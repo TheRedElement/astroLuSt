@@ -815,7 +815,7 @@ def hexcolor_extract(testplot=False, timeit=False):
 #TODO: iterate over combinations of nintervals and nbins to find out closest solution to nbins
 #______________________________________________________________________________
 #function to define linspace with variable resolution
-def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbins=100, spreads=None, testplot=False, timeit=False):
+def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbins=100, spreads=None, maxiter=100000, testplot=False, verbose=False, timeit=False):
     """
     Function to generate a linspace in the range of linspace_range with higher 
         resolved areas around centers.
@@ -852,10 +852,18 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
         Parameter to control the amount of overflowing of the distribution over
             the given high-resolution parts.
         The default is None, which will result in no additional overflow.
+    maxiter : int, optional
+        Parameter to define the maximum number of iterations to take to get as
+            close to the desired nbins as possible.
+        The default is 100000
     testplot : bool, optional
         If True will produce a test-plot that shows the underlying distribution
             as well as the resulting array.
         The default is False.
+    verbose : bool, optional
+        If True will show messages defined by the creator of the function.
+        Eg.: Length of the output, number of iterations.
+        The default is False
     timeit : bool, optional
         Specify wether to time the task ad return the information or not.
         The default is False
@@ -937,6 +945,8 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
         raise ValueError("nintervals has to be of type int!")
     if type(nbins) != int:
         raise ValueError("nbins has to be of type int!")
+    if type(maxiter) != int:
+        raise ValueError("maxiter has to be of type int!")
     if type(testplot) != bool:
         raise ValueError("testplot has to be of type bool!")
     
@@ -946,34 +956,50 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
     linspace_range = np.array(linspace_range)
     intervals = np.linspace(linspace_range.min(), linspace_range.max(), nintervals+1)
     
-    
     #generate datapoint distribution
     dist = 0
     for c, w, s in zip(centers, widths, spreads):
         gauss = sps.norm.pdf(intervals, loc=c, scale=s*w)
         gauss /= gauss.max()        #to give all gaussians the same weight
         dist += gauss               #superposition all gaussians to get distribution
-        
-    dist /= np.sum(dist)            #normalize so all values add up to 1
-    dist *= nbins                   #rescale to add up to the number of bins
 
+
+    #test various bins to get as close to nbins as possible
+    iteration = 0
+    testbin = nbins/2
+    delta = 1E18
+    while delta > 1E-6 and iteration < maxiter:
+                 
+        testdist = dist/np.sum(dist)            #normalize so all values add up to 1
+        testdist *= testbin
+        # dist *= nbins                   #rescale to add up to the number of bins
     
-    #create combined linspace
-    combined_linspace = np.array([])
-    for i1, i2, bins in zip(intervals[:-1], intervals[1:], dist):
-        ls = np.linspace(i1,i2,int(bins), endpoint=False)                       #don't include endpoint to ensure non-overlapping
-        combined_linspace = np.append(combined_linspace, ls)
+        
+        #create combined linspace
+        combined_linspace = np.array([])
+        for i1, i2, bins in zip(intervals[:-1], intervals[1:], testdist):
+            ls = np.linspace(i1,i2,int(bins), endpoint=False)                       #don't include endpoint to ensure non-overlapping
+            combined_linspace = np.append(combined_linspace, ls)
+        
+        #add border points
+        combined_linspace = np.insert(combined_linspace,0,linspace_range.min())
+        combined_linspace = np.append(combined_linspace,linspace_range.max())
     
-    #add border points
-    combined_linspace = np.insert(combined_linspace,0,linspace_range.min())
-    combined_linspace = np.append(combined_linspace,linspace_range.max())
-    
+        delta = (nbins-combined_linspace.shape[0])
+        testbin += 1
+        iteration += 1
+        
     #make sure to get sorted array
     combined_linspace = np.sort(combined_linspace)
     
+    if verbose:
+        print("Number of iterations: %s"%(iteration))
+        print("Shape of combined_linspace: %s"%combined_linspace.shape)
+        print("Desired shape: %s"%nbins)
+        print("Range of linspace: [%g, %g]"%(combined_linspace.min(), combined_linspace.max()))
+
+    
     if testplot:
-        print("shape of combined_linspace: %s"%combined_linspace.shape)
-        print("range of linspace: [%g, %g]"%(combined_linspace.min(), combined_linspace.max()))
         y_test = np.ones_like(combined_linspace)
         
         fig = plt.figure()
@@ -1000,14 +1026,14 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
 # TEST FOR linspace_def function #  
 ##################################
 
-import numpy as np
-centers = [-10, 50]
-widths = [4, 5]
-a = np.linspace(-100,100,1000)
-nintervals=50
-nbins=125
-spreads=[20,3]
-linspace_def(centers=centers, widths=widths, linspace_range=a, nintervals=nintervals, nbins=nbins, spreads=spreads, testplot=True, timeit=False)
+# import numpy as np
+# centers = [-10, 50]
+# widths = [4, 5]
+# a = np.linspace(-100,100,1000)
+# nintervals=50
+# nbins=200
+# spreads=[20,3]
+# linspace_def(centers=centers, widths=widths, linspace_range=a, nintervals=nintervals, nbins=nbins, spreads=spreads, testplot=True, verbose=True, timeit=False)
 
 
 #______________________________________________________________________________
