@@ -812,14 +812,18 @@ def hexcolor_extract(testplot=False, timeit=False):
   
     
 #%%Data Aanlysis
-#TODO: iterate over combinations of nintervals and nbins to find out closest solution to nbins
+#TODO: add go_exact: randomly remove datapoints to reach exat requested nbins
+#TODO: expand to n-D 
 #______________________________________________________________________________
 #function to define linspace with variable resolution
-def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbins=100, spreads=None, maxiter=100000, testplot=False, verbose=False, timeit=False):
+def linspace_def(centers, widths=None, linspace_range=[0,1] ,
+                 nintervals=50, nbins=100, spreads=None, maxiter=100000,
+                 go_exact=True, testplot=False, verbose=False, timeit=False):
     """
     Function to generate a linspace in the range of linspace_range with higher 
-        resolved areas around centers.
-    The final array has ideally nbins entries, but mostly it is less than that.
+        resolved areas around given centers.
+    The final array has ideally nbins entries, but mostly it is more than that.
+    The user can however get to the exact solution by seting go_exact = True.
     The resolution follows a gaussian for each given center.
     The size of these high-res-areas is defined by widths, wich is equal to
         the standard deviation in the gaussian.
@@ -856,6 +860,10 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
         Parameter to define the maximum number of iterations to take to get as
             close to the desired nbins as possible.
         The default is 100000
+    go_exact : bool, optional
+        If True random points will be cut from the final result to achive 
+            exactly the amount of requested nbins
+        The default is True
     testplot : bool, optional
         If True will produce a test-plot that shows the underlying distribution
             as well as the resulting array.
@@ -947,8 +955,14 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
         raise ValueError("nbins has to be of type int!")
     if type(maxiter) != int:
         raise ValueError("maxiter has to be of type int!")
+    if type(go_exact) != bool:
+        raise ValueError("go_exact has to be of type bool!")
     if type(testplot) != bool:
         raise ValueError("testplot has to be of type bool!")
+    if type(verbose) != bool:
+        raise ValueError("verbose has to be of type bool!")
+    if type(timeit) != bool:
+        raise ValueError("timeit has to be of type bool!")
     
     #initial definitions and conversions
     centers   = np.array(centers)
@@ -992,12 +1006,19 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
     #make sure to get sorted array
     combined_linspace = np.sort(combined_linspace)
     
+    #cut random points but not the borders to get exactly to requested nbins
+    if go_exact:
+        n_to_cut = combined_linspace.shape[0] - nbins
+        remove = np.random.randint(1, combined_linspace.shape[0]-1, size = n_to_cut)
+        combined_linspace = np.delete(combined_linspace, remove)
+    
     if verbose:
         print("Number of iterations: %s"%(iteration))
         print("Shape of combined_linspace: %s"%combined_linspace.shape)
         print("Desired shape: %s"%nbins)
         print("Range of linspace: [%g, %g]"%(combined_linspace.min(), combined_linspace.max()))
-
+        if go_exact:
+            print("Number of cut datapoints: %s"%(n_to_cut))
     
     if testplot:
         y_test = np.ones_like(combined_linspace)
@@ -1026,14 +1047,14 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] , nintervals=50, nbi
 # TEST FOR linspace_def function #  
 ##################################
 
-# import numpy as np
-# centers = [-10, 50]
-# widths = [4, 5]
-# a = np.linspace(-100,100,1000)
-# nintervals=50
-# nbins=200
-# spreads=[20,3]
-# linspace_def(centers=centers, widths=widths, linspace_range=a, nintervals=nintervals, nbins=nbins, spreads=spreads, testplot=True, verbose=True, timeit=False)
+import numpy as np
+centers = [-10, 50]
+widths = [4, 5]
+a = np.linspace(-100,100,1000)
+nintervals=50
+nbins=200
+spreads=[20,3]
+linspace_def(centers=centers, widths=widths, linspace_range=a, nintervals=nintervals, nbins=nbins, spreads=spreads, go_exact=True, testplot=True, verbose=True, timeit=False)
 
 
 #______________________________________________________________________________
