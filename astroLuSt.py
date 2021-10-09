@@ -812,7 +812,6 @@ def hexcolor_extract(testplot=False, timeit=False):
   
     
 #%%Data Aanlysis
-#TODO: add go_exact: randomly remove datapoints to reach exat requested nbins
 #TODO: expand to n-D 
 #______________________________________________________________________________
 #function to define linspace with variable resolution
@@ -1024,7 +1023,7 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] ,
         y_test = np.ones_like(combined_linspace)
         
         fig = plt.figure()
-        plt.suptitle("Testplot to visualize generated linspace")
+        plt.suptitle("Testplot to visualize generated linspace", fontsize=18)
         plt.plot(combined_linspace, y_test, color="k", marker=".", alpha=0.5, linestyle="", zorder=4)
         plt.scatter(intervals, dist, color="gainsboro", zorder=1, marker=".", figure=fig)
         plt.vlines(centers, dist.min(), dist.max(), colors="b")
