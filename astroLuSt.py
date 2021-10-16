@@ -1046,14 +1046,14 @@ def linspace_def(centers, widths=None, linspace_range=[0,1] ,
 # TEST FOR linspace_def function #  
 ##################################
 
-import numpy as np
-centers = [-10, 50]
-widths = [4, 5]
-a = np.linspace(-100,100,1000)
-nintervals=50
-nbins=200
-spreads=[20,3]
-linspace_def(centers=centers, widths=widths, linspace_range=a, nintervals=nintervals, nbins=nbins, spreads=spreads, go_exact=True, testplot=True, verbose=True, timeit=False)
+# import numpy as np
+# centers = [-10, 50]
+# widths = [4, 5]
+# a = np.linspace(-100,100,1000)
+# nintervals=50
+# nbins=200
+# spreads=[20,3]
+# linspace_def(centers=centers, widths=widths, linspace_range=a, nintervals=nintervals, nbins=nbins, spreads=spreads, go_exact=True, testplot=True, verbose=True, timeit=False)
 
 
 #______________________________________________________________________________
