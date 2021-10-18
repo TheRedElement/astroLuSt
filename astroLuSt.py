@@ -8,9 +8,9 @@ Created on Sat Sep 25 19:37:29 2021
 
 
 #%%useful stuff
-#TODO: Make into class containing dict of timers
 #______________________________________________________________________________
 #Function to time tasks
+#TODO: Make into class containing dict of timers
 def time_stuff(task, head=True):
     """
     Function to time code enclosed by two instances of time_stuff.
