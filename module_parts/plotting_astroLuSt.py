@@ -6,9 +6,261 @@
 #______________________________________________________________________________
 #Class containing useful stuff for plotting
 #TODO: get plot_ax(), color_generator(), hexcolor_extract(), inside this class
+#TODO: use arguments of plot_ax as attributes that can be set
+#TODO: use plot_ax() as a method to output the Plot_LuSt instance
 class Plot_LuSt:
 
-    def __init__(self):
+    def __init__(self,
+                 xvals, yvals, colors=None, markers=None, markersizes=None, labels=None, linestyles=None, alphas=None,  #curve specifications
+                 smooths=None, smoothdegrees=None, smoothresolutions=None,           #curve manipulations
+                 xerrs=None, yerrs=None, capsizes=None, errcolors=None,              #error specifications
+                 positions=None, zorders=None,                                       #positions/order specifications
+                 invert_xaxis=None, invert_yaxis=None,                               #axis-specifications
+                 xlabs=None, ylabs=None, suptitle=None, num=None,                    #titling specifications
+                 axlegend=None, figlegend=None, figsize=None, fontsize=None,         #layout specifications
+                 timeit=None):
+        
+        import copy
+        import numpy as np
+
+    ###################################
+    #Initialize attributes accordingly#
+    ###################################
+
+        self.xvals = xvals
+        self.yvals = yvals
+        if colors is None:
+            self.colors = copy.deepcopy(self.xvals)
+            #initialize all colors with "tab:blue"
+            for ciidx, ci in enumerate(colors):
+                for cjidx, cj in enumerate(ci):
+                    self.colors[ciidx][cjidx] = "tab:blue"
+        else:
+            self.colors = colors
+        if markers is None:
+            self.markers = copy.deepcopy(self.xvals)
+            #initialize all markers with "."
+            for miidx, mi in enumerate(markers):
+                for mjidx, mj in enumerate(mi):
+                    self.markers[miidx][mjidx] = "."
+        else:
+            self.markers = markers
+        if markersizes is None:
+            self.markersizes = copy.deepcopy(self.xvals)
+            #initialize all markers with "."
+            for miidx, mi in enumerate(markersizes):
+                for mjidx, mj in enumerate(mi):
+                    self.markersizes[miidx][mjidx] = 10
+        else:
+            self.markersizes = markersizes
+        if labels is None:
+            self.labels = copy.deepcopy(self.xvals)
+            #initialize all labels with None
+            for liidx, li in enumerate(labels):
+                for ljidx, lj in enumerate(li):
+                    self.labels[liidx][ljidx] = None
+        else:
+            self.labels = labels
+        if linestyles is None:
+            self.linestyles = copy.deepcopy(self.xvals)
+            #initialize all linestyles with ""
+            for liidx, li in enumerate(linestyles):
+                for ljidx, lj in enumerate(li):
+                    self.linestyles[liidx][ljidx] = ""
+        else:
+            self.linestyles = linestyles
+        if alphas is None:
+            self.alphas = copy.deepcopy(self.xvals)
+            #initialize all alpha with None
+            for aiidx, ai in enumerate(alphas):
+                for ajidx, aj in enumerate(ai):
+                    self.alphas[aiidx][ajidx] = None
+        else:
+            self.alphas = alphas
+        if smooths is None:
+            self.smooths = copy.deepcopy(self.xvals)
+            #initialize all smooths with None
+            for siidx, si in enumerate(smooths):
+                for sjidx, sj in enumerate(si):
+                    self.smooths[siidx][sjidx] = False
+        else:
+            self.smooths = smooths
+        if smoothdegrees is None:
+            self.smoothdegrees = copy.deepcopy(self.xvals)
+            #initialize all smoothdegrees with None
+            for siidx, si in enumerate(smoothdegrees):
+                for sjidx, sj in enumerate(si):
+                    self.smoothdegrees[siidx][sjidx] = 3
+            # print(smoothdegrees)
+        else:
+            self.smoothdegrees = smoothdegrees
+        if smoothresolutions is None:
+            self.smoothresolutions = copy.deepcopy(self.xvals)
+            #initialize all smoothresolutions with None
+            for siidx, si in enumerate(smoothresolutions):
+                for sjidx, sj in enumerate(si):
+                    self.smoothresolutions[siidx][sjidx] = 100
+        else:
+            self.smoothresolutions = smoothresolutions
+        if xerrs is None:
+            self.xerrs = copy.deepcopy(self.xvals)
+            #initialize all xerrs with None
+            for xiidx, xi in enumerate(xerrs):
+                for xjidx, xj in enumerate(xi):
+                    self.xerrs[xiidx][xjidx] = None
+        else:
+            self.xerrs = xerrs
+            # print(xerrs)
+        if yerrs is None:
+            self.yerrs = copy.deepcopy(self.xvals)
+            #initialize all yerrs with None
+            for yiidx, yi in enumerate(yerrs):
+                for yjidx, yj in enumerate(yi):
+                    self.yerrs[yiidx][yjidx] = None
+        else:
+            self.yerrs = yerrs
+        if capsizes is None:
+            self.capsizes = copy.deepcopy(self.xvals)
+            #initialize all capsizes with None
+            for ciidx, ci in enumerate(capsizes):
+                for cjidx, cj in enumerate(ci):
+                    self.capsizes[ciidx][cjidx] = None
+        else:
+            self.capsizes = capsizes
+            # print(capsizes)
+        if errcolors is None:
+            self.errcolors = copy.deepcopy(self.xvals)
+            #initialize all colors with "tab:blue"
+            for eciidx, eci in enumerate(errcolors):
+                for ecjidx, ecj in enumerate(eci):
+                    self.errcolors[eciidx][ecjidx] = "tab:blue"
+        else:
+            self.errcolors = errcolors
+        if positions is None:
+            v1 = int(np.ceil(np.sqrt(len(xvals))))
+            self.positions = np.empty(len(xvals), dtype=int)
+            for pidx, p in enumerate(positions):
+                subfig_idx = int(str(v1)+str(v1)+str(pidx+1))
+                self.positions[pidx] = subfig_idx
+        else:
+            self.positions = positions
+        if zorders is None:
+            self.zorders = copy.deepcopy(self.xvals)
+            #initialize all zorders with 1
+            for ziidx, zi in enumerate(zorders):
+                for zjidx, zj in enumerate(zi):
+                    self.zorders[ziidx][zjidx] = 1
+        else:
+            self.zorders = zorders
+        if invert_yaxis is None:
+            #initialize with all False
+            self.invert_yaxis = [False]*len(self.xvals)
+        else:
+            self.invert_yaxis = invert_yaxis
+            # print(invert_yaxis)
+        if invert_xaxis is None:
+            #initialize with all False
+            self.invert_xaxis = [False]*len(self.xvals)
+        else:
+            self.invert_xaxis = invert_xaxis
+        if xlabs is None:
+            #initialize all xaxis with "x"
+            self.xlabs = ["x"]*len(xvals)
+        else:
+            self.xlabs = xlabs
+        if ylabs is None:
+            #initialize all yaxis with "y"
+            self.ylabs = ["y"]*len(self.xvals)
+        else:
+            self.ylabs = ylabs
+        if suptitle is None:
+            self.suptitle = ""
+        else:
+            self.suptitle = suptitle
+        if num is None:
+            self.num = ""
+        else:
+            self.num = num
+        if axlegend is None:
+            self.axlegend = False
+        else:
+            self.axlegend = axlegend
+        if figlegend is None:
+            self.figlegend = False
+        else:
+            self.figlegend = figlegend
+        if figsize is None:
+            self.figsize = (16,9)
+        else:
+            self.figsize = figsize
+        if fontsize is None:
+            self.fontsize = 16
+        else:
+            self.fontsize = fontsize
+        if timeit is None:
+            self.timeit = False
+        else:
+            self.timeit = timeit
+
+    #################################
+    #check if all shapes are correct#
+    #################################
+        
+        shape_check1_name = ["xvals", "yvals", "colors", "markers", "markersizes", "labels", "linestyles", "alphas",
+                            "smooths", "smoothdegrees", "smoothresolutions",
+                            "xerrs", "yerrs", "capsizes", "errcolors",
+                            "zorders"]
+        shape_check1 = [self.xvals, self.yvals, self.colors, self.markers, self.markersizes, self.labels, self.linestyles, self.alphas,
+                        self.smooths, self.smoothdegrees, self.smoothresolutions,
+                        self.xerrs, self.yerrs, self.capsizes, self.errcolors,
+                        self.zorders] 
+        for sciidx, sci in enumerate(shape_check1):
+            for scjidx, scj in enumerate(shape_check1):
+                var1 = shape_check1_name[sciidx]
+                var2 = shape_check1_name[scjidx]
+                if len(sci) == len(scj):
+                    for scii, scjj in zip(sci, scj):
+                        if len(scii) != len(scjj):
+                            raise ValueError(f"Shape of {var1:s} has to be shape of {var2:s}")
+
+                else:
+                    raise ValueError(f"Shape of {var1:s} has to be shape of {var2:s}")
+        
+        
+        shape_check2_name = ["positions",
+                            "invert_xaxis", "invert_yaxis",
+                            "xlabs", "ylabs"]
+        shape_check2 = [self.positions,
+                        self.invert_xaxis, self.invert_yaxis,
+                        self.xlabs, self.ylabs]
+        for sc2, sc2n in zip(shape_check2, shape_check2_name):
+            if len(xvals) > len(sc2):
+                raise ValueError(f"length of {'xvals':s} has to be smaller or equal length of {sc2n:s}"%("xvals", sc2n))
+
+    ####################################
+    #check if all datatypes are correct#
+    ####################################
+        
+        if type(figlegend) != bool:
+            raise TypeError("'figlegend' has to be of type bool!")
+        if type(axlegend) != bool:
+            raise TypeError("'axlegend' has to be of type bool!")
+
+
+    # def __repr__():
+    #     pass
+
+    def plot_ax():
+        pass
+
+    def add_subplot():
+        pass
+
+
+    def hexcolor_extract():
+        pass
+        
+    def color_generator():
         pass
 
 #______________________________________________________________________________
@@ -24,311 +276,140 @@ def plot_ax(xvals, yvals, colors=None, markers=None, markersizes=None, labels=No
             axlegend=True, figlegend=False, figsize=(16,9), fontsize=16,        #layout specifications
             timeit=False):                                                      #additional functionality
     """
-    Function which automatically creates a figure with subplots fitting the
-        provided list of arrays.
-    Different parameters can be specified which can be specified in the
-        fig.add_subplot() function as well.
-    Will return the fugure as well as a list of the axes to use for later
-        configurations.
-    One has to call plt.show() outside of the function to show it
-    
-    
-    Parameters
-    ----------
-    xvals : list/np.ndarray
-        list of x-values to plot.
-    yvals : list/np.ndarray
-        list of y-values corresponding to xvals.
-    colors : list/np.ndarray, optional
-        list of colors to use for plotting the datasets.
-        The default is None, which will plot all in "tab:blue".
-    markers : list/np.ndarray, optional
-        list of markers to use for plotting the datasets.
-        The default is None, which will result in all ".".
-    markersizes : list/np.ndarray, optional
-        list of markersiszes to use for plotting the datasets.
-        The default is None, which will result in all haivng markersize=10.
-    labels : list/np.ndarray, optional
-        dataset-labels corresponding to the dataset of xvals.
-        The default is None, which will result in no labels.
-    linestyles : list/np.ndarray, optional
-        list of linestyles to use for plotting the datasets.
-        The default is None, which will result in all "".
-    alphas : list/np.ndarray, optional
-        list of the alphas to use on the curve.
-        The default is None, which will result in all default values.
-    smooths : list/np.ndarray of bools, optional
-        list of wether to interpolate and smooth the curve or not.
-        But there will not be errors in smoothed curves, even if passed to the function!
-        The default is None, which will result in all curves not being smoothed (i.e. all set to False).
-    smoothdegrees : list/np.ndarray, optional
-        list of polynomial degrees to use when smoothing for each curve.
-        The default is None which will create k=3 splines for smoothing
-    smoothresolutions : 
-        reolution of the smoothed curve, i.e. number of points to use for interpolation
-        the default is None, which will result in all curves having a resolution of 100
-    xerrs : list/np.ndarray, optional
-        x-errors corresponding to xvals.
-        The default is None.
-    yerrs : list/np.ndarray, optional
-        y-errors corresponding to yvals.
-        The default is None.
-    capsizes : list/np.ndarray, optional
-        capsizes to use for plotting errorbars.
-        The default is None.
-    errcolors : list/np.ndarray, optional
-        list of colors to use for plotting the errors.
-        The default is None, which will plot all in "tab:blue".
-    positions : list/np.array, optional
-        list of positions of the datasets.
-        used to position each dataset to its respective subplot.
-        has to contain the "add_subplot" indexing system values (integer of length 3)
-        The default None, which is to plot all dataset from top left to bottom right.
-    zorders : list/np.array, optional
-        list of values vor zorder.
-        describes wich data-series is in front, second, in background etc.
-        The default None, which will retain the order of the provided input data.
-    invert_xaxis : list/np.array, optional
-        list of booleans. If the entry is True the xaxis of the corresponding subplot will be inverted.
-        The default is None, which will flip none of the xaxes.
-    invert_yaxis : list/np.array, optional
-        list of booleans. If the entry is True the yaxis of the corresponding subplot will be inverted.
-        The default is None, which will flip none of the yaxes.
-    xlabs : list/np.array, optional
-        labels of the x-axes.
-        The default is None, which will result in "x".
-    ylabs : string, optional
-        labels of the y-axes.
-        The default is None, wich will result in "y".
-    suptitle : string, optional
-        suptitle of the figure.
-        The default is "".
-    num : str, optional
-        number of the figure.
-        The default is "".
-    axlegend : bool, optional
-        If set to True will create a legend for each axis
-        The default is True
-    figlegend : bool, optional
-        If set to True will create a global legend for the figure instead of
-            separate legends for each axis.
-        The default is False
-    figsize : tuple, optional
-        size of the figure.
-        The default is (16,9).
-    fontsize : int, optional
-        fontsize to use for labels and ticks.
-        fontsize of title and legend will be adjusted accordingly.
-        The default is 16.
-    timeit : bool, optional
-        Specify wether to time the task ad return the information or not.
-        The default is False
+        Function which automatically creates a figure with subplots fitting the
+            provided list of arrays.
+        Different parameters can be specified which can be specified in the
+            fig.add_subplot() function as well.
+        Will return the fugure as well as a list of the axes to use for later
+            configurations.
+        One has to call plt.show() outside of the function to show it
         
-
-    Returns
-    -------
-    fig : matplotlib.figure - object
-        created figure
-    axs : matplotlib axes - object
-        axes of created figure to change settings later on
-
-    Comments
-    --------
-        If one wants to share axis between plots simply call
-        >>>axs[iidx].get_shared_y_axes().join(axs[iidx],axs[jidx])
-        >>>axs[iidx].set_yticklabels([])
-        axs is hereby the second return value of the function and thus a list
-            of all axes
-
-    Dependencies
-    ------------
-    numpy
-    matplotlib
-    scipy
-    copy
+        
+        Parameters
+        ----------
+        xvals : list/np.ndarray
+            list of x-values to plot.
+        yvals : list/np.ndarray
+            list of y-values corresponding to xvals.
+        colors : list/np.ndarray, optional
+            list of colors to use for plotting the datasets.
+            The default is None, which will plot all in "tab:blue".
+        markers : list/np.ndarray, optional
+            list of markers to use for plotting the datasets.
+            The default is None, which will result in all ".".
+        markersizes : list/np.ndarray, optional
+            list of markersiszes to use for plotting the datasets.
+            The default is None, which will result in all haivng markersize=10.
+        labels : list/np.ndarray, optional
+            dataset-labels corresponding to the dataset of xvals.
+            The default is None, which will result in no labels.
+        linestyles : list/np.ndarray, optional
+            list of linestyles to use for plotting the datasets.
+            The default is None, which will result in all "".
+        alphas : list/np.ndarray, optional
+            list of the alphas to use on the curve.
+            The default is None, which will result in all default values.
+        smooths : list/np.ndarray of bools, optional
+            list of wether to interpolate and smooth the curve or not.
+            But there will not be errors in smoothed curves, even if passed to the function!
+            The default is None, which will result in all curves not being smoothed (i.e. all set to False).
+        smoothdegrees : list/np.ndarray, optional
+            list of polynomial degrees to use when smoothing for each curve.
+            The default is None which will create k=3 splines for smoothing
+        smoothresolutions : 
+            reolution of the smoothed curve, i.e. number of points to use for interpolation
+            the default is None, which will result in all curves having a resolution of 100
+        xerrs : list/np.ndarray, optional
+            x-errors corresponding to xvals.
+            The default is None.
+        yerrs : list/np.ndarray, optional
+            y-errors corresponding to yvals.
+            The default is None.
+        capsizes : list/np.ndarray, optional
+            capsizes to use for plotting errorbars.
+            The default is None.
+        errcolors : list/np.ndarray, optional
+            list of colors to use for plotting the errors.
+            The default is None, which will plot all in "tab:blue".
+        positions : list/np.array, optional
+            list of positions of the datasets.
+            used to position each dataset to its respective subplot.
+            has to contain the "add_subplot" indexing system values (integer of length 3)
+            The default None, which is to plot all dataset from top left to bottom right.
+        zorders : list/np.array, optional
+            list of values vor zorder.
+            describes wich data-series is in front, second, in background etc.
+            The default None, which will retain the order of the provided input data.
+        invert_xaxis : list/np.array, optional
+            list of booleans. If the entry is True the xaxis of the corresponding subplot will be inverted.
+            The default is None, which will flip none of the xaxes.
+        invert_yaxis : list/np.array, optional
+            list of booleans. If the entry is True the yaxis of the corresponding subplot will be inverted.
+            The default is None, which will flip none of the yaxes.
+        xlabs : list/np.array, optional
+            labels of the x-axes.
+            The default is None, which will result in "x".
+        ylabs : string, optional
+            labels of the y-axes.
+            The default is None, wich will result in "y".
+        suptitle : string, optional
+            suptitle of the figure.
+            The default is "".
+        num : str, optional
+            number of the figure.
+            The default is "".
+        axlegend : bool, optional
+            If set to True will create a legend for each axis
+            The default is True
+        figlegend : bool, optional
+            If set to True will create a global legend for the figure instead of
+                separate legends for each axis.
+            The default is False
+        figsize : tuple, optional
+            size of the figure.
+            The default is (16,9).
+        fontsize : int, optional
+            fontsize to use for labels and ticks.
+            fontsize of title and legend will be adjusted accordingly.
+            The default is 16.
+        timeit : bool, optional
+            Specify wether to time the task ad return the information or not.
+            The default is False
+            
+    
+        Returns
+        -------
+        fig : matplotlib.figure - object
+            created figure
+        axs : matplotlib axes - object
+            axes of created figure to change settings later on
+    
+        Comments
+        --------
+            If one wants to share axis between plots simply call
+            >>>axs[iidx].get_shared_y_axes().join(axs[iidx],axs[jidx])
+            >>>axs[iidx].set_yticklabels([])
+            axs is hereby the second return value of the function and thus a list
+                of all axes
+    
+        Dependencies
+        ------------
+        numpy
+        matplotlib
+        scipy
+        copy
     """
     import numpy as np
     import matplotlib.pyplot as plt
     from scipy.interpolate import make_interp_spline, BSpline #used for smoothing
     import copy
-    from utility_astroLuSt import Time_stuff
+    from module_parts.utility_astroLuSt import Time_stuff
     
     #time execution
     if timeit:
         task = Time_stuff("plot_ax")
         task.start_task()
-    
-    ##########################################
-    #initialize not provided data accordingly#
-    ##########################################
-    
-    if colors is None:
-        colors = copy.deepcopy(xvals)
-        #initialize all colors with "tab:blue"
-        for ciidx, ci in enumerate(colors):
-            for cjidx, cj in enumerate(ci):
-                colors[ciidx][cjidx] = "tab:blue"
-        # print(colors)
-    if markers is None:
-        markers = copy.deepcopy(xvals)
-        #initialize all markers with "."
-        for miidx, mi in enumerate(markers):
-            for mjidx, mj in enumerate(mi):
-                markers[miidx][mjidx] = "."
-        # print(markers)
-    if markersizes is None:
-        markersizes = copy.deepcopy(xvals)
-        #initialize all markers with "."
-        for miidx, mi in enumerate(markersizes):
-            for mjidx, mj in enumerate(mi):
-                markersizes[miidx][mjidx] = 10
-        # print(markersizes)
-    if labels is None:
-        labels = copy.deepcopy(xvals)
-        #initialize all labels with None
-        for liidx, li in enumerate(labels):
-            for ljidx, lj in enumerate(li):
-                labels[liidx][ljidx] = None
-        # print(labels)
-    if linestyles is None:
-        linestyles = copy.deepcopy(xvals)
-        #initialize all linestyles with ""
-        for liidx, li in enumerate(linestyles):
-            for ljidx, lj in enumerate(li):
-                linestyles[liidx][ljidx] = ""
-        # print(linestyles)
-    if alphas is None:
-        alphas = copy.deepcopy(xvals)
-        #initialize all alpha with None
-        for aiidx, ai in enumerate(alphas):
-            for ajidx, aj in enumerate(ai):
-                alphas[aiidx][ajidx] = None
-        # print(alphas)
-    if smooths is None:
-        smooths = copy.deepcopy(xvals)
-        #initialize all smooths with None
-        for siidx, si in enumerate(smooths):
-            for sjidx, sj in enumerate(si):
-                smooths[siidx][sjidx] = False
-        # print(smooth)
-    if smoothdegrees is None:
-        smoothdegrees = copy.deepcopy(xvals)
-        #initialize all smoothdegrees with None
-        for siidx, si in enumerate(smoothdegrees):
-            for sjidx, sj in enumerate(si):
-                smoothdegrees[siidx][sjidx] = 3
-        # print(smoothdegrees)
-    if smoothresolutions is None:
-        smoothresolutions = copy.deepcopy(xvals)
-        #initialize all smoothresolutions with None
-        for siidx, si in enumerate(smoothresolutions):
-            for sjidx, sj in enumerate(si):
-                smoothresolutions[siidx][sjidx] = 100
-        # print(smoothresolutions)
-    if xerrs is None:
-        xerrs = copy.deepcopy(xvals)
-        #initialize all xerrs with None
-        for xiidx, xi in enumerate(xerrs):
-            for xjidx, xj in enumerate(xi):
-                xerrs[xiidx][xjidx] = None
-        # print(xerrs)
-    if yerrs is None:
-        yerrs = copy.deepcopy(xvals)
-        #initialize all yerrs with None
-        for yiidx, yi in enumerate(yerrs):
-            for yjidx, yj in enumerate(yi):
-                yerrs[yiidx][yjidx] = None
-        # print(yerrs)
-    if capsizes is None:
-        capsizes = copy.deepcopy(xvals)
-        #initialize all capsizes with None
-        for ciidx, ci in enumerate(capsizes):
-            for cjidx, cj in enumerate(ci):
-                capsizes[ciidx][cjidx] = None
-        # print(capsizes)
-    if errcolors is None:
-        errcolors = copy.deepcopy(xvals)
-        #initialize all colors with "tab:blue"
-        for eciidx, eci in enumerate(errcolors):
-            for ecjidx, ecj in enumerate(eci):
-                errcolors[eciidx][ecjidx] = "tab:blue"
-        # print(errcolors)
-    if positions is None:
-        v1 = int(np.ceil(np.sqrt(len(xvals))))
-        positions = np.empty(len(xvals), dtype=int)
-        for pidx, p in enumerate(positions):
-            subfig_idx = int(str(v1)+str(v1)+str(pidx+1))
-            positions[pidx] = subfig_idx
-        # print(positions)
-    if zorders is None:
-        zorders = copy.deepcopy(xvals)
-        #initialize all zorders with 1
-        for ziidx, zi in enumerate(zorders):
-            for zjidx, zj in enumerate(zi):
-                zorders[ziidx][zjidx] = 1
-        # print(zorders)
-    if invert_yaxis is None:
-        #initialize with all False
-        invert_yaxis = [False]*len(xvals)
-        # print(invert_yaxis)
-    if invert_xaxis is None:
-        #initialize with all False
-        invert_xaxis = [False]*len(xvals)
-        # print(invert_xaxis)
-    if xlabs is None:
-        #initialize all xaxis with "x"
-        xlabs = ["x"]*len(xvals)
-        # print(xlabs)
-    if ylabs is None:
-        #initialize all yaxis with "y"
-        ylabs = ["y"]*len(xvals)
-        # print(ylabs)
         
-    
-    #################################
-    #check if all shapes are correct#
-    #################################
-    
-    shape_check1_name = ["xvals", "yvals", "colors", "markers", "markersizes", "labels", "linestyles", "alphas",
-                         "smooths", "smoothdegrees", "smoothresolutions",
-                         "xerrs", "yerrs", "capsizes", "errcolors",
-                         "zorders"]
-    shape_check1 = [xvals, yvals, colors, markers, markersizes, labels, linestyles, alphas,
-                    smooths, smoothdegrees, smoothresolutions,
-                    xerrs, yerrs, capsizes, errcolors,
-                    zorders] 
-    for sciidx, sci in enumerate(shape_check1):
-        for scjidx, scj in enumerate(shape_check1):
-            var1 = shape_check1_name[sciidx]
-            var2 = shape_check1_name[scjidx]
-            if len(sci) == len(scj):
-                for scii, scjj in zip(sci, scj):
-                    if len(scii) != len(scjj):
-                        raise ValueError("Shape of %s has to be shape of %s"%(var1, var2))
-
-            else:
-                raise ValueError("Shape of %s has to be shape of %s"%(var1, var2))
-    
-    
-    shape_check2_name = ["positions",
-                         "invert_xaxis", "invert_yaxis",
-                         "xlabs", "ylabs"]
-    shape_check2 = [positions,
-                    invert_xaxis, invert_yaxis,
-                    xlabs, ylabs]
-    for sc2, sc2n in zip(shape_check2, shape_check2_name):
-        if len(xvals) > len(sc2):
-            raise ValueError("length of %s has to be smaller or equal length of %s"%("xvals", sc2n))
-
-    ####################################
-    #check if all datatypes are correct#
-    ####################################
-    
-    if type(figlegend) != bool:
-        raise ValueError("figlegend has to be of type bool!")
-    if type(axlegend) != bool:
-        raise ValueError("axlegend has to be of type bool!")
-    
     
 
     ###################################
@@ -406,63 +487,7 @@ def plot_ax(xvals, yvals, colors=None, markers=None, markersizes=None, labels=No
 
     
     return fig, axs
-
-#############################
-# TEST FOR plot_ax function #  
-#############################
  
-# import numpy as np
-# import matplotlib.pyplot as plt
-# xi = np.linspace(0,20,21)
-
-# xvals = [[xi,xi],[xi],[xi]]
-# yvals = [[xi,xi**2],[xi*3],[xi]]
-# colors=[["r","g"],["r"],["k"]]
-# markers = [[".","x"],[","],["^"]]
-# markersizes = [[50,2],[12],[8]]
-# labels = [["c1", "c2"],["c1"],["c2"]]
-# linestyles = [["","-."],["-"],[":"]]
-# alphas = [[0.5,1],[1],[1]]
-# smooths = [[False, True], [True],[True]]
-# smoothdegrees = [[3,3],[3],[2]]
-# smoothresolutions = [[100,4],[4],[300]]
-
-# xerrs = [[[0.5]*len(xi), [1]*len(xi)],[[2]*len(xi)],[None]]
-# yerrs = [[[0.5]*len(xi), [1]*len(xi)],[[2]*len(xi)],[None]]
-# capsizes = [[3,5],[3],[None]]
-# errcolors = [["r","g"],["b"],["c"]]
-
-# positions = [211, 224, 223]
-# zorders = [[1,2],[1],[1]]
-
-# invert_yaxis = [True, False, False]
-# invert_xaxis = [False, True, False]
-
-# yaxlabs = ["y1", "y2", "y3"]
-# xaxlabs = ["x1", "x2", "x3"]
-
-# suptitle="Testtitle"
-# num = "Testplot"
-
-# figlegend = True
-# figsize = (5,5)
-# fontsize = 16
-
-# fig, axs = plot_ax(xvals, yvals, colors=colors, markers=markers, markersizes=markersizes, labels=labels, linestyles=linestyles, alphas=alphas,
-#                     smooths=smooths, smoothdegrees=smoothdegrees, smoothresolutions=smoothresolutions,
-#                     xerrs=xerrs, yerrs=yerrs, capsizes=capsizes, errcolors=errcolors,
-#                     positions=positions, zorders=zorders,
-#                     invert_yaxis=invert_yaxis, invert_xaxis=invert_xaxis,
-#                     xlabs=xaxlabs, ylabs=yaxlabs, suptitle=suptitle, num=num,
-#                     figlegend=figlegend, figsize=figsize, fontsize=fontsize,
-#                     timeit=True)
-# #use to share axis
-# axs[1].get_shared_y_axes().join(axs[1],axs[2])
-# axs[1].set_yticklabels([])
-# plt.tight_layout()
-# plt.show()
-
-
 
 #______________________________________________________________________________
 #function to generate as distinct colors as possible (useful for plotting)
@@ -471,7 +496,7 @@ def color_generator(ncolors, testplot=False, timeit=False):
     
     import numpy as np
     import matplotlib.pyplot as plt
-    from utility_astroLuSt import Time_stuff
+    from module_parts.utility_astroLuSt import Time_stuff
     
     #time execution
     if timeit:
@@ -561,7 +586,7 @@ def hexcolor_extract(testplot=False, timeit=False):
     import re
     import numpy as np
     import matplotlib.pyplot as plt
-    from utility_astroLuSt import Time_stuff
+    from module_parts.utility_astroLuSt import Time_stuff
       
     
     #time execution

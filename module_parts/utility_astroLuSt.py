@@ -105,20 +105,13 @@ class Time_stuff:
         printing = self.end.strftime("%Y-%m-%d %H:%M:%S.%f")
         print(f"--> Time needed for {self.task}: {self.needed_time}")
         print(f"--> Finished {self.task} at time {printing}")
-
-
-# task1 = Time_stuff("T1")
-# task1.start_task()
-# for i in range(10**7):
-#     i2 = i+1
-# task1.end_task()
-# print(task1)
-
     
 #______________________________________________________________________________
 #Class for printing tables
 #TODO: Add method to output latex template for table
+#TODO: Add choice of separator?
 #TODO: Add something like add_section()
+#TODO: Add check that formatstr matches rows for passing the formatstr directly or initiate correctly
 #%%
 class Table_LuSt:
     """
@@ -162,7 +155,11 @@ class Table_LuSt:
         --------
     """
 
-    def __init__(self, rows=None, header=None, formatstr=None):
+    def __init__(self, header=None, rows=None, formatstr=None):
+        if header is None:
+            self.header = []
+        else:
+            self.header = header
         if rows is None:
             self.rows = []
         #check if all rows have the same length
@@ -170,8 +167,6 @@ class Table_LuSt:
             self.rows = rows
         else:
             raise ValueError("All lists in rows (all rows) have to have the same length!")
-        if header is None:
-            self.header = []
         if formatstr is None:
             self.formatstr = []
         else:
@@ -352,23 +347,3 @@ class Table_LuSt:
         pass
 
 
-# header = ["C1", "C2", "C3", "C4"]
-# fstring = ["%10s", "%8d", "%6.2f", "%7.1e"]
-# fstring2 = 2*[["%10s", "%8d", "%6.3f", "%7.1e"]]
-# row1 = ["t11", 246, 2.45, 1E6]
-# row2 = ["t21", 1, 26.45, 1.2E-3]
-# row3 = ["t31", 4, 2.45, 8.2E-2]
-# row4 = ["t41", 8, 82.45, 1.2E-2]
-# rows = [row1, row2]
-
-# table = Table_LuSt(rows=rows, formatstr=fstring2)
-# # table = Table_LuSt()
-# table.header = header
-# table.add_row(row3, fstring=fstring)
-# table.add_row(row4)
-# print(table)
-# table.print_table()
-# table.print_header()
-# table.print_rows()
-
-# print(table.__dict__)

@@ -306,7 +306,7 @@ def periodic_shift(input_array, shift, borders, timeit=False, testplot=False, ve
     
     import numpy as np
     import matplotlib.pyplot as plt
-    from utility_astroLuSt import Time_stuff
+    from module_parts.utility_astroLuSt import Time_stuff
     
     
     #time execution
