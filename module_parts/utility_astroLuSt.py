@@ -124,6 +124,7 @@ class Table_LuSt:
             - print_rows:   prints out the rows of the table
             - print_table:  prints out the whole table
             - latex_template: TODO
+            - export_to_file: TODO
         
         Attributes
         ----------
@@ -153,10 +154,15 @@ class Table_LuSt:
                     ~~> Allowed are '|', '||' and ''
                 --> has to be of same length as header
                 --> the default is None
-            - sections
-                #TODO
+            - newsections
                 --> list, optional
-                --> list containing 
+                --> list containing
+                    ~~> '-', '=' or False
+                    ~~> The first two will print out the respective symbol as separator before the entry
+                    ~~> False will print nothing before the entry
+                --> basically used to start a new section with the current row
+                --> has to be of same length as rows
+                --> the default is None
                 
 
         Dependencies
@@ -168,7 +174,7 @@ class Table_LuSt:
         --------
     """
 
-    def __init__(self, header=None, rows=None, formatstrings=None, separators=None, sections=None):
+    def __init__(self, header=None, rows=None, formatstrings=None, separators=None, newsections=None):
         if header is None:
             self.header = []
         else:
@@ -188,10 +194,10 @@ class Table_LuSt:
             self.separators = ["|"]*len(self.header)
         else:
             self.separators = separators
-        if sections is None:
-            self.sections = [""]*len(self.rows)
+        if newsections is None:
+            self.newsections = [False]*len(self.rows)
         else:
-            self.sections = sections
+            self.newsections = newsections
 
         self.num_width = str(len(str(len(self.rows)))+2)   #length of the string of the number of rows +2
         self.tablewidth = None  #width of the output table
@@ -201,12 +207,12 @@ class Table_LuSt:
             raise ValueError("len(separators) has to be len(header).\n"
                             "This is because it specifies the separators between two columns.\n"
                             "The first column is per default the rownumber")
-        if len(self.sections) != len(self.rows):
-            raise ValueError("len(sections) has to be len(rows).")
+        if len(self.newsections) != len(self.rows):
+            raise ValueError("len(newsections) has to be len(rows).")
 
     #check if all types are correct
-        if any((sect != "-") and (sect != "=") and (sect != "") for sect in iter(self.sections)):
-            raise TypeError("The entries of sections have to be either '-' or '=' or ''!")
+        if any((sect != "-") and (sect != "=") and (sect != False) for sect in iter(self.newsections)):
+            raise TypeError("The entries of newsections have to be either '-' or '=' or False!")
 
     def __repr__(self):
         return ("\n"
@@ -214,9 +220,10 @@ class Table_LuSt:
                 f"rows = {self.rows},\n" 
                 f"header = {self.header},\n"
                 f"formatstrings = {self.formatstrings}),\n"
-                f"separators = {self.separators}")
+                f"separators = {self.separators},\n"
+                f"newsections = {self.newsections}")
         
-    def add_row(self, row, fstring=None):
+    def add_row(self, row, fstring=None, new_sect=False):
         """
             Function to add another row to the table.
             Adding a row also results in adding a formatstring for this row.
@@ -232,6 +239,12 @@ class Table_LuSt:
                     --> list containing
                         ~~> the corresponding formatstrings for the entries
                     --> the default is None
+                -new_sect
+                    --> bool or str, optional
+                    --> allowed are '-', '=', False
+                    --> wether to start a new section with this row
+                        ~~> Starts a new section when set to true
+                    --> the default is False
             
             Raises
             ------
@@ -247,7 +260,14 @@ class Table_LuSt:
             Comments
             --------
         """
+
+        #check correct type of new_sect
+        if any((sect != "-") and (sect != "=") and (sect != False) for sect in iter(self.newsections)):
+            raise TypeError("The entries of newsections have to be either '-' or '=' or False!")
+
+        #add row and corresponding attributes
         self.rows.append(row)
+        self.newsections.append(new_sect)
         if fstring is None and len(self.formatstrings) == 0:
             fstring = [""]*len(row)
         elif fstring is None and len(self.formatstrings) != 0:
@@ -327,7 +347,7 @@ class Table_LuSt:
         row_num = 1 #keep track of the rownumber to enumerate table
         
         #print rows
-        for row, fstring in zip(self.rows, self.formatstrings):
+        for row, fstring, new_sect in zip(self.rows, self.formatstrings, self.newsections):
 
             seps = self.separators + ["|"]   #append empty string to sparators since the last one will get omitted anyways
 
@@ -338,10 +358,16 @@ class Table_LuSt:
             for fs, sep in zip(fstring, seps[1:]):
                 row_print += "{:^"+fs[1:]+"}" + sep
             row_num += 1
+
+            #start a new section if specified
+            if new_sect != False:
+                print(new_sect*self.tablewidth)
+            
+            #print new row
             print(row_print[:-1].format(*row))
+            
 
     def print_table(self):
-        #TODO: Add something like add_section()
         """
             Function to combine print_header and print_rows to display a nice table
 
@@ -366,6 +392,28 @@ class Table_LuSt:
         Table_LuSt.print_rows(self)
         print("-"*self.tablewidth)
 
+    def export_to_file(self, filename):
+        """
+        
+            Parameters
+            ----------
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Dependencies
+            ------------ 
+
+            Comments
+            --------
+        """        
+        #TODO: implement
+        raise Warning("NOT IMPLEMENTED YET")
+        pass
+
     def latex_template(self):
         """
         
@@ -379,13 +427,13 @@ class Table_LuSt:
             -------
 
             Dependencies
-            ------------
-                
+            ------------ 
 
             Comments
             --------
         """        
         #TODO: implement
+        raise Warning("NOT IMPLEMENTED YET")
         pass
 
 
