@@ -111,7 +111,8 @@ class Time_stuff:
 #TODO: Add method to output latex template for table
 #TODO: Add choice of separator?
 #TODO: Add something like add_section()
-#TODO: Add check that formatstr matches rows for passing the formatstr directly or initiate correctly
+#TODO: Add check that formatstrings matches rows for passing the formatstrings directly or initiate correctly
+#TODO: Add save to file option in plot_table
 #%%
 class Table_LuSt:
     """
@@ -138,13 +139,25 @@ class Table_LuSt:
                 --> list containing
                     ~~> the entries for the header
                 --> the default is None
-            - formatstr
+            - formatstrings
                 --> list of lists, optional
                 --> list containing
                     ~~> a list for each row containing
                         + the formatstring for each cell in that row
                 --> has to be of same dimension as rows
                 --> the default is None
+            - separators
+                --> list, optional
+                --> list containing
+                    ~~> the separators after each column
+                    ~~> Allowed are '|', '||' and ''
+                --> has to be of same length as header
+                --> the default is None
+            - sections
+                #TODO
+                --> list, optional
+                --> list containing 
+                
 
         Dependencies
         ------------
@@ -155,7 +168,7 @@ class Table_LuSt:
         --------
     """
 
-    def __init__(self, header=None, rows=None, formatstr=None):
+    def __init__(self, header=None, rows=None, formatstrings=None, separators=None, sections=None):
         if header is None:
             self.header = []
         else:
@@ -167,19 +180,41 @@ class Table_LuSt:
             self.rows = rows
         else:
             raise ValueError("All lists in rows (all rows) have to have the same length!")
-        if formatstr is None:
-            self.formatstr = []
+        if formatstrings is None:
+            self.formatstrings = []
         else:
-            self.formatstr = formatstr
+            self.formatstrings = formatstrings
+        if separators is None:
+            self.separators = ["|"]*len(self.header)
+        else:
+            self.separators = separators
+        if sections is None:
+            self.sections = [""]*len(self.rows)
+        else:
+            self.sections = sections
+
         self.num_width = str(len(str(len(self.rows)))+2)   #length of the string of the number of rows +2
         self.tablewidth = None  #width of the output table
+
+    #check if the shapes are correct
+        if len(self.separators) != len(self.header):
+            raise ValueError("len(separators) has to be len(header).\n"
+                            "This is because it specifies the separators between two columns.\n"
+                            "The first column is per default the rownumber")
+        if len(self.sections) != len(self.rows):
+            raise ValueError("len(sections) has to be len(rows).")
+
+    #check if all types are correct
+        if any((sect != "-") and (sect != "=") and (sect != "") for sect in iter(self.sections)):
+            raise TypeError("The entries of sections have to be either '-' or '=' or ''!")
 
     def __repr__(self):
         return ("\n"
                 f"Table_LuSt(\n"
                 f"rows = {self.rows},\n" 
                 f"header = {self.header},\n"
-                f"formatstr = {self.formatstr})")
+                f"formatstrings = {self.formatstrings}),\n"
+                f"separators = {self.separators}")
         
     def add_row(self, row, fstring=None):
         """
@@ -213,11 +248,11 @@ class Table_LuSt:
             --------
         """
         self.rows.append(row)
-        if fstring is None and len(self.formatstr) == 0:
+        if fstring is None and len(self.formatstrings) == 0:
             fstring = [""]*len(row)
-        elif fstring is None and len(self.formatstr) != 0:
-            fstring = self.formatstr[0]
-        self.formatstr.append(fstring)
+        elif fstring is None and len(self.formatstrings) != 0:
+            fstring = self.formatstrings[0]
+        self.formatstrings.append(fstring)
 
         if len(row) != len(fstring):
             raise ValueError("len(row) as to be equal to len(fstring)")
@@ -248,14 +283,18 @@ class Table_LuSt:
         #create empty header if none was provided
         if len(self.header) == 0:
             self.header = [""]*len(self.rows[0])
+        if len(self.separators) == 0:
+            self.separators = ["|"]*len(self.header)
+        
+        seps = self.separators + ["|"]  #append empty string to sparators since the last one will get omitted anyways
         
         #initialize header with a rownumber column
-        header_print = "{:^"+self.num_width+"}|"
+        header_print = "{:^"+self.num_width+"}" + seps[0]
         header_print = header_print.format("#")
         #fill in the rest of the header and print it
-        for fs in self.formatstr[0]:
+        for fs, sep in zip(self.formatstrings[0], seps[1:]):
             fs_digit = re.findall(r"\d+", fs)[0]
-            header_print += "{:^"+fs_digit+"s}|"
+            header_print += "{:^"+fs_digit+"s}"+ sep
         to_print = header_print[:-1].format(*self.header)
         print(to_print)
         self.tablewidth = len(to_print)  #total width the table will have 
@@ -280,21 +319,24 @@ class Table_LuSt:
             --------
         """
         #fill formatstring list, if not enough formatstrings were provided
-        if len(self.rows) < len(self.formatstr):
-            diff = abs(len(self.rows) - len(self.formatstr))
-            to_add = [self.formatstr[-1]]*diff
+        if len(self.rows) < len(self.formatstrings):
+            diff = abs(len(self.rows) - len(self.formatstrings))
+            to_add = [self.formatstrings[-1]]*diff
             for ta in to_add:
-                self.formatstr.insert(0, ta)
+                self.formatstrings.insert(0, ta)
         row_num = 1 #keep track of the rownumber to enumerate table
         
         #print rows
-        for row, fstring in zip(self.rows, self.formatstr):
+        for row, fstring in zip(self.rows, self.formatstrings):
+
+            seps = self.separators + ["|"]   #append empty string to sparators since the last one will get omitted anyways
+
             #initialize row with its rownumber
-            row_print = "{:^"+self.num_width+"}|"
+            row_print = "{:^"+self.num_width+"}" + seps[0]
             row_print = row_print.format(row_num)
             #add row-entries
-            for fs in fstring:
-                row_print += "{:^"+fs[1:]+"}|"
+            for fs, sep in zip(fstring, seps[1:]):
+                row_print += "{:^"+fs[1:]+"}" + sep
             row_num += 1
             print(row_print[:-1].format(*row))
 
