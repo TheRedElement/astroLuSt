@@ -109,10 +109,9 @@ class Time_stuff:
 #______________________________________________________________________________
 #Class for printing tables
 #TODO: Add method to output latex template for table
-#TODO: Add choice of separator?
-#TODO: Add something like add_section()
 #TODO: Add check that formatstrings matches rows for passing the formatstrings directly or initiate correctly
 #TODO: Add save to file option in plot_table
+#TODO: Add choice of alignment
 #%%
 class Table_LuSt:
     """
