@@ -114,7 +114,7 @@ class Time_stuff:
 #%%
 class Table_LuSt:
     """
-        Class to quickly print nice tables
+        Class to quickly print nice tables and save them to a text-file if need be.
         
         Methods
         -------
@@ -122,7 +122,6 @@ class Table_LuSt:
             - print_rows:   prints out the rows of the table
             - print_table:  prints out the whole table
             - latex_template: TODO
-            - export_to_file: TODO
         
         Attributes
         ----------
@@ -208,7 +207,7 @@ class Table_LuSt:
         else:
             self.newsections = newsections
 
-    #combined variables
+        #combined variables
         self.num_width = str(len(str(len(self.rows)))+2)   #length of the string of the number of rows +2
         self.tablewidth = None  #width of the output table
         
@@ -218,7 +217,7 @@ class Table_LuSt:
         self.aligns = [align if align != "c" else "^" for align in self.aligns]
         self.aligns = [align if align != "r" else ">" for align in self.aligns]
 
-    #check if the shapes are correct
+        #check if the shapes are correct
         if len(self.separators) != len(self.header):
             raise ValueError(f"len(separators) (currently: {len(self.separators):d}) has to be len(header) (currently: {len(self.header):d}).\n"
                             "This is because it specifies the separators between two columns.\n"
@@ -229,7 +228,7 @@ class Table_LuSt:
         if len(self.newsections) != len(self.rows):
             raise ValueError("len(newsections) has to be len(rows).")
 
-    #check if all types are correct
+        #check if all types are correct
         if any((sect != "-") and (sect != "=") and (sect != False) for sect in iter(self.newsections)):
             raise TypeError("The entries of newsections have to be either '-' or '=' or False!")
         if any((alignment != "l") and (alignment != "c") and (alignment != "r") for alignment in iter(self.alignments)):
@@ -311,6 +310,11 @@ class Table_LuSt:
 
             Returns
             -------
+                - to_return
+                    --> str
+                    --> a string of the header
+                    --> could be written to a file
+                    --> used in print_table() when writing to a file
 
             Dependencies
             ------------
@@ -341,6 +345,9 @@ class Table_LuSt:
         print(to_print)
         self.tablewidth = len(to_print)  #total width the table will have 
 
+        to_return = to_print + "\n"
+        return to_return
+
     def print_rows(self):
         """
             Function to print out the rows of the table.
@@ -353,6 +360,11 @@ class Table_LuSt:
 
             Returns
             -------
+                - to_return
+                    --> str
+                    --> a string of the table-body (all rows)
+                    --> could be written to a file
+                    --> used in print_table() when writing to a file
 
             Dependencies
             ------------
@@ -360,6 +372,9 @@ class Table_LuSt:
             Comments
             --------
         """
+        #initialize return
+        to_return = ""
+
         #fill formatstring list, if not enough formatstrings were provided
         if len(self.rows) < len(self.formatstrings):
             diff = abs(len(self.rows) - len(self.formatstrings))
@@ -384,20 +399,33 @@ class Table_LuSt:
             #start a new section if specified
             if new_sect != False:
                 print(new_sect*self.tablewidth)
+                to_return += (new_sect*self.tablewidth + "\n")
             
             #print new row
             print(row_print[:-1].format(*row))
-            
+            to_return += row_print[:-1].format(*row) + "\n"
 
-    def print_table(self):
+        return to_return
+
+    def print_table(self, save=False):
         """
             Function to combine print_header and print_rows to display a nice table
 
             Parameters
             ----------
-            
+                - save
+                    --> str or bool, optional
+                    --> allowed is any string or False
+                        ~~> if set to False, the table will be printed in the shell
+                        ~~> if set to some string, a file with the respective name will be saved in addition
+                            to printing it in the shell
+                    --> wether to save the created table to a file or just display it in the shell
+                    --> the default is False
+
             Raises
             ------
+                -ValueError
+                    --> if wrong arguments are passed as save
 
             Returns
             -------
@@ -405,36 +433,26 @@ class Table_LuSt:
             Dependencies
             ------------
                 
-
             Comments
             --------
         """
-        Table_LuSt.print_header(self)
-        print("="*self.tablewidth)
-        Table_LuSt.print_rows(self)
-        print("-"*self.tablewidth)
-
-    def export_to_file(self, filename):
-        """
-        
-            Parameters
-            ----------
-            
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Dependencies
-            ------------ 
-
-            Comments
-            --------
-        """        
-        #TODO: implement
-        raise Warning("NOT IMPLEMENTED YET")
-        pass
+        #display and save
+        if type(save) == str:
+            outfile = open(save, "w")
+            outfile.write(Table_LuSt.print_header(self))
+            outfile.write("="*self.tablewidth + "\n")
+            outfile.write(Table_LuSt.print_rows(self))
+            outfile.write("-"*self.tablewidth +"\n")
+            outfile.close()
+        #just display
+        elif save == False: 
+            Table_LuSt.print_header(self)
+            print("="*self.tablewidth)
+            Table_LuSt.print_rows(self)
+            print("-"*self.tablewidth)
+        else:
+            raise ValueError("save has to be either some string (will be used as filename),\n"
+                            "or False, which will result in printing out the table in the shell.")
 
     def latex_template(self):
         """
