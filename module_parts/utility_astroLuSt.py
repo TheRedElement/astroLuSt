@@ -111,6 +111,7 @@ class Time_stuff:
 #TODO: Add method to output latex template for table
 #TODO: Add check that formatstrings matches rows for passing the formatstrings directly or initiate correctly
 #TODO: Add save to file option in plot_table()
+#TODO: Add option to not print header/rows
 #%%
 class Table_LuSt:
     """
@@ -118,9 +119,12 @@ class Table_LuSt:
         
         Methods
         -------
-            - print_header: prints out the header of the table
-            - print_rows:   prints out the rows of the table
-            - print_table:  prints out the whole table
+            - print_header
+                --> prints out the header of the table
+            - print_rows
+                --> prints out the rows of the table
+            - print_table
+                --> prints out the whole table
             - latex_template: TODO
         
         Attributes
@@ -210,6 +214,11 @@ class Table_LuSt:
         #combined variables
         self.num_width = str(len(str(len(self.rows)))+2)   #length of the string of the number of rows +2
         self.tablewidth = None  #width of the output table
+        self.to_return_header = "No header created yet"
+
+        #attributes that can't be set
+        self.to_return_rows = "No rows created yet"
+        self.complete_table = "No table created yet. Call Table_Lust_object.print_table() to create a table."
         
         #convert alignments entries to f-string formatters
         self.aligns = ["c"] + self.alignments   #add "c" for row-number column
@@ -298,13 +307,16 @@ class Table_LuSt:
         if len(row) != len(fstring):
             raise ValueError("len(row) as to be equal to len(fstring)")
 
-    def print_header(self):
+    def print_header(self, print_it=True):
         """
             Function to print out the header of the created table.
 
             Parameters
-            ----------
-            
+            ----------       
+                -print_it
+                    --> bool
+                    --> wether to print the headr in the bash or not
+
             Raises
             ------
 
@@ -342,19 +354,28 @@ class Table_LuSt:
             fs_digit = re.findall(r"\d+", fs)[0]
             header_print += "{:"+align +fs_digit+ "s}"+ sep
         to_print = header_print[:-1].format(*self.header)
-        print(to_print)
+
+        if print_it:
+            print(to_print)
         self.tablewidth = len(to_print)  #total width the table will have 
 
         to_return = to_print + "\n"
+
+        #set as attribute to access for latex formatting
+        self.to_return_header = to_return   
+        
         return to_return
 
-    def print_rows(self):
+    def print_rows(self, print_it=True):
         """
             Function to print out the rows of the table.
 
             Parameters
             ----------
-            
+                 -print_it
+                    --> bool
+                    --> wether to print the headr in the bash or not
+           
             Raises
             ------
 
@@ -398,16 +419,21 @@ class Table_LuSt:
 
             #start a new section if specified
             if new_sect != False:
-                print(new_sect*self.tablewidth)
+                if print_it:
+                    print(new_sect*self.tablewidth)
                 to_return += (new_sect*self.tablewidth + "\n")
             
             #print new row
-            print(row_print[:-1].format(*row))
+            if print_it:
+                print(row_print[:-1].format(*row))
             to_return += row_print[:-1].format(*row) + "\n"
+
+        #set as attribute to access for latex formatting
+        self.to_return_rows = to_return
 
         return to_return
 
-    def print_table(self, save=False):
+    def print_table(self, save=False, print_it=True):
         """
             Function to combine print_header and print_rows to display a nice table
 
@@ -439,29 +465,47 @@ class Table_LuSt:
         #display and save
         if type(save) == str:
             outfile = open(save, "w")
-            outfile.write(Table_LuSt.print_header(self))
+            outfile.write(Table_LuSt.print_header(self, print_it=print_it))
             outfile.write("="*self.tablewidth + "\n")
-            outfile.write(Table_LuSt.print_rows(self))
-            outfile.write("-"*self.tablewidth +"\n")
+            outfile.write(Table_LuSt.print_rows(self), print_it=print_it)
+            outfile.write("-"*self.tablewidth + "\n")
             outfile.close()
         #just display
         elif save == False: 
-            Table_LuSt.print_header(self)
-            print("="*self.tablewidth)
-            Table_LuSt.print_rows(self)
-            print("-"*self.tablewidth)
+            head = Table_LuSt.print_header(self, print_it=print_it)
+            if print_it:
+                print("="*self.tablewidth)
+            rows = Table_LuSt.print_rows(self, print_it=print_it)
+            if print_it:
+                print("-"*self.tablewidth)
         else:
             raise ValueError("save has to be either some string (will be used as filename),\n"
                             "or False, which will result in printing out the table in the shell.")
 
-    def latex_template(self):
-        """
+        #construct one string of the complete table (needed for latex_template)
+        self.complete_table = "="*self.tablewidth + "\n" + head + "-"*self.tablewidth +"\n" + rows + "-"*self.tablewidth +"\n"
         
+
+    def latex_template(self, save=False, print_it=False):
+        """
+            Function to create a template that can be inserted into your latex document and will
+            result in a nice table.
+
             Parameters
             ----------
+                - save
+                    --> str or bool, optional
+                    --> allowed is any string or False
+                        ~~> if set to False, the table will be printed in the shell
+                        ~~> if set to some string, a file with the respective name will be saved in addition
+                            to printing it in the shell
+                    --> wether to save the created table to a file or just display it in the shell
+                    --> the default is False
             
             Raises
             ------
+                -ValueError
+                    --> if wrong arguments are passed as save
 
             Returns
             -------
@@ -472,8 +516,63 @@ class Table_LuSt:
             Comments
             --------
         """        
-        #TODO: implement
-        raise Warning("NOT IMPLEMENTED YET")
-        pass
+        import re
+
+        #calculate current table
+        Table_LuSt.print_table(self, save=save, print_it=print_it)
+
+        #set up table environment
+        latex_table = "\\begin{table}[]"+"\n"
+        latex_table += (4*" " +"\centering\n")
+        #set up tabular
+        tabulator = 4*" " + "\\begin{tabular}{c"
+        for sep, align in zip(self.separators, self.alignments):
+            tabulator += sep+align
+        tabulator += "}\n"
+        latex_table += tabulator
+
+        #change sectionseparators to \hline
+        hline = re.sub("-{%i,}"%(self.tablewidth), r"\\hline", self.complete_table)
+        hlinehline = re.sub("={%i,}"%(self.tablewidth), r"\\hline\\hline", hline)
+
+        #chang column separators to &
+        andpercent = re.sub(r"\|+", "&", hlinehline)
+
+        #add latex newline while keeping "\n" for printing
+        newlines = re.sub(r"\n", r"\ \\\\ \n", andpercent)
+        
+        #add proper indentation
+        indent = re.sub(r"\n", r"\n"+8*" ", newlines)
+
+        #make sure that # becomes \#
+        hashtag = re.sub(r"\ #", r"\#", indent)
+
+        #add tablebody to latex_table
+        latex_table += (8*" " + hashtag)
+
+        #end tabular
+        latex_table += 4*" " + "\\end{tabular}\n"
+        #add caption
+        latex_table += 4*" " + "\\caption{ADD YOUR CAPTION}\n"
+        #add label
+        latex_table += 4*" " + "\\label{tab:ADD SOME LABEL}\n"
+        #end table
+        latex_table += "\\end{table}"
+
+        #write to file according to specification
+        if type(save) == str:
+            outfile = open(save, "w")
+            outfile.write(latex_table)
+            outfile.close()
+        elif save == False: 
+            print(latex_table)
+        else:
+            raise ValueError("save has to be either some string (will be used as filename),\n"
+                            "or False, which will result in printing out the table in the shell.")
+        
+
+
+
+
 
 
