@@ -110,8 +110,7 @@ class Time_stuff:
 #Class for printing tables
 #TODO: Add method to output latex template for table
 #TODO: Add check that formatstrings matches rows for passing the formatstrings directly or initiate correctly
-#TODO: Add save to file option in plot_table
-#TODO: Add choice of alignment
+#TODO: Add save to file option in plot_table()
 #%%
 class Table_LuSt:
     """
@@ -150,8 +149,15 @@ class Table_LuSt:
                 --> list, optional
                 --> list containing
                     ~~> the separators after each column
-                    ~~> Allowed are '|', '||' and ''
+                    ~~> allowed are '|', '||' and ''
                 --> has to be of same length as header
+                --> the default is None
+            -alginments
+                --> list, optional
+                --> list containing
+                    ~~> the alignment tag for each column
+                    ~~> allowed are 'l', 'c', 'r' (left-bound, centered, rightbound)
+                --> has te of same length as header
                 --> the default is None
             - newsections
                 --> list, optional
@@ -173,7 +179,7 @@ class Table_LuSt:
         --------
     """
 
-    def __init__(self, header=None, rows=None, formatstrings=None, separators=None, newsections=None):
+    def __init__(self, header=None, rows=None, formatstrings=None, separators=None, alignments=None, newsections=None):
         if header is None:
             self.header = []
         else:
@@ -193,25 +199,41 @@ class Table_LuSt:
             self.separators = ["|"]*len(self.header)
         else:
             self.separators = separators
+        if alignments is None:
+            self.alignments = ["c"]*len(self.header)
+        else:
+            self.alignments = alignments        
         if newsections is None:
             self.newsections = [False]*len(self.rows)
         else:
             self.newsections = newsections
 
+    #combined variables
         self.num_width = str(len(str(len(self.rows)))+2)   #length of the string of the number of rows +2
         self.tablewidth = None  #width of the output table
+        
+        #convert alignments entries to f-string formatters
+        self.aligns = ["c"] + self.alignments   #add "c" for row-number column
+        self.aligns = [align if align != "l" else "<" for align in self.aligns]
+        self.aligns = [align if align != "c" else "^" for align in self.aligns]
+        self.aligns = [align if align != "r" else ">" for align in self.aligns]
 
     #check if the shapes are correct
         if len(self.separators) != len(self.header):
-            raise ValueError("len(separators) has to be len(header).\n"
+            raise ValueError(f"len(separators) (currently: {len(self.separators):d}) has to be len(header) (currently: {len(self.header):d}).\n"
                             "This is because it specifies the separators between two columns.\n"
                             "The first column is per default the rownumber")
+        if len(self.alignments) != len(self.header):
+            raise ValueError(f"len(alignments) (= {len(self.alignments):d}) has to be len(header) (= {len(self.header):d}).\n"
+                            "The first column the rownumber and set to c per default")
         if len(self.newsections) != len(self.rows):
             raise ValueError("len(newsections) has to be len(rows).")
 
     #check if all types are correct
         if any((sect != "-") and (sect != "=") and (sect != False) for sect in iter(self.newsections)):
             raise TypeError("The entries of newsections have to be either '-' or '=' or False!")
+        if any((alignment != "l") and (alignment != "c") and (alignment != "r") for alignment in iter(self.alignments)):
+            raise TypeError("The entries of alignments have to be either 'l' or 'c' or 'r' (left-bound, centered, right-bound)!")
 
     def __repr__(self):
         return ("\n"
@@ -220,7 +242,8 @@ class Table_LuSt:
                 f"header = {self.header},\n"
                 f"formatstrings = {self.formatstrings}),\n"
                 f"separators = {self.separators},\n"
-                f"newsections = {self.newsections}")
+                f"newsections = {self.newsections},\n"
+                f"alignments = {self.alignments}")
         
     def add_row(self, row, fstring=None, new_sect=False):
         """
@@ -305,15 +328,15 @@ class Table_LuSt:
         if len(self.separators) == 0:
             self.separators = ["|"]*len(self.header)
         
-        seps = self.separators + ["|"]  #append empty string to sparators since the last one will get omitted anyways
-        
+        seps = self.separators + ["|"]  #append some string to sparators since the last one will get omitted anyways
+
         #initialize header with a rownumber column
-        header_print = "{:^"+self.num_width+"}" + seps[0]
+        header_print = "{:"+self.aligns[0] + self.num_width +"}" + seps[0]
         header_print = header_print.format("#")
         #fill in the rest of the header and print it
-        for fs, sep in zip(self.formatstrings[0], seps[1:]):
+        for fs, sep, align in zip(self.formatstrings[0], seps[1:], self.aligns[1:]):
             fs_digit = re.findall(r"\d+", fs)[0]
-            header_print += "{:^"+fs_digit+"s}"+ sep
+            header_print += "{:"+align +fs_digit+ "s}"+ sep
         to_print = header_print[:-1].format(*self.header)
         print(to_print)
         self.tablewidth = len(to_print)  #total width the table will have 
@@ -351,11 +374,11 @@ class Table_LuSt:
             seps = self.separators + ["|"]   #append empty string to sparators since the last one will get omitted anyways
 
             #initialize row with its rownumber
-            row_print = "{:^"+self.num_width+"}" + seps[0]
+            row_print = "{:"+self.aligns[0] + self.num_width + "}" + seps[0]
             row_print = row_print.format(row_num)
             #add row-entries
-            for fs, sep in zip(fstring, seps[1:]):
-                row_print += "{:^"+fs[1:]+"}" + sep
+            for fs, sep, align in zip(fstring, seps[1:], self.aligns[1:]):
+                row_print += "{:"+ align + fs[1:] + "}" + sep
             row_num += 1
 
             #start a new section if specified
