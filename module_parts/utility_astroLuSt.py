@@ -110,7 +110,6 @@ class Time_stuff:
 #Class for printing tables
 #TODO: Add option to add another header row
 #TODO: latex_template(): make so that if separator == " " the "&" are above each other
-
 #%%
 class Table_LuSt:
     """
