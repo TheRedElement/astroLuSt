@@ -109,9 +109,12 @@ class Time_stuff:
 #______________________________________________________________________________
 #Class for printing tables
 #TODO: Add method to output latex template for table
-#TODO: Add check that formatstrings matches rows for passing the formatstrings directly or initiate correctly
 #TODO: Add save to file option in plot_table()
 #TODO: Add option to not print header/rows
+#TODO: Add option to add another header row
+#TODO: Add option to show/hide rownumber column
+#TODO: latex_template(): make so that if separator == " " the "&" are above each other
+
 #%%
 class Table_LuSt:
     """
@@ -119,13 +122,21 @@ class Table_LuSt:
         
         Methods
         -------
+            - add_row
+                --> adds a row to the Table_LuSt object
+            - add header_row: TODO: Implement
+                --> adds a row to the current header of the Table_LuSt object
+                
             - print_header
                 --> prints out the header of the table
             - print_rows
                 --> prints out the rows of the table
             - print_table
                 --> prints out the whole table
-            - latex_template: TODO
+            - latex_template:
+                --> Prints a latex template of the table
+                    ~~> If this template is copied to a .tex document it should print a table
+                        similar to the one created with this class
         
         Attributes
         ----------
@@ -152,7 +163,7 @@ class Table_LuSt:
                 --> list, optional
                 --> list containing
                     ~~> the separators after each column
-                    ~~> allowed are '|', '||' and ''
+                    ~~> allowed are '|', '||' and ' '
                 --> has to be of same length as header
                 --> the default is None
             -alginments
@@ -196,6 +207,16 @@ class Table_LuSt:
             raise ValueError("All lists in rows (all rows) have to have the same length!")
         if formatstrings is None:
             self.formatstrings = []
+            for row in self.rows:
+                formatstring = []
+                for r in row:
+                    #make sure the type is correct for f string
+                    if type(r) == str:
+                        formattype = "s"
+                    else:
+                        formattype = ".0f"
+                    formatstring.append("%6"+formattype)
+                self.formatstrings.append(formatstring)
         else:
             self.formatstrings = formatstrings
         if separators is None:
@@ -242,16 +263,19 @@ class Table_LuSt:
             raise TypeError("The entries of newsections have to be either '-' or '=' or False!")
         if any((alignment != "l") and (alignment != "c") and (alignment != "r") for alignment in iter(self.alignments)):
             raise TypeError("The entries of alignments have to be either 'l' or 'c' or 'r' (left-bound, centered, right-bound)!")
+        if any((separator != "|") and (separator != "||") and (separator != " ") for separator in iter(self.separators)):
+            raise TypeError("The entries of separators have to be either '|' or '||' or ' '!")
 
     def __repr__(self):
         return ("\n"
                 f"Table_LuSt(\n"
                 f"rows = {self.rows},\n" 
                 f"header = {self.header},\n"
-                f"formatstrings = {self.formatstrings}),\n"
+                f"formatstrings = {self.formatstrings},\n"
                 f"separators = {self.separators},\n"
                 f"newsections = {self.newsections},\n"
-                f"alignments = {self.alignments}")
+                f"alignments = {self.alignments}"
+                ")")
         
     def add_row(self, row, fstring=None, new_sect=False):
         """
@@ -307,15 +331,23 @@ class Table_LuSt:
         if len(row) != len(fstring):
             raise ValueError("len(row) as to be equal to len(fstring)")
 
-    def print_header(self, print_it=True):
+    def add_header_row(self):
+        raise Warning("NOT IMPLEMENTED YET!")
+
+    def print_header(self, print_it=True, hide_rownumbers=False):
         """
             Function to print out the header of the created table.
 
             Parameters
             ----------       
-                -print_it
-                    --> bool
-                    --> wether to print the headr in the bash or not
+                - print_it
+                    --> bool, optional
+                    --> wether to print the header in the bash or not
+                    --> the default is True
+                - hide_rownumbers
+                    --> bool, optional
+                    --> wehter to show a column containing the rownumbers or not
+                    --> the default is False
 
             Raises
             ------
@@ -346,9 +378,12 @@ class Table_LuSt:
         
         seps = self.separators + ["|"]  #append some string to sparators since the last one will get omitted anyways
 
-        #initialize header with a rownumber column
-        header_print = "{:"+self.aligns[0] + self.num_width +"}" + seps[0]
-        header_print = header_print.format("#")
+        #initialize header with a rownumber column (if wished)
+        if hide_rownumbers:
+            header_print = ""
+        else:
+            header_print = "{:"+self.aligns[0] + self.num_width +"}" + seps[0]
+            header_print = header_print.format("#")
         #fill in the rest of the header and print it
         for fs, sep, align in zip(self.formatstrings[0], seps[1:], self.aligns[1:]):
             fs_digit = re.findall(r"\d+", fs)[0]
@@ -366,15 +401,20 @@ class Table_LuSt:
         
         return to_return
 
-    def print_rows(self, print_it=True):
+    def print_rows(self, print_it=True, hide_rownumbers=False):
         """
             Function to print out the rows of the table.
 
             Parameters
             ----------
-                 -print_it
-                    --> bool
-                    --> wether to print the headr in the bash or not
+                - print_it
+                    --> bool, optional
+                    --> wether to print the rows in the bash or not
+                    --> the default is True
+                - hide_rownumbers
+                    --> bool, optional
+                    --> wehter to show a column containing the rownumbers or not
+                    --> the default is False
            
             Raises
             ------
@@ -409,9 +449,12 @@ class Table_LuSt:
 
             seps = self.separators + ["|"]   #append empty string to sparators since the last one will get omitted anyways
 
-            #initialize row with its rownumber
-            row_print = "{:"+self.aligns[0] + self.num_width + "}" + seps[0]
-            row_print = row_print.format(row_num)
+            #initialize row with its rownumber (if wished)
+            if hide_rownumbers:
+                row_print = ""
+            else:
+                row_print = "{:"+self.aligns[0] + self.num_width + "}" + seps[0]
+                row_print = row_print.format(row_num)
             #add row-entries
             for fs, sep, align in zip(fstring, seps[1:], self.aligns[1:]):
                 row_print += "{:"+ align + fs[1:] + "}" + sep
@@ -433,7 +476,7 @@ class Table_LuSt:
 
         return to_return
 
-    def print_table(self, save=False, print_it=True):
+    def print_table(self, save=False, writingtype="w", print_it=True, hide_rownumbers=False):
         """
             Function to combine print_header and print_rows to display a nice table
 
@@ -446,6 +489,22 @@ class Table_LuSt:
                         ~~> if set to some string, a file with the respective name will be saved in addition
                             to printing it in the shell
                     --> wether to save the created table to a file or just display it in the shell
+                    --> the default is False
+                - writingtype
+                    --> str, optional
+                    --> the type of writing one wants to execute for saving the table
+                    --> allowed are the standard strings for open()
+                        ~~> "w" for writing to a file (a file will be created if not existent)
+                        ~~> "a" for appending to an existing file
+                        ~~> "x" for creating a new file (will raise an error if the file exists)
+                    --> the default is "w"
+                - print_it
+                    --> bool, optional
+                    --> wether to print the table in the bash or not
+                    --> the default is True
+                - hide_rownumbers
+                    --> bool, optional
+                    --> wehter to show a column containing the rownumbers or not
                     --> the default is False
 
             Raises
@@ -462,31 +521,27 @@ class Table_LuSt:
             Comments
             --------
         """
-        #display and save
+        #display (for print_it==True) and save (for type(save)==str) 
+        head = Table_LuSt.print_header(self, print_it=print_it, hide_rownumbers=hide_rownumbers)
+        if print_it:
+            print("="*self.tablewidth)
+        rows = Table_LuSt.print_rows(self, print_it=print_it, hide_rownumbers=hide_rownumbers)
+        if print_it:
+            print("-"*self.tablewidth)
+
         if type(save) == str:
-            outfile = open(save, "w")
-            outfile.write(Table_LuSt.print_header(self, print_it=print_it))
+            outfile = open(save, writingtype)
+            outfile.write(head)
             outfile.write("="*self.tablewidth + "\n")
-            outfile.write(Table_LuSt.print_rows(self), print_it=print_it)
+            outfile.write(rows)
             outfile.write("-"*self.tablewidth + "\n")
             outfile.close()
-        #just display
-        elif save == False: 
-            head = Table_LuSt.print_header(self, print_it=print_it)
-            if print_it:
-                print("="*self.tablewidth)
-            rows = Table_LuSt.print_rows(self, print_it=print_it)
-            if print_it:
-                print("-"*self.tablewidth)
-        else:
-            raise ValueError("save has to be either some string (will be used as filename),\n"
-                            "or False, which will result in printing out the table in the shell.")
 
         #construct one string of the complete table (needed for latex_template)
         self.complete_table = "="*self.tablewidth + "\n" + head + "-"*self.tablewidth +"\n" + rows + "-"*self.tablewidth +"\n"
         
-
-    def latex_template(self, save=False, print_it=False):
+    def latex_template(self, save=False, writingtype="w", print_it=False, print_latex=True, hide_rownumbers=False):
+        #TODO: make so that if separator == " " the "&" are above each other
         """
             Function to create a template that can be inserted into your latex document and will
             result in a nice table.
@@ -501,7 +556,25 @@ class Table_LuSt:
                             to printing it in the shell
                     --> wether to save the created table to a file or just display it in the shell
                     --> the default is False
-            
+                - writingtype
+                    --> str, optional
+                    --> the type of writing one wants to execute for saving the table
+                    --> allowed are the standard strings for open()
+                        ~~> "w" for writing to a file (a file will be created if not existent)
+                        ~~> "a" for appending to an existing file
+                        ~~> "x" for creating a new file (will raise an error if the file exists)
+                    --> the default is "w"
+                 -print_it
+                    --> bool
+                    --> wether to print the headr in the bash or not
+                - print_latex
+                    --> bool
+                    --> wether to print the latex code in the bash or not
+                - hide_rownumbers
+                    --> bool, optional
+                    --> wehter to show a column containing the rownumbers or not
+                    --> the default is False
+        
             Raises
             ------
                 -ValueError
@@ -524,31 +597,48 @@ class Table_LuSt:
         #set up table environment
         latex_table = "\\begin{table}[]"+"\n"
         latex_table += (4*" " +"\centering\n")
-        #set up tabular
-        tabulator = 4*" " + "\\begin{tabular}{c"
-        for sep, align in zip(self.separators, self.alignments):
-            tabulator += sep+align
+
+        #set up tabular (show/hide rownumbers according to specification)
+        if hide_rownumbers:
+            tabulator = 4*" " + "\\begin{tabular}{"
+            for sep, align in zip(self.separators, self.alignments):
+                tabulator += sep+align
+            tabulator = re.sub("\|", "", tabulator, 1)
+        else:
+            tabulator = 4*" " + "\\begin{tabular}{c"
+            for sep, align in zip(self.separators, self.alignments):
+                tabulator += sep+align
         tabulator += "}\n"
         latex_table += tabulator
 
+        if hide_rownumbers:
+            complete_table = re.sub("(?<=\n)\s+[\d\#]\s\|*", "", self.complete_table)
+        else:
+            complete_table = self.complete_table
+
         #change sectionseparators to \hline
-        hline = re.sub("-{%i,}"%(self.tablewidth), r"\\hline", self.complete_table)
+        hline = re.sub("-{%i,}"%(self.tablewidth), r"\\hline", complete_table)
         hlinehline = re.sub("={%i,}"%(self.tablewidth), r"\\hline\\hline", hline)
 
         #chang column separators to &
-        andpercent = re.sub(r"\|+", "&", hlinehline)
+        andpercent = re.sub(r"(?<=\w)[^\S\n]+(?=\w+)", " & ", hlinehline)  #substitute whitespace separators
+        andpercent = re.sub(r"\|+", " & ", andpercent)                     #substitute all other separators
 
-        #add latex newline while keeping "\n" for printing
-        newlines = re.sub(r"\n", r"\ \\\\ \n", andpercent)
+
+        #add latex newline while keeping "\n" for printing (plus ignore lines with \hline)
+        newlines = re.sub(r"(?<!\\hline)\n", r" \\\\ \n", andpercent)
         
         #add proper indentation
         indent = re.sub(r"\n", r"\n"+8*" ", newlines)
 
         #make sure that # becomes \#
-        hashtag = re.sub(r"\ #", r"\#", indent)
+        if hide_rownumbers:
+            hashtag = re.sub(r"\ #", r"", indent)
+        else:
+            hashtag = re.sub(r"\ #", r"\#", indent)
 
         #add tablebody to latex_table
-        latex_table += (8*" " + hashtag)
+        latex_table += (8*" " + hashtag + "\n")
 
         #end tabular
         latex_table += 4*" " + "\\end{tabular}\n"
@@ -559,16 +649,17 @@ class Table_LuSt:
         #end table
         latex_table += "\\end{table}"
 
-        #write to file according to specification
+        latex_table = re.sub(r"(?<=\n)\ +\n", "", latex_table)
+
+        #print and write to file according to specification
+        if print_latex:
+            print(latex_table)        
         if type(save) == str:
-            outfile = open(save, "w")
+            outfile = open(save, writingtype)
             outfile.write(latex_table)
             outfile.close()
-        elif save == False: 
-            print(latex_table)
-        else:
-            raise ValueError("save has to be either some string (will be used as filename),\n"
-                            "or False, which will result in printing out the table in the shell.")
+
+
         
 
 
