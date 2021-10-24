@@ -15,8 +15,10 @@ class Time_stuff:
 
         Methods
         -------
-            - start_task:   saves the point in time for a task as starting point
-            - end_task:     saves the point in time for a task as starting point
+            - start_task
+                --> saves the point in time for a task as starting point
+            - end_task
+                --> saves the point in time for a task as starting point
         
         Attributes
         ----------
@@ -178,7 +180,6 @@ class Table_LuSt:
                 --> has to be of same length as rows
                 --> the default is None
                 
-
         Dependencies
         ------------
             - re
