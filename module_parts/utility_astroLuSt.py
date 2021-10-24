@@ -108,11 +108,7 @@ class Time_stuff:
     
 #______________________________________________________________________________
 #Class for printing tables
-#TODO: Add method to output latex template for table
-#TODO: Add save to file option in plot_table()
-#TODO: Add option to not print header/rows
 #TODO: Add option to add another header row
-#TODO: Add option to show/hide rownumber column
 #TODO: latex_template(): make so that if separator == " " the "&" are above each other
 
 #%%
@@ -140,17 +136,17 @@ class Table_LuSt:
         
         Attributes
         ----------
+            - header
+                --> list, optional
+                --> list containing
+                    ~~> the entries for the header
+                --> the default is None
             - rows
                 --> list of lists, optional
                 --> list containing
                     ~~> a list for each row containing
                         + the entries for each cell in that row
                 --> each row has to have the same length
-                --> the default is None
-            - header
-                --> list, optional
-                --> list containing
-                    ~~> the entries for the header
                 --> the default is None
             - formatstrings
                 --> list of lists, optional
@@ -269,12 +265,12 @@ class Table_LuSt:
     def __repr__(self):
         return ("\n"
                 f"Table_LuSt(\n"
-                f"rows = {self.rows},\n" 
                 f"header = {self.header},\n"
+                f"rows = {self.rows},\n" 
                 f"formatstrings = {self.formatstrings},\n"
                 f"separators = {self.separators},\n"
-                f"newsections = {self.newsections},\n"
                 f"alignments = {self.alignments}"
+                f"newsections = {self.newsections},\n"
                 ")")
         
     def add_row(self, row, fstring=None, new_sect=False):
