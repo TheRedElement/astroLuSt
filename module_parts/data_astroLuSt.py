@@ -3,14 +3,12 @@
     #Steinwender Lukas#
     ###################
 
-#TODO:Add progress bar?
-
 
 
 #______________________________________________________________________________
 #Class containing useful stuff for data analysis
-#TODO: update docstrings
 #TODO: add attributes?
+#TODO: Add progress bar?
 
 class Data_LuSt:
 
@@ -21,84 +19,97 @@ class Data_LuSt:
                     nintervals=50, nbins=100, spreads=None, maxiter=100000,
                     go_exact=True, testplot=False, verbose=False, timeit=False):
         """
-            Function to generate a linspace in the range of linspace_range with higher 
-                resolved areas around given centers.
-            The final array has ideally nbins entries, but mostly it is more than that.
-            The user can however get to the exact solution by seting go_exact = True.
-            The resolution follows a gaussian for each given center.
-            The size of these high-res-areas is defined by widths, wich is equal to
-                the standard deviation in the gaussian.
-            The spilling over the border of the chosen high-res areas can be varied by
-                changing the parameter spreads.
+            - function to generate a linspace in the range of linspace_range with higher 
+              resolved areas around given centers
+            - the final array has ideally nbins entries, but mostly it is more than that
+                --> the user can get to the exact solution by seting go_exact = True
+            - the resolution follows a gaussian for each given center
+            - the size of these high-res-areas is defined by widths, wich is equal to
+              the standard deviation in the gaussian
+            - the spilling over the border of the chosen high-res areas can be varied by
+              changing the parameter spreads
 
             Parameters
             ----------
-            centers : np.array/list
-                Defines the centers of the areas that will be higher resolved
-            widths : np.array/list, optional
-                Defines the widths (in terms of standard deviation for a gaussian).
-                Those widths define the interval which will be higher resolved
-                The default is None, which will result in all ones.
-            linspace_range : np.array/list, optional
-                Range on which the linspace will be defined.
-                The default is [0,1].
-            nintervals : int, optional
-                Number of intervals to use for computing the distribution of nbins.
-                i.e. for 50 intervals all nbins get distributed over 50 intervals-
-                The default is 50.
-            nbins : int, optional
-                Total number of bins that are wished in the final array.
-                Due to rounding and the use of a distribution the exact number
-                    is very unlikely to be reached.
-                Because of this the number of bins is in general lower than requested.
-                Just play until the best result is reached ;)
-                The default is 100.
-            spreads : np.array/list, optional
-                Parameter to control the amount of overflowing of the distribution over
-                    the given high-resolution parts.
-                The default is None, which will result in no additional overflow.
-            maxiter : int, optional
-                Parameter to define the maximum number of iterations to take to get as
-                    close to the desired nbins as possible.
-                The default is 100000
-            go_exact : bool, optional
-                If True random points will be cut from the final result to achive 
-                    exactly the amount of requested nbins
-                The default is True
-            testplot : bool, optional
-                If True will produce a test-plot that shows the underlying distribution
-                    as well as the resulting array.
-                The default is False.
-            verbose : bool, optional
-                If True will show messages defined by the creator of the function.
-                Eg.: Length of the output, number of iterations.
-                The default is False
-            timeit : bool, optional
-                Specify wether to time the task ad return the information or not.
-                The default is False
+                - centers
+                    --> np.array/list
+                    --> Defines the centers of the areas that will be higher resolved
+                - widths
+                    --> np.array/list, optional
+                    --> Defines the widths (in terms of standard deviation for a gaussian)
+                    --> Those widths define the interval which will be higher resolved
+                    --> The default is None
+                        ~~> will result in all ones
+                - linspace_range
+                    --> np.array/list, optional
+                    --> Range on which the linspace will be defined
+                    --> The default is [0,1]
+                - nintervals
+                    --> int, optional
+                    --> Number of intervals to use for computing the distribution of nbins
+                    --> i.e. for 50 intervals all nbins get distributed over 50 intervals
+                    --> The default is 50
+                - nbins
+                    --> int, optional
+                    --> total number of bins that are wished in the final array
+                    --> due to rounding and the use of a distribution the exact number
+                        is very unlikely to be reached.
+                    --> because of this the number of bins is in general lower than requested.
+                    --> just play until the best result is reached, or set go_exact ;)
+                    --> the default is 100
+                - spreads
+                    --> np.array/list, optional
+                    --> parameter to control the amount of overflowing of the distribution over
+                        the given high-resolution parts
+                    --> the default is None
+                        ~~> will result in no additional overflow.
+                - maxiter
+                    --> int, optional
+                    --> parameter to define the maximum number of iterations to take to get as
+                        close to the desired nbins as possible
+                    --> the default is 100000
+                - go_exact
+                    --> bool, optional
+                    --> if True random points will be cut from the final result to achive 
+                        exactly the amount of requested nbins
+                    --> the default is True
+                - testplot
+                    --> bool, optional
+                    --> if True will produce a test-plot that shows the underlying distribution
+                        as well as the resulting array
+                    --> the default is False.
+                - verbose
+                    --> bool, optional
+                    --> if True will show messages defined by the creator of the function
+                        ~~> e.g. Length of the output, number of iterations, ...
+                    --> the default is False
+                - timeit
+                    --> bool, optional
+                    --> specify wether to time the task and return the information or not.
+                    --> the default is False
                 
-
             Raises
             ------
-            ValueError
-                DESCRIPTION.
+                - TypeError
+                    --> if the parametersprovided are of the wrong type
 
             Returns
             -------
-            combined_linspace : np.array
-                A linspace that has higher resolved areas where the user requests them.
-                Those areas are defined by centers and widths, respectively.
-
-            Comments
-            --------
-                If you don't get the right length of your array right away, vary nbins
-                    and nintervals until you get close enough ;)
+                - combined_linspace
+                    --> np.array
+                    --> a linspace that has higher resolved areas where the user requests them
+                        ~~> those areas are defined by centers and widths, respectively
 
             Dependencies
             ------------
-            numpy
-            matplotlib.pyplot
-            scipy.stats
+                - numpy
+                - matplotlib.pyplot
+                - scipy.stats
+ 
+            Comments
+            --------
+                - If you don't get the right length of your array right away, vary nbins
+                  and nintervals until you get close enough, or set go_exact ;)
         """
         
         import numpy as np
@@ -121,8 +132,6 @@ class Data_LuSt:
         if spreads == None:
             #initialize all spreads with "1"
             spreads = np.ones_like(centers)
-        
-
 
         #################################
         #check if all shapes are correct#
@@ -145,27 +154,21 @@ class Data_LuSt:
         ####################################
         
         if type(linspace_range) != np.ndarray and type(linspace_range) != list:
-            raise ValueError("input_array has to be of type np.array or list!")
+            raise TypeError("input_array has to be of type np.array or list!")
         if type(centers) != np.ndarray and type(centers) != list:
-            raise ValueError("centers has to be of type np.array or list!")
+            raise TypeError("centers has to be of type np.array or list!")
         if type(widths) != np.ndarray and type(widths) != list:
-            raise ValueError("widths has to be of type np.array or list!")        
+            raise TypeError("widths has to be of type np.array or list!")        
         if type(spreads) != np.ndarray and type(spreads) != list:
-            raise ValueError("spreads has to be of type np.array or list!")
-        if type(nintervals) != int:
-            raise ValueError("nintervals has to be of type int!")
-        if type(nbins) != int:
-            raise ValueError("nbins has to be of type int!")
-        if type(maxiter) != int:
-            raise ValueError("maxiter has to be of type int!")
+            raise TypeError("spreads has to be of type np.array or list!")
         if type(go_exact) != bool:
-            raise ValueError("go_exact has to be of type bool!")
+            raise TypeError("go_exact has to be of type bool!")
         if type(testplot) != bool:
-            raise ValueError("testplot has to be of type bool!")
+            raise TypeError("testplot has to be of type bool!")
         if type(verbose) != bool:
-            raise ValueError("verbose has to be of type bool!")
+            raise TypeError("verbose has to be of type bool!")
         if type(timeit) != bool:
-            raise ValueError("timeit has to be of type bool!")
+            raise TypeError("timeit has to be of type bool!")
         
         #initial definitions and conversions
         centers   = np.array(centers)
@@ -216,12 +219,16 @@ class Data_LuSt:
             combined_linspace = np.delete(combined_linspace, remove)
         
         if verbose:
-            print("Number of iterations: %s"%(iteration))
-            print("Shape of combined_linspace: %s"%combined_linspace.shape)
-            print("Desired shape: %s"%nbins)
-            print("Range of linspace: [%g, %g]"%(combined_linspace.min(), combined_linspace.max()))
+            print("\n"+50*"-"+"\n",
+                  "verbose, linspace_def:\n",
+                  "--> Number of iterations         : %s\n"%(iteration),
+                  "--> Shape of combined_linspace   : %s\n"%(combined_linspace.shape),
+                  "--> Desired shape                : %s\n"%(nbins),
+                  "--> Range of linspace            : [%g, %g]"%(combined_linspace.min(), combined_linspace.max())
+                  )
             if go_exact:
-                print("Number of cut datapoints: %s"%(n_to_cut))
+                print("--> Number of cut datapoints: %s"%(n_to_cut))
+            print(50*"-"+"\n")
         
         if testplot:
             y_test = np.ones_like(combined_linspace)
@@ -248,35 +255,52 @@ class Data_LuSt:
 
     def lc_error(fluxes, times, delta_t_points, timeit=False):
         """    
-            estimates the error of a lightcurve given the respective time series and a
-                time-difference condition (delta_t_points - maximum difference between 2 data points
-                of same cluster).
-            The LC will be divided into clusters of Datapoints, which are nearer to their
-                respective neighbours, than the delta_t_points.
-            returns an array, which assigns errors to the LC. Those errors are the standard
-                deviation of the respective intervals. All values of the LC in the same
-                interval get the same errors assigned.
-            returns mean values of the intervals and the belonging standard deviations
+            - estimates the error of a lightcurve given the respective time series and a
+              time-difference condition (delta_t_points - maximum difference between 2 data points
+              of same cluster)
+            - the LC will be divided into clusters of datapoints, which are nearer to their
+              respective neighbours, than the delta_t_points
+            - returns an array, which assigns errors to the LC
+                --> those errors are the standard deviation of the respective intervals
+                --> all values of the LC in the same interval get the same errors assigned
+            - returns mean values of the intervals and the belonging standard deviations
             
             Parameters
             ----------
-            fluxes : np.array
-                fluxes to extimate the error of.
-            times : np.array
-                times corresponding to fluxes.
-            delta_t_points : float
-                time-difference condition (delta_t_points - maximum difference between 2 data points
-                of same cluster)
-            timeit : bool, optional
-                Specify wether to time the task ad return the information or not.
-                The default is False
+                - fluxes
+                    --> np.array
+                    --> fluxes to extimate the error of
+                - times
+                    --> np.array
+                    --> times corresponding to fluxes
+                - delta_t_points
+                    --> float
+                    --> time-difference condition
+                        ~~> delta_t_points - maximum difference between 2 data points
+                            of same cluster
+                - timeit 
+                    --> bool, optional
+                    --> specify wether to time the task and return the information or not
+                    --> the default is False
                 
+            Raises
+            ------
 
             Returns
             -------
-            LC_errors : estimated errors of flux
-            means : mean values of flux
-            stabws : standard deviations of flux
+                - LC_errors
+                    --> estimated errors of flux
+                - means
+                    --> mean values of flux
+                - stabws
+                    --> standard deviations of flux
+        
+            Dependencies
+            ------------
+                - numpy
+
+            Comments
+            --------
         """
         
         import numpy as np
@@ -326,31 +350,60 @@ class Data_LuSt:
     def pdm():
         #TODO: implement
         """
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Dependencies
+            ------------
+
+            Comments
+            --------
         """ 
         raise NotImplementedError("Not implemented yet. But on the TODO-list ;)")   
 
     def fold(time, period, timeit=False):
         """
-            takes an array of times and folds it with a specified period
-            returns folded array of phases    
+            - takes an array of times
+                --> folds it with a specified period
+                --> returns folded array of phases    
 
             Parameters
             ----------
-            time : np.array
-                times to be folded with the specified period.
-            period : int
-                Period to fold the times with.
-            timeit : bool, optional
-                Specify wether to time the task ad return the information or not.
+                - time
+                    --> np.array
+                    --> times to be folded with the specified period
+                - period 
+                    --> int
+                    --> period to fold the times onto
+                - timeit
+                    --> bool, optional
+                    --> specify wether to time the task and return the information or not
+
+            Raises
+            ------
 
             Returns
             -------
             phases_folded : np.array
                 phases corresponding to the given time folded with period.
+
+            Dependencies
+            ------------
+                - numpy
+
+            Comments
+            --------
         """
 
         import numpy as np
-        from utility_astroLuSt import Time_stuff
+        from module_parts.utility_astroLuSt import Time_stuff
         
         #time execution
         if timeit:
@@ -377,33 +430,50 @@ class Data_LuSt:
 
     def periodic_shift(input_array, shift, borders, timeit=False, testplot=False, verbose=False):
         """
-            Function to shift an array considering periodic boundaries.
+            - function to shift an array considering periodic boundaries
 
             Parameters
             ----------
-            input_array : np.array
-                array to be shifted along an interval with periodic boundaries.
-            shift : float/int
-                size of the shift to apply to the array.
-            borders : list/np.array
-                upper and lower boundary of the periodic interval.
-            timeit : bool, optional
-                wether to time the execution. The default is False.
-            testplot : bool, optional
-                wether to show a testplot. The default is False.
-            verbose : bool, optional
-                wether to output information about the result. The default is False.
+                - input_array
+                    --> np.array
+                    --> array to be shifted along an interval with periodic boundaries
+                - shift
+                    --> float/int
+                    --> magnizude of the shift to apply to the array
+                - borders
+                    --> list/np.array
+                    --> upper and lower boundary of the periodic interval
+                - timeit 
+                    --> bool, optional
+                    --> wether to time the execution
+                    --> the default is False
+                - testplot
+                    --> bool, optional
+                    --> wether to show a testplot
+                    --> the default is False
+                - verbose
+                    --> bool, optional
+                    --> wether to output information about the result
+                    --> the default is False
 
             Raises
             ------
-            TypeError
-                DESCRIPTION.
+                - TypeError
+                    --> if the provided parameters are of the wrong type
 
             Returns
             -------
             shifted : np.arra
                 array shifted by shift along the periodic interval in borders.
-        """
+
+            Dependencies
+            ------------
+                - numpy
+                - matplotlib
+
+            Comments
+            --------
+        """        
         
         import numpy as np
         import matplotlib.pyplot as plt
@@ -423,8 +493,6 @@ class Data_LuSt:
         
         if type(input_array) != np.ndarray:
             raise TypeError("input_array has to be of type np.ndarray!")
-        if (type(shift) != float) and (type(shift) != int):
-            raise TypeError("shift has to be of type int or float!")
         if (type(borders) != np.ndarray) and (type(borders) != list):
             raise TypeError("borders has to be of type np.array or list!")
         if (type(timeit) != bool):
@@ -486,23 +554,37 @@ class Data_LuSt:
 
     def phase2time(phases, period, timeit=False):
         """
-            converts a given array of phases into its respective time equivalent
+            - converts a given array of phases into its respective time equivalent
 
             Parameters
             ----------
-            phases : np.array, float
-                The phases to convert to times
-            period : float
-                The given period the phase describes
+                - phases
+                    --> np.array, float
+                    --> the phases to convert to times
+                - period
+                    --> float
+                    --> the given period the phase describes
+
+            Raises
+            ------
 
             Returns
             -------
-            time : np.array, float
-                The resulting time array, when the phases are converted
-            timeit : bool, optional
-                Specify wether to time the task ad return the information or not.
-                The default is False    
+                - time
+                    --> np.array, float
+                    --> the resulting time array, when the phases are converted
+                - timeit
+                    --> bool, optional
+                    --> specify wether to time the task and return the information or not
+                    --> the default is False    
+
+            Dependencies
+            ------------
+
+            Comments
+            --------
         """
+   
         from module_parts.utility_astroLuSt import Time_stuff
         
         #time execution
@@ -518,60 +600,90 @@ class Data_LuSt:
 
         return time
 
-    def phase_binning(fluxes, phases, nintervals, nbins, centers, widths, spreads=None, verbose=False, testplot=False, timeit=False):
+    def phase_binning(fluxes, phases, nintervals, nbins, centers, widths, spreads=None, go_exact=True, verbose=False, testplot=False, timeit=False):
         """
-            Function to execute binning in phase on some given timeseries.
-            Additional parameters allow the user to define different resolutions in 
-                in different areas of the timeseries.
-            returns the mean flux, phase and variance of each interval.
+            - function to execute binning in phase on some given timeseries
+            - additional parameters allow the user to define different resolutions in 
+              in different areas of the timeseries
+            - returns the mean flux, phase and variance of each interval
 
             Parameters
             ----------
-            fluxes : np.array
-                fluxes to be binned.
-            phases : np.array
-                phases to be binned.
-            nintervals : int
-                number of intervals to distribute nbins on.
-            nbins : int
-                number of bins you wish to have in the final array.
-                is most of the time not fullfilled.
-                play with widths and spreads to adjust the number.
-            centers : np.array/list
-                centers of areas which one wants a higher resolution on.
-                will become the centers of a gaussian for this area representing the
-                    distribution of nbins
-            widths : np.array/list
-                widths of the areas which one wants a higher resolution on.
-                will become the standard deviation in the gaussian for this area
-                    representing the distribution of nbins
-            spreads : np.array/list, optional
-                used to define the spill over the boundaries of centers +/- widths.
-                The default is None, which will result in non spill of the gaussian
-            verbose : bool, optional
-                wether to show messages integrated in the function or not
-                The default is False.
-            testplot : bool, optinoal
-                wether to show a testplot of the chosen distribution for the higher resolved area
-                The default is False
-            timeit : bool, optional
-                Specify wether to time the task ad return the information or not.
-                The default is False
+                - fluxes
+                    --> np.array
+                    --> fluxes to be binned
+                - phases
+                    --> np.array
+                    --> phases to be binned
+                - nintervals
+                    --> int
+                    --> number of intervals to distribute nbins on
+                - nbins
+                    --> int
+                    --> number of bins you wish to have in the final array
+                    --> is most of the time not fullfilled exactly
+                        ~~> due to rounding
+                    --> play with widths and spreads to adjust the number
+                - centers
+                    --> np.array/list
+                    --> centers of areas one wants a higher resolution on
+                    --> will become the centers of a gaussian for this area representing the
+                        distribution of nbins
+                - widths
+                    --> np.array/list
+                    --> widths of the areas one wants a higher resolution on
+                    --> will become the standard deviation in the gaussian for this area
+                        representing the distribution of nbins
+                - spreads
+                    --> np.array/list, optional
+                    --> used to define the spill over the boundaries of centers +/- widths
+                    --> the default is None
+                        ~~> will result in no spill of the gaussian
+                - go_exact
+                    --> bool, optional
+                    --> set to True if you want to use the exact number of requested bins
+                    --> serves as input for linspace_def()
+                - verbose
+                    --> bool, optional
+                    --> wether to show messages integrated in the function or not
+                    --> the default is False
+                - testplot
+                    --> bool, optinoal
+                    --> wether to show a testplot of the chosen distribution for the higher resolved area
+                    --> the default is False
+                - timeit
+                    --> bool, optional
+                    --> Specify wether to time the task and return the information or not
+                    --> the default is False
 
+            Raises
+            ------
 
             Returns
             -------
-            phases_mean : TYPE
-                DESCRIPTION.
-            fluxes_mean : TYPE
-                DESCRIPTION.
-            fluxes_sigm : TYPE
-                DESCRIPTION.
-            intervals : TYPE
-                DESCRIPTION.
+                - phases_mean
+                    --> np.array
+                    --> mean phase of each interval
+                        ~~> serve as representative for the repective intervals
+                - fluxes_mean
+                    --> np.array
+                    --> the mean flux of each interval
+                        ~~> serve as representative for the repective intervals
+                - fluxes_sigm
+                    --> np.array
+                    --> the variance of the flux of each inteval
+                - intervals
+                    --> the intervals used for the calculation
+
+            Dependencies
+            ------------
+                - numpy
+
+            Comments
+            --------
+                - Plot_LuSt.linspace_def() will be called inside this function
         """
         
-
         import numpy as np
         from module_parts.utility_astroLuSt import Time_stuff
         
@@ -580,13 +692,15 @@ class Data_LuSt:
             task = Time_stuff("phase_binning")
             task.start_task()
 
-        intervals = Plot_LuSt.linspace_def(centers,
+        intervals = Data_LuSt.linspace_def(centers,
                                            widths,
                                            linspace_range=[phases.min(),phases.max()],
                                            nintervals=nintervals,
-                                           nbins=nbins,
+                                           nbins=nbins+1,
+                                           go_exact=go_exact,
                                            spreads=spreads,
-                                           testplot=testplot
+                                           testplot=testplot,
+                                           verbose=verbose
                                            )
         
         #saving arrays for mean LC    
@@ -608,14 +722,16 @@ class Data_LuSt:
             fluxes_sigm = np.append(fluxes_sigm, sigm_flux)    
         
         if verbose:
-            print("\n"+20*"-")
-            print("Phase_Binning:")
-            print("shape of binned phases     : %s"%phases_mean.shape)
-            print("shape of binned fluxes     : %s"%fluxes_mean.shape)
-            print("shape of binned flux errors: %s"%fluxes_sigm.shape)
-            print("shape of intervals used    : %s"%intervals.shape)
+            print("\n"+50*"-"+"\n",
+                  "verbose, phase_binning: \n",
+                  "--> requested shape            : %s\n"%nbins,
+                  "--> shape of binned phases     : %s\n"%phases_mean.shape,
+                  "--> shape of binned fluxes     : %s\n"%fluxes_mean.shape,
+                  "--> shape of binned flux errors: %s\n"%fluxes_sigm.shape,
+                  "--> shape of intervals used    : %s\n"%intervals.shape,
+                  50*"-"+"\n"
+                  )
             
-
         #time execution
         if timeit:
             task.end_task()
@@ -625,44 +741,63 @@ class Data_LuSt:
 
     def sigma_clipping(fluxes, fluxes_mean, phases, phases_mean, intervals, clip_value_top, clip_value_bottom, times=[], timeit=False):
         """
-            cuts out all datapoints of fluxes (and phases and times) array which are outside of the interval
-                [clip_value_bottom, clip_value_top] and returns the remaining array
-            used to get rid of outliers
-            clip_value_bottom and clip_value_top are usually defined as n*sigma, with 
-                n = 1,2,3,... and sigma the STABW (Variance?)
-            if times is not specified, it will return an array of None with same size as fluxes    
+            - cuts out all datapoints of fluxes (and phases and times) array which are outside of the interval
+              [clip_value_bottom, clip_value_top] and returns the remaining array
+            - used to get rid of outliers
+            - clip_value_bottom and clip_value_top are usually defined as n*sigma, with 
+              n = 1,2,3,... and sigma the standard deviation or Variance
+            - if times is not specified, it will return an array of None with same size as fluxes    
 
             Parameters
             ----------
-            fluxes : np.array
-                fluxes to be cut.
-            fluxes_mean : np.array
-                mean values of fluxes to use as reference for clipping.
-            phases : np.array
-                phases to be cut.
-            phases_mean : np.array 
-                phases of fluxes_mean.
-            intervals : np.array
-                DESCRIPTION.
-            clip_value_top : np.array
-                top border of clipping.
-            clip_value_bottom : np.array
-                bottom border of clipping.
-            times : np.array, list, optional
-                times of fluxes (if existent). The default is [].
-            timeit : bool, optional
-                Specify wether to time the task ad return the information or not.
-                The default is False
+                - fluxes
+                    --> np.array
+                    --> fluxes to be sigma-clipped
+                - fluxes_mean
+                    --> np.array
+                    --> mean values of fluxes to use as reference for clipping
+                - phases
+                    --> np.array
+                    --> phases to be sigma-clipped
+                - phases_mean
+                    --> np.array 
+                    --> phases corresponding to fluxes_mean
+                - intervals
+                    --> np.array
+                    --> intervals to calculate the mean flux
+                        ~~> this will be used as reference for cutting datapoints
+                - clip_value_top
+                    --> np.array
+                    --> top border of clipping
+                - clip_value_bottom
+                    --> np.array
+                    --> bottom border of clipping
+                - times
+                    --> np.array/list, optional
+                    --> times corresponding to fluxes
+                        ~~> only if existent
+                    --> the default is []
+                - timeit
+                    --> bool, optional
+                    --> specify wether to time the task and return the information or not.
+                    --> the default is False
                 
 
             Returns
             -------
-            fluxes_sigcut : Fluxes after cutting out all values above clip_value_top and below clip_value bottom
-            phases_sigcut : Phases after cutting out all values above clip_value_top and below clip_value bottom
-            times_sigcut : Times after cutting out all values above clip_value_top and below clip_value bottom
-            cut_f : All cut-out values of fluxes
-            cut_p : All cut-out values of phases
-            cut_t : All cut-out values of times
+                - fluxes_sigcut
+                    --> fluxes after cutting out all values above clip_value_top and below clip_value bottom
+                - phases_sigcut
+                    --> phases after cutting out all values above clip_value_top and below clip_value bottom
+                - times_sigcut
+                    --> times after cutting out all values above clip_value_top and below clip_value bottom
+                    --> None if not provided
+                - cut_f
+                    --> all cut-out values of fluxes
+                - cut_p
+                    --> all cut-out values of phases
+                - cut_t
+                    --> all cut-out values of times
         """
 
         import numpy as np
@@ -721,7 +856,6 @@ class Data_LuSt:
         #time execution
         if timeit:
             task.end_task()
-
                         
         return fluxes_sigcut, phases_sigcut, times_sigcut, cut_f, cut_p, cut_t
 

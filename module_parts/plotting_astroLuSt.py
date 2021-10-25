@@ -8,6 +8,8 @@
 #TODO: implement color_generator()
 #TODO: plot_ax(): add multiple x/y-axes (twinx)?
 #TODO: plot_ax(): add 3d plotting
+#TODO: plot_ax(): make initialization correct (str could not be converted to float)
+
 class Plot_LuSt:
     """
         Class containing methods useful for plotting
@@ -39,7 +41,6 @@ class Plot_LuSt:
     def __init__(self):
         pass
         
-
     # def __repr__():
 
     def plot_ax(xvals, yvals, colors=None, markers=None, markersizes=None, labels=None, linestyles=None, alphas=None,  #curve specifications
@@ -52,6 +53,7 @@ class Plot_LuSt:
                 timeit=False, verbose=False):                                       #additional functionality
         #TODO: add multiple x/y-axes (twinx)?
         #TODO: add 3d plotting
+        #TODO: make initialization correct (str could not be converted to float)
         """
             Function which automatically creates a figure with subplots fitting the
                 provided list of arrays.
@@ -234,6 +236,42 @@ class Plot_LuSt:
         import copy
         from module_parts.utility_astroLuSt import Time_stuff
         
+        ###################################################
+        #Check if xvals and yvals are of the correct shape#
+        ###################################################
+
+        for vals, valname in zip([xvals, yvals], ["xvals", "yvals"]):
+            try:
+                len(vals)
+            except:
+                raise ValueError(f"{valname:s} has to be an array of shape (k,l,m)!\n"
+                                 "Here k is the number of subplots created,\n"
+                                 "l is the number of curves in the respective subplot (can differ for different k),\n"
+                                 "m is the number of datapoints in the respective curve (can differ for different l).\n"
+                                 f"Try something like:[[np.array([{valname:s}(curve1(subplot1))],curve2,..)],subplot2,...]"
+                                 )
+            for xv in vals:
+                try:
+                    len(xv) 
+                except:
+                    raise ValueError(f"{valname:s} has to be an array of shape (k,l,m)!\n"
+                                     "Here k is the number of subplots created,\n"
+                                     "l is the number of curves in the respective subplot (can differ for different k),\n"
+                                     "m is the number of datapoints in the respective curve (can differ for different l).\n"
+                                     f"Try something like:[[np.array([{valname:s}(curve1(subplot1))],curve2,..)],subplot2,...]"
+                                     )
+                for xvi in xv:
+                    try:
+                        len(xvi)
+                    except:
+                        raise ValueError(f"{valname:s} has to be an array of shape (k,l,m)!\n"
+                                         "Here k is the number of subplots created,\n"
+                                         "l is the number of curves in the respective subplot (can differ for different k),\n"
+                                         "m is the number of datapoints in the respective curve (can differ for different l).\n"
+                                         f"Try something like:[[np.array([{valname:s}(curve1(subplot1))],curve2,..)],subplot2,...]"
+                                         )
+
+
         ###################################
         #Initialize parameters accordingly#
         ###################################
@@ -270,52 +308,49 @@ class Plot_LuSt:
                     linestyles[liidx][ljidx] = ""
         if alphas is None:
             alphas = copy.deepcopy(xvals)
-            #initialize all alpha with None
+            #initialize all alphas with None
             for aiidx, ai in enumerate(alphas):
                 for ajidx, aj in enumerate(ai):
                     alphas[aiidx][ajidx] = None
         if smooths is None:
+            #initialize all smooths with False
             smooths = copy.deepcopy(xvals)
-            #initialize all smooths with None
             for siidx, si in enumerate(smooths):
                 for sjidx, sj in enumerate(si):
                     smooths[siidx][sjidx] = False
         if smoothdegrees is None:
+            #initialize all smoothdegrees with 3
             smoothdegrees = copy.deepcopy(xvals)
-            #initialize all smoothdegrees with None
             for siidx, si in enumerate(smoothdegrees):
                 for sjidx, sj in enumerate(si):
                     smoothdegrees[siidx][sjidx] = 3
-            # print(smoothdegrees)
         if smoothresolutions is None:
+            #initialize all smoothresolutinos with 100
             smoothresolutions = copy.deepcopy(xvals)
-            #initialize all smoothresolutions with None
             for siidx, si in enumerate(smoothresolutions):
                 for sjidx, sj in enumerate(si):
                     smoothresolutions[siidx][sjidx] = 100
         if xerrs is None:
+            #initialize all xerrs with 0
             xerrs = copy.deepcopy(xvals)
-            #initialize all xerrs with None
             for xiidx, xi in enumerate(xerrs):
                 for xjidx, xj in enumerate(xi):
                     xerrs[xiidx][xjidx] = None
-            # print(xerrs)
         if yerrs is None:
+            #initialize all yerrs with 0
             yerrs = copy.deepcopy(xvals)
-            #initialize all yerrs with None
             for yiidx, yi in enumerate(yerrs):
                 for yjidx, yj in enumerate(yi):
                     yerrs[yiidx][yjidx] = None
         if capsizes is None:
-            capsizes = copy.deepcopy(xvals)
             #initialize all capsizes with None
+            capsizes = copy.deepcopy(xvals)
             for ciidx, ci in enumerate(capsizes):
                 for cjidx, cj in enumerate(ci):
                     capsizes[ciidx][cjidx] = None
-            # print(capsizes)
         if errcolors is None:
-            errcolors = copy.deepcopy(xvals)
             #initialize all colors with "tab:blue"
+            errcolors = copy.deepcopy(xvals)
             for eciidx, eci in enumerate(errcolors):
                 for ecjidx, ecj in enumerate(eci):
                     errcolors[eciidx][ecjidx] = "tab:blue"
@@ -326,15 +361,14 @@ class Plot_LuSt:
                 subfig_idx = int(str(v1)+str(v1)+str(pidx+1))
                 positions[pidx] = subfig_idx
         if zorders is None:
-            zorders = copy.deepcopy(xvals)
             #initialize all zorders with 1
+            zorders = copy.deepcopy(xvals)
             for ziidx, zi in enumerate(zorders):
                 for zjidx, zj in enumerate(zi):
                     zorders[ziidx][zjidx] = 1
         if invert_yaxis is None:
             #initialize with all False
             invert_yaxis = [False]*len(xvals)
-            # print(invert_yaxis)
         if invert_xaxis is None:
             #initialize with all False
             invert_xaxis = [False]*len(xvals)
@@ -352,17 +386,21 @@ class Plot_LuSt:
         #################################
             
         shape_check1_name = ["xvals", "yvals", "colors", "markers", "markersizes", "labels", "linestyles", "alphas",
-                            "smooths", "smoothdegrees", "smoothresolutions",
-                            "xerrs", "yerrs", "capsizes", "errcolors",
-                            "zorders"]
+                             "smooths", "smoothdegrees", "smoothresolutions",
+                             "xerrs", "yerrs",
+                             "capsizes", "errcolors",
+                             "zorders"]
         shape_check1 = [xvals, yvals, colors, markers, markersizes, labels, linestyles, alphas,
                         smooths, smoothdegrees, smoothresolutions,
-                        xerrs, yerrs, capsizes, errcolors,
+                        xerrs, yerrs,
+                        capsizes, errcolors,
                         zorders] 
         for sciidx, sci in enumerate(shape_check1):
+            # print(shape_check1_name[sciidx], "=", sci)
             for scjidx, scj in enumerate(shape_check1):
                 var1 = shape_check1_name[sciidx]
                 var2 = shape_check1_name[scjidx]
+                # print(var1, "vs", var2)
                 if len(sci) == len(scj):
                     for scii, scjj in zip(sci, scj):
                         if len(scii) != len(scjj):
@@ -371,14 +409,14 @@ class Plot_LuSt:
                 else:
                     raise ValueError(f"Shape of {var1:s} has to be shape of {var2:s}")
         
-        
         shape_check2_name = ["positions",
-                            "invert_xaxis", "invert_yaxis",
-                            "xlabs", "ylabs"]
+                             "invert_xaxis", "invert_yaxis",
+                             "xlabs", "ylabs"]
         shape_check2 = [positions,
                         invert_xaxis, invert_yaxis,
                         xlabs, ylabs]
         for sc2, sc2n in zip(shape_check2, shape_check2_name):
+            # print(sc2n, "=", sc2)
             if len(xvals) > len(sc2):
                 raise ValueError(f"length of {'xvals':s} has to be smaller or equal length of {sc2n:s}"%("xvals", sc2n))
 
@@ -407,11 +445,11 @@ class Plot_LuSt:
         
         #iterate over all lists to get specifications for corresponding subplot
         for xi, yi, color, marker, markersize, label, linestyle, alpha, smooth, smoothdegree, smoothresolution, xerr, yerr, capsize, errcolor, position, zorder, invert_x, invert_y, xl, yl in zip(xvals, yvals, colors, markers, markersizes, labels, linestyles, alphas,
-                                                                                                                                                                smooths, smoothdegrees, smoothresolutions,
-                                                                                                                                                                xerrs, yerrs, capsizes, errcolors,
-                                                                                                                                                                positions, zorders,
-                                                                                                                                                                invert_xaxis, invert_yaxis,
-                                                                                                                                                                xlabs, ylabs):
+                                                                                                                                                                                                   smooths, smoothdegrees, smoothresolutions,
+                                                                                                                                                                                                   xerrs, yerrs, capsizes, errcolors,
+                                                                                                                                                                                                   positions, zorders,
+                                                                                                                                                                                                   invert_xaxis, invert_yaxis,
+                                                                                                                                                                                                   xlabs, ylabs):
             ax = fig.add_subplot(position)                  #add subplot on specified positions
             ax.set_xlabel(xl, fontsize=(fontsize-2))        #set xlabel if specified, else set to "x"
             ax.set_ylabel(yl, fontsize=(fontsize-2))        #set ylabel if specified, else set to "y"
@@ -421,9 +459,9 @@ class Plot_LuSt:
             curvenumber = 0
             #iterate over all datasets to get specifications of dataset for current subplot
             for xii, yii, ci, marki, marksi, labi, stylei, alphi, sm, smd, smr, xerri, yerri, capsizei, eci, zi in zip(xi, yi, color, marker, markersize, label, linestyle, alpha,
-                                                                                                            smooth, smoothdegree, smoothresolution,
-                                                                                                            xerr, yerr, capsize, errcolor,
-                                                                                                            zorder):
+                                                                                                                       smooth, smoothdegree, smoothresolution,
+                                                                                                                       xerr, yerr, capsize, errcolor,
+                                                                                                                       zorder):
                 
                 #smooth if smoothig is pecified for the curve is true
                 if sm and verbose:
