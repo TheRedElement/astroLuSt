@@ -268,8 +268,8 @@ class Table_LuSt:
                 f"rows = {self.rows},\n" 
                 f"formatstrings = {self.formatstrings},\n"
                 f"separators = {self.separators},\n"
-                f"alignments = {self.alignments}"
-                f"newsections = {self.newsections},\n"
+                f"alignments = {self.alignments},\n"
+                f"newsections = {self.newsections}\n"
                 ")")
         
     def add_row(self, row, fstring=None, new_sect=False):

@@ -267,15 +267,15 @@ class Data_LuSt:
             print(50*"-"+"\n")
         
         if testplot:
-            y_test = np.ones_like(combined_linspace)
+            y_test = np.ones_like(combined_linspace)*testdist.max()
             
             fig = plt.figure()
             plt.suptitle("Testplot to visualize generated linspace", fontsize=18)
             plt.plot(combined_linspace, y_test, color="k", marker=".", alpha=0.5, linestyle="", zorder=4)
-            plt.scatter(intervals, dist, color="gainsboro", zorder=1, marker=".", figure=fig)
-            plt.vlines(centers, dist.min(), dist.max(), colors="b")
-            plt.vlines(centers+widths, dist.min(), dist.max(), colors="r")
-            plt.vlines(centers-widths, dist.min(), dist.max(), colors="r")
+            plt.scatter(intervals, testdist, color="gainsboro", zorder=1, marker=".", figure=fig)
+            plt.vlines(centers, testdist.min(), testdist.max(), colors="b")
+            plt.vlines(centers+widths, testdist.min(), testdist.max(), colors="r")
+            plt.vlines(centers-widths, testdist.min(), testdist.max(), colors="r")
             plt.xlabel("x", fontsize=16)
             plt.ylabel("number of points", fontsize=16)
             plt.xticks(fontsize=16)
