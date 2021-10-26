@@ -19,8 +19,10 @@ class Plot_LuSt:
                 --> function for easy multipanel plots
             - hexcolor_extract
                 --> function for creating a (more or less) continuous color series
-            - color_generator: TODO: implement
-                --> 
+            - wavelength2rgb
+                --> function to convert a given wavelength into its corresponding RGB-value
+            - color_generator:
+                --> function to generate a list of RGB-values for colors in spectral order
 
         Attributes
         ----------
@@ -513,66 +515,58 @@ class Plot_LuSt:
 
     def hexcolor_extract(testplot=False, timeit=False):
         """
-        - File credits: https://cloford.com/resources/colours/500col.htm
-            --> last acces: 11.02.2021
-        - extracts names and hex-values of 554 colors in more or less spectral order
-        - useful for not using same color twice in plotting
-            --> to do this use:
-                
-                for c in colors["hex"]:
-                    x = np.array([...])
-                    y = np.array([...])
-                    plt.plot(x,y, color=c)
-                    
-                where x and y are values for the data series
+            - File credits: https://cloford.com/resources/colours/500col.htm
+                --> last acces: 11.02.2021
+            - extracts names and hex-values of 554 colors in more or less spectral order
+            - useful for not using same color twice in plotting
+                --> to do this use:
 
-        Parameters
-        ----------
-            - testplot
-                --> bool, optional
-                --> generates a plot to visualize all the extracted colors
-                --> the default is False.
-            - timeit
-                --> bool, optional
-                --> specify wether to time the task ad return the information or not.
-                --> the default is False
-            
-        Returns
-        -------
-            - colors
-                --> dict
-                --> dictonary of colors in more or less spectral order.
-        
-        Comments
-        --------
+                    for c in colors["hex"]:
+                        x = np.array([...])
+                        y = np.array([...])
+                        plt.plot(x,y, color=c)
 
-        Dependencies
-        ------------
-            - re
-            - numpy
-            - matplotlib
-        
+                    where x and y are values for the data series
+
+            Parameters
+            ----------
+                - testplot
+                    --> bool, optional
+                    --> generates a plot to visualize all the extracted colors
+                    --> the default is False.
+                - timeit
+                    --> bool, optional
+                    --> specify wether to time the task and return the information or not.
+                    --> the default is False
+
+            Returns
+            -------
+                - colors
+                    --> dict
+                    --> dictonary of colors in more or less spectral order.
+
+            Comments
+            --------
+
+            Dependencies
+            ------------
+                - re
+                - numpy
+                - matplotlib        
         """
-        
-        
         import re
         import numpy as np
         import matplotlib.pyplot as plt
         from module_parts.utility_astroLuSt import Time_stuff
-        
         
         #time execution
         if timeit:
             task = Time_stuff("hexcolor_extract")
             task.start_task()
 
-
         infile = open("files/Colorcodes.txt", "r")
-        
         colors = {"names":[],"hex":[]}
-        
         lines = infile.readlines()
-        
         for line in lines:
             
             #get all color names from given file and append to colors dictionary
@@ -584,7 +578,6 @@ class Plot_LuSt:
             col_hex = re.findall("(?<=\#)\w+", line)    #capture everything after #
             if len(col_hex) != 0:
                 colors["hex"].append("#" + col_hex[0])                  
-        
             
             infile.close()
         
@@ -606,13 +599,118 @@ class Plot_LuSt:
                 
         return colors
 
-    def color_generator(ncolors, testplot=False, timeit=False):
-        #TODO: implement
+    def wavelength2rgb(wavelength, gamma=0.8):
         """
-        
-        """
-        raise NotImplementedError("Not implemented yet, but on the TODO-list ;)")
+            - function to convert a given wavelength of visible light to a RGB value.
+            - wavelength in nanometers (380 nm - 750 nm)
+            - Code from: http://www.noah.org/wiki/Wavelength_to_RGB_in_Python
 
+            Parameters
+            ----------
+                - wavelength
+                    --> float
+                    --> the wavelength to convert
+                - gamma
+                    --> float, optional
+                    --> some scaling exponent
+                        ~~> will change the colors
+                        ~~> will change the smoothness of the boundaries between 2 colors
+
+            Returns
+            -------
+                - RGB
+                    --> an array of RGB-values of the inserted wavelength
+
+            Comments
+            --------
+
+            Dependencies
+            ------------
+                - numpy
+        """
+        import numpy as np
+
+        #check if wavelength is in corret range
+        if wavelength < 380 or wavelength > 750:
+            raise ValueError("wavelength has to be in range(380, 750) nanometers!")
+
+        wavelength = float(wavelength)
+        if wavelength >= 380 and wavelength <= 440:
+            attenuation = 0.3 + 0.7 * (wavelength - 380) / (440 - 380)
+            R = ((-(wavelength - 440) / (440 - 380)) * attenuation) ** gamma
+            G = 0.0
+            B = (1.0 * attenuation) ** gamma
+        elif wavelength >= 440 and wavelength <= 490:
+            R = 0.0
+            G = ((wavelength - 440) / (490 - 440)) ** gamma
+            B = 1.0
+        elif wavelength >= 490 and wavelength <= 510:
+            R = 0.0
+            G = 1.0
+            B = (-(wavelength - 510) / (510 - 490)) ** gamma
+        elif wavelength >= 510 and wavelength <= 580:
+            R = ((wavelength - 510) / (580 - 510)) ** gamma
+            G = 1.0
+            B = 0.0
+        elif wavelength >= 580 and wavelength <= 645:
+            R = 1.0
+            G = (-(wavelength - 645) / (645 - 580)) ** gamma
+            B = 0.0
+        elif wavelength >= 645 and wavelength <= 750:
+            attenuation = 0.3 + 0.7 * (750 - wavelength) / (750 - 645)
+            R = (1.0 * attenuation) ** gamma
+            G = 0.0
+            B = 0.0
+        else:
+            R = 0.0
+            G = 0.0
+            B = 0.0
+        R *= 255
+        G *= 255
+        B *= 255
+
+        RGB = np.array([int(R), int(G), int(B)])
+        return RGB
+
+    def color_generator(ncolors, wavelength_range=[380, 750], gamma=0.8, testplot=False, timeit=False):
+        """
+            - function to create a list of ncolors RGB-values for colors in spectral order
+
+            Parameters
+            ----------
+                - ncolors
+                    --> int, optional
+                    --> number of colors to generate
+                -wavelength_range
+                    --> list/np.array, optional
+                    --> list containing the maximum and minimum wavelength to consider for the color generation
+                    --> the default is [380, 750]
+                - gamma
+                    --> float, optional
+                    --> some scaling exponent
+                        ~~> will change the colors
+                        ~~> will change the smoothness of the boundaries between 2 colors
+                - testplot
+                    --> bool, optional
+                    --> wether to create a testplot to visualize the created colors
+                    --> the default is False
+                - timeit
+                    --> bool, optional
+                    --> specify wether to time the task and return the information or not.
+                    --> the default is False    
+            Returns
+            -------
+                - colors
+                    --> an array of the generated RGB-values in spectral order
+
+            Comments
+            --------
+
+            Dependencies
+            ------------
+                - numpy
+                - matplotlib
+        """
         import numpy as np
         import matplotlib.pyplot as plt
         from module_parts.utility_astroLuSt import Time_stuff
@@ -622,35 +720,19 @@ class Plot_LuSt:
             task = Time_stuff("color_generator")
             task.start_task()
 
-        
-        # vhex = np.vectorize(hex)
-        # colorrange = np.arange(0,ncolors,1)
-        # hexcolors = vhex(colorrange)
-        # print(hexcolors)
-        
-        nrgb = int(ncolors**(1/3))
-        print(nrgb)
-        R = np.linspace(0,1,nrgb)
-        G = np.linspace(0,1,nrgb)
-        B = np.linspace(0,1,nrgb)
-        
-        
+        wavelengths = np.linspace(np.min(wavelength_range), np.max(wavelength_range), ncolors)        
         colors = []
-        for r in R:
-            for g in G:
-                for b in B:
-                    color = (r,g,b)
-                    colors.append(color)
-                    
-        print(len(colors))
-        
+        for wl in wavelengths:
+            c = Plot_LuSt.wavelength2rgb(wl, gamma=gamma) / 255
+            colors.append(c)
+
         if testplot:
             x = np.arange(0,len(colors),1)
             y = x
             fig = plt.figure()
             plt.suptitle("Testplot to visualize colors extracted")
             plt.scatter(x, y, color=colors, marker=".", figure=fig)
-            plt.xlabel("indices colors[\"hex\"]", fontsize=16)
+            plt.xlabel("indices colors", fontsize=16)
             plt.ylabel("y=x", fontsize=16)
             plt.xticks(fontsize=16)
             plt.yticks(fontsize=16)
@@ -660,4 +742,4 @@ class Plot_LuSt:
         if timeit:
             task.end_task()
         
-        return 
+        return colors
