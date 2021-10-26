@@ -122,8 +122,7 @@ class Table_LuSt:
             - add_row
                 --> adds a row to the Table_LuSt object
             - add header_row: TODO: Implement
-                --> adds a row to the current header of the Table_LuSt object
-                
+                --> adds a row to the current header of the Table_LuSt object     
             - print_header
                 --> prints out the header of the table
             - print_rows

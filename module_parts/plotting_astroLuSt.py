@@ -8,7 +8,6 @@
 #TODO: implement color_generator()
 #TODO: plot_ax(): add multiple x/y-axes (twinx)?
 #TODO: plot_ax(): add 3d plotting
-#TODO: plot_ax(): make initialization correct (str could not be converted to float)
 
 class Plot_LuSt:
     """

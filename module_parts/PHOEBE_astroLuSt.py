@@ -6,6 +6,8 @@
 #______________________________________________________________________________
 #Class useful for working with PHOEBE
 #TODO: get extract_data(), plot_data_PHOEBE inside this class
+#TODO: update to extract more values
+#TODO: finish documentation
 class PHOEBE_additional:
 
     def __init__(self):

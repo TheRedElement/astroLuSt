@@ -9,8 +9,43 @@
 #Class containing useful stuff for data analysis
 #TODO: add attributes?
 #TODO: Add progress bar?
-
+#TODO: implement PDM
 class Data_LuSt:
+    """
+            Class to quickly print nice tables and save them to a text-file if need be.
+        
+        Methods
+        -------
+            - linspace_def
+                --> creates an array of points with high resolution in some regions
+            - lc_error
+                --> estimates the error of a lightcurve given the respective time series and a
+                    time-difference condition
+            - pdm TODO: implement
+            - fold
+                --> folds an array (time series) onto a given phase
+            - periodic shift
+                --> shifts an array with regards to periodic boundaries
+            - phase2time
+                --> converts an array of phases to the repective times, given a period
+            - phase_binning
+                --> executes binning in phase on a dataseries
+            - sigmaclipping
+                --> executes sigma clipping in a dataseries
+        
+        Attributes
+        ----------
+            - 
+                
+        Dependencies
+        ------------
+            - numpy
+            - matplotlib.pyplot
+            - scipy.stats
+
+        Comments
+        --------
+    """
 
     def __init__(self):
         pass
@@ -47,6 +82,7 @@ class Data_LuSt:
                 - nintervals
                     --> int, optional
                     --> Number of intervals to use for computing the distribution of nbins
+                    --> Basically irrelevant in the endresult, but crutial for computation
                     --> i.e. for 50 intervals all nbins get distributed over 50 intervals
                     --> The default is 50
                 - nbins
@@ -410,8 +446,6 @@ class Data_LuSt:
             task = Time_stuff("fold")
             task.start_task()
 
-        
-        
         delta_t = time-time.min()
         phases = delta_t/period
         
@@ -425,7 +459,6 @@ class Data_LuSt:
         if timeit:
             task.end_task()
 
-        
         return phases_folded
 
     def periodic_shift(input_array, shift, borders, timeit=False, testplot=False, verbose=False):
