@@ -730,7 +730,7 @@ class Plot_LuSt:
             x = np.arange(0,len(colors),1)
             y = x
             fig = plt.figure()
-            plt.suptitle("Testplot to visualize colors extracted")
+            plt.suptitle("Testplot to visualize generated colors", fontsize=18)
             plt.scatter(x, y, color=colors, marker=".", figure=fig)
             plt.xlabel("indices colors", fontsize=16)
             plt.ylabel("y=x", fontsize=16)
