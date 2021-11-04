@@ -15,25 +15,25 @@ class Plot_LuSt:
 
         Methods
         -------
-        - plot_ax
-            - function for easy multipanel plots
-        - hexcolor_extract
-            - function for creating a (more or less) continuous color series
-        - wavelength2rgb
-            - function to convert a given wavelength into its corresponding RGB-value
-        - color_generator:
-            - function to generate a list of RGB-values for colors in spectral order
+            - plot_ax
+                - function for easy multipanel plots
+            - hexcolor_extract
+                - function for creating a (more or less) continuous color series
+            - wavelength2rgb
+                - function to convert a given wavelength into its corresponding RGB-value
+            - color_generator:
+                - function to generate a list of RGB-values for colors in spectral order
 
         Attributes
         ----------
             
         Dependencies
         ------------
-        - numpy
-        - matplotlib
-        - scipy
-        - copy
-        - re
+            - numpy
+            - matplotlib
+            - scipy
+            - copy
+            - re
     
         Comments
         --------
@@ -64,169 +64,170 @@ class Plot_LuSt:
             
             Parameters
             ----------
-            - xvals
-                - list/np.ndarray
-                - list of x-values to plot
-            - yvals
-                - list/np.ndarray
-                - list of y-values corresponding to xvals
-            - colors
-                - list/np.ndarray, optional
-                - list of colors to use for plotting the datasets.
-                - the default is None
-                    - will plot all in "tab:blue"
-            - markers
-                - list/np.ndarray, optional
-                - list of markers to use for plotting the datasets.
-                - the default is None
-                        will result in all "."
-            - markersizes
-                - list/np.ndarray, optional
-                - list of markersiszes to use for plotting the datasets
-                - The default is None
-                    - will result in all haivng markersize=10.
-            - labels
-                - list/np.ndarray, optional
-                - dataset-labels corresponding to the dataset of xvals
-                - the default is None
-                    - will result in no labels.
-            - linestyles
-                - list/np.ndarray, optional
-                - list of linestyles to use for plotting the datasets.
-                - the default is None
-                    - will result in all ""
-            - alphas
-                - list/np.ndarray, optional
-                - list of the alphas to use on the curve
-                - the default is None
-                    - will result in all default values
-            - smooths
-                - list/np.ndarray of bools, optional
-                - list of wether to interpolate and smooth the curve or not
-                    - there will not be x/y-errors in smoothed curves, even if passed to the function!
-                - the default is None
-                    - will result in all curves not being smoothed (i.e. all set to False)
-            - smoothdegrees
-                - list/np.ndarray, optional
-                - list of polynomial degrees to use when smoothing for each curve
-                - the default is None
-                    - will create k=3 splines for smoothing
-            - smoothresolutions
-                - list/np.ndarray, optional
-                - reolution of the smoothed curve, i.e. number of points to use for interpolation
-                - the default is None
-                    - will result in all curves having a resolution of 100
-            - xerrs
-                - list/np.ndarray, optional
-                - x-errors corresponding to xvals
-                - the default is None
-            - yerrs
-                - list/np.ndarray, optional
-                - y-errors corresponding to yvals.
-                - the default is None.
-            - capsizes
-                - list/np.ndarray, optional
-                - capsizes to use for plotting errorbars
-                - The default is None
-            - errcolors 
-                - list/np.ndarray, optional
-                - list of colors to use for plotting the errors
-                - the default is None
-                    - will plot all in "tab:blue"
-            - positions 
-                - list/np.array, optional
-                - list of positions of the datasets.
-                - used to position each dataset to its respective subplot.
-                - has to contain matplotlibs "add_subplot" indexing system values (integer of length 3)
-                - the default None
-                    - plot all dataset from top left to bottom right.
-            - zorders
-                - list/np.array, optional
-                - list of values for zorder
-                - describes wich data-series is in front, second, in background etc.
-                    - the lower the number the further back
-                - the default None
-                    - will retain the order of the provided input data.
-            - invert_xaxis
-                - list/np.array, optional
-                - list of booleans
-                    - if the entry is True the xaxis of the corresponding subplot will be inverted
-                - the default is None
-                    - will flip none of the xaxes
-            - invert_yaxis
-                - list/np.array, optional
-                - list of booleans
-                    - if the entry is True the yaxis of the corresponding subplot will be inverted
-                - the default is None
-                    - will flip none of the yaxes
-            - xlabs
-                - list/np.array, optional
-                - labels of the x-axes
-                - the default is None
-                    - will result in "x".
-            - ylabs
-                - list/np.array, optional
-                - labels of the y-axes
-                - the default is None
-                    - will result in "y".
-            - suptitle
-                - string, optional
-                - suptitle of the figure
-                - the default is "".
-            - num
-                - str, optional
-                - number of the figure
-                - the default is None.
-            - axlegend
-                - bool, optional
-                - if set to True will create a legend for each axis
-                - the default is None
-            - figlegend
-                - bool, optional
-                - if set to True will create a global legend for the figure instead of separate legends for each axis
-                - the default is None
-            - figsize
-                - tuple, optional
-                - size of the figure
-                - the default is (16,9)
-            - fontsize
-                - int, optional
-                - fontsize to use for labels and ticks
-                    - fontsize of title and legend will be adjusted accordingly
-                - The default is None
-                    - Will result in 16
-            - timeit
-                - bool, optional
-                - specify wether to time the task and return the information or not.
-                - the default is False
-            - verbose
-                - bool, optional
-                - specify wether to print additional information implemented in the function
-                - the default is False
+                - xvals
+                    - list/np.ndarray
+                    - list of x-values to plot
+                - yvals
+                    - list/np.ndarray
+                    - list of y-values corresponding to xvals
+                - colors
+                    - list/np.ndarray, optional
+                    - list of colors to use for plotting the datasets.
+                    - the default is None
+                        - will plot all in "tab:blue"
+                - markers
+                    - list/np.ndarray, optional
+                    - list of markers to use for plotting the datasets.
+                    - the default is None
+                            will result in all "."
+                - markersizes
+                    - list/np.ndarray, optional
+                    - list of markersiszes to use for plotting the datasets
+                    - The default is None
+                        - will result in all haivng markersize=10.
+                - labels
+                    - list/np.ndarray, optional
+                    - dataset-labels corresponding to the dataset of xvals
+                    - the default is None
+                        - will result in no labels.
+                - linestyles
+                    - list/np.ndarray, optional
+                    - list of linestyles to use for plotting the datasets.
+                    - the default is None
+                        - will result in all ""
+                - alphas
+                    - list/np.ndarray, optional
+                    - list of the alphas to use on the curve
+                    - the default is None
+                        - will result in all default values
+                - smooths
+                    - list/np.ndarray of bools, optional
+                    - list of wether to interpolate and smooth the curve or not
+                        - there will not be x/y-errors in smoothed curves, even if passed to the function!
+                    - the default is None
+                        - will result in all curves not being smoothed (i.e. all set to False)
+                - smoothdegrees
+                    - list/np.ndarray, optional
+                    - list of polynomial degrees to use when smoothing for each curve
+                    - the default is None
+                        - will create k=3 splines for smoothing
+                - smoothresolutions
+                    - list/np.ndarray, optional
+                    - reolution of the smoothed curve, i.e. number of points to use for interpolation
+                    - the default is None
+                        - will result in all curves having a resolution of 100
+                - xerrs
+                    - list/np.ndarray, optional
+                    - x-errors corresponding to xvals
+                    - the default is None
+                - yerrs
+                    - list/np.ndarray, optional
+                    - y-errors corresponding to yvals.
+                    - the default is None.
+                - capsizes
+                    - list/np.ndarray, optional
+                    - capsizes to use for plotting errorbars
+                    - The default is None
+                - errcolors 
+                    - list/np.ndarray, optional
+                    - list of colors to use for plotting the errors
+                    - the default is None
+                        - will plot all in "tab:blue"
+                - positions 
+                    - list/np.array, optional
+                    - list of positions of the datasets.
+                    - used to position each dataset to its respective subplot.
+                    - has to contain matplotlibs "add_subplot" indexing system values (integer of length 3)
+                    - the default None
+                        - plot all dataset from top left to bottom right.
+                - zorders
+                    - list/np.array, optional
+                    - list of values for zorder
+                    - describes wich data-series is in front, second, in background etc.
+                        - the lower the number the further back
+                    - the default None
+                        - will retain the order of the provided input data.
+                - invert_xaxis
+                    - list/np.array, optional
+                    - list of booleans
+                        - if the entry is True the xaxis of the corresponding subplot will be inverted
+                    - the default is None
+                        - will flip none of the xaxes
+                - invert_yaxis
+                    - list/np.array, optional
+                    - list of booleans
+                        - if the entry is True the yaxis of the corresponding subplot will be inverted
+                    - the default is None
+                        - will flip none of the yaxes
+                - xlabs
+                    - list/np.array, optional
+                    - labels of the x-axes
+                    - the default is None
+                        - will result in "x".
+                - ylabs
+                    - list/np.array, optional
+                    - labels of the y-axes
+                    - the default is None
+                        - will result in "y".
+                - suptitle
+                    - string, optional
+                    - suptitle of the figure
+                    - the default is "".
+                - num
+                    - str, optional
+                    - number of the figure
+                    - the default is None.
+                - axlegend
+                    - bool, optional
+                    - if set to True will create a legend for each axis
+                    - the default is None
+                - figlegend
+                    - bool, optional
+                    - if set to True will create a global legend for the figure instead of separate legends for each axis
+                    - the default is None
+                - figsize
+                    - tuple, optional
+                    - size of the figure
+                    - the default is (16,9)
+                - fontsize
+                    - int, optional
+                    - fontsize to use for labels and ticks
+                        - fontsize of title and legend will be adjusted accordingly
+                    - The default is None
+                        - Will result in 16
+                - timeit
+                    - bool, optional
+                    - specify wether to time the task and return the information or not.
+                    - the default is False
+                - verbose
+                    - bool, optional
+                    - specify wether to print additional information implemented in the function
+                    - the default is False
                 
         
             Returns
             -------
-            - fig
-                - matplotlib.figure-object
-                - created figure
-            - axs
-                - matplotlib axes-object
-                - axes of created figure to change settings later on
+                - fig
+                    - matplotlib.figure-object
+                    - created figure
+                - axs
+                    - matplotlib axes-object
+                    - axes of created figure to change settings later on
         
             Comments
             --------
-            - If one wants to share axis between plots simply call
-                >>>axs[iidx].get_shared_y_axes().join(axs[iidx],axs[jidx])
-                >>>axs[iidx].set_yticklabels([])
-            - axs is hereby the second return value of the function and thus a list of all axes
+                - If one wants to share axis between plots simply call
+
+                    >>> axs[iidx].get_shared_y_axes().join(axs[iidx],axs[jidx]) \n
+                    >>> axs[iidx].set_yticklabels([]) \n
+                    where axs the second return value of the function and thus a list of all axes
         
             Dependencies
             ------------
-            - numpy
-            - matplotlib
-            - scipy
-            - copy
+                - numpy
+                - matplotlib
+                - scipy
+                - copy
         """
         import numpy as np
         import matplotlib.pyplot as plt
@@ -512,42 +513,43 @@ class Plot_LuSt:
 
     def hexcolor_extract(testplot=False, timeit=False):
         """
-            - File credits: https://cloford.com/resources/colours/500col.htm
-                - last acces: 11.02.2021
-            - extracts names and hex-values of 554 colors in more or less spectral order
-            - useful for not using same color twice in plotting
-                - to do this use:
-                    >>>for c in colors["hex"]:
-                    >>>    x = np.array([...])
-                    >>>    y = np.array([...])
-                    >>>    plt.plot(x,y, color=c)
-                - here x and y are values for the data series
+                - File credits: https://cloford.com/resources/colours/500col.htm
+                    - last acces: 11.02.2021
+                - extracts names and hex-values of 554 colors in more or less spectral order
+                - useful for not using same color twice in plotting
+                    - to do this use:
+
+                        >>> for c in colors["hex"]: \n
+                        >>>     x = np.array([...]) \n
+                        >>>     y = np.array([...]) \n
+                        >>>     plt.plot(x,y, color=c) \n
+                        where x and y are values for the data series
 
             Parameters
             ----------
-            - testplot
-                - bool, optional
-                - generates a plot to visualize all the extracted colors
-                - the default is False.
-            - timeit
-                - bool, optional
-                - specify wether to time the task and return the information or not.
-                - the default is False
+                - testplot
+                    - bool, optional
+                    - generates a plot to visualize all the extracted colors
+                    - the default is False.
+                - timeit
+                    - bool, optional
+                    - specify wether to time the task and return the information or not.
+                    - the default is False
 
             Returns
             -------
-            - colors
-                - dict
-                - dictonary of colors in more or less spectral order.
+                - colors
+                    - dict
+                    - dictonary of colors in more or less spectral order.
 
             Comments
             --------
 
             Dependencies
             ------------
-            - re
-            - numpy
-            - matplotlib        
+                - re
+                - numpy
+                - matplotlib        
         """
         import re
         import numpy as np
@@ -602,26 +604,26 @@ class Plot_LuSt:
 
             Parameters
             ----------
-            - wavelength
-                - float
-                - the wavelength to convert
-            - gamma
-                - float, optional
-                - some scaling exponent
-                    - will change the colors
-                    - will change the smoothness of the boundaries between 2 colors
+                - wavelength
+                    - float
+                    - the wavelength to convert
+                - gamma
+                    - float, optional
+                    - some scaling exponent
+                        - will change the colors
+                        - will change the smoothness of the boundaries between 2 colors
 
             Returns
             -------
-            - RGB
-                - an array of RGB-values of the inserted wavelength
+                - RGB
+                    - an array of RGB-values of the inserted wavelength
 
             Comments
             --------
 
             Dependencies
             ------------
-            - numpy
+                - numpy
         """
         import numpy as np
 
@@ -673,38 +675,38 @@ class Plot_LuSt:
 
             Parameters
             ----------
-            - ncolors
-                - int, optional
-                - number of colors to generate
-            - wavelength_range
-                - list/np.array, optional
-                - list containing the maximum and minimum wavelength to consider for the color generation
-                - the default is [380, 750]
-            - gamma
-                - float, optional
-                - some scaling exponent
-                    - will change the colors
-                    - will change the smoothness of the boundaries between 2 colors
-            - testplot
-                - bool, optional
-                - wether to create a testplot to visualize the created colors
-                - the default is False
-            - timeit
-                - bool, optional
-                - specify wether to time the task and return the information or not.
-                - the default is False    
+                - ncolors
+                    - int, optional
+                    - number of colors to generate
+                - wavelength_range
+                    - list/np.array, optional
+                    - list containing the maximum and minimum wavelength to consider for the color generation
+                    - the default is [380, 750]
+                - gamma
+                    - float, optional
+                    - some scaling exponent
+                        - will change the colors
+                        - will change the smoothness of the boundaries between 2 colors
+                - testplot
+                    - bool, optional
+                    - wether to create a testplot to visualize the created colors
+                    - the default is False
+                - timeit
+                    - bool, optional
+                    - specify wether to time the task and return the information or not.
+                    - the default is False    
             Returns
             -------
-            - colors
-                - an array of the generated RGB-values in spectral order
+                - colors
+                    - an array of the generated RGB-values in spectral order
 
             Comments
             --------
 
             Dependencies
             ------------
-            - numpy
-            - matplotlib
+                - numpy
+                - matplotlib
         """
         import numpy as np
         import matplotlib.pyplot as plt

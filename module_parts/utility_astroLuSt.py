@@ -16,23 +16,23 @@ class Time_stuff:
         Methods
         -------
             - start_task
-                --> saves the point in time for a task as starting point
+                - saves the point in time for a task as starting point
             - end_task
-                --> saves the point in time for a task as starting point
+                - saves the point in time for a task as starting point
         
         Attributes
         ----------
             - task
-                --> str
-                --> name of the task
+                - str
+                - name of the task
             - start
-                --> datetime object, optional
-                --> the point in time, at which the process started
-                --> the default is None, since it will get set by start_task
+                - datetime object, optional
+                - the point in time, at which the process started
+                - the default is None, since it will get set by start_task
             - end
-                --> datetime object, optional
-                --> the point in time, at which the process ended
-                --> the default is None, since it will get set by end_task
+                - datetime object, optional
+                - the point in time, at which the process ended
+                - the default is None, since it will get set by end_task
 
         Dependencies
         ------------
@@ -67,7 +67,7 @@ class Time_stuff:
 
             Dependencies
             ------------
-            - datetime
+                - datetime
 
             Comments
             --------
@@ -94,11 +94,11 @@ class Time_stuff:
 
             Dependencies
             ------------
-            - datetime
+                - datetime
 
             Comments
             --------
-            - Needs to be called after start_task
+                - Needs to be called after start_task
         """
         from datetime import datetime
 
@@ -119,68 +119,68 @@ class Table_LuSt:
         
         Methods
         -------
-        - add_row
-            - adds a row to the Table_LuSt object
-        - add header_row: TODO: Implement
-            - adds a row to the current header of the Table_LuSt object     
-        - print_header
-            - prints out the header of the table
-        - print_rows
-            - prints out the rows of the table
-        - print_table
-            - prints out the whole table
-        - latex_template:
-            - Prints a latex template of the table
-                - If this template is copied to a .tex document it should print a table similar to the one created with this class
+            - add_row
+                - adds a row to the Table_LuSt object
+            - add header_row: TODO: Implement
+                - adds a row to the current header of the Table_LuSt object     
+            - print_header
+                - prints out the header of the table
+            - print_rows
+                - prints out the rows of the table
+            - print_table
+                - prints out the whole table
+            - latex_template:
+                - Prints a latex template of the table
+                    - If this template is copied to a .tex document it should print a table similar to the one created with this class
         
         Attributes
         ----------
-        - header
-            - list, optional
-            - list containing
-                - the entries for the header
-            - the default is None
-        - rows
-            - list of lists, optional
-            - list containing
-                - a list for each row containing
-                    - the entries for each cell in that row
-            - each row has to have the same length
-            - the default is None
-        - formatstrings
-            - list of lists, optional
-            - list containing
-                - a list for each row containing
-                    - the formatstring for each cell in that row
-            - has to be of same dimension as rows
-            - the default is None
-        - separators
-            - list, optional
-            - list containing
-                - the separators after each column
-                - allowed are '|', '||' and ' '
-            - has to be of same length as header
-            - the default is None
-        -alginments
-            - list, optional
-            - list containing
-                - the alignment tag for each column
-                - allowed are 'l', 'c', 'r' (left-bound, centered, rightbound)
-            - has te of same length as header
-            - the default is None
-        - newsections
-            - list, optional
-            - list containing
-                - '-', '=' or False
-                - The first two will print out the respective symbol as separator before the entry
-                - False will print nothing before the entry
-            - basically used to start a new section with the current row
-            - has to be of same length as rows
-            - the default is None
+            - header
+                - list, optional
+                - list containing
+                    - the entries for the header
+                - the default is None
+            - rows
+                - list of lists, optional
+                - list containing
+                    - a list for each row containing
+                        - the entries for each cell in that row
+                - each row has to have the same length
+                - the default is None
+            - formatstrings
+                - list of lists, optional
+                - list containing
+                    - a list for each row containing
+                        - the formatstring for each cell in that row
+                - has to be of same dimension as rows
+                - the default is None
+            - separators
+                - list, optional
+                - list containing
+                    - the separators after each column
+                    - allowed are '|', '||' and ' '
+                - has to be of same length as header
+                - the default is None
+            - alignments
+                - list, optional
+                - list containing
+                    - the alignment tag for each column
+                    - allowed are 'l', 'c', 'r' (left-bound, centered, rightbound)
+                - has te of same length as header
+                - the default is None
+            - newsections
+                - list, optional
+                - list containing
+                    - '-', '=' or False
+                    - The first two will print out the respective symbol as separator before the entry
+                    - False will print nothing before the entry
+                - basically used to start a new section with the current row
+                - has to be of same length as rows
+                - the default is None
                 
         Dependencies
         ------------
-        - re
+            - re
 
 
         Comments
@@ -278,26 +278,26 @@ class Table_LuSt:
 
             Parameters
             ----------
-            - row
-                - list
-                - list containing
-                    - the entries for each cell
-            - fstring
-                - list, optional
-                - list containing
-                    - the corresponding formatstrings for the entries
-                - the default is None
-            - new_sect
-                - bool or str, optional
-                - allowed are '-', '=', False
-                - wether to start a new section with this row
-                    - Starts a new section when set to true
-                - the default is False
+                - row
+                    - list
+                    - list containing
+                        - the entries for each cell
+                - fstring
+                    - list, optional
+                    - list containing
+                        - the corresponding formatstrings for the entries
+                    - the default is None
+                - new_sect
+                    - bool or str, optional
+                    - allowed are '-', '=', False
+                    - wether to start a new section with this row
+                        - Starts a new section when set to true
+                    - the default is False
             
             Raises
             ------
-            - ValueError
-                    - If the row and fstring are not of the same length
+                - ValueError
+                        - If the row and fstring are not of the same length
 
             Returns
             -------
@@ -334,33 +334,33 @@ class Table_LuSt:
 
             Parameters
             ----------       
-            - print_it
-                - bool, optional
-                - wether to print the header in the bash or not
-                - the default is True
-            - hide_rownumbers
-                - bool, optional
-                - whether to show a column containing the rownumbers or not
-                - the default is False
+                - print_it
+                    - bool, optional
+                    - wether to print the header in the bash or not
+                    - the default is True
+                - hide_rownumbers
+                    - bool, optional
+                    - whether to show a column containing the rownumbers or not
+                    - the default is False
 
             Raises
             ------
 
             Returns
             -------
-            - to_return
-                - str
-                - a string of the header
-                - could be written to a file
-                - used in print_table() when writing to a file
+                - to_return
+                    - str
+                    - a string of the header
+                    - could be written to a file
+                    - used in print_table() when writing to a file
 
             Dependencies
             ------------
-            - re
+                - re
 
             Comments
             --------
-            - sets self.tablewidth to the width of the header in characters
+                - sets self.tablewidth to the width of the header in characters
         """
         import re
         
@@ -401,25 +401,25 @@ class Table_LuSt:
 
             Parameters
             ----------
-            - print_it
-                - bool, optional
-                - wether to print the rows in the bash or not
-                - the default is True
-            - hide_rownumbers
-                - bool, optional
-                - wehter to show a column containing the rownumbers or not
-                - the default is False
+                - print_it
+                    - bool, optional
+                    - wether to print the rows in the bash or not
+                    - the default is True
+                - hide_rownumbers
+                    - bool, optional
+                    - wehter to show a column containing the rownumbers or not
+                    - the default is False
            
             Raises
             ------
 
             Returns
             -------
-            - to_return
-                - str
-                - a string of the table-body (all rows)
-                - could be written to a file
-                - used in print_table() when writing to a file
+                - to_return
+                    - str
+                    - a string of the table-body (all rows)
+                    - could be written to a file
+                    - used in print_table() when writing to a file
 
             Dependencies
             ------------
@@ -540,42 +540,43 @@ class Table_LuSt:
 
             Parameters
             ----------
-            - save
-                - str or bool, optional
-                - allowed is any string or False
-                    - if set to False, the table will be printed in the shell
-                    - if set to some string, a file with the respective name will be saved in addition to printing it in the shell
-                - wether to save the created table to a file or just display it in the shell
-                - the default is False
-            - writingtype
-                - str, optional
-                - the type of writing one wants to execute for saving the table
-                - allowed are the standard strings for open()
-                    - "w" for writing to a file (a file will be created if not existent)
-                    - "a" for appending to an existing file
-                    - "x" for creating a new file (will raise an error if the file exists)
-                - the default is "w"
-            - print_it
-                - bool
-                - wether to print the headr in the bash or not
-            - print_latex
-                - bool
-                - wether to print the latex code in the bash or not
-            - hide_rownumbers
-                - bool, optional
-                - wehter to show a column containing the rownumbers or not
-                - the default is False
+                - save
+                    - str or bool, optional
+                    - allowed is any string or False
+                        - if set to False, the table will be printed in the shell
+                        - if set to some string, a file with the respective name will be saved in addition to printing it in the shell
+                    - wether to save the created table to a file or just display it in the shell
+                    - the default is False
+                - writingtype
+                    - str, optional
+                    - the type of writing one wants to execute for saving the table
+                    - allowed are the standard strings for open()
+                        - "w" for writing to a file (a file will be created if not existent)
+                        - "a" for appending to an existing file
+                        - "x" for creating a new file (will raise an error if the file exists)
+                    - the default is "w"
+                - print_it
+                    - bool
+                    - wether to print the headr in the bash or not
+                - print_latex
+                    - bool
+                    - wether to print the latex code in the bash or not
+                - hide_rownumbers
+                    - bool, optional
+                    - wehter to show a column containing the rownumbers or not
+                    - the default is False
         
             Raises
             ------
-            - ValueError
-                - if wrong arguments are passed as save
+                - ValueError
+                    - if wrong arguments are passed as save
 
             Returns
             -------
 
             Dependencies
             ------------ 
+                - re
 
             Comments
             --------
