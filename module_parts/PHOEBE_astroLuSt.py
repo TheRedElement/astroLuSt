@@ -18,58 +18,59 @@ class PHOEBE_additional:
 
             Parameters
             ----------
-            - phoebes_b
-                - PHOEBE-bundle
-                    - data structure object of PHOEBE to be converted to dict
-            - distance
-                - float
-                - distance to observed object. If not known simply type 1
-            - unit_distance
-                - str
-                - a string to specify the unit of distance
-            - show_keys
-                - bool, optional
-                - If true prints out all possible keys (twigs) of the created dictionary
-                - The default is False
-            - timeit
-                - bool, optional
-                - Specify wether to time the task ad return the information or not
-                - The default is False
+                - phoebes_b
+                    - PHOEBE-bundle
+                        - data structure object of PHOEBE to be converted to dict
+                - distance
+                    - float
+                    - distance to observed object. If not known simply type 1
+                - unit_distance
+                    - str
+                    - a string to specify the unit of distance
+                - show_keys
+                    - bool, optional
+                    - If true prints out all possible keys (twigs) of the created dictionary
+                    - The default is False
+                - timeit
+                    - bool, optional
+                    - Specify wether to time the task ad return the information or not
+                    - The default is False
 
             Returns
             -------
-            - binary
-                - dictionary of PHOEBEs default binary object with all the data-arrays in it.
-                - The structure is the following:
-                - binary = {
-                        "lc-dataset1":{
-                            "enabled":True
-                            "model1":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])},
-                            "model2":{...},
-                            :
-                            :
-                            :
-                            "modeli":{...}
-                            }, 
-                        "lc-dataset2":{"enabled":True, qualifier1:np.array([values]),...},
-                        :
-                        :
-                        :
-                        "lc-dataseti":{...},
-                        "orb-daraset1:{
-                            "model1":{
-                                "component1":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])}
-                                "component2":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])}
-                                :
-                                :
-                                "componenti":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])}
-                                },
-                            "model2":
-                            :
-                            :
-                            "modeli":
+                - binary
+                    - dictionary of PHOEBEs default binary object with all the data-arrays in it.
+                    - The structure is the following:
+                        
+                        binary = { \n
+                                "lc-dataset1":{ \n
+                                    "enabled":True \n
+                                    "model1":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])}, \n
+                                    "model2":{...}, \n
+                                    : \n
+                                    : \n
+                                    : \n
+                                    "modeli":{...} \n
+                                    },  \n
+                                "lc-dataset2":{"enabled":True, qualifier1:np.array([values]),...}, \n
+                                : \n
+                                : \n
+                                : \n
+                                "lc-dataseti":{...}, \n
+                                "orb-daraset1:{ \n
+                                    "model1":{ \n
+                                        "component1":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])} \n
+                                        "component2":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])} \n
+                                        : \n
+                                        : \n
+                                        "componenti":{"qualifier1":np.array([values]), "qualifier2":np.array([...]), ... ,"qualifieri":np.array([...])} \n
+                                        }, \n
+                                    "model2": \n
+                                    : \n
+                                    : \n
+                                    "modeli": \n
+                                    } \n
                             }
-                    }
 
             Notes
             -----
