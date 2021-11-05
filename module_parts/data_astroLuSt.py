@@ -508,7 +508,9 @@ class Data_LuSt:
         
         #normalize sigma2s if specified
         if normalize:
-            sigma2s_sums /= np.linalg.norm(sigma2s_sums)
+            # sigma2s_sums /= np.linalg.norm(sigma2s_sums)    #actual normalization
+            # sigma2s_sums /= np.sum(sigma2s_sums)            #normalize so everything adds up to 1
+            sigma2s_sums /= sigma2s_sums.max()              #normalize so the maximum is 1
 
         #calculated desired parameters
         sortidx = np.argsort(sigma2s_sums)
@@ -528,6 +530,7 @@ class Data_LuSt:
             ax1.set_title("PDM-result", fontsize=18)
             ax1.plot(trial_periods, sigma2s_sums, color="tab:blue", marker=".", linestyle="", zorder=1)
             ax1.vlines(best_period, ymin=sigma2s_sums.min(), ymax=sigma2s_sums.max(), color="tab:orange", linestyle="-", label=r"$P_{\mathrm{PDM}} =$" + f"{best_period:.3f}", zorder=2)
+            ax1.hlines(best_sigma2, xmin=trial_periods.min(), xmax=trial_periods.max(), color="tab:orange", linestyle="-", zorder=2)
             ax1.tick_params("both", labelsize=16)
             ax1.set_xlabel("Period", fontsize=16)
             ax1.set_ylabel("Variance", fontsize=16)
