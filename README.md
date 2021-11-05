@@ -15,3 +15,6 @@ The current version consists of the following parts:
 - __utility_astroLuSt.py__
     - classes and functions for random convenient stuff
 
+## Examples
+
+To get a feel on how the different function and Classes behave I provided some information in __astroLuSt_example_usage.ipynb__.
