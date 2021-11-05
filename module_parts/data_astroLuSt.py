@@ -9,7 +9,6 @@
 #Class containing useful stuff for data analysis
 #TODO: add attributes?
 #TODO: Add progress bar?
-#TODO: implement PDM
 class Data_LuSt:
     """
         - Class to execute data processing
@@ -21,7 +20,8 @@ class Data_LuSt:
                 - creates an array of points with high resolution in some regions
             - lc_error
                 - estimates the error of a lightcurve given the respective time series and a time-difference condition
-            - pdm TODO: implement
+            - pdm
+                - runs a Phase Dispersion Minimization to estimate the period of a periodic time series
             - fold
                 - folds an array (time series) onto a given phase
             - periodic shift
@@ -392,26 +392,162 @@ class Data_LuSt:
         return LC_errors, mean_fluxes, mean_times, sigmas, intervals
 
 
-    def pdm():
-        #TODO: implement
+    def pdm(times, fluxes, period_start=1, period_stop=100, nperiods=100, nintervals=100, normalize=True, testplot=False, verbose=False, timeit=True):
         """
+            - function to execute a Phase Dispersion Minimization on a given timeseries.
+            - not only limited to lightcurve-anaylsis but any time series with periodic behaiviour actually
+                - e.g.: radial velocity curves
 
             Parameters
             ----------
+                - times
+                    - np.array
+                    - times of the time series to run phase dispersion minimization on
+                - fluxes
+                    - np.array
+                    - fluxes of the time series to run phase dispersion minimization on
+                    - can also be any other function of time
+                - period_start
+                    - float, optional
+                    - the period to consider as starting point for the analysis
+                    - the default is 1
+                - period_stop
+                    - float, optional
+                    - the period to consider as stopping point for the analysis
+                    - the default is 100
+                - nperiods
+                    - int, optional
+                    - how many trial periods to consider during the analysis
+                    - the default is 100
+                - ninteravls
+                    - int, optional
+                    - the number of itervals to consider for the evaluation of the total variance in the folded curve
+                        - if nintervals is too big, only one datapoint might avalilable per interval
+                            - it is therefore not possible to calculate the variance in that interval and hence the curve
+                        - if nintervals is too small, all the datapoints might lie in the intervals
+                            - therefore to many datapoints are considered to estimate the total variance hence leading to a variance which is too high
+                        - just play around until you think you get a reasonable result (use testplot to check)
+                    - the default is 100
+                - normalize
+                    - bool, optional
+                    - wether to normalize the calculated variances
+                    - the default is True
+                - testplot
+                    - bool, optional
+                    - wether to show a testplot of the result or not
+                    - the default is False
+                - verbose
+                    - bool, optional
+                    - wether to show additional information implemented by the creator
+                    - the default is False
+                - timeit
+                    - bool, optional
+                    - wether to time the execution
+                    - the default is True
 
             Raises
             ------
 
             Returns
             -------
+                - best_period
+                    - float
+                    - the period yielding the lowest variance in the whole curve
+                - best_sigma2
+                    - float
+                    - the lowest variance calculated
+                - periods_sorted
+                    - np.array
+                    - the periods sorted after the the variance they yielded in the curve
+                - sigma2s_sorted
+                    - np.array
+                    - the variances sorted from low to high
+                    - corresponding to periods_sorted
+                - best_fold
+                    - np.array
+                    - the resulting phases of the times folded with best_period
 
             Dependencies
             ------------
+                - numpy
+                - matplotlib
 
             Comments
             --------
-        """ 
-        raise NotImplementedError("Not implemented yet. But on the TODO-list ;)")   
+            """ 
+
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from module_parts.utility_astroLuSt import Time_stuff
+
+        #time execution
+        if timeit:
+            task = Time_stuff("pdm")
+            task.start_task()
+
+        #set up trial periods
+        trial_periods = np.linspace(period_start, period_stop, nperiods+1)
+
+        sigma2s_sums = np.array([])  #array to save the total variance
+        all_intervals = []
+
+        #calculate variance of folded curve for each trial period
+        for p in trial_periods:
+            folded = Data_LuSt.fold(times, p)                                #fold curve on period
+            intervals = np.linspace(folded.min(), folded.max(), nintervals+1)   #setup intervals to use for variance calculation
+            all_intervals.append(intervals)
+            sigma2s = np.array([])                                              #array to save variance of each interval to
+            #calculate variance of each interval
+            for iv, ivs in zip(intervals[:-1], intervals[1:]):
+                iv_bool = (iv <= folded) & (folded < ivs)
+                sigma2_iv = np.var(fluxes[iv_bool])
+                sigma2s = np.append(sigma2s, sigma2_iv)
+
+            #save all calculate values accordingly and determine period of minimum variance
+            sigma2s_sums = np.append(sigma2s_sums, np.sum(sigma2s))
+        
+        #normalize sigma2s if specified
+        if normalize:
+            sigma2s_sums /= np.linalg.norm(sigma2s_sums)
+
+        #calculated desired parameters
+        sortidx = np.argsort(sigma2s_sums)
+        periods_sorted = trial_periods[sortidx]
+        sigma2s_sorted = sigma2s_sums[sortidx]
+        best_period = periods_sorted[0]
+        best_sigma2 = sigma2s_sorted[0]
+        best_fold = Data_LuSt.fold(times, best_period)
+        best_intervals = all_intervals[sortidx[0]]
+
+        if verbose:
+            print("No verbose impemented yet.")
+
+        if testplot:
+            fig = plt.figure(figsize=(12,12))
+            ax1 = fig.add_subplot(211)
+            ax1.set_title("PDM-result", fontsize=18)
+            ax1.plot(trial_periods, sigma2s_sums, color="tab:blue", marker=".", linestyle="", zorder=1)
+            ax1.vlines(best_period, ymin=sigma2s_sums.min(), ymax=sigma2s_sums.max(), color="tab:orange", linestyle="-", label=r"$P_{\mathrm{PDM}} =$" + f"{best_period:.3f}", zorder=2)
+            ax1.tick_params("both", labelsize=16)
+            ax1.set_xlabel("Period", fontsize=16)
+            ax1.set_ylabel("Variance", fontsize=16)
+            ax1.legend(fontsize=16)
+            ax2 = fig.add_subplot(212)
+            ax2.set_title("Resulting lightcurve", fontsize=18)
+            ax2.plot(best_fold, fluxes, color="tab:blue", marker=".", linestyle="", label="Final resulting lightcurve")
+            ax2.vlines(best_intervals, ymax=fluxes.max(), ymin=fluxes.min(), color="tab:orange", linestyle="--", label="Used intervals")
+            ax2.tick_params("both", labelsize=16)
+            ax2.set_xlabel("Period", fontsize=16)
+            ax2.set_ylabel("Flux", fontsize=16)
+            ax2.legend(fontsize=16)        
+            plt.show()
+
+        #time execution
+        if timeit:
+            task.end_task()
+
+        return best_period, best_sigma2, periods_sorted, sigma2s_sorted, best_fold
+
 
     def fold(time, period, timeit=False):
         """
