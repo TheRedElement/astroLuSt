@@ -19,10 +19,14 @@ class Plot_LuSt:
                 - function for easy multipanel plots
             - hexcolor_extract
                 - function for creating a (more or less) continuous color series
+            - color_generator
+                - function to generate a list of RGB-values for colors in equidistant spectral order
             - wavelength2rgb
                 - function to convert a given wavelength into its corresponding RGB-value
             - color_generator:
                 - function to generate a list of RGB-values for colors in spectral order
+                - uses wavelength
+                - depends on wavelength2rgb()
 
         Attributes
         ----------
@@ -596,6 +600,178 @@ class Plot_LuSt:
                 
         return colors
 
+    def color_generator(ncolors, color2black_factor=1, color2white_factor=1, greyscaleportion_combined=0.25, testplot=False, timeit=False):
+        #TODO: Add option to start at specific rgb value
+        #TODO: Add option to end at specific rgb value
+        """
+            - function to create a list of ncolors RGB-values for colors in spectral order  
+                - creates those for just colors, greyscale and a combination of both
+
+            Parameters
+            ----------
+                - ncolors
+                    - int, optional
+                    - number of colors to generate
+                - color2black_factor
+                    - float, optional
+                    - number to define how dark (black) the generated colors should be
+                    - out of the interval [0,1]
+                        - 0 is completely black
+                        - 1 is completely bright colors
+                        - everything inbetween is darker colors
+                    - can be combined with color2white_factor
+                        - yields interesting behaviour
+                        - use testplot to see the behaviour
+                    - the default is 1
+                - color2white_factor
+                    - float, optional
+                    - number to define how transperent (white) the generated colors should be
+                    - out of the interval [0,1]
+                        - 0 is completely white
+                        - 1 is completely bright colors
+                        - everything inbetween is more transparent colors
+                    - can be combined with color2black_factor
+                        - yields interesting behaviour
+                        - use testplot to see the behaviour
+                    - the default is 1
+                - greyscaleportion_combined
+                    - float, optional
+                    - number to define the relative amount of greyscale colors in the colors_combined
+                    - out of the interval (0,1)
+                    - the default is 0.25
+                - testplot
+                    - bool, optional
+                    - wether to create a testplot to visualize the created colors
+                    - the default is False
+                - timeit
+                    - bool, optional
+                    - specify wether to time the task and return the information or not.
+                    - the default is False      
+
+            Raises
+            ------
+                - ValueError
+                    - if a value is out of bounds   
+
+            Returns
+            -------
+                - colors
+                    - an array of the generated RGB-values in spectral order
+                - colors_greyscale
+                    - an array of fading grayscales
+                - colors_combined
+                    - an array of colors combined with greyscales
+                    - colors at the beginning, greyscales at the end    
+
+            Comments
+            --------    
+
+            Dependencies
+            ------------
+                - numpy
+                - matplotlib
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from module_parts.utility_astroLuSt import Time_stuff
+
+        #time execution
+        if timeit:
+            task = Time_stuff("color_generator")
+            task.start_task()   
+
+        if (color2black_factor < 0) or (color2black_factor > 1):
+            raise ValueError("color2black_factor has to be in the interval [0,1]")
+        if (color2white_factor < 0) or (color2white_factor > 1):
+            raise ValueError("color2white_factor has to be in the interval [0,1]")
+        if (greyscaleportion_combined <= 0) or (greyscaleportion_combined >= 1):
+            raise ValueError("color2black_factor has to be in the interval (0,1)")  
+
+        #colors
+        #------
+        colornum = int(np.ceil(ncolors/6))
+        variable = np.linspace(255*(1-color2white_factor),255,colornum)*color2black_factor
+        const255 = np.ones_like(variable)*255*color2black_factor
+        const0   = np.zeros_like(variable)+(255*(1-color2white_factor)) 
+
+        #red
+        c1 = np.append(const255, variable)
+        c1 = np.append(c1, const0)
+        c1 = c1.reshape(3,colornum).T   
+
+        #yellow - flip variable
+        c2 = np.append(variable[::-1], const255)
+        c2 = np.append(c2, const0)
+        c2 = c2.reshape(3,colornum).T   
+
+        #green
+        c3 = np.append(const0, const255)
+        c3 = np.append(c3, variable)
+        c3 = c3.reshape(3,colornum).T   
+
+        #cyan - flip variable
+        c4 = np.append(const0, variable[::-1])
+        c4 = np.append(c4, const255)
+        c4 = c4.reshape(3,colornum).T   
+
+        #blue
+        c5 = np.append(variable, const0)
+        c5 = np.append(c5, const255)
+        c5 = c5.reshape(3,colornum).T   
+
+        #magenta - flip variable
+        c6 = np.append(const255, const0)
+        c6 = np.append(c6, variable[::-1])
+        c6 = c6.reshape(3,colornum).T   
+
+        colors = np.concatenate((c1, c2, c3, c4, c5, c6))/255
+        colors = colors[:ncolors]   
+
+
+        #greyscale
+        #---------
+        variable_greyscale = np.linspace(255*(1-color2white_factor),255,ncolors)*color2black_factor
+        colors_greyscale = np.array(3*[variable_greyscale])/255
+        colors_greyscale = colors_greyscale.reshape(3,ncolors).T    
+
+        #both combined
+        #-------------
+        step_color     = int(np.floor(1/(1-greyscaleportion_combined)))
+        step_grayscale = int(np.floor(1/greyscaleportion_combined))
+        to_cut = (1/step_color+1/step_grayscale)*ncolors - ncolors
+        greyscaleend = int(to_cut//2)
+        colorend = int(to_cut-greyscaleend)
+        colors_combined = list(colors[::step_color])
+        colors_combined = colors_combined[:-colorend]
+        colors_combined += list(colors_greyscale[::step_grayscale])
+        colors_combined = colors_combined[:-greyscaleend]
+
+
+        if testplot:
+            x = np.arange(0,len(colors),1)
+            x_greyscale = np.arange(0,len(colors_greyscale),1)
+            x_combined = np.arange(0,len(colors_combined),1)
+            y = x
+            y_greyscale = x_greyscale-0.33*ncolors
+            y_combined = x_combined-0.66*ncolors
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.set_title("Testplot to visualize generated colors", fontsize=18)
+            ax.scatter(x, y, color=colors, marker=".", figure=fig)
+            ax.scatter(x_greyscale,y_greyscale, color=colors_greyscale, marker=".", figure=fig)
+            ax.scatter(x_combined,y_combined, color=colors_combined, marker=".", figure=fig)
+            ax.set_xlabel("indices colors", fontsize=16)
+            ax.set_ylabel("y", fontsize=16)
+            ax.tick_params("both", labelsize=16)
+            plt.show()
+
+        #time execution
+        if timeit:
+            task.end_task()
+
+        return colors, colors_greyscale, colors_combined
+
+
     def wavelength2rgb(wavelength, gamma=0.8):
         """
             - function to convert a given wavelength of visible light to a RGB value.
@@ -669,7 +845,7 @@ class Plot_LuSt:
         RGB = np.array([int(R), int(G), int(B)])
         return RGB
 
-    def color_generator(ncolors, wavelength_range=[380, 750], gamma=0.8, testplot=False, timeit=False):
+    def color_generator_wavelength(ncolors, wavelength_range=[380, 750], gamma=0.8, testplot=False, timeit=False):
         """
             - function to create a list of ncolors RGB-values for colors in spectral order
 
