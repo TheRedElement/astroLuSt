@@ -5,7 +5,6 @@
 
 #______________________________________________________________________________
 #Class containing useful stuff for plotting
-#TODO: implement color_generator()
 #TODO: plot_ax(): add multiple x/y-axes (twinx)?
 #TODO: plot_ax(): add 3d plotting
 
@@ -58,7 +57,6 @@ class Plot_LuSt:
                 timeit=False, verbose=False):                                       #additional functionality
         #TODO: add multiple x/y-axes (twinx)?
         #TODO: add 3d plotting
-        #TODO: make initialization correct (str could not be converted to float)
         """
             - Function which automatically creates a figure with subplots fitting the provided list of arrays.
             - Different parameters can be specified which can be specified in the fig.add_subplot() function as well.
@@ -599,6 +597,7 @@ class Plot_LuSt:
             task.end_task()
                 
         return colors
+
 
     def color_generator(ncolors, color2black_factor=1, color2white_factor=1, greyscaleportion_combined=0.25, testplot=False, timeit=False):
         #TODO: Add option to start at specific rgb value

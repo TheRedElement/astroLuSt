@@ -9,6 +9,7 @@
 #Class containing useful stuff for data analysis
 #TODO: add attributes?
 #TODO: Add progress bar?
+#TODO: fold(): Add option to fold into any desired interval
 class Data_LuSt:
     """
         - Class to execute data processing
@@ -553,6 +554,7 @@ class Data_LuSt:
 
 
     def fold(time, period, timeit=False):
+        #TODO: fold(): Add option to fold into any desired interval
         """
             - takes an array of times
                 - folds it with a specified period

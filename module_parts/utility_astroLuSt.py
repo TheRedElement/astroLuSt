@@ -114,6 +114,8 @@ class Time_stuff:
 #TODO: latex_template(): make so that if separator == " " the "&" are above each other
 #%%
 class Table_LuSt:
+    #TODO: Add method to add new column
+    #TODO: Add method to add another header row
     """
         Class to quickly print nice tables and save them to a text-file if need be.
         
@@ -121,7 +123,9 @@ class Table_LuSt:
         -------
             - add_row
                 - adds a row to the Table_LuSt object
-            - add header_row: TODO: Implement
+            - add_column TODO: Implement
+                - adds a whole column to the Table_LuSt object
+            - add header_row TODO: Implement
                 - adds a row to the current header of the Table_LuSt object     
             - print_header
                 - prints out the header of the table
@@ -325,6 +329,62 @@ class Table_LuSt:
         if len(row) != len(fstring):
             raise ValueError("len(row) as to be equal to len(fstring)")
 
+    def add_column(self, header, rows, formatstrings, separator="|", alignment="c"):
+        """
+            - Function to add another column to the table.
+
+            Parameters
+            ----------
+                - header
+                    - str
+                    - header of new column
+                - formatstrings
+                    - list, optional
+                    - list containing
+                        - strings
+                        - the corresponding formatstrings for the entries
+                - separator
+                    - str, optional
+                    - the separator to use for the column
+                    - the default is '|'
+                - alignment
+                    - str, optional
+                    - the alignment of the row
+                    - the default is 'c'
+            
+            Raises
+            ------
+                - ValueError
+                        - If the number of entries in the column is unequal to the number of rows in the table
+                        - If the number of entries in formatstrings is unequal to the number of rows in the table
+
+            Returns
+            -------
+
+            Dependencies
+            ------------
+
+            Comments
+            --------
+                - NOT IMPLEMENTED YET (Has issues)  
+
+        """
+
+        raise Warning("NOT IMPLEMENTED YET!")        
+             
+        # if len(self.rows) != len(rows):
+        #     raise ValueError("rows (len = %i) has to be the same length as self.rows (len = %i)!"%(len(rows), len(self.rows)))
+        # if len(self.formatstrings) != len(formatstrings):
+        #     raise ValueError("formatstrings (len = %i) has to be the same length as self.formatstrings (len = %i)!"%(len(formatstrings), len(self.formatstrings)))
+        
+        # self.header.append(header)
+        # self.separators.append(separator)
+        # self.alignments.append(alignment)
+        # for ridx, fidx in zip(range(len(self.rows)), range(len(self.formatstrings))):
+        #     self.rows[ridx].append(rows[ridx])
+        #     self.formatstrings[fidx].append(formatstrings[fidx])
+                
+    
     def add_header_row(self):
         raise Warning("NOT IMPLEMENTED YET!")
 
