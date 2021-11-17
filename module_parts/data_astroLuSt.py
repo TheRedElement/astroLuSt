@@ -612,6 +612,112 @@ class Data_LuSt:
 
         return phases_folded
 
+    def periodic_expansion(phases, fluxes, phase_ref, minmax="max", testplot=False, timeit=False):
+        """
+            - function to expand a periodic timeseries on either side
+                - takes all datapoints up to a reference phase
+                - appends them to the original array according to specification  
+
+            Parameters
+            ----------
+                - phases
+                    - np.array
+                    - phases of the datapoints to be expanded
+                - fluxes 
+                    - np.array
+                    - fluxes of the datapoints to be expanded
+                - phase_ref
+                    - float
+                    - reference phase
+                        - will be used in order to determine which phases to consider for appending
+                - minmax
+                    - str, optional
+                    - wether to append to the maximum or minimum of the dataseries
+                    - can take either
+                        - 'min'
+                            - will expand on the minimum side
+                            - will consider all phases from phase_ref to the maximum phase
+                        - 'max'
+                            - will expand on the maximum side
+                            - will consider all phases the minimum phase up to phase_ref
+                    - the default is 'max'
+                -testplot
+                    - bool, optional
+                    - whether to show a testplot of the result
+                    - the default is False
+                - timeit
+                    - bool, optional
+                    - specify whether to time the task and return the information or not
+                    - the default is False
+
+            Raises
+            ------
+                - ValueError
+                    - if minmax gets passed a wrong argument
+
+            Returns
+            -------
+                - expanded_phases
+                    - np.array
+                    - phases including the expanded part
+                - expanded_fluxes
+                    - np.array
+                    - fluxes including the expanded part
+
+            Dependencies
+            ------------
+                - numpy
+                - matplotlib
+
+            Comments
+            --------
+        """
+        
+
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from module_parts.utility_astroLuSt import Time_stuff
+
+        #time execution
+        if timeit:
+            task = Time_stuff("periodic_expansion")
+            task.start_task()
+
+        #append to maximum
+        if minmax == "max":
+            phase_bool = (phases < phase_ref)
+            appendix_phases = phases.max() + (phases[phase_bool] - phases.min())
+        #append to minimum
+        elif minmax == "min":
+            phase_bool = (phases > phase_ref)
+            appendix_phases = phases.min() - (phases.max() - phases[phase_bool])
+        else:
+            raise ValueError("minmax has to bei either 'min' or 'max'!")
+        
+        appendix_fluxes = fluxes[phase_bool]
+        expanded_phases = np.append(phases, appendix_phases)
+        expanded_fluxes = np.append(fluxes, appendix_fluxes)
+
+        if testplot:
+            fig = plt.figure()
+            plt.suptitle("Testplot to visualize shift")
+            plt.plot(phases, fluxes, color="tab:grey", marker=".", linestyle="", alpha=0.5, zorder=2, label="original input")
+            plt.plot(expanded_phases, expanded_fluxes, color="tab:blue", marker=".", linestyle="", alpha=1, zorder=1, label="expanded input")
+            plt.vlines(phase_ref, ymin=fluxes.min(), ymax=fluxes.max(), color="g", linestyle="--", label="reference phase")
+            plt.xlabel("x", fontsize=16)
+            plt.ylabel("y", fontsize=16)
+            plt.xticks(fontsize=16)
+            plt.yticks(fontsize=16)
+            plt.legend()
+            plt.show()
+        
+        #time execution
+        if timeit:
+            task.end_task()
+
+        return expanded_phases, expanded_fluxes
+
+
     def periodic_shift(input_array, shift, borders, timeit=False, testplot=False, verbose=False):
         """
             - function to shift an array considering periodic boundaries
