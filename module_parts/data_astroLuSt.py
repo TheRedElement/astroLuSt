@@ -467,6 +467,12 @@ class Data_LuSt:
                 - best_fold
                     - np.array
                     - the resulting phases of the times folded with best_period
+                - errestimate
+                    - float
+                    - an estiamte of the uncertainty of the result
+                    - estimated to be 2* the maximum distance between two trial periods
+                        - because the best period is certain to lie within the trial interval
+                        - but where exactly is not sure
 
             Dependencies
             ------------
@@ -522,6 +528,8 @@ class Data_LuSt:
         best_fold = Data_LuSt.fold(times, best_period)
         best_intervals = all_intervals[sortidx[0]]
 
+        errestimate = 2*np.diff(np.sort(periods_sorted)).max()  #error estimate as 2*maximum difference between periods
+
         if verbose:
             print("No verbose impemented yet.")
 
@@ -550,7 +558,7 @@ class Data_LuSt:
         if timeit:
             task.end_task()
 
-        return best_period, best_sigma2, periods_sorted, sigma2s_sorted, best_fold
+        return best_period, best_sigma2, periods_sorted, sigma2s_sorted, best_fold, errestimate
 
 
     def fold(time, period, timeit=False):
@@ -957,6 +965,7 @@ class Data_LuSt:
             Dependencies
             ------------
                 - numpy
+                - matplotlib
 
             Comments
             --------
@@ -964,8 +973,9 @@ class Data_LuSt:
         """
         
         import numpy as np
+        import matplotlib.pyplot as plt
         from module_parts.utility_astroLuSt import Time_stuff
-        
+
         #time execution
         if timeit:
             task = Time_stuff("phase_binning")
@@ -1010,6 +1020,18 @@ class Data_LuSt:
                   50*"-"+"\n"
                   )
             
+        if testplot:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.errorbar(phases, fluxes, color="gainsboro", marker=".", linestyle="", zorder=1, label="original data")
+            ax.errorbar(phases_mean, fluxes_mean, yerr=fluxes_sigm, color="tab:blue", marker=".", linestyle="", zorder=3, label="representative data")
+            ax.legend(fontsize=16)
+            ax.set_xlabel("x", fontsize=14)
+            ax.set_ylabel("y", fontsize=14)
+            ax.tick_params(axis="both", labelsize=14)
+            plt.show()
+            
+        
         #time execution
         if timeit:
             task.end_task()
@@ -1017,7 +1039,7 @@ class Data_LuSt:
         
         return phases_mean, fluxes_mean, fluxes_sigm, intervals
 
-    def sigma_clipping(fluxes, fluxes_mean, phases, phases_mean, intervals, clip_value_top, clip_value_bottom, times=[], timeit=False):
+    def sigma_clipping(fluxes, fluxes_mean, phases, phases_mean, intervals, clip_value_top, clip_value_bottom, times=[], testplot=False, timeit=False):
         """
             - cuts out all datapoints of fluxes (and phases and times) array which are outside of the interval [clip_value_bottom, clip_value_top] and returns the remaining array
             - used to get rid of outliers
@@ -1053,10 +1075,15 @@ class Data_LuSt:
                     - times corresponding to fluxes
                         - only if existent
                     - the default is []
+                - testplot
+                    - bool, optinonal
+                    - whether to show a testplot
+                    - the default is False
                 - timeit
                     - bool, optional
                     - specify wether to time the task and return the information or not.
                     - the default is False
+
 
             Raises
             ------
@@ -1082,6 +1109,7 @@ class Data_LuSt:
             Dependencies
             ------------
                 - numpy
+                - matplotlib
             
             Comments
             --------
@@ -1089,6 +1117,7 @@ class Data_LuSt:
         """
 
         import numpy as np
+        import matplotlib.pyplot as plt
         from module_parts.utility_astroLuSt import Time_stuff
 
         #time execution
@@ -1140,7 +1169,18 @@ class Data_LuSt:
             cut_f = np.append(cut_f, cut_fluxes)
             cut_p = np.append(cut_p, cut_phases)
             cut_t = np.append(cut_t, cut_times)
-        
+            
+        if testplot:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.plot(phases_sigcut, fluxes_sigcut, color="tab:blue", marker=".", linestyle="", zorder=2, label="Kept data")
+            ax.plot(cut_p, cut_f, color="gainsboro", marker=".", linestyle="", zorder=1, label="Removed data")
+            ax.legend(fontsize=16)
+            ax.set_xlabel("x", fontsize=14)
+            ax.set_ylabel("y", fontsize=14)
+            ax.tick_params(axis="both", labelsize=14)
+            plt.show()
+
         #time execution
         if timeit:
             task.end_task()
