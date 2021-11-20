@@ -270,7 +270,7 @@ class Data_LuSt:
         
         return combined_linspace
 
-    def lc_error(fluxes, times, delta_t_points, timeit=False, verbose=False):
+    def lc_error(fluxes, times, delta_t_points, timeit=False, verbose=False, testplot=False):
         """    
             - estimates the error of a lightcurve given the respective time series and a time-difference condition (delta_t_points - maximum difference between 2 data points of same cluster)
             - the LC will be divided into clusters of datapoints, which are nearer to their respective neighbours, than the delta_t_points
@@ -299,7 +299,10 @@ class Data_LuSt:
                     - bool, optional
                     - wether to show additional information implemented by the creator
                     - the default is False
-                
+                - testplot
+                    - bool, optional
+                    - whether to show a testplot
+                    - the default is False
             Raises
             ------
 
@@ -372,8 +375,10 @@ class Data_LuSt:
             mean_times = np.append(mean_times, mean_time_iv)    #store mean time of the interval
             sigmas = np.append(sigmas, sigma_iv)
             
-
         if verbose:
+            print("NO verbose IMPLEMENTED YET!")
+            
+        if testplot:
             fig = plt.figure(figsize=(10,10))
             fig.suptitle("Result of lc_error()", fontsize=18)
             ax = fig.add_subplot(111)

@@ -110,6 +110,8 @@ class Time_stuff:
     
 #______________________________________________________________________________
 #Class for printing tables
+#TODO: __init__(): Add option to pass table_name. (Include in saving table)
+#       + add in latex_template() and print_table() (+ print some separator between two tables (\n))
 #TODO: Add option to add another header row
 #TODO: latex_template(): make so that if separator == " " the "&" are above each other
 #%%
@@ -139,6 +141,10 @@ class Table_LuSt:
         
         Attributes
         ----------
+            - table_name
+                - str, optional
+                - name of the table when saved in file
+                - the default is None
             - header
                 - list, optional
                 - list containing
@@ -191,7 +197,11 @@ class Table_LuSt:
         --------
     """
 
-    def __init__(self, header=None, rows=None, formatstrings=None, separators=None, alignments=None, newsections=None):
+    def __init__(self, table_name=None, header=None, rows=None, formatstrings=None, separators=None, alignments=None, newsections=None):
+        if table_name is None:
+            self.table_name = "Table"
+        else:
+            self.table_name = table_name
         if header is None:
             self.header = []
         else:
@@ -267,6 +277,7 @@ class Table_LuSt:
     def __repr__(self):
         return ("\n"
                 f"Table_LuSt(\n"
+                f"table_name = {self.table_name},\n"
                 f"header = {self.header},\n"
                 f"rows = {self.rows},\n" 
                 f"formatstrings = {self.formatstrings},\n"
@@ -584,10 +595,13 @@ class Table_LuSt:
 
         if type(save) == str:
             outfile = open(save, writingtype)
+            outfile.write("\n")
+            outfile.write(self.table_name + "\n")
+            outfile.write(len(self.table_name)*"-" + "\n")
             outfile.write(head)
             outfile.write("="*self.tablewidth + "\n")
             outfile.write(rows)
-            outfile.write("-"*self.tablewidth + "\n")
+            outfile.write("-"*self.tablewidth + "\n\n")
             outfile.close()
 
         #construct one string of the complete table (needed for latex_template)
@@ -708,7 +722,11 @@ class Table_LuSt:
             print(latex_table)        
         if type(save) == str:
             outfile = open(save, writingtype)
+            outfile.write("\n")
+            outfile.write(self.table_name + "\n")
+            outfile.write(len(self.table_name)*"-" + "\n")
             outfile.write(latex_table)
+            outfile.write("\n\n")
             outfile.close()
 
 
