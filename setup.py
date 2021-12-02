@@ -14,7 +14,6 @@ setup(
         "numpy",
         "matplotlib",
         "scipy",
-        "re",
         "datetime",
         "copy",
     ],
