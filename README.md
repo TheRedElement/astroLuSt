@@ -5,7 +5,7 @@ A collection of functions useful for dataprocessing especially in astronomy.
 ## Installation
 
 To install astroLuSt simply call
-```
+```shell
 python -m pip install git+https://github.com/TheRedElement/astroLuSt
 ```
 from your console.
