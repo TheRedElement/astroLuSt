@@ -17,6 +17,7 @@ The current version consists of the following parts:
 
 The structure of the module is the following:
 
+```
 astroLuSt
 +-- files
 |    +--- colorcodes
@@ -29,6 +30,7 @@ astroLuSt
 +-- astroLuSt_example_usage.ipynb
 +-- README.md
 +-- setup.py
+```
 
 ## Dependencies
 
