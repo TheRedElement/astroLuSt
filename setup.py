@@ -15,7 +15,6 @@ setup(
         "matplotlib",
         "scipy",
         "datetime",
-        "copy",
     ],
     classifiers=[
         "Programming Language :: Python :: 3.8",
