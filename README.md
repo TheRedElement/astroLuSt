@@ -2,6 +2,14 @@
 
 A collection of functions useful for dataprocessing especially in astronomy.
 
+## Installation
+
+To install astroLuSt simply call
+```
+python -m pip install git+https://github.com/TheRedElement/astroLuSt
+```
+from your console.
+
 ## Files
 
 The different parts of the module are saved in *./astroLuSt*.
