@@ -384,7 +384,7 @@ class Data_LuSt:
             ax = fig.add_subplot(111)
             ax.vlines(intervals, ymax=fluxes.max(), ymin=fluxes.min(), color="tab:grey", linestyle="--", label="intervals", zorder=1)
             ax.errorbar(times, fluxes, yerr=LC_errors, color="tab:blue", marker=".", linestyle="", capsize=3, label="estimated errors", zorder=2)
-            ax.errorbar(mean_times, mean_fluxes, yerr=sigmas, color="tab:orange", marker=".", linestyle="", capsize=3, label="means of the interaval", zorder=3)
+            ax.errorbar(mean_times, mean_fluxes, yerr=sigmas, color="tab:orange", marker=".", linestyle="", capsize=3, label="means of the interval", zorder=3)
             ax.set_xlabel(r"$x$", fontsize=16)
             ax.set_ylabel(r"y$(x)$", fontsize=16)
             ax.tick_params("both", labelsize=16)
