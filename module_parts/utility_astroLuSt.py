@@ -110,14 +110,11 @@ class Time_stuff:
     
 #______________________________________________________________________________
 #Class for printing tables
-#TODO: __init__(): Add option to pass table_name. (Include in saving table)
-#       + add in latex_template() and print_table() (+ print some separator between two tables (\n))
-#TODO: Add option to add another header row
-#TODO: latex_template(): make so that if separator == " " the "&" are above each other
 #%%
 class Table_LuSt:
     #TODO: Add method to add new column
     #TODO: Add method to add another header row
+    #TODO: latex_template(): make so that if separator == " " the "&" are above each other
     """
         Class to quickly print nice tables and save them to a text-file if need be.
         
@@ -731,8 +728,6 @@ class Table_LuSt:
 
 
         
-
-
 
 
 

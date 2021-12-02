@@ -8,7 +8,7 @@
 #______________________________________________________________________________
 #Class containing useful stuff for data analysis
 #TODO: add attributes?
-#TODO: Add progress bar?
+#TODO: Add progress bar? - https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
 #TODO: fold(): Add option to fold into any desired interval
 class Data_LuSt:
     """
