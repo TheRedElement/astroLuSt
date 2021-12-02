@@ -137,7 +137,7 @@ class Data_LuSt:
         import numpy as np
         import matplotlib.pyplot as plt
         import scipy.stats as sps
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
 
         #time execution
         if timeit:
@@ -335,7 +335,7 @@ class Data_LuSt:
         
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
 
         #time execution
         if timeit:
@@ -490,7 +490,7 @@ class Data_LuSt:
 
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
 
         #time execution
         if timeit:
@@ -603,7 +603,7 @@ class Data_LuSt:
         """
 
         import numpy as np
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
         
         #time execution
         if timeit:
@@ -689,7 +689,7 @@ class Data_LuSt:
 
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
 
         #time execution
         if timeit:
@@ -781,7 +781,7 @@ class Data_LuSt:
         
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
         
         
         #time execution
@@ -885,7 +885,7 @@ class Data_LuSt:
             --------
         """
    
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
         
         #time execution
         if timeit:
@@ -979,7 +979,7 @@ class Data_LuSt:
         
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
 
         #time execution
         if timeit:
@@ -1123,7 +1123,7 @@ class Data_LuSt:
 
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
 
         #time execution
         if timeit:

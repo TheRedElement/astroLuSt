@@ -4,7 +4,7 @@ A collection of functions useful for dataprocessing especially in astronomy.
 
 ## Files
 
-The different parts of the module are saved in *./module_parts*.
+The different parts of the module are saved in *./astroLuSt*.
 The current version consists of the following parts:
 - __data_astroLuSt.py__
     - classes and functions useful for data-processing
@@ -14,6 +14,31 @@ The current version consists of the following parts:
     - classes and functions useful for plotting
 - __utility_astroLuSt.py__
     - classes and functions for random convenient stuff
+
+The structure of the module is the following:
+
+astroLuSt
+|--- files
+|    |--- colorcodes
+|--- astroLuSt
+|    |--- \__init\__.py
+|    |--- data_astroLuSt.py
+|    |--- PHOEBE_astroLuSt.py
+|    |--- plotting_astroLuSt.py
+|    |--- utility_astroLuSt.py
+|--- astroLuSt_example_usage.ipynb
+|--- README.md
+|--- setup.py
+
+## Dependencies
+
+The current dependencies are
+- numpy
+- matplotlib
+- scipy
+- re
+- datetime
+- copy
 
 ## Examples
 

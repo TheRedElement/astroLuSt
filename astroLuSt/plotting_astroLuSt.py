@@ -235,7 +235,7 @@ class Plot_LuSt:
         import matplotlib.pyplot as plt
         from scipy.interpolate import make_interp_spline, BSpline #used for smoothing
         import copy
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
         
         ###################################################
         #Check if xvals and yvals are of the correct shape#
@@ -556,7 +556,7 @@ class Plot_LuSt:
         import re
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
         
         #time execution
         if timeit:
@@ -672,7 +672,7 @@ class Plot_LuSt:
         """
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
 
         #time execution
         if timeit:
@@ -885,7 +885,7 @@ class Plot_LuSt:
         """
         import numpy as np
         import matplotlib.pyplot as plt
-        from module_parts.utility_astroLuSt import Time_stuff
+        from astroLuSt.utility_astroLuSt import Time_stuff
         
         #time execution
         if timeit:
