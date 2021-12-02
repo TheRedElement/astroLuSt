@@ -18,17 +18,17 @@ The current version consists of the following parts:
 The structure of the module is the following:
 
 astroLuSt
-|--- files
-|    |--- colorcodes
-|--- astroLuSt
-|    |--- \__init\__.py
-|    |--- data_astroLuSt.py
-|    |--- PHOEBE_astroLuSt.py
-|    |--- plotting_astroLuSt.py
-|    |--- utility_astroLuSt.py
-|--- astroLuSt_example_usage.ipynb
-|--- README.md
-|--- setup.py
++-- files
+|    +--- colorcodes
++-- astroLuSt
+|   +-- \__init\__.py
+|   +-- data_astroLuSt.py
+|   +-- PHOEBE_astroLuSt.py
+|   +-- plotting_astroLuSt.py
+|   +-- utility_astroLuSt.py
++-- astroLuSt_example_usage.ipynb
++-- README.md
++-- setup.py
 
 ## Dependencies
 

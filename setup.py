@@ -1,5 +1,5 @@
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="astroLuSt",
@@ -9,7 +9,7 @@ setup(
     author_email="lukas.steinwender99@gmail.com",
     description="Module containing code especially useful in astronomy.",
     long_description="Module containing code especially useful in astronomy.",
-    packages=find_packages(),
+    packages=["astroLuSt"],
     install_requires=[
         "numpy",
         "matplotlib",
