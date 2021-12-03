@@ -975,6 +975,8 @@ class Data_LuSt:
             Comments
             --------
                 - Plot_LuSt.linspace_def() will be called inside this function
+                - contains a subfunction (execute_binning())
+                    - used to correct if nan occur in the result
         """
         
         import numpy as np
@@ -986,34 +988,59 @@ class Data_LuSt:
             task = Time_stuff("phase_binning")
             task.start_task()
 
-        intervals = Data_LuSt.linspace_def(centers,
-                                           widths,
-                                           linspace_range=[phases.min(),phases.max()],
-                                           nintervals=nintervals,
-                                           nbins=nbins+1,
-                                           go_exact=go_exact,
-                                           testplot=testplot,
-                                           verbose=verbose
-                                           )
-        
-        #saving arrays for mean LC    
-        phases_mean = np.array([])    
-        fluxes_mean = np.array([])
-        fluxes_sigm = np.array([])
-        
-        #calculate mean flux for each interval
-        for iv1, iv2 in zip(intervals[1:], intervals[:-1]):  
-            bool_iv = ((phases <= iv1) & (phases > iv2))
-            
-            #calc mean phase, mean flux and standard deviation of flux for each interval        for pidx, p in enumerate(phases):
-            mean_phase = np.mean(phases[bool_iv])
-            mean_flux  = np.mean(fluxes[bool_iv])
-            sigm_flux  = np.std(fluxes[bool_iv])
+        def execute_binning(correctnan=0):
+            """
+                - Code snippet to execute the binning procedure
+                - Needed to correct if the result contains nan values
+                    - in that case it is necessary to run the procedure twice
+                
+                Parameters
+                ----------
+                    - correctnan
+                        - int, optional
+                        - parameter to correct for the nan values in the result
+            """
 
-            phases_mean = np.append(phases_mean, mean_phase)
-            fluxes_mean = np.append(fluxes_mean, mean_flux)
-            fluxes_sigm = np.append(fluxes_sigm, sigm_flux)    
-        
+            intervals = Data_LuSt.linspace_def(centers,
+                                               widths,
+                                               linspace_range=[phases.min(),phases.max()],
+                                               nintervals=nintervals,
+                                               nbins=nbins+1+correctnan,
+                                               go_exact=go_exact,
+                                               testplot=testplot,
+                                               verbose=verbose
+                                               )
+
+            #saving arrays for mean LC    
+            phases_mean = np.array([])    
+            fluxes_mean = np.array([])
+            fluxes_sigm = np.array([])
+
+            #calculate mean flux for each interval
+            for iv1, iv2 in zip(intervals[:-1], intervals[1:]):  
+                bool_iv = ((iv1 <= phases) & (phases < iv2))
+
+                #calc mean phase, mean flux and standard deviation of flux for each interval        for pidx, p in enumerate(phases):
+                mean_phase = np.mean(phases[bool_iv])
+                mean_flux  = np.mean(fluxes[bool_iv])
+                sigm_flux  = np.std(fluxes[bool_iv])
+
+                phases_mean = np.append(phases_mean, mean_phase)
+                fluxes_mean = np.append(fluxes_mean, mean_flux)
+                fluxes_sigm = np.append(fluxes_sigm, sigm_flux)    
+            return  phases_mean, fluxes_mean, fluxes_sigm, intervals
+
+        phases_mean, fluxes_mean, fluxes_sigm, intervals = execute_binning()
+
+        nans = np.count_nonzero(np.isnan(phases_mean))
+        if nans > 0:
+            
+            print("Found nan in the result. Will execute procedure once more to correct for the nan.")
+            phases_mean, fluxes_mean, fluxes_sigm, intervals = execute_binning(correctnan=nans)
+            phases_mean = phases_mean[~np.isnan(phases_mean)]
+            fluxes_mean = fluxes_mean[~np.isnan(fluxes_mean)]
+            fluxes_sigm = fluxes_sigm[~np.isnan(fluxes_sigm)]
+
         if verbose:
             print("\n"+50*"-"+"\n",
                   "verbose, phase_binning: \n",
