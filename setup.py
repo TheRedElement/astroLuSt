@@ -6,18 +6,18 @@
 
 
 from setuptools import setup, find_packages
-# import pathlib
+import pathlib
 
-# here = pathlib.Path(__file__).parent.resolve()
+here = pathlib.Path(__file__).parent.resolve()
 
-# # Get long description from the README file
-# long_description = (here / "README.md").read_text(encoding="utf-8")
+# Get long description from the README file
+long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="astroLuSt",
     version="0.0.1",
     description="Module containing tools useful especially in astronomy.",
-    long_description="long_description",
+    long_description=long_description,
     long_description_content_type='text/markdown',
     url="https://github.com/TheRedElement/astroLuSt",
     author="Steinwender Lukas",
