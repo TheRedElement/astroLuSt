@@ -52,4 +52,4 @@ The current dependencies are
 
 ## Examples
 
-To get a feel on how the different functions and classes behave I provided some information in __astroLuSt_example_usage.ipynb__.
+To get a feel on how the different functions and classes behave, I provided some information in __astroLuSt_example_usage.ipynb__.
