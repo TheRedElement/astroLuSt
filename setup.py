@@ -31,7 +31,8 @@ setup(
     ],
     keywords="Astronomy, Dataanalysis",
     # package_dir={"": "astroLuSt"},
-    packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
+    packages=["astroLuSt"],
+    # packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
     # python_requires=">=3.8, < 4",
     install_requires=[
         "numpy",
