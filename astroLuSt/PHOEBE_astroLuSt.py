@@ -1,8 +1,9 @@
 
+
     ###################
     #Steinwender Lukas#
     ###################
-
+    
 #______________________________________________________________________________
 #Class useful for working with PHOEBE
 #TODO: update to extract more values
@@ -78,8 +79,13 @@ class PHOEBE_additional:
         """
         
         import numpy as np
-        from module_parts.utility_astroLuSt import Time_stuff
-        
+        from astroLuSt.utility_astroLuSt import Time_stuff
+
+        print("WARNING:")
+        print("--------")
+        print("This part of astroLuSt still needs a lot of work to function well.")
+        print("The main focus of this module is not PHOEBE_astroLuSt, hence it might take a long time until this part functions well!\n\n")
+
         #time execution
         if timeit:
             task = Time_stuff("extract_data")

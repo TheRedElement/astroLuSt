@@ -1,10 +1,9 @@
 
+
     ###################
     #Steinwender Lukas#
     ###################
-
-
-
+    
 #______________________________________________________________________________
 #Class containing useful stuff for data analysis
 #TODO: add attributes?

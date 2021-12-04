@@ -21,21 +21,22 @@ The current version consists of the following parts:
 - __plotting_astroLuSt.py__
     - classes and functions useful for plotting
 - __utility_astroLuSt.py__
-    - classes and functions for random convenient stuff
+    - classes and functions for other convenient stuff to improve the workflow
 
 The structure of the module is the following:
 
 ```
 astroLuSt
-|-- files
-|   `-- colorcodes
 |-- astroLuSt
+|   |-- files
+|   |   `-- Colorcodes.txt
 |   |-- __init__.py
 |   |-- data_astroLuSt.py
 |   |-- PHOEBE_astroLuSt.py
 |   |-- plotting_astroLuSt.py
 |   `-- utility_astroLuSt.py
 |-- astroLuSt_example_usage.ipynb
+|-- MANIFEST.in
 |-- README.md
 `-- setup.py
 ```
@@ -49,7 +50,13 @@ The current dependencies are
 - re
 - datetime
 - copy
+- pathlib
 
 ## Examples
 
 To get a feel on how the different functions and classes behave, I provided some information in __astroLuSt_example_usage.ipynb__.
+
+## Referencing
+
+If you use any of the utilities provided in the __astroLuSt__-module, I would be very glad if you reference the current homepage:
+[https://github.com/TheRedElement/astroLuSt](https://github.com/TheRedElement/astroLuSt)
