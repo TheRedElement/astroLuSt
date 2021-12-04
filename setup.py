@@ -8,6 +8,11 @@
 from setuptools import setup
 import pathlib
 
+here = pathlib.Path(__file__).parent.resolve()
+
+# Get long description from the README file
+long_description = (here / "README.md").read_text(encoding="utf-8")
+
 setup(
     name="astroLuSt",
     version="0.0.1",
