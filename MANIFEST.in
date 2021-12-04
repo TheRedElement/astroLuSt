@@ -1,2 +1,2 @@
 include README.md
-exclude astroLuSt/PHOEBE_astroLuSt.py
+exclude PHOEBE_astroLuSt.py
