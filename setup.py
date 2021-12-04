@@ -6,6 +6,7 @@
 
 
 from setuptools import setup
+import pathlib
 
 setup(
     name="astroLuSt",
