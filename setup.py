@@ -4,10 +4,6 @@
 # https://packaging.python.org/guides/distributing-packages-using-setuptools/
 # https://github.com/pypa/sampleproject
 
-# A setuptools based setup module.
-# See:
-# https://packaging.python.org/guides/distributing-packages-using-setuptools/
-# https://github.com/pypa/sampleproject
 
 from setuptools import setup, find_packages
 import pathlib
@@ -35,8 +31,7 @@ setup(
     ],
     keywords="Astronomy, Dataanalysis",
     # package_dir={"": "astroLuSt"},
-    packages=["astroLuSt"],
-    # packages=find_packages(exclude=["astroLuSt/__pycache__", "astroLuSt/PHOEBE_astro_LuSt.py"]),
+    packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
     # python_requires=">=3.8, < 4",
     install_requires=[
         "numpy",

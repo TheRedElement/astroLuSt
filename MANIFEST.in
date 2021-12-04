@@ -1,4 +1,4 @@
 include README.md
 include astroLuSt_example_usage.ipynb
-global-exclude PHOEBE_astroLuSt.py
-global-exclude __pycache__
+exclude PHOEBE_astroLuSt.py
+exclude __pycache__
