@@ -563,7 +563,7 @@ class Plot_LuSt:
             task = Time_stuff("hexcolor_extract")
             task.start_task()
 
-        infile = open("astroLuSt/files/Colorcodes.txt", "r")
+        infile = open("files/Colorcodes.txt", "r")
         colors = {"names":[],"hex":[]}
         lines = infile.readlines()
         for line in lines:
