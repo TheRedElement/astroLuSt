@@ -43,9 +43,12 @@ setup(
         "scipy",
         "datetime",
     ],
-    data_files=[
-        ('files', ['files/Colorcodes.txt']),
-    ],
+    package_data={
+        'astroLuSt': ['files/Colorcodes.txt'],
+    },    
+    # data_files=[
+    #     ('files', ['files/Colorcodes.txt']),
+    # ],
     project_urls={
         "Source": "https://github.com/TheRedElement/astroLuSt" 
     },
