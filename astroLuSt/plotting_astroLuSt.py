@@ -37,7 +37,7 @@ class Plot_LuSt:
             - scipy
             - copy
             - re
-    
+            - pathlib
         Comments
         --------
     """
@@ -551,11 +551,13 @@ class Plot_LuSt:
             ------------
                 - re
                 - numpy
-                - matplotlib        
+                - matplotlib    
+                - pathlib    
         """
         import re
         import numpy as np
         import matplotlib.pyplot as plt
+        from pathlib import Path
         from astroLuSt.utility_astroLuSt import Time_stuff
         
         #time execution
@@ -563,7 +565,8 @@ class Plot_LuSt:
             task = Time_stuff("hexcolor_extract")
             task.start_task()
 
-        infile = open("files/Colorcodes.txt", "r")
+        here = Path(__file__).parent
+        infile = open(here/"files/Colorcodes.txt", "r")
         colors = {"names":[],"hex":[]}
         lines = infile.readlines()
         for line in lines:
