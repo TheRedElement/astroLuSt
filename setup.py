@@ -47,6 +47,6 @@ setup(
         ('needed_files', ['files/Colorcodes.txt']),
     ],
     project_urls={
-        "Source: https://github.com/TheRedElement/astroLuSt" 
+        "Source": "https://github.com/TheRedElement/astroLuSt" 
     },
 )
