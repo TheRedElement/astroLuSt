@@ -44,7 +44,7 @@ setup(
         "datetime",
     ],
     package_data={
-        'astroLuSt': ['files/Colorcodes.txt'],
+        'astroLuSt/files': ['files/Colorcodes.txt'],
     },    
     # data_files=[
     #     ('files', ['files/Colorcodes.txt']),
