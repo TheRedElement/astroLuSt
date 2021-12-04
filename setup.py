@@ -30,9 +30,7 @@ setup(
         "Development Status :: 2 - Pre-Alpha"
     ],
     keywords="Astronomy, Dataanalysis",
-    # package_dir={"": "astroLuSt"},
     packages=["astroLuSt"],
-    # python_requires=">=3.8, < 4",
     install_requires=[
         "numpy",
         "matplotlib",
