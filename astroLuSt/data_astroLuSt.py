@@ -1115,7 +1115,6 @@ class Data_LuSt:
                     - specify wether to time the task and return the information or not.
                     - the default is False
 
-
             Raises
             ------
                 - ValueError
@@ -1218,3 +1217,75 @@ class Data_LuSt:
                         
         return fluxes_sigcut, phases_sigcut, times_sigcut, cut_f, cut_p, cut_t
 
+class Units:
+
+
+    def __init__(self):
+        pass
+    
+    def mags2fluxes(mags, m_ref):
+        """
+            - function to convert magnitudes to flux
+            
+            Parameters
+            ----------
+                - mags
+                    - float, np.array
+                    - magnitudes to be converted
+                - m_ref
+                    - float
+                    - reference magnitude for the conversion
+                        - this value is dependent on the passband filter in use
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fluxes
+                    - float, np.array
+                    - fluxes corresponding to mags
+
+            Dependencies
+            ------------
+
+            Comments
+            --------
+
+        """
+        flux = 10**(0.4*(m_ref - mags))
+        return flux
+
+
+    def fluxes2mags(flux, m_ref):
+        """
+            - function to convert photon flux to magnitudes
+
+            Parameters
+            ----------
+                - flux
+                    - float, np.array
+                    - fluxes to be converted
+                - m_ref
+                    - float
+                    - reference magnitude for the conversion
+                        - this value is dependent on the passband filter in use
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - mags
+                    - float, np.array
+                    - magnitudes corresponding to fluxes
+
+            Dependencies
+            ------------
+
+            Comments
+            --------
+        """
+        import numpy as np
+        mags = -2.5*np.log10(flux) + m_ref
+        return mags

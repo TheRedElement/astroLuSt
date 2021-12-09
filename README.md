@@ -18,6 +18,9 @@ The different parts of the module are saved in *./astroLuSt*.
 The current version consists of the following parts:
 - __data_astroLuSt.py__
     - classes and functions useful for data-processing
+    - classes for unit conversions
+        - not complete
+        - will get expanded over time
 - __PHOEBE_astroLuSt.py__
     - classes and functions useful for working with PHOEBE
 - __plotting_astroLuSt.py__
