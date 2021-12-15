@@ -342,11 +342,11 @@ class Data_LuSt:
             task.start_task()
 
         #check where the datapoints are more delta_t_points apart from each other
-        indecies =  np.where(np.diff(times) > delta_t_points)[0]
+        indices =  np.where(np.diff(times) > delta_t_points)[0]
 
         #used intervals
-        mean_delta = np.mean(np.diff(times[indecies]))
-        intervals = times[indecies] - (times[indecies] - times[indecies+1])/2
+        mean_delta = np.mean(np.diff(times[indices]))
+        intervals = times[indices] - (times[indices] - times[indices+1])/2
         intervals = np.insert(intervals, 0, times.min()-mean_delta/2)          #add initial point
         intervals = np.append(intervals, times.max()+mean_delta/2)             #add final point
 

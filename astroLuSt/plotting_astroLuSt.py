@@ -466,13 +466,14 @@ class Plot_LuSt:
                                                                                                                        zorder):
                 
                 #smooth if smoothig is pecified for the curve is true
-                if sm and verbose:
-                    print("\n---------------------------------------")
-                    print("WARNING: Smoothing the following curve:")
-                    print("position: %s, curve number: %i"%(position, curvenumber))
-                    print("The errors attached to this curve will")
-                    print("be deleted for the plotting process!")                
-                    print("---------------------------------------\n")
+                if sm: 
+                    if verbose:
+                        print("\n---------------------------------------")
+                        print("WARNING: Smoothing the following curve:")
+                        print("position: %s, curve number: %i"%(position, curvenumber))
+                        print("The errors attached to this curve will")
+                        print("be deleted for the plotting process!")                
+                        print("---------------------------------------\n")
                     sortidx = np.argsort(xii)                       #get sorted indices
                     xii, yii = xii[sortidx], yii[sortidx]           #sort arrays (spline needs sorted array)
                     spl = make_interp_spline(xii, yii, k=smd)       #type: BSpline
