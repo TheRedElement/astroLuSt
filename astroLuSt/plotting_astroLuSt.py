@@ -77,7 +77,8 @@ class Plot_LuSt:
                     - list/np.ndarray, optional
                     - list of colors to use for plotting the datasets.
                     - the default is None
-                        - will plot all in "tab:blue"
+                        - will generate all curves in one subplot in as different colors as possible
+                        - calls Plot_LuSt.color_generator() to do so
                 - markers
                     - list/np.ndarray, optional
                     - list of markers to use for plotting the datasets.
@@ -224,6 +225,7 @@ class Plot_LuSt:
                     >>> axs[iidx].get_shared_y_axes().join(axs[iidx],axs[jidx]) \n
                     >>> axs[iidx].set_yticklabels([]) \n
                     where axs the second return value of the function and thus a list of all axes
+                - calls Plot_LuSt.color_generator()
         
             Dependencies
             ------------
@@ -280,10 +282,12 @@ class Plot_LuSt:
 
         if colors is None:
             colors = copy.deepcopy(xvals)
-            #initialize all colors with "tab:blue"
+            maxlen = max([len(l) for l in colors])
+            consecutive_colors = Plot_LuSt.color_generator(ncolors=maxlen)[0]
+            #initialize all colors with colors as different from each other as possible "tab:blue"
             for ciidx, ci in enumerate(colors):
                 for cjidx, cj in enumerate(ci):
-                    colors[ciidx][cjidx] = "tab:blue"
+                    colors[ciidx][cjidx] = consecutive_colors[cjidx] #"tab:blue"
         if markers is None:
             markers = copy.deepcopy(xvals)
             #initialize all markers with "."
@@ -693,7 +697,8 @@ class Plot_LuSt:
 
         #colors
         #------
-        colornum = int(np.ceil(ncolors/6))
+        ncolors2 = 2*ncolors
+        colornum = int(np.ceil(ncolors2/6))
         variable = np.linspace(255*(1-color2white_factor),255,colornum)*color2black_factor
         const255 = np.ones_like(variable)*255*color2black_factor
         const0   = np.zeros_like(variable)+(255*(1-color2white_factor)) 
@@ -729,14 +734,15 @@ class Plot_LuSt:
         c6 = c6.reshape(3,colornum).T   
 
         colors = np.concatenate((c1, c2, c3, c4, c5, c6))/255
-        colors = colors[:ncolors]   
+        colors = colors[:ncolors2:2]   
 
 
         #greyscale
         #---------
-        variable_greyscale = np.linspace(255*(1-color2white_factor),255,ncolors)*color2black_factor
+        variable_greyscale = np.linspace(255*(1-color2white_factor),255,ncolors2)*color2black_factor
         colors_greyscale = np.array(3*[variable_greyscale])/255
-        colors_greyscale = colors_greyscale.reshape(3,ncolors).T    
+        colors_greyscale = colors_greyscale.reshape(3,ncolors2).T
+        colors_greyscale = colors_greyscale[::2]    
 
         #both combined
         #-------------
