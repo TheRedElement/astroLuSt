@@ -1526,7 +1526,6 @@ class Synthetic_Curves:
         #check if input values are correct
         warningmessage1 = "%s should be in the interval [%g, %g] in order to avoid overlapping dips!"
         warningmessage2 = "%s should be in the interval [%g, %g]!"
-        warningmessage3 = "%s should be in the interval [%g, %g], in order to avoid weird dip shape!"
         warningmessage4 = "%s has to be in the interval [%g, %g], in order to prevent empty masks!"
         if mu1 < -0.3 or -0.2 < mu1:
             print(warningmessage1%("mu1", -0.3, -0.2))
@@ -1627,15 +1626,15 @@ class Synthetic_Curves:
             d2_type = "non-eclipsing"
         else:
             #partial otherwise
-            d2_type = "partial" + f" {np.std(relative_fluxes[mask2]):.2e}"
+            d2_type = "partial"
         
         #assign classification corretly
         if np.min(dip1) < np.min(dip2):
-            d1_lab = f"primary eclipse ({d1_type})"
-            d2_lab = f"secondary eclipse ({d2_type})"
+            d1_lab = f"Primary eclipse ({d1_type})"
+            d2_lab = f"Secondary eclipse ({d2_type})"
         else:
-            d1_lab = f"secondary eclipse ({d1_type})"
-            d2_lab = f"primary eclipse ({d2_type})"    
+            d1_lab = f"Secondary eclipse ({d1_type})"
+            d2_lab = f"Primary eclipse ({d2_type})"    
 
         if testplot:
             
@@ -1647,9 +1646,9 @@ class Synthetic_Curves:
             
             #insert nan to avoid connecting start and end
             insidx = np.argmin(phases_shifted)
-            phases_shifted_plt = np.insert(phases_shifted, insidx, NaN)
-            relative_fluxes_plt = np.insert(relative_fluxes, insidx, NaN)
-            noise_plt = np.insert(noise, insidx, NaN)
+            phases_shifted_plt = np.insert(phases_shifted, insidx, np.NaN)
+            relative_fluxes_plt = np.insert(relative_fluxes, insidx, np.NaN)
+            noise_plt = np.insert(noise, insidx, np.NaN)
 
             fig = plt.figure()
             ax1 = fig.add_subplot(211)
@@ -1662,20 +1661,20 @@ class Synthetic_Curves:
             ax1.plot(phases, dip2_center, color=dip2_color, alpha=.5)
             ax1.plot(phases, dip2_pos, color=dip2_color, alpha=.5)
             ax1.plot(phases, dip2_neg, color=dip2_color, alpha=.5)
-            ax1.plot(phases, f_bl, color=bl_color, alpha=.5, label="baseline flux")
-            # ax1.plot(phases, fluxes, color=whole_color, alpha=.7, label="synthetic lightcurve")
+            ax1.plot(phases, f_bl, color=bl_color, alpha=.5, label="Baseline flux")
+            # ax1.plot(phases, fluxes, color=whole_color, alpha=.7, label="Synthetic lightcurve")
             ax1.set_xticks([])
-            ax1.set_ylabel("flux-like", fontsize=16)
+            ax1.set_ylabel("Flux-like", fontsize=16)
             ax2 = fig.add_subplot(212)
             ax2.set_title("Generated LC", fontsize=16)
-            ax2.plot(phases_shifted[~mask1&~mask2], relative_fluxes[~mask1&~mask2], color="tab:green", marker=".", linestyle="", alpha=1, label="continuum flux")
+            ax2.plot(phases_shifted[~mask1&~mask2], relative_fluxes[~mask1&~mask2], color="tab:green", marker=".", linestyle="", alpha=1, label="Continuum flux")
             ax2.plot(phases_shifted[mask1], relative_fluxes[mask1], color=d1_color, marker=".", linestyle="", alpha=1, label=d1_lab)
             ax2.plot(phases_shifted[mask2], relative_fluxes[mask2], color=d2_color, marker=".", linestyle="", alpha=1, label=d2_lab)
-            ax2.plot(phases_shifted_plt, relative_fluxes_plt-noise_plt, color="k", alpha=1, label="non-noisy LC")
-            ax2.vlines((mu1_shifted, mu2_shifted), ymin=relative_fluxes.min(), ymax=relative_fluxes.max(), color="grey", linestyles="--")#, label="dippositions")
-            ax2.vlines((dip1_border1, dip1_border2, dip2_border1, dip2_border2), ymin=relative_fluxes.min(), ymax=relative_fluxes.max(), color="gainsboro", linestyles="--")#, label="dipborders")
-            ax2.set_xlabel("phase", fontsize=16)
-            ax2.set_ylabel("relative-flux", fontsize=16)
+            ax2.plot(phases_shifted_plt, relative_fluxes_plt-noise_plt, color="k", alpha=1, label="Non-noisy LC")
+            ax2.vlines((mu1_shifted, mu2_shifted), ymin=relative_fluxes.min(), ymax=relative_fluxes.max(), color="grey", linestyles="--")#, label="Dippositions")
+            ax2.vlines((dip1_border1, dip1_border2, dip2_border1, dip2_border2), ymin=relative_fluxes.min(), ymax=relative_fluxes.max(), color="gainsboro", linestyles="--")#, label="Dipborders")
+            ax2.set_xlabel("Phase", fontsize=16)
+            ax2.set_ylabel("Relative-flux", fontsize=16)
             fig.legend()
             plt.tight_layout()
             plt.show()
@@ -1703,3 +1702,81 @@ class Synthetic_Curves:
             "basline_flux":f_bl,
             "noise":noise,
         }
+
+    def periodize(phases, fluxes, period, repetitions, testplot=True, timeit=False):
+        """
+            - function to create a periodic signal out of a time-series given in phase space
+            - works for phases given in the interval [-0.5, 0.5]
+
+            Parameters
+            ----------
+                - phases
+                    - np.array
+                    - array of phases to be converted
+                - fluxes
+                    - np.array
+                    - array of the corresponding fluxes
+                - period
+                    - float
+                    - period to use for the repetition
+                - testplot
+                    - bool, optional
+                    - whether to show a test-plot
+                    - the default is True
+                - timeit
+                    - bool, optional
+                    - whether to time the execution
+                    - the default is False
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - times_periodized
+                    - times of the periodized signal
+                - fluxes_periodized
+                    - fluxes of the periodized signal
+
+            Dependencies
+            ------------
+                - numpy
+                - matplotlib
+
+            Comments
+            --------
+                - if you want to use a phase space defined on [0,1], simply call pass phases-0.5 to the function
+        
+        """
+        import astroLuSt.data_astroLuSt as ald
+        from astroLuSt.utility_astroLuSt import Time_stuff
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        if timeit:
+            timer = Time_stuff("periodize")
+            timer.start_task()
+
+        times = ald.Data_LuSt.phase2time(phases+0.5, period, timeit=False)
+        times_periodized = np.array([])
+        fluxes_periodized = np.array([])
+        for r in range(repetitions):
+            times_add = times + (r*period)
+            times_periodized = np.append(times_periodized, times_add)
+            fluxes_periodized = np.append(fluxes_periodized, fluxes)
+        
+        if testplot:
+            fig = plt.figure()
+            ax1 = fig.add_subplot(111)
+            ax1.plot(times_periodized, fluxes_periodized, color="tab:blue", linestyle="", marker=".", label="Periodized signal")
+            ax1.set_xlabel("Time [Period-unit]", fontsize=16)
+            ax1.set_ylabel("Relative flux", fontsize=16)
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
+
+
+        if timeit:
+            timer.end_task()
+
+        return times_periodized, fluxes_periodized, 

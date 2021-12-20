@@ -21,6 +21,7 @@ The current version consists of the following parts:
     - classes for unit conversions
         - not complete
         - will get expanded over time
+    - classes and functions useful to create synthetic data-series
 - __PHOEBE_astroLuSt.py__
     - classes and functions useful for working with PHOEBE
 - __plotting_astroLuSt.py__
