@@ -1218,6 +1218,25 @@ class Data_LuSt:
         return fluxes_sigcut, phases_sigcut, times_sigcut, cut_f, cut_p, cut_t
 
 class Units:
+    """
+        - Class to execute common uit conversions
+        
+        Methods
+        -------
+            - mags2fluxes
+                - converts magnitudes to flux
+            - flux2mags
+                - converts flux to magnitudes
+        
+        Attributes
+        ----------
+                
+        Dependencies
+        ------------
+
+        Comments
+        --------
+    """
 
 
     def __init__(self):
@@ -1289,3 +1308,398 @@ class Units:
         import numpy as np
         mags = -2.5*np.log10(flux) + m_ref
         return mags
+
+class Synthetic_Curves:
+    """
+        - Class to generate synthetic curves
+        - useful to create synthetic training data for AI
+        
+        Methods
+        -------
+            - 
+        
+        Attributes
+        ----------
+                
+        Dependencies
+        ------------
+
+        Comments
+        --------
+    """
+    def __init__(self):
+        pass
+
+    def synth_eb(mu1=-0.3, mu2=0.3, mu3=0, sigma1=0.01, sigma2=0.045, frequ3=2, scale1=0.04, scale2=0.04, scale3=0.1,
+                dip1_add=0.01, dip2_add=0.01, noise_scale=0, total_shift=0, fluxmin=0.8, resolution=100, dip_border_factor=4.5,
+                total_eclipse1=False, total_eclipse2=False, testplot=True, timeit=False):
+        """
+            - function to create synthetic lightcurves of eclipsing binaries in phase space
+                - on the interval [-0.5,0.5]
+            - creation done by superpositioning in total 6 gaussians and one sin
+                - 3 gaussians for each dip
+                - the sin for a basline flux variation
+
+            Parameters
+            ----------
+                - mu1
+                    - float, optional
+                    - mean of the first dip
+                    - the default is -0.3
+                - mu2
+                    - float, optional
+                    - mean of the second dip
+                    - the default is 0.3 
+                - mu3
+                    - float, optional
+                    - zeropoint of the continuum flux
+                    - the default is 0
+                - sigma1
+                    - float, optional
+                    - standard deviation of the first dip
+                    - the default is 0.01
+                - sigma2
+                    - float, optional
+                    - standard deviation of the second dip
+                    - the default is 0.045
+                - frequ3
+                    - float, optional
+                    - some frequency measure
+                    - the default is 2
+                - scale1
+                    - float, optional
+                    - scaling factor to increase/decreace depth of first dip
+                    - the default is 0.04
+                - scale2
+                    - float, optional
+                    - scaling factor to increase/decreace depth of second dip
+                    - the default is 0.04
+                - scale3
+                    - float, optional
+                    - scaling factor to increase/decreace depth of continuum flux
+                    - the default is 0.01
+                - dip1_add
+                    - float, optional
+                    - offset of the side-parts of first dip
+                    - the default is 0.01
+                - dip2_add
+                    - float, optional
+                    - offset of the side-parts of second dip
+                    - the default is 0.01
+                - noise_scale
+                    - float, optional
+                    - how much noise to add to the generated curve
+                    - the default is 0
+                - total_shift
+                    - float, optional
+                    - some total shift of the curve
+                        - to eneable dips reaching over the boundaries
+                    - the default is 0
+                - fluxmin
+                    - float, optional
+                    - the lowst fluxvalue of the smooth curve
+                    - the whole curve will get scaled to be in the interval [1, fluxmin]
+                    - the default 0.8
+                - resolution
+                    - int, optional
+                    - number of datapoints to resolve the generated curve
+                    - the defalut is 100
+                - dip_border_factor
+                    - float, optional
+                    - factor on how much of the area around each dip to consider as part of the dip
+                        - will be the factor the standard deviations (sigma) will get multiplied with
+                    - the default is 4.5
+                - total_eclipse1
+                    - bool, optional
+                    - wheter the generated first dip has to contain a total eclipse or not
+                        - otherwise the dip shape will be a random gaussian
+                    - the default is False
+                - total_eclipse2
+                    - bool, optional
+                    - wheter the generated second dip has to contain a total eclipse or not
+                        - otherwise the dip shape will be a random gaussian
+                    - the default is False
+                - testplot
+                    - bool, optional
+                    - wheter to create a test plot of the created lightcurve
+                    - the default is True
+                -timeit
+                    - bool, optional
+                    - whether to time the execution of the generation
+                    - the default is False
+
+            Raises
+            ------
+                - ValueError
+                    - if parameters out of bounds
+
+            Returns
+            -------
+                - dict containing
+                    - fluxes
+                        - np.array
+                        - generated fluxes in some (non-scientific) flux-unit
+                    - relative_fluxes
+                        - np.array
+                        - generated normalized relative fluxes 
+                    - phases
+                        - np.array
+                        - generated phases
+                        - with total_shift = 0
+                    - shifted_phases
+                        - np.array
+                        - generated phases
+                        - with total_shift != 0
+                    - dip_positions
+                        - list
+                        - positions of the dips
+                        - with total_shift != 0
+                    - dip_borders
+                        - list
+                        - estimated borders of the dips
+                        - with total_shift != 0
+                    - dip1_type
+                        - str
+                        - classification of the first dip
+                    - dip2_type
+                        - str
+                        - classification of the second dip
+                    - dip1
+                        - np.array
+                        - underlying curve of first dip
+                    - dip1_center
+                        - np.array
+                        - center gaussian of first dip
+                    - dip1_pos
+                        - np.array
+                        - positive offset-part of first dip
+                    - dip1_neg
+                        - np.array
+                        - negative offset-part of first dip
+                    - dip2
+                        - np.array
+                        - underlying curve of first dip
+                    - dip2_center
+                        - np.array
+                        - center gaussian of first dip
+                    - dip2_pos
+                        - np.array
+                        - positive offset-part of first dip
+                    - dip2_neg
+                        - np.array
+                        - negative offset-part of first dip
+                    - basline_flux
+                        - np.array
+                        - sinusoidal baseline flux variation
+                    - noise
+                        - np.array
+                        - artificially added noise
+            
+            Dependencies
+            ------------
+                - numpy
+                - matplotlib
+
+            Comments
+            --------
+                - calls astroLuSts periodic_shift()
+
+        """
+
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import astroLuSt.data_astroLuSt as ald
+        from astroLuSt.utility_astroLuSt import Time_stuff
+
+        if timeit:
+            timer = Time_stuff("synth_eb()")
+            timer.start_task()
+
+        def gaussian(times, mu, sigma):
+            """
+                - function to create a gaussian with center mu and stadard-deviation sigma
+            """
+            Q1 = sigma*np.sqrt(2*np.pi)
+            exp1 = -0.5*(times-mu)**2 / sigma**2
+            return np.exp(exp1)/Q1
+
+        #check if input values are correct
+        warningmessage1 = "%s should be in the interval [%g, %g] in order to avoid overlapping dips!"
+        warningmessage2 = "%s should be in the interval [%g, %g]!"
+        warningmessage3 = "%s should be in the interval [%g, %g], in order to avoid weird dip shape!"
+        warningmessage4 = "%s has to be in the interval [%g, %g], in order to prevent empty masks!"
+        if mu1 < -0.3 or -0.2 < mu1:
+            print(warningmessage1%("mu1", -0.3, -0.2))
+        if mu2 < 0.2 or 0.3 < mu2:
+            print(warningmessage1%("mu2", 0.2, 0.3))
+        if mu3 < -0.5 or 0.5 < mu3:
+            print(warningmessage1%("mu3", -0.5, -0.5))
+        if sigma1 < 0.01 or 0.045 < sigma1:
+            print(warningmessage1%("sigma1", 0.01, 0.045))
+        if sigma2 < 0.01 or 0.045 < sigma2:
+            print(warningmessage1%("sigma2", 0.01, 0.045))
+        if frequ3 < 0 or 6 < frequ3:
+            print(warningmessage2%("frequ3", 0, 4))
+        if scale1 < 0 or 0.04 < scale1:
+            print(warningmessage1%("scale1", 0, 0.04))
+        if scale2 < 0 or 0.04 < scale2:
+            print(warningmessage1%("scale2", 0, 0.04))
+        if scale3 < 0 or 0.15 < scale3:
+            print(warningmessage2%("scale3", 0, 0.03))
+        if dip1_add < 1e-3 or 0.01 < dip1_add:
+            raise ValueError(warningmessage4%("dip1_add", 0, 0.01))
+        if dip2_add < 1e-3 or 0.01 < dip2_add:
+            raise ValueError(warningmessage4%("dip2_add", 0, 0.01))
+        if total_shift < -0.5 or 0.5 < total_shift:
+            raise ValueError("total_shift has to be in the interval [-0.5,0.5]")
+
+        #set some initialization variables
+        phases = np.linspace(-0.5, 0.5, resolution)
+
+        #shift x_vals to enable dip reaching over boundary
+        phases_shifted = ald.Data_LuSt.periodic_shift(phases, total_shift, [-0.5,0.5])
+        mu1_shifted = ald.Data_LuSt.periodic_shift(np.array([mu1]), total_shift, [-0.5,0.5])[0]
+        mu2_shifted = ald.Data_LuSt.periodic_shift(np.array([mu2]), total_shift, [-0.5,0.5])[0]
+        
+        #first dip
+        if total_eclipse1:
+            sigma1 = 0.5*np.abs((mu1+dip1_add) - (mu1-dip1_add))
+        dip1_center = -scale1*gaussian(phases, mu1, sigma1)*(not total_eclipse1) #0 if total eclipse
+        dip1_pos    = -scale1*gaussian(phases, mu1+dip1_add, sigma1)
+        dip1_neg    = -scale1*gaussian(phases, mu1-dip1_add, sigma1)
+        dip1        = dip1_neg + dip1_center + dip1_pos
+            
+        #second dip
+        if total_eclipse2:
+            sigma2 = 0.5*np.abs((mu2+dip2_add) - (mu2-dip2_add))
+        dip2_center = -scale2*gaussian(phases, mu2, sigma2)*(not total_eclipse2) #0 if total eclipse
+        dip2_pos    = -scale2*gaussian(phases, mu2+dip2_add, sigma2) 
+        dip2_neg    = -scale2*gaussian(phases, mu2-dip2_add, sigma2)
+        dip2        = dip2_neg + dip2_center + dip2_pos
+
+        #basline flux
+        # f_bl = scale3*gaussian(phases, mu3, sigma3)
+        f_bl = scale3*np.sin(2*frequ3*np.pi*(phases + mu3))
+
+        #put everything together to get synthetic LC
+        fluxes = f_bl + dip1 + dip2
+        noise = np.random.normal(size=np.shape(fluxes))*noise_scale
+        relative_fluxes = np.interp(fluxes, (fluxes.min(), fluxes.max()), (fluxmin, f_bl.max() + 1))  #normalize to 1 (such that sinusoidal baseline is centered around 1)
+        relative_fluxes += noise   #add some noise
+
+        #classify dip borders
+        dip1_border1 = ald.Data_LuSt.periodic_shift(np.array([mu1-np.abs(dip_border_factor*sigma1)]), total_shift, [-0.5,0.5])[0]
+        dip1_border2 = ald.Data_LuSt.periodic_shift(np.array([mu1+np.abs(dip_border_factor*sigma1)]), total_shift, [-0.5,0.5])[0]
+        dip2_border1 = ald.Data_LuSt.periodic_shift(np.array([mu2-np.abs(dip_border_factor*sigma2)]), total_shift, [-0.5,0.5])[0]
+        dip2_border2 = ald.Data_LuSt.periodic_shift(np.array([mu2+np.abs(dip_border_factor*sigma2)]), total_shift, [-0.5,0.5])[0]
+
+        #masks to separate dips 
+        if dip1_border1 < dip1_border2:
+            mask1 = (dip1_border1<phases_shifted)&(phases_shifted<dip1_border2) #mask of dip1
+        else:
+            mask1 = (dip1_border1<phases_shifted)|(phases_shifted<dip1_border2) #mask of dip1 if reaching over border
+        if dip2_border1 < dip2_border2:
+            mask2 = (dip2_border1<phases_shifted)&(phases_shifted<dip2_border2) #mask of dip2
+        else:
+            mask2 = (dip2_border1<phases_shifted)|(phases_shifted<dip2_border2) #mask of dip2 if reaching over border
+
+
+        #classify if total/partial eclipse
+        std_crit = 2e-2
+        d1_std = np.std(relative_fluxes[mask1])
+        d2_std = np.std(relative_fluxes[mask2])
+        
+        if total_eclipse1:
+            #total if specified
+            d1_type = "total"
+        elif d1_std <= std_crit:
+            #non-eclipsing if indistinguishable from baseline
+            d1_type = "non-eclipsing"
+        else:
+            #partial otherwise
+            d1_type = "partial"
+
+        if total_eclipse2:
+            #total if specified
+            d2_type = "total"
+        elif d2_std <= std_crit:
+            #non-eclipsing if indistinguishable from baseline
+            d2_type = "non-eclipsing"
+        else:
+            #partial otherwise
+            d2_type = "partial" + f" {np.std(relative_fluxes[mask2]):.2e}"
+        
+        #assign classification corretly
+        if np.min(dip1) < np.min(dip2):
+            d1_lab = f"primary eclipse ({d1_type})"
+            d2_lab = f"secondary eclipse ({d2_type})"
+        else:
+            d1_lab = f"secondary eclipse ({d1_type})"
+            d2_lab = f"primary eclipse ({d2_type})"    
+
+        if testplot:
+            
+            dip1_color = "tab:blue"
+            dip2_color = "tab:orange"
+            bl_color = "tab:grey"
+            d1_color = "tab:blue"
+            d2_color = "tab:orange"
+            
+            #insert nan to avoid connecting start and end
+            insidx = np.argmin(phases_shifted)
+            phases_shifted_plt = np.insert(phases_shifted, insidx, NaN)
+            relative_fluxes_plt = np.insert(relative_fluxes, insidx, NaN)
+            noise_plt = np.insert(noise, insidx, NaN)
+
+            fig = plt.figure()
+            ax1 = fig.add_subplot(211)
+            ax1.set_title("Generation parts", fontsize=16)
+            ax1.plot(phases, dip1, color=dip1_color, alpha=1)#, label=d1_lab)
+            ax1.plot(phases, dip1_center, color=dip1_color, alpha=.5)
+            ax1.plot(phases, dip1_pos, color=dip1_color, alpha=.5)
+            ax1.plot(phases, dip1_neg, color=dip1_color, alpha=.5)
+            ax1.plot(phases, dip2, color=dip2_color, alpha=1)#, label=d2_lab)
+            ax1.plot(phases, dip2_center, color=dip2_color, alpha=.5)
+            ax1.plot(phases, dip2_pos, color=dip2_color, alpha=.5)
+            ax1.plot(phases, dip2_neg, color=dip2_color, alpha=.5)
+            ax1.plot(phases, f_bl, color=bl_color, alpha=.5, label="baseline flux")
+            # ax1.plot(phases, fluxes, color=whole_color, alpha=.7, label="synthetic lightcurve")
+            ax1.set_xticks([])
+            ax1.set_ylabel("flux-like", fontsize=16)
+            ax2 = fig.add_subplot(212)
+            ax2.set_title("Generated LC", fontsize=16)
+            ax2.plot(phases_shifted[~mask1&~mask2], relative_fluxes[~mask1&~mask2], color="tab:green", marker=".", linestyle="", alpha=1, label="continuum flux")
+            ax2.plot(phases_shifted[mask1], relative_fluxes[mask1], color=d1_color, marker=".", linestyle="", alpha=1, label=d1_lab)
+            ax2.plot(phases_shifted[mask2], relative_fluxes[mask2], color=d2_color, marker=".", linestyle="", alpha=1, label=d2_lab)
+            ax2.plot(phases_shifted_plt, relative_fluxes_plt-noise_plt, color="k", alpha=1, label="non-noisy LC")
+            ax2.vlines((mu1_shifted, mu2_shifted), ymin=relative_fluxes.min(), ymax=relative_fluxes.max(), color="grey", linestyles="--")#, label="dippositions")
+            ax2.vlines((dip1_border1, dip1_border2, dip2_border1, dip2_border2), ymin=relative_fluxes.min(), ymax=relative_fluxes.max(), color="gainsboro", linestyles="--")#, label="dipborders")
+            ax2.set_xlabel("phase", fontsize=16)
+            ax2.set_ylabel("relative-flux", fontsize=16)
+            fig.legend()
+            plt.tight_layout()
+            plt.show()
+
+        if timeit:
+            timer.end_task()
+
+        return {
+            "fluxes":fluxes,
+            "relative_fluxes":relative_fluxes,
+            "phases":phases,
+            "shifted_phases":phases_shifted,
+            "dip_positions":[mu1_shifted, mu2_shifted],
+            "dip_borders":[dip1_border1,dip1_border2,dip2_border1,dip2_border2],
+            "dip1_type":d1_type,
+            "dip2_type":d2_type,
+            "dip1":dip1,
+            "dip1_center":dip1_center,
+            "dip1_pos":dip1_pos,
+            "dip1_neg":dip1_neg,
+            "dip2":dip2,
+            "dip2_center":dip2_center,
+            "dip2_pos":dip2_pos,
+            "dip2_neg":dip2_neg,
+            "basline_flux":f_bl,
+            "noise":noise,
+        }
