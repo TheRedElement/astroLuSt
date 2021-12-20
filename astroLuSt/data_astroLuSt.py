@@ -795,7 +795,7 @@ class Data_LuSt:
         ################################
         
         if type(input_array) != np.ndarray:
-            raise TypeError("input_array has to be of type np.ndarray!")
+            raise TypeError("input_array has to be of type np.ndarray! If you want to shift a scalar, simply convert it to an array and acess outputarray[0]")
         if (type(borders) != np.ndarray) and (type(borders) != list):
             raise TypeError("borders has to be of type np.array or list!")
         if (type(timeit) != bool):
