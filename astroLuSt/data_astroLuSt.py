@@ -9,6 +9,9 @@
 #TODO: add attributes?
 #TODO: Add progress bar? - https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
 #TODO: fold(): Add option to fold into any desired interval
+from numpy.core.fromnumeric import sort
+
+
 class Data_LuSt:
     """
         - Class to execute data processing
@@ -257,7 +260,7 @@ class Data_LuSt:
             plt.vlines(centers+widths, testdist.min(), testdist.max(), colors="r")
             plt.vlines(centers-widths, testdist.min(), testdist.max(), colors="r")
             plt.xlabel("x", fontsize=16)
-            plt.ylabel("number of points", fontsize=16)
+            plt.ylabel("Number of points", fontsize=16)
             plt.xticks(fontsize=16)
             plt.yticks(fontsize=16)
             plt.show()
@@ -882,6 +885,8 @@ class Data_LuSt:
 
             Comments
             --------
+                - operates with phases in the interval [-0.5,0.5]
+                - if you wish to convert phases from the interval [0,1], simply pass phases-0.5 to the function
         """
    
         from astroLuSt.utility_astroLuSt import Time_stuff
@@ -891,7 +896,7 @@ class Data_LuSt:
             task = Time_stuff("phase2time")
             task.start_task()
 
-        time = phases*period
+        time = (phases+0.5)*period
         
         #time execution
         if timeit:
@@ -1331,8 +1336,8 @@ class Synthetic_Curves:
         pass
 
     def synth_eb(mu1=-0.3, mu2=0.3, mu3=0, sigma1=0.01, sigma2=0.045, frequ3=2, scale1=0.04, scale2=0.04, scale3=0.1,
-                dip1_add=0.01, dip2_add=0.01, noise_scale=0, total_shift=0, fluxmin=0.8, resolution=100, dip_border_factor=4.5,
-                total_eclipse1=False, total_eclipse2=False, testplot=True, timeit=False):
+                 dip1_add=0.01, dip2_add=0.01, noise_scale=0, total_shift=0, fluxmin=0.8, resolution=100, dip_border_factor=4.5,
+                 total_eclipse1=False, total_eclipse2=False, testplot=True, timeit=False):
         """
             - function to create synthetic lightcurves of eclipsing binaries in phase space
                 - on the interval [-0.5,0.5]
@@ -1583,7 +1588,7 @@ class Synthetic_Curves:
         #put everything together to get synthetic LC
         fluxes = f_bl + dip1 + dip2
         noise = np.random.normal(size=np.shape(fluxes))*noise_scale
-        relative_fluxes = np.interp(fluxes, (fluxes.min(), fluxes.max()), (fluxmin, f_bl.max() + 1))  #normalize to 1 (such that sinusoidal baseline is centered around 1)
+        relative_fluxes = np.interp(fluxes, (fluxes.min(), fluxes.max()), (fluxmin,1))  #normalize to 1 (such that sinusoidal baseline is centered around 1)
         relative_fluxes += noise   #add some noise
 
         #classify dip borders
@@ -1765,6 +1770,10 @@ class Synthetic_Curves:
             times_periodized = np.append(times_periodized, times_add)
             fluxes_periodized = np.append(fluxes_periodized, fluxes)
         
+        sortidx = np.argsort(times_periodized)
+        times_periodized = times_periodized[sortidx]
+        fluxes_periodized = fluxes_periodized[sortidx]
+
         if testplot:
             fig = plt.figure()
             ax1 = fig.add_subplot(111)
@@ -1774,7 +1783,6 @@ class Synthetic_Curves:
             plt.legend()
             plt.tight_layout()
             plt.show()
-
 
         if timeit:
             timer.end_task()
