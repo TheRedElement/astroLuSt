@@ -355,11 +355,8 @@ class Plot_LuSt:
                 for cjidx, cj in enumerate(ci):
                     capsizes[ciidx][cjidx] = None
         if errcolors is None:
-            #initialize all colors with "tab:blue"
-            errcolors = copy.deepcopy(xvals)
-            for eciidx, eci in enumerate(errcolors):
-                for ecjidx, ecj in enumerate(eci):
-                    errcolors[eciidx][ecjidx] = "tab:blue"
+            #initialize all errcolors to be the same as color
+            errcolors = copy.deepcopy(colors)
         if positions is None:
             v1 = int(np.ceil(np.sqrt(len(xvals))))
             positions = np.empty(len(xvals), dtype=int)
