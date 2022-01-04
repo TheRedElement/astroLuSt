@@ -1341,9 +1341,15 @@ class Synthetic_Curves:
         """
             - function to create synthetic lightcurves of eclipsing binaries in phase space
                 - on the interval [-0.5,0.5]
+            - the resulting function is by far close to real observations or physics
+                - it is however useful e.g.:
+                    - getting an initialization of weigths for NNs
             - creation done by superpositioning in total 6 gaussians and one sin
                 - 3 gaussians for each dip
                 - the sin for a basline flux variation
+            - if you need higher quality data I strongly suggest you check out PHOEBE
+                - PHysics Of Eclipsing BinariEs
+                - http://phoebe-project.org/
 
             Parameters
             ----------
@@ -1507,6 +1513,8 @@ class Synthetic_Curves:
 
             Comments
             --------
+                - Check out PHOEBE for more accurate synthetic LCs
+                    - http://phoebe-project.org/
                 - calls astroLuSts periodic_shift()
 
         """
