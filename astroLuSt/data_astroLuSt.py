@@ -568,7 +568,7 @@ class Data_LuSt:
         return best_period, best_sigma2, periods_sorted, sigma2s_sorted, best_fold, errestimate
 
 
-    def fold(time, period, timeit=False):
+    def fold(time, period, tref=None, timeit=False):
         #TODO: fold(): Add option to fold into any desired interval
         """
             - takes an array of times
@@ -612,7 +612,10 @@ class Data_LuSt:
             task = Time_stuff("fold")
             task.start_task()
 
-        delta_t = time-time.min()
+        if tref is None:
+            tref = time.min()
+
+        delta_t = time-tref
         phases = delta_t/period
         
         #fold phases by getting the remainder of the division by the ones-value 
