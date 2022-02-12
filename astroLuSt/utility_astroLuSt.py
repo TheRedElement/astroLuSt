@@ -973,7 +973,7 @@ class GANTT:
             #create legend in separate subplot
             handles, labels = ax1.get_legend_handles_labels()
             if enumerate_tasks and show_totalwork:
-                labels[:-1] = [f"{idx+1:d}. {label}" for idx, label in enumerate(labels[:-1])]
+                labels[:len(self.tasknames)] = [f"{idx+1:d}. {label}" for idx, label in enumerate(labels[:len(self.tasknames)])]
             elif enumerate_tasks and not show_totalwork:
                 labels[:] = [f"{idx+1:d}. {label}" for idx, label in enumerate(labels[:])]
 
