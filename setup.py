@@ -15,7 +15,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="astroLuSt",
-    version="0.0.1",
+    version="0.0.2",
     description="Module containing tools useful especially in astronomy.",
     long_description=long_description,
     long_description_content_type='text/markdown',
