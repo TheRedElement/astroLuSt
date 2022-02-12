@@ -4,6 +4,7 @@
     #Steinwender Lukas#
     ###################
     
+
 #______________________________________________________________________________
 #Class to time tasks
 class Time_stuff:
@@ -110,7 +111,6 @@ class Time_stuff:
     
 #______________________________________________________________________________
 #Class for printing tables
-#%%
 class Table_LuSt:
     #TODO: Add method to add new column
     #TODO: Add method to add another header row
@@ -725,6 +725,271 @@ class Table_LuSt:
             outfile.write(latex_table)
             outfile.write("\n\n")
             outfile.close()
+
+#______________________________________________________________________________
+#Class for creating a GANTT-chart variation (for Mission Planning)
+class GANTT:
+    """
+        - class to genereate a variation of a GANTT-chart
+        
+        Attributes
+        ----------
+            - time
+                - array of the period of time where the project takes place
+                - time has to be an array of datetime-objects!
+            - tasks
+                - relative workload for the tasks to be done (dependent on time)
+            - tasknames
+                - nametag for each task
+
+        Methods
+        -------
+            - sigmoid
+                - returns the sigmoid of some input
+            - task
+                - function to add a task to the project
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - datetime
+    """
+
+    def __init__(self, time, tasks=None, tasknames=None):
+
+        import numpy as np
+        from datetime import datetime
+        
+        if any([type(t) != datetime for t in time]):
+            raise TypeError("'time' has to be an array containing 'datetime' objects!")
+        self.time = time
+        if tasks is None:
+            self.tasks = np.array([])
+        else:
+            self.tasks = tasks
+        if tasknames is None:
+            self.tasknames = []
+        else:
+            self.tasknames = tasknames
+
+    def sigmoid(self, time, slope, shift):
+        """
+            - calculates the sigmoid function
+        """
+        import numpy as np
+        Q1 = 1 + np.e**(slope*(-(time - shift)))
+        return 1/Q1
+
+    def task(self, start, end, start_slope, end_slope, taskname=None, testplot=False):
+        """
+            - function to define a specific task
+            - will add that task to 'self.tasks' as well
+
+            Parameters
+            ----------
+                - start
+                    - float
+                    - time at which the tasks starts
+                - end
+                    - float
+                    - time at which the task ends
+                - start_slope
+                    - float
+                    - how steep the starting phase should be
+                - end_slope
+                    - float
+                    - how steep the ending phase (reflection phase) should be
+                - taskname
+                    - str, optional
+                    - name of the task added
+                    - the default is None
+                        - Will generate 'Task' and add a number one more than the current amount of tasks
+                - testplot
+                    - bool, optional
+                    - whether to show a testplot of the created task
+                    - the default is False
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - task
+                    - np.array
+                    - an array of the percentages of workload over the whole task
+            
+            Dependencies
+            ------------
+                - matplotlib
+                - numpy
+
+        """
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        calc_time = np.arange(0, self.time.shape[0], 1)
+
+        start_phase = self.sigmoid(calc_time, start_slope, start)
+        end_phase   = self.sigmoid(-calc_time, end_slope, -end)
+
+        task = start_phase + end_phase
+        task -= task.min()
+        task /= task.max()
+
+        if self.tasks.shape[0] == 0:
+            self.tasks = np.append(self.tasks, task)
+        else:
+            self.tasks = np.vstack((self.tasks, task))
+        
+        #add task-name
+        if taskname is None:
+            taskname = f"Task {len(self.tasknames)+1:d}"
+        self.tasknames.append(taskname)
+
+        if testplot:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.set_title(f"Testplot for your {taskname}", fontsize=18)
+            ax.plot(self.time, task, "-")
+            ax.set_xlabel("Time [Your Unit]", fontsize=16)
+            ax.set_ylabel("Relative Workload [-]", fontsize=16)
+            ax.tick_params("both", labelsize=16)
+            plt.tight_layout()
+            plt.show()
+
+        return task
+
+    def workload(self, projecttitle="Your Project", timeunit="Your Unit", today=None, ncols=1, enumerate_tasks=True, show_totalwork=True, testplot=True):
+        """
+            - function to visualize the workload of a project w.r.t. the time
+            
+            Parameters
+            ----------
+                - projecttitle
+                    - str, optional
+                    - title of your project
+                        - will be shown as title of plot created
+                    - only relevant for the plot created
+                    - the default is 'Your Project'
+                - timeunit
+                    - str, optional
+                    - unit of 'time'
+                    - only relevant for the plot created
+                    - the default is 'Your Unit'
+                - today
+                    - float, optional
+                    - current state
+                    - will plot a vertical line at the current state in the plot created
+                    - only relevant for the plot created
+                    - the default is None (will not plot a line)
+                - ncols
+                    - int, optional
+                    - number of columns to use for the legend in the plot created
+                    - only relevant for the plot created
+                    - the default is 1
+                - enumerate_tasks
+                    - bool, optional
+                    - whether to enumerate the tasks contained in the GANTT-instance
+                        - will enumerate them in the order they got added to the GANTT-instance
+                    - only relevant for the plot created
+                    - the default is true
+                - show_totalwork
+                    - bool, optional
+                    - whether to add a plot of the total work for each point in time
+                    - only relevant for the plot created
+                    - the default is True
+                - testplot
+                    - bool, optional
+                    - whether to show a testplot of the created task
+                    - the default is True
+                
+                Raises
+                ------
+
+                Returns
+                -------
+                    - tasks_combined
+                        - np.array
+                        - combination of all tasks
+                        - the maximum workload for a given point in time of all tasks combined is 100% 
+                    - fig_parts
+                        - tuple
+                        - matplotlib objects
+                            - figure
+                            - axis
+                        - returns empty tuple if 'testplot' is set to 'False' 
+
+                Dependencies
+                ------------
+                    - matplotlib
+                    - numpy
+        """
+
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        tasks_zeromin = self.tasks-self.tasks.min()
+        
+        try:
+            tasks_zeromin.shape[1]
+            weights = np.sum(tasks_zeromin, axis=0)
+        except:
+            weights = tasks_zeromin
+
+        
+        tasks_combined = tasks_zeromin/weights.max()
+        
+
+        fig_parts = ()
+        if testplot:
+            fig = plt.figure(figsize=(16,9))
+            ax1 = fig.add_subplot(211)
+            fig.suptitle(projecttitle, fontsize=24)
+
+            #all tasks
+            try:
+                tasks_combined.shape[1]
+            except:
+                tasks_combined = np.array([tasks_combined])
+
+            for idx, (task, tn) in enumerate(zip(tasks_combined, self.tasknames)):
+                ax1.plot(self.time, task, label=tn, zorder=2+(1/(idx+1)), alpha=1, linestyle="-", linewidth=5)
+            
+            #total workload
+            if show_totalwork:
+                ax1.plot(self.time, np.sum(tasks_combined, axis=0), linestyle=":", color="k", alpha=.6, label="Total workload", zorder=1)
+                ax1.fill_between(self.time, np.sum(tasks_combined, axis=0), where=(self.time>today), color="tab:grey", alpha=.2, label="TODO", zorder=1)
+                if today is not None:
+                    ax1.fill_between(self.time, np.sum(tasks_combined, axis=0), where=(self.time<today), color="tab:green", alpha=.2, label="Finished", zorder=1)
+            ax1.set_xlabel(f"Time [{timeunit}]", fontsize=20)
+            ax1.set_ylabel("Relative Workload [-]", fontsize=20)
+            ax1.tick_params("both", labelsize=20)
+
+            #current point in time
+            if today is not None:
+                ax1.vlines(today, ymin=0, ymax=1, color="red", zorder=20, label="Today", linestyle="--", linewidth=2.5)
+            
+            #create legend in separate subplot
+            handles, labels = ax1.get_legend_handles_labels()
+            if enumerate_tasks and show_totalwork:
+                labels[:-1] = [f"{idx+1:d}. {label}" for idx, label in enumerate(labels[:-1])]
+            elif enumerate_tasks and not show_totalwork:
+                labels[:] = [f"{idx+1:d}. {label}" for idx, label in enumerate(labels[:])]
+
+
+            ax2 = fig.add_subplot(212)
+            ax2.set_axis_off()
+            ax2.legend(
+                handles, labels,
+                loc="upper left", #bbox_to_anchor=(0,1),
+                frameon=False, borderpad=0, borderaxespad=0, mode="expand",
+                ncol=ncols, fontsize=24
+                )
+            plt.tight_layout()
+            fig_parts = (fig, ax1, ax2)
+
+        return tasks_combined, fig_parts
 
 
         
