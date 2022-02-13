@@ -605,7 +605,7 @@ class Plot_LuSt:
         return colors
 
 
-    def color_generator(ncolors, color2black_factor=1, color2white_factor=1, greyscaleportion_combined=0.25, testplot=False, timeit=False):
+    def color_generator(ncolors, color2black_factor=0.9, color2white_factor=0.9, greyscaleportion_combined=0.25, testplot=False, timeit=False):
         #TODO: Add option to start at specific rgb value
         #TODO: Add option to end at specific rgb value
         """
@@ -627,7 +627,7 @@ class Plot_LuSt:
                     - can be combined with color2white_factor
                         - yields interesting behaviour
                         - use testplot to see the behaviour
-                    - the default is 1
+                    - the default is 0.9
                 - color2white_factor
                     - float, optional
                     - number to define how transperent (white) the generated colors should be
@@ -638,7 +638,7 @@ class Plot_LuSt:
                     - can be combined with color2black_factor
                         - yields interesting behaviour
                         - use testplot to see the behaviour
-                    - the default is 1
+                    - the default is 0.9
                 - greyscaleportion_combined
                     - float, optional
                     - number to define the relative amount of greyscale colors in the colors_combined
