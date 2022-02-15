@@ -1371,9 +1371,7 @@ class GANTT:
             ax1.text(start-text_shift, idx, label, va="center", ha="right", alpha=0.8, fontsize=18)
         
         #current point in time
-        if today is not None:
-            ax1.vlines(today, ymin=-1, ymax=self.tasks.shape[0], color="red", zorder=20, label="Today", linestyle="--", linewidth=2.5)
-            ax1.annotate('TODAY', xy=(today+2*text_shift, -0.8), color="k", fontsize=18)
+        ax1.vlines(today, ymin=-1, ymax=self.tasks.shape[0], color="k", zorder=20, label="Today", linestyle="--", linewidth=2.5)
 
         #make visually appealing
         ax1.set_ylim(-1, self.tasks.shape[0])
@@ -1384,6 +1382,8 @@ class GANTT:
         #labelling
         ax1.set_xlabel(f"Time [{timeunit}]", fontsize=20)
         ax1.tick_params("both", labelsize=20)
+
+        ax1.legend(fontsize=16)
 
         axs = plt.gcf().get_axes()
         plt.tight_layout()
