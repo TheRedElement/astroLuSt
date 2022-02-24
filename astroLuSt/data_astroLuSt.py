@@ -556,7 +556,7 @@ class Data_LuSt:
             ax2.plot(best_fold, fluxes, color="tab:blue", marker=".", linestyle="", label="Final resulting lightcurve")
             ax2.vlines(best_intervals, ymax=fluxes.max(), ymin=fluxes.min(), color="tab:orange", linestyle="--", label="Used intervals")
             ax2.tick_params("both", labelsize=16)
-            ax2.set_xlabel("Period", fontsize=16)
+            ax2.set_xlabel("Phase", fontsize=16)
             ax2.set_ylabel("Flux", fontsize=16)
             ax2.legend(fontsize=16)        
             plt.show()
@@ -569,7 +569,6 @@ class Data_LuSt:
 
 
     def fold(time, period, tref=None, timeit=False):
-        #TODO: fold(): Add option to fold into any desired interval
         """
             - takes an array of times
                 - folds it with a specified period
