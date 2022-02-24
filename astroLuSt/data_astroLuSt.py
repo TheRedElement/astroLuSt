@@ -712,6 +712,11 @@ class Data_LuSt:
             task = Time_stuff("periodic_expansion")
             task.start_task()
 
+        #sort to get correct appendix in the end
+        sortidx = np.argsort(phases)
+        phases = phases[sortidx]
+        fluxes = fluxes[sortidx]
+
         #append to maximum
         if minmax == "max":
             phase_bool = (phases < phase_ref)
