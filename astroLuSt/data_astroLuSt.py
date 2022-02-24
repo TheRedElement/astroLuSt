@@ -635,7 +635,7 @@ class Data_LuSt:
 
         return phases_folded
 
-    def periodic_expansion(phases, fluxes, phase_ref, minmax="max", testplot=False, timeit=False):
+    def periodic_expansion(phases, fluxes, phase_ref_min=0, phase_ref_max=0, minmax="max", testplot=False, timeit=False):
         """
             - function to expand a periodic timeseries on either side
                 - takes all datapoints up to a reference phase
@@ -649,11 +649,18 @@ class Data_LuSt:
                 - fluxes 
                     - np.array
                     - fluxes of the datapoints to be expanded
-                - phase_ref
-                    - float, list
+                - phase_ref_min
+                    - float, optional
                     - reference phase
                         - will be used in order to determine which phases to consider for appending
-                    - has to be a list, if 'minmax' == 'both'!
+                    - used in the case of appending to the minimum and both ends
+                    - the default is 0
+                - phase_ref_max
+                    - float, optional
+                    - reference phase
+                        - will be used in order to determine which phases to consider for appending
+                    - used in the case of appending to the minimum and both ends
+                    - the default is 0
                 - minmax
                     - str, optional
                     - wether to append to the maximum or minimum of the dataseries
@@ -719,17 +726,20 @@ class Data_LuSt:
 
         #append to maximum
         if minmax == "max":
-            phase_bool = (phases < phase_ref)
+            phase_bool = (phases < phase_ref_max)
             appendix_phases = phases.max() + (phases[phase_bool] - phases.min())
+            phase_ref = phase_ref_max
         #append to minimum
         elif minmax == "min":
-            phase_bool = (phases > phase_ref)
+            phase_bool = (phases > phase_ref_min)
             appendix_phases = phases.min() - (phases.max() - phases[phase_bool])
+            phase_ref = phase_ref_min
         elif minmax == "both":
-            if type(phase_ref) != list and type(phase_ref) != np.ndarray:
-                raise TypeError("'phase_ref' has to be of type list or np.array if 'minmax' == 'both'!") 
-            phase_bool_max = (phases < phase_ref[0])
-            phase_bool_min = (phases > phase_ref[1])
+            if phase_ref_min < phase_ref_max:
+                raise ValueError("'phase_ref_min' has to be greater or equal than 'phase_ref_max' ")
+            phase_ref = [phase_ref_min, phase_ref_max]
+            phase_bool_max = (phases < phase_ref_max)
+            phase_bool_min = (phases > phase_ref_min)
             phase_bool = phase_bool_max|phase_bool_min
             appendix_phases_max = phases.max() + (phases[phase_bool_max] - phases.min())
             appendix_phases_min = phases.min() - (phases.max() - phases[phase_bool_min])
