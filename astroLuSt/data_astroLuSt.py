@@ -650,9 +650,10 @@ class Data_LuSt:
                     - np.array
                     - fluxes of the datapoints to be expanded
                 - phase_ref
-                    - float
+                    - float, list
                     - reference phase
                         - will be used in order to determine which phases to consider for appending
+                    - has to be a list, if 'minmax' == 'both'!
                 - minmax
                     - str, optional
                     - wether to append to the maximum or minimum of the dataseries
@@ -663,6 +664,9 @@ class Data_LuSt:
                         - 'max'
                             - will expand on the maximum side
                             - will consider all phases the minimum phase up to phase_ref
+                        - 'both'
+                            - will expand on both ends of the curve
+                            - requires 'phase_ref' to be a list with two entries
                     - the default is 'max'
                 -testplot
                     - bool, optional
@@ -676,7 +680,9 @@ class Data_LuSt:
             Raises
             ------
                 - ValueError
-                    - if minmax gets passed a wrong argument
+                    - if 'minmax' gets passed a wrong argument
+                - TypeError
+                    - if 'phase_ref' gets passed a wrong type
 
             Returns
             -------
@@ -714,8 +720,17 @@ class Data_LuSt:
         elif minmax == "min":
             phase_bool = (phases > phase_ref)
             appendix_phases = phases.min() - (phases.max() - phases[phase_bool])
+        elif minmax == "both":
+            if type(phase_ref) != list and type(phase_ref) != np.ndarray:
+                raise TypeError("'phase_ref' has to be of type list or np.array if 'minmax' == 'both'!") 
+            phase_bool_max = (phases < phase_ref[0])
+            phase_bool_min = (phases > phase_ref[1])
+            phase_bool = phase_bool_max|phase_bool_min
+            appendix_phases_max = phases.max() + (phases[phase_bool_max] - phases.min())
+            appendix_phases_min = phases.min() - (phases.max() - phases[phase_bool_min])
+            appendix_phases = np.append(appendix_phases_max, appendix_phases_min)
         else:
-            raise ValueError("minmax has to bei either 'min' or 'max'!")
+            raise ValueError("'minmax' has to bei either 'min', 'max' or 'both'!")
         
         appendix_fluxes = fluxes[phase_bool]
         expanded_phases = np.append(phases, appendix_phases)
