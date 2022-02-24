@@ -401,6 +401,7 @@ class Data_LuSt:
 
 
     def pdm(times, fluxes, period_start=1, period_stop=100, nperiods=100, nintervals=100, normalize=True, testplot=False, verbose=False, timeit=True):
+        #TODO: add option to ignore nan-values and still get an output - to make choice of nperiods and nintervals not so hard (especially for short-period signals)
         """
             - function to execute a Phase Dispersion Minimization on a given timeseries.
             - not only limited to lightcurve-anaylsis but any time series with periodic behaiviour actually
