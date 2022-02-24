@@ -583,6 +583,11 @@ class Data_LuSt:
                 - period 
                     - int
                     - period to fold the times onto
+                - tref
+                    - float, optional
+                    - reference time to consider when folding the lightcurve
+                    - the default is None
+                        - will take min(time) as reference
                 - timeit
                     - bool, optional
                     - specify wether to time the task and return the information or not
