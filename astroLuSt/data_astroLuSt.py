@@ -515,7 +515,7 @@ class Data_LuSt:
             #calculate variance of each interval
             for iv, ivs in zip(intervals[:-1], intervals[1:]):
                 iv_bool = (iv <= folded) & (folded < ivs)
-                sigma2_iv = np.var(fluxes[iv_bool])
+                sigma2_iv = np.nanvar(fluxes[iv_bool])
                 sigma2s = np.append(sigma2s, sigma2_iv)
 
             #save all calculate values accordingly and determine period of minimum variance
