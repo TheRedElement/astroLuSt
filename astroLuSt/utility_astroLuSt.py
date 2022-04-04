@@ -1513,6 +1513,7 @@ class MindMap:
             - function to get dicts of nodes and edges
         """
         import inspect
+        import numpy as np
         
         
         #check shapes
