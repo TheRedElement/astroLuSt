@@ -1571,17 +1571,39 @@ class MindMap:
         else:
             pass
 
-    def generate_node_colors(self):
+    def generate_node_colors(self, cmap="jet"):
         """
-            - function to generate node colors
+            - function to generate node colors according to the node level
+
+            Parameters
+            ----------
+                - cmap
+                    - str, optional
+                    - matplotlib colormap name
+                    - the default is 'jet'
+             Raises
+             ------
+
+             Returns
+             -------
+                - node_colors
+                    - np.array
+                    - contains rgb-tripels mapped to each node
+            
+            Dependencies
+            ------------
+                - matplotlib
+                - numpy
         """
-        import astroLuSt.plotting_astroLuSt as alp
+        # import astroLuSt.plotting_astroLuSt as alp
+        import matplotlib.pyplot as plt
         import numpy as np
 
         #initialize with color-generator colors
         node_colors = np.empty((self.node_contents.shape[0], 3))
         if len(node_colors) > 0:
-            level_colors = alp.Plot_LuSt.color_generator(ncolors=self.node_levels.max()+1, color2black_factor=.8, color2white_factor=1)[0]
+            # level_colors = alp.Plot_LuSt.color_generator(ncolors=self.node_levels.max()+1, color2black_factor=.8, color2white_factor=1)[0]
+            level_colors = eval(f"plt.cm.{cmap}(np.linspace(0,1,self.node_levels.max()+1))[:,:-1]")
             for lvl in np.unique(self.node_levels):
                 node_colors[(lvl == self.node_levels)] = level_colors[lvl]
         
@@ -1605,6 +1627,7 @@ class MindMap:
                     - float, optional
                     - amount of space between the points
                     - the default is 1
+
             Raises
             ------
 
@@ -1689,6 +1712,7 @@ class MindMap:
             Dependencies
             ------------
                 - numpy
+                - matplotlib
             
             Comments
             --------
@@ -1770,6 +1794,7 @@ class MindMap:
                     - needed in case one branch has a lot of nodes
                         - thus, even partitioning will lead to an IndexError
                     - the default is 2
+
             Raises
             ------
 
@@ -1861,7 +1886,7 @@ class MindMap:
 
     #MM operations
     def draw_MM(self,
-        node_positions=None, node_sizes=1, node_colors=None, node_shape="o", node_borderwidth=0, node_bordercolor="k",     #Nodes
+        node_positions=None, node_sizes=1, node_colors="jet", node_shape="o", node_borderwidth=0, node_bordercolor="k",     #Nodes
         edge_colors="k", edge_styles="-",
         font_size=12, font_color="k",
         plt_style="default",
@@ -1883,9 +1908,11 @@ class MindMap:
                         - will outogenereate a size according to the specified "level" of a node
                         - L0 > L1 > L2 > ...
                 - node_colors
-                    - list, optional
+                    - list, str, optional
                     - list of colors for the nodes
-                    - the default is None
+                    - str of a matplotlib colormap-name
+                    - the default is 'jet'
+                        - Colors generated according to a matplotlib colormap
                         - will generate colors, according to the "level" of each node
                         - L1: Color1, L2: Color2, ...
                 - node_shape
@@ -1984,11 +2011,13 @@ class MindMap:
                     - int, optional
                     - the resolution to use for saving the image
                     - the default is 180
+
             Raises
             ------
                 - IndexError
                     - in case too little nodes for a particular branch have been generated
                     - also gives the hint of increasing 'correction_exponen'
+
             Returns
             -------
                 - fig
@@ -2017,9 +2046,9 @@ class MindMap:
             except IndexError as i:
                 print(f"ORIGINAL ERROR: {i}")
                 raise IndexError("Try to increase 'correction_exponent' in order to ensure not falling out of bounds.")
-        if node_colors is None:
+        if type(node_colors) == str:
             #treat node_colors differently, since it can be an array of RGB tripels
-            node_colors = self.generate_node_colors()
+            node_colors = self.generate_node_colors(node_colors)
 
 
         fig = plt.figure(figsize=figsize)
@@ -2063,6 +2092,7 @@ class MindMap:
                 - absolute_path
                     - str
                     - the ABSOLUTE path to the source file
+
             Raises
             ------
 
@@ -2072,7 +2102,6 @@ class MindMap:
             Dependencies
             ------------
                 - ctypes
-                - os
             
             Comments
             --------
@@ -2097,22 +2126,28 @@ class MindMap:
         """
             - function to save the MindMap as an indented list in a text-file
         """
-
+        import numpy as np
 
         max_depth = self.node_levels.max()
+        min_depth = self.node_levels.min()
+        print()
 
-        d = 1
-        #iterate until deepest element(s) reached
-        while d < max_depth:
-            cur_ids = self.node_contents[(self.node_levels==d)]     #Parents
-            next_ids = self.node_contents[(self.node_levels==d+1)]  #Children
-            
-            #iterate over parents and children 
-            for cur_id in cur_ids:
-                for next_id in next_ids:
-                    print(d, cur_id, "-", next_id)
 
-            d += 1
+        roots = self.node_contents[(self.node_levels==min_depth)]
+        for root in roots:
+            print(root)
+            connection_idxs = (self.edge_froms==root)
+
+            while np.any(connection_idxs):
+                for c_sub in self.edge_tos[connection_idxs]:
+                    print("\t"*self.node_levels[(self.node_contents==c_sub)][0], c_sub)
+                    connection_idxs_sub = (self.edge_froms==c_sub)
+
+                    for c_2sub in self.edge_tos[connection_idxs_sub]:
+                        print("\t"*self.node_levels[(self.node_contents==c_2sub)][0], c_2sub)
+
+                    connection_idxs = (self.edge_froms==c_sub)
+
 
         raise NotImplementedError("NOT IMPLEMENTED YET!")
         pass
@@ -2138,6 +2173,20 @@ class MindMap:
                     - str
                         - the path to the source file
                         - has to be of above mentioned structure
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Dependencies
+            ------------
+                - numpy
+                - re
+            
+            Comments
+            --------
         """
         import re
         import numpy as np
