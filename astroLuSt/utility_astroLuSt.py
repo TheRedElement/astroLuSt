@@ -1571,7 +1571,7 @@ class MindMap:
         else:
             pass
 
-    def generate_node_colors(self, cmap="jet"):
+    def generate_node_colors(self, cmap="jet", shift_min=0, shift_max=0):
         """
             - function to generate node colors according to the node level
 
@@ -1581,6 +1581,16 @@ class MindMap:
                     - str, optional
                     - matplotlib colormap name
                     - the default is 'jet'
+                - shift_min
+                    - int, optional
+                    - value to shift vmin
+                    - the default is 0  
+                        - no shift
+                - shift_max
+                    - int, optional
+                    - value to shift vmax
+                    - the default is 0
+                        - no shift
              Raises
              ------
 
@@ -1602,8 +1612,10 @@ class MindMap:
         #initialize with color-generator colors
         node_colors = np.empty((self.node_contents.shape[0], 3))
         if len(node_colors) > 0:
+            if shift_max == 0: shift_max_to = None
+            else: shift_max_to = -shift_max
             # level_colors = alp.Plot_LuSt.color_generator(ncolors=self.node_levels.max()+1, color2black_factor=.8, color2white_factor=1)[0]
-            level_colors = eval(f"plt.cm.{cmap}(np.linspace(0,1,self.node_levels.max()+1))[:,:-1]")
+            level_colors = eval(f"plt.cm.{cmap}(np.linspace(0,1,self.node_levels.max()+1+shift_min+shift_max))[shift_min:shift_max_to,:-1]")
             for lvl in np.unique(self.node_levels):
                 node_colors[(lvl == self.node_levels)] = level_colors[lvl]
         
@@ -1760,6 +1772,7 @@ class MindMap:
         center=[0,0], start_angle=0, end_angle=None,
         correction_exponent=2,
         ):
+        #TODO: not working as expected for depth >=4
         """
             - function to generate some default node-positions
             - will generate positions consisting of datapoints on a fibonacci disc with radius 1 around 'center'
@@ -1887,6 +1900,7 @@ class MindMap:
     #MM operations
     def draw_MM(self,
         node_positions=None, node_sizes=1, node_colors="jet", node_shape="o", node_borderwidth=0, node_bordercolor="k",     #Nodes
+        shift_vmin=0, shift_vmax=0,
         edge_colors="k", edge_styles="-",
         font_size=12, font_color="k",
         plt_style="default",
@@ -1928,6 +1942,16 @@ class MindMap:
                     - str, rgb-triple optional
                     - defines color of the border surrounding a node
                     - the default is black
+                - shift_vmin
+                    - int, optional
+                    - value to shift vmin
+                    - the default is 0  
+                        - no shift
+                - shift_vmax
+                    - int, optional
+                    - value to shift vmax
+                    - the default is 0
+                        - no shift                
                 - edge_colors
                     - list, str, optional
                     - list of colors for all the edges
@@ -2048,7 +2072,7 @@ class MindMap:
                 raise IndexError("Try to increase 'correction_exponent' in order to ensure not falling out of bounds.")
         if type(node_colors) == str:
             #treat node_colors differently, since it can be an array of RGB tripels
-            node_colors = self.generate_node_colors(node_colors)
+            node_colors = self.generate_node_colors(cmap=node_colors, shift_min=shift_vmin, shift_max=shift_vmax)
 
 
         fig = plt.figure(figsize=figsize)
