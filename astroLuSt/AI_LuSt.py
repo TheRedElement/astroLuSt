@@ -6,7 +6,6 @@ def plot_confusion_matrix(
     annotate=True, annotationcolor="w", textfontsize=None,
     figsize=(9,5), fontsize=16,
     save=False):
-    #TODO: Finish documentation
     """
         - function to plot a confusion matrix
 
@@ -62,7 +61,28 @@ def plot_confusion_matrix(
                 - location of where to save the plot
                 - the default is False
                     - will not save the plot
+        
+        Raises
+        ------
+
+        Returns
+        -------
+            - fig
+                - matplotlib figure object
+            - ax
+                - list
+                - contains matplotlib axes objects
+
+        Dependencies
+        ------------
+            - numpy
+            - matplotlib
+
+        Comments
+        --------
+
     """
+
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -107,7 +127,7 @@ def plot_confusion_matrix(
     return fig, ax
 
 
-def kdist(X, k=4, eps_pred=None, testplot=False):
+def kdist(X, k=4, eps_pred=None, testplot=False, saveplot=False):
     #TODO: Autodetermine kink-distance
     """
         - function to return the distance of every datapoint in "X" to its k-th nearest neighbour
@@ -137,6 +157,11 @@ def kdist(X, k=4, eps_pred=None, testplot=False):
                 - bool, optional
                 - whether to generate a kdist-plot using the caculated distances
                 - the default is False
+            - saveplot
+                - str, optional
+                - location of where to save the generated plot
+                - the default is False
+
         Raises
         ------
 
@@ -189,6 +214,9 @@ def kdist(X, k=4, eps_pred=None, testplot=False):
         
         ax.legend(fontsize=fontsize)
         plt.tight_layout()
+        if type(saveplot)==str:
+            plt.savefig(saveplot, dpi=180)
+
         plt.show()
 
 
@@ -202,7 +230,6 @@ def plot_feature_spaces(
     figtitle="Feature Spaces",
     figsize=(10,10), fontsize=16,
     save=False):
-    #NOTE: changes from last git push: markersize, alpha
     """
         - function to plot all possible feature-space combinations in a correlation-plot
             - will result in a figure of X.shape[0]**2 subplots
