@@ -643,6 +643,7 @@ def plot_param_search(
     grid, metric,
     cmap="viridis", vmin=0, vmax=1,
     marker_color="r", marker_size=5,
+    metric_name="metric",
     fontsize=16,
     figtitle="Hyperparameter-Search Summary", figsize=(10,8),
     save=False):
@@ -676,6 +677,11 @@ def plot_param_search(
                 - float, optional
                 - size of the markers for the checked hyperparameter combinations
                 - the default is 5
+            - metric_name
+                - str, optional
+                - name of your metric
+                - will only be used to title the color-bar
+                - the default is "metric"
             - fontsize
                 - float, optional
                 - fontsize to use on the plot
@@ -768,11 +774,11 @@ def plot_param_search(
     fig.subplots_adjust(right=0.8)
     cbar_ax = fig.add_axes([0.85, 0.1, 0.05, 0.83])
     cbar = fig.colorbar(cont, cax=cbar_ax)
-    cbar.set_label("Accuracy", fontsize=fontsize, rotation=270, labelpad=20)
+    cbar.set_label(metric_name, fontsize=fontsize, rotation=270, labelpad=20)
     cbar.ax.tick_params(labelsize=fontsize-2)
 
     plt.tight_layout(rect=[0,0,.85,1])
-    fig.legend(fontsize=fontsize)
+    fig.legend(fontsize=fontsize, loc="upper left")
 
     if type(save) == str:
         plt.savefig(save, dpi=180)
