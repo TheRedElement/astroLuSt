@@ -1559,7 +1559,7 @@ class Synthetic_Curves:
 
         import numpy as np
         import matplotlib.pyplot as plt
-        import astroLuSt.data_astroLuSt as ald
+        import astroLuSt.preprocessing.data_astroLuSt as ald
         from astroLuSt.utility_astroLuSt import Time_stuff
 
         if timeit:
@@ -1799,7 +1799,7 @@ class Synthetic_Curves:
                 - if you want to use a phase space defined on [0,1], simply call pass phases-0.5 to the function
         
         """
-        import astroLuSt.data_astroLuSt as ald
+        import astroLuSt.preprocessing.data_astroLuSt as ald
         from astroLuSt.utility_astroLuSt import Time_stuff
         import numpy as np
         import matplotlib.pyplot as plt
