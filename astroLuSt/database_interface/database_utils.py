@@ -1,28 +1,70 @@
 
-#TODO: eleanor parts not working with pandas yet -> use csv
 
 #%%imports
 
+#data manipulation
+import numpy as np
+import pandas as pd
+import re
+
+#plotting
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+
+#os interaction
+import os
+
+#web interaction
+from urllib import request
+
+#astronomy
+from astropy.table import Table
+from astroquery.simbad import Simbad
+from astroquery.gaia import Gaia
+from joblib import Parallel, delayed
+import eleanor
+
+
+#warnings
+import warnings
 
 #%%
 
+#SIMBAD
+class SimbadDatabaseInterface:
+    """
+        - class to interact with the SIMBAD database
 
-class DatabaseInterface:
+        Attributes
+        ----------
 
+        Methods
+        -------
+            - get_ids()
+
+        Dependencies
+        ------------
+            - numpy
+            - pandas
+            - re
+            - astroquery
+            - joblib
+    """
+    
+
+    
     def __init__(self):
-        import pandas as pd
-        
-        self.gaia_crendetials = None
 
         self.df_ids = pd.DataFrame()
-        self.df_LCs = pd.DataFrame()
+
         pass
 
-    #SIMBAD
+        
+
     def get_ids(self,
-        input_ids:list[str],
+        input_ids:list,
         nparallelrequests:int=1000, simbad_timeout:int=120,
-        show_scanned_strings_at:list[int]=[],
+        show_scanned_strings_at:list=[],
         verbose:int=0) -> None:
         """
             - function to query the SIMBAD database for additional identifiers
@@ -65,12 +107,6 @@ class DatabaseInterface:
             --------
 
         """
-        import numpy as np
-        import pandas as pd
-        import re
-
-        from astroquery.simbad import Simbad
-        from joblib import Parallel, delayed
 
         unique_ids = pd.unique(input_ids)
 
@@ -230,16 +266,244 @@ class DatabaseInterface:
     #     return
 
 
-    #ELEANOR
-    def data_from_eleanor_alltics(self):
+#ELEANOR
+class EleanorDatabaseInterface:
+
+    """
+        - class to interact with the eleanor code for downloading lightcurves
+
+        
+        Attributes
+        ----------
+            - tic
+                - list[int], optional
+                - list of TIC identifiers
+                - the default is []
+            - sectors
+                - list[int]|str, optional
+                - list of sectors to extract or "all" if all available sectors shall be considered
+                - the default is "all"
+            - do_psf
+                - bool, optional
+                - whether to execute a psf
+                - argument of eleanor.multi_sectors
+                - the default is False
+            - do_pca
+                - bool, optional
+                - whether to execute a pca
+                - argument of eleanor.multi_sectors
+                - the default is False
+            - aperture_mode
+                - str, optional
+                - specify which aperture to use ('small', 'normal', 'large')
+                - argument of eleanor.TargetData
+                - the default is 'normal'
+            - regressors
+                - str, optional
+                - which methods to use to estimate the background
+                - argument of eleanot.TargetData
+                - the default is 'corners'
+            - try_load
+                - bool, optional
+                - whether to search hidden ~/.eleanor dictionary for alrady existing TPF
+                - argument of eleanor.TargetData
+                - the default is True
+            - height
+                - int, optional
+                - pixel height of the cutout
+                - argument of eleanor.multi_sectors
+                - the default is 15
+            - width
+                - int, optional
+                - pixel width of the cutout
+                - argument of eleanor.multi_sectors
+                - the default is 15
+            - bkg_size
+                - int, optional
+                - argument of eleanor.multi_sectors
+                    - see documentation for more info
+                - the default is 31
+
+
+        
+        Methods
+        -------
+            - data_from_eleanor_alltics()
+            - data_from_eleanor()
+            - plot_result_eleanor()
+            - result2pandas()
+            - save_npy_eleanor()
+                - not maintained
+                - might have compatibility issues
+
+        Dependencies
+        ------------
+            - pandas
+            - numpy
+            - matplotlib
+            - eleanor
+            - warnings
+
+    """
+
+
+
+    def __init__(self,
+        tics:list=[], sectors:list="all",
+        do_psf:bool=False, do_pca:bool=False,
+        aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
+        height:int=15, width:int=15, bkg_size:int=31        
+        ):
+
+
+        self.tics = tics
+        self.sectors = sectors
+        self.do_psf = do_psf
+        self.do_pca = do_pca
+        self.aperture_mode = aperture_mode
+        self.regressors = regressors
+        self.try_load = try_load
+        self.height = height
+        self.width = width
+        self.bkg_size = bkg_size
+
+        pass
+
+    def data_from_eleanor_alltics(self,
+        #saving data
+        save:str="./",
+        quality_expression:str="(datum.quality == 0)",
+        include_aperture:bool=False, include_tpf:bool=False,
+        #plotting
+        plot_result:bool=True,
+        aperture_detail:int=50, ylims:list=None,
+        fontsize:int=16, figsize:tuple=(16,9),
+        save_plot:str=False,
+        verbose:int=0
+        ):
+        """
+            - method to extract data for all ids in 'self.tics'
+
+            Parameters
+            ----------
+                - save
+                    - str|bool, optional
+                    - path to the directory of where to store the extracted files
+                    - the default is "./"
+                        - will save to the current working directory
+                - quality_expression
+                    - str, optional
+                    - string containing some boolean condition w.r.t. 'datum.quality'
+                    - eval() function will be applied to construct a boolean array
+                    - the default is "(datum.quality == 0)"
+                - include_aperture
+                    - bool, optional
+                    - whether to include the used aperture in the extracted file
+                    - will store the aperture for every single frame
+                        - thus, can lead to quite large files
+                    - the default is False
+                - include_tpf
+                    - bool, optional
+                    - whether to include the target-pixel-files in the extracted file
+                    - will store the tpf for every single frame
+                        - thus, can lead to quite large files
+                    - the default is False
+                - plot_result
+                    - bool, optional
+                    - whether to create a plot of the extracted file
+                    - the default is True
+                - aperture_detail
+                    - int, optional
+                    - how detailed the aperture shall be depicted
+                    - higher values require more computation time
+                    - the default is 50
+                - ylims
+                    - list, tuple, optional
+                    - the ylims of the created plot
+                    - the default is None
+                        - will automatically adapt the ylims
+                - fontsize
+                    - int, optional
+                    - fontsize to use on the created plot
+                    - the default is 16
+                - figsize
+                    - tuple, optional
+                    - size of the created figure/plot
+                    - the default is (16,9)
+                - save_plot
+                    - str, optional
+                    - location of where to save the created plot
+                    - the default is False
+                        - will not save the plot
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - higher numbers will show more information
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+
+
+        """
+
+        extraction_fail = []
+
+        for idx, tic in enumerate(self.tics):
+
+            print(f"\nExtracting {tic} ({idx+1}/{len(self.tics)})")
+
+            data, sectors, tess_mags, error_msg = self.data_from_eleanor(
+                tic, sectors=self.sectors,
+                do_psf=self.do_psf, do_pca=self.do_pca,
+                aperture_mode=self.aperture_mode, regressors=self.regressors, try_load=self.try_load,
+                height=self.height, width=self.width, bkg_size=self.bkg_size, 
+            )
+
+            if data is not None:
+
+                #Save data
+                if isinstance(save, str):
+                    df_res = self.result2pandas(
+                        save=f"{save}tic{tic}.csv",
+                        data=data, sectors=sectors, tess_mags=tess_mags, tic=tic,
+                        quality_expression=quality_expression,
+                        include_aperture=include_aperture, include_tpf=include_tpf,
+                        sep=";"
+                    )
+
+                #Plot data
+                if plot_result:
+                    fig, axs = self.plot_result_eleanor(
+                        data=data, tic=tic, sectors=sectors, tess_mags=tess_mags,
+                        quality_expression=quality_expression,
+                        aperture_detail=aperture_detail, ylims=ylims,
+                        fontsize=fontsize, figsize=figsize, save=f"{save_plot}tic{tic}.png",                  
+                    )
+                
+            else:
+                #append failed extractions
+                extraction_fail.append(tic)
+
+        #short protocoll about extraction
+        if verbose > 1:
+            print(f"\nExtraction failed for:")
+            for ef in extraction_fail:
+                print(f"\t{ef[1]} ({ef[0]})")
+            print()        
 
         return
 
     def data_from_eleanor(self,
-        tic:str, sectors:list|str="all", 
+        tic:int, sectors:list="all", 
         do_psf:bool=False, do_pca:bool=False, 
         aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
-        height:int=15, width:int=15, bkg_size:int=31) -> tuple[list, list, float, str]:
+        height:int=15, width:int=15, bkg_size:int=31) -> tuple:
         """
             - function to download data using eleonor
 
@@ -322,7 +586,6 @@ class DatabaseInterface:
             --------
 
         """
-        import eleanor
 
         try:
             error_msg = None
@@ -330,6 +593,7 @@ class DatabaseInterface:
             
             data = []
             sectors = []
+            tess_mags = []
             try:
                 for s in star:
                     datum = eleanor.TargetData(
@@ -347,14 +611,14 @@ class DatabaseInterface:
                     sectors.append(s.sector)
 
                     #Get TESS-magnitude
-                    tess_mag = s.tess_mag
+                    tess_mags.append(s.tess_mag)
                     
             except Exception as e:
                 print("WARNING: Error in eleanor.TargetData()")
                 print(f"ORIGINAL ERROR: {e}")
                 data = None
                 sectors = None
-                tess_mag = None
+                tess_mags = None
                 error_msg = f"{'eleanor.TargetData()':25s}: {e}"
 
 
@@ -366,16 +630,17 @@ class DatabaseInterface:
             
             data = None
             sectors = None
-            tess_mag = None
+            tess_mags = None
             error_msg = f"{'eleanor.multi_sectors()':25s}: {e}"
             
         
-        return data, sectors, tess_mag, error_msg
+        return data, sectors, tess_mags, error_msg
 
     def plot_result_eleanor(self,
-        data:list, target:str, TIC:str, sectors:list, tess_mag:float,
-        aperture_detail:int=50, ylims:list|None=None,
-        fontsize:int=16, figsize:tuple=(16,9), save:str|bool=False):
+        data:list, tic:int, sectors:list, tess_mags:list,
+        quality_expression:str="(datum.quality == 0)",
+        aperture_detail:int=50, ylims:list=None,
+        fontsize:int=16, figsize:tuple=(16,9), save:str=False):
         """
             - function to autogenerate a summary-plot of the data downloaded using eleonor
         
@@ -385,19 +650,20 @@ class DatabaseInterface:
                     - list
                     - contains the data for each sector
                         - extracted with eleanor
-                - target
-                    - str
-                    - name under which the target shall be depiced in the plot
-                        - shown in the title of the figure
-                - TIC
+                - tic
                     - str
                     - TIC identifier of the target
                 - sectors
                     - list
                     - containing the sectors in which the target has been observed
-                - tess_mag
-                    - float
-                    - contains the tess-magnitude of the target           
+                - tess_mags
+                    - list
+                    - contains the tess-magnitudes of the target for each sector           
+                - quality_expression
+                    - str, optional
+                    - string containing some boolean condition w.r.t. 'datum.quality'
+                    - eval() function will be applied to construct a boolean array
+                    - the default is "(datum.quality == 0)"
                 - aperture_detail
                     - int, optional
                     - how highly resolved the outline of the aperture should be depicted
@@ -438,19 +704,15 @@ class DatabaseInterface:
             --------
         """
 
-        import matplotlib.pyplot as plt
-        from matplotlib.lines import Line2D
-        import numpy as np
-
         if ylims is None:
             ylims = [False]*len(sectors)
         assert len(ylims) == len(sectors), f"'ylims' has to be 'None' or of the same shape as 'sectors'!"
 
         fig = plt.figure(figsize=figsize)
-        fig.suptitle(f"{target} ({TIC}) \n[TESS-mag = {tess_mag}]", fontsize=fontsize+6)
+        fig.suptitle(f"tic{tic}", fontsize=fontsize+6)
 
         
-        for idx, (datum, sector, ylim) in enumerate(zip(data, sectors, ylims)):
+        for idx, (datum, sector, tess_mag, ylim) in enumerate(zip(data, sectors, tess_mags, ylims)):
             
             #add subplots
             row = len(sectors)
@@ -472,7 +734,7 @@ class DatabaseInterface:
             ax1.contour(aperture_plot, levels=[1], colors="r", corner_mask=False, origin='lower', aspect='auto', extent=extent, zorder=2)
 
             #TODO: Maybe check here if extraction worked (only one sector not working?)
-            q = datum.quality == 0
+            q = eval(quality_expression)
             ax2.plot(datum.time[q], datum.corr_flux[q]/np.nanmedian(datum.corr_flux[q]), marker=".", linestyle="", color="tab:blue", label=f"Corrected Flux")
             try:
                 ax2.plot(datum.time[q], datum.pca_flux[q]/np.nanmedian(datum.pca_flux[q]), marker=".", linestyle="", color="tab:orange", label=f"PCA")
@@ -487,7 +749,7 @@ class DatabaseInterface:
             #add legends
             leg = ax2.legend(
                 fontsize=fontsize-2,
-                title=r"$\mathbf{Sector~%i}$"%(sector), title_fontsize=fontsize-2,
+                title=r"$\mathbf{Sector~%i}$, TESS_mag: %.2f"%(sector, tess_mag), title_fontsize=fontsize-2,
                 loc="upper right",
             )
             leg._legend_box.align = "left"
@@ -525,11 +787,123 @@ class DatabaseInterface:
             plt.savefig(save, dpi=180)
         plt.show()
         
-        return
+        axs = fig.axes
+
+        return fig, axs
+   
+    def result2pandas(self,
+        data:list, sectors:list, tess_mags:list, tic:str,
+        quality_expression:str="(datum.quality == 0)",
+        sep=";",
+        include_aperture=False, include_tpf=False,
+        save:str=False,
+        ) -> pd.DataFrame:
+        """
+            - method to convert the result returned by eleanor to a pandas DataFrame
+            - also allows saving of the created DataFrame as .csv
+
+            Parameters
+            ----------
+                - data
+                    - list
+                    - contains the data for each sector
+                        - extracted with eleanor
+                - sectors
+                    - list
+                    - containing the sectors in which the target has been observed
+                - tess_mags
+                    - list
+                    - contains the tess-magnitudes of the target for each sector           
+                - tic
+                    - str
+                    - TIC identifier of the target
+                - quality_expression
+                    - str, optional
+                    - string containing some boolean condition w.r.t. 'datum.quality'
+                    - eval() function will be applied to construct a boolean array
+                    - the default is "(datum.quality == 0)"
+                - sep
+                    - str, optional
+                    - separator to use when creating the .csv file
+                    - the default is ";"
+                        - reason for choosing ";" over "," is that aperture and tpf will be stored as nested list, which contain "," as separators
+                - include_aperture
+                    - bool, optional
+                    - whether to include the used aperture in the extracted file
+                    - will store the aperture for every single frame
+                        - thus, can lead to quite large files
+                    - the default is False
+                - include_tpf
+                    - bool, optional
+                    - whether to include the target-pixel-files in the extracted file
+                    - will store the tpf for every single frame
+                        - thus, can lead to quite large files
+                - save
+                    - str|bool, optional
+                    - path to the directory of where to store the created csv-file
+                    - the default is False
+                        - will not save results to .csv file
+                
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+
+        """
+
+        df_lc = pd.DataFrame(
+            columns=["times", "raw_flux", "corr_flux", "pca_flux", "psf_flux", "sector", "q_eleanor", "tess_mag"]+[ "aperture"]*include_aperture+["tpf"]*include_tpf
+            )
+        if include_aperture:
+            df_lc["aperture"].astype(object)
+        if include_tpf:
+            df_lc["tpf"].astype(object)
+
+        for idx, (datum, sector, tess_mag) in enumerate(zip(data, sectors, tess_mags)):
+
+            q = eval(quality_expression)
+
+            if self.do_pca:
+                pca_flux = datum.pca_flux[q]
+            else:
+                pca_flux = [None]*len(datum.time[q])
+            if self.do_psf:
+                psf_flux = datum.pca_flux[q]
+            else:
+                psf_flux = [None]*len(datum.time[q])
+
+            df_datum = pd.DataFrame({
+                "times":datum.time[q],
+                "raw_flux":datum.raw_flux[q],
+                "corr_flux":datum.corr_flux[q],
+                "pca_flux":pca_flux,
+                "psf_flux":psf_flux,
+                "sector":[sector]*len(datum.time[q]),
+                "q_eleanor":datum.quality[q],
+                "tess_mag":[tess_mag]*len(datum.time[q]),
+            })
+
+            if include_aperture:
+                df_datum["aperture"] = [datum.aperture]*len(datum.time[q])
+            if include_tpf:
+                df_datum["tpf"] = datum.tpf[q].tolist()
+
+
+            df_lc = pd.concat((df_lc, df_datum), ignore_index=True)
+
+        if isinstance(save, str):
+            df_lc.to_csv(save, index=False, sep=sep)
+            
+
+        return df_lc
 
     def save_npy_eleanor(self,
-        data:list, sectors:list, tess_mag:float, save:str|bool,
-        target:str, TIC:str|None=None, GCVS_class:str|None=None, GCVS_period:float|None=None, GCVS_RA:str|None=None, GCVS_DEC:str|None=None):
+        data:list, sectors:list, tess_mag:float, save:str,
+        target:str, TIC:str=None, GCVS_class:str=None, GCVS_period:float=None, GCVS_RA:str=None, GCVS_DEC:str=None):
         """
             - function to save the extracted data into an 0-dimensional np.array
 
@@ -580,15 +954,13 @@ class DatabaseInterface:
             Returns
             -------
 
-            Dependencies
-            ------------
-                - numpy
-            
             Comments
             --------
+                - NOT MAINTAINED ANYMOER
         
         """
-        import numpy as np
+
+        warnings.warn("WARNING: save_npy_eleanor is not being maintained anymore. It might not be compatible with newer versions of the other methods.")
 
         savedict = {
             "target":target,
@@ -642,7 +1014,35 @@ class DatabaseInterface:
 
         return
 
-    #GAIA
+#GAIA
+class GaiaDatabaseInterface:
+    """
+        - class to interact with the Gaia-archive
+
+        Attributes
+        ----------
+            -
+        
+        Methods
+        -------
+
+        Dependencies
+        ------------
+            - astropy
+            - astroquery
+            - numpy
+            - os
+            - pandas
+            - urllib
+
+    """
+    def __init__(self):
+
+        self.gaia_crendetials = None
+        self.df_LCs = pd.DataFrame()
+        pass
+
+
     def get_lc_gaia(self,
         gaia_result:str):
         """
@@ -675,10 +1075,6 @@ class DatabaseInterface:
             Comments
             --------
         """
-        import os
-        from astropy.table import Table
-        from urllib import request
-        import numpy as np
 
 
         res = Table.read(gaia_result, format="votable")
@@ -708,9 +1104,9 @@ class DatabaseInterface:
         return results
 
     def remove_all_jobs(self,
-    pd_filter:str|None=None, gaia_credentials:str|None=None,
-    login_before:bool=False, logout_after:bool=False,
-    verbose:int=0):
+        pd_filter:str=None, gaia_credentials:str=None,
+        login_before:bool=False, logout_after:bool=False,
+        verbose:int=0):
         """
             - method to remove all jobs stored in the Gaia-Archive
 
@@ -778,8 +1174,6 @@ class DatabaseInterface:
             Comments
             --------
         """
-        from astroquery.gaia import Gaia
-        import pandas as pd
 
         if login_before:
             if self.gaia_crendetials is None:
@@ -837,32 +1231,34 @@ class DatabaseInterface:
         return
 
 #%%Testing
-# ID = DatabaseInterface()
-# ID.gaia_crendetials = "../credentials_gaia.txt"
+
+# targets = [
+#     "KIC 5006817", "RR Lyr", "TV Boo"
+# ]
+
+# SDI = SimbadDatabaseInterface()
+# ids = SDI.get_ids(
+#     targets
+# )
+# tics = SDI.df_ids["TIC"]
+
+# EDI = EleanorDatabaseInterface(
+#     tics=tics[1:2], sectors="all"
+#     )
+
+# EDI.data_from_eleanor_alltics(
+#     save="./",
+#     plot_result=True, save_plot="./",
+# )
+
+
+
+
+
+# GID = GaiaDatabaseInterface()
+# GID.gaia_crendetials = "../credentials_gaia.txt"
 
 # filter = "(jobs['phase'] == 'ERROR')"
-# ID.remove_all_jobs(pd_filter=filter, login_before=True, logout_after=True)
+# GID.remove_all_jobs(pd_filter=filter, login_before=True, logout_after=True)
 
 
-# import joblib
-
-
-# projection = "TSNE"
-# clf_name = "DBSCAN"
-# dataset = "DataSet4"
-
-# X_train_best_model = joblib.load(f"../saved_data_structures/ML_Model/sector_wise/model_UMAP_HDBSCAN_X.pkl")
-# best_model_y_filter = joblib.load(f"../saved_data_structures/ML_Model/sector_wise/model_{projection}_{clf_name}_TIC_ary.pkl")
-# input_ids = [f"tic {id}" for id in best_model_y_filter]
-
-# # display(df_ids)
-
-# queries = DatabaseInterface()
-# queries.get_ids(
-#     input_ids[:200],
-#     nparallelrequests=500, simbad_timeout=60,
-#     show_scanned_strings_at=[], verbose=1)
-
-# df = queries.df_ids
-
-#%%

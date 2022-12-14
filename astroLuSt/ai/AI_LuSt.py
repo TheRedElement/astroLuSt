@@ -869,3 +869,4 @@ def plot_param_search(
     axs = fig.axes
 
     return fig, axs
+
