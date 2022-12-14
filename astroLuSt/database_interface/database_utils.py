@@ -456,7 +456,7 @@ class EleanorDatabaseInterface:
 
         for idx, tic in enumerate(self.tics):
 
-            print(f"\nExtracting {tic} ({idx+1}/{len(self.tics)})")
+            print(f"\nExtracting tic{tic} ({idx+1}/{len(self.tics)})")
 
             data, sectors, tess_mags, error_msg = self.data_from_eleanor(
                 tic, sectors=self.sectors,
