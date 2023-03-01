@@ -36,7 +36,7 @@ dependencies = [
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
-    name=modulename,
+    name=programname,
     version=version,
     author=author,
     author_email=author_email,

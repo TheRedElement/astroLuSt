@@ -2,13 +2,13 @@
 
 A collection of functions useful for dataprocessing especially in astronomy.
 
-Author: Lukas Steinwender
-Author Email: lukas.steinwender99@gmail.com
-Maintainer: Lukas Steinwender
-Maintiner Email: lukas.steinwender99@gmail.com
-Last Update: 2023-03-01
-Version: 0.0.2
-URL: [https://github.com/TheRedElement/astroLuSt](https://github.com/TheRedElement/astroLuSt)
+Author: <author>
+Author Email: <author_email>
+Maintainer: <maintainer>
+Maintiner Email: <maintainer_email>
+Last Update: <lastupdate>
+Version: <version>
+URL: <url>
 
 ## Installation
 

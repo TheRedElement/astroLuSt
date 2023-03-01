@@ -1,0 +1,4 @@
+include README.md
+include astroLuSt_example_usage.ipynb
+exclude PHOEBE_astroLuSt.py
+exclude __pycache__
