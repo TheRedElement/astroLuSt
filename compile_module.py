@@ -69,7 +69,7 @@ def current2legacy(
     if os.path.exists(dest_dir):
         shutil.rmtree(dest_dir)
     for source in glob.glob('*'):
-        if not re.match(r'legacy|__pycache__|.*~\$+|temp\b|testing|TODOS.md', source):
+        if not re.match(r'legacy|__pycache__|.*~\$+|temp\b|testing|TODOs.md', source):
 
             if os.path.isdir(source):
                 shutil.copytree(f'./{source}', dst=f'{dest_dir}/{source}')
@@ -89,7 +89,7 @@ def main():
     maintainer_email = 'lukas.steinwender99@gmail.com'
     url = "https://github.com/TheRedElement/astroLuSt"
     lastupdate = str(datetime.date.today())
-    version = '0.0.2'
+    version = '0.0.3'
 
     compile_readme(
         modulename,
