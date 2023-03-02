@@ -678,12 +678,6 @@ class Plot_LuSt:
         """
         import numpy as np
         import matplotlib.pyplot as plt
-        from astroLuSt.utility_astroLuSt import Time_stuff
-
-        #time execution
-        if timeit:
-            task = Time_stuff("color_generator")
-            task.start_task()   
 
         if (color2black_factor < 0) or (color2black_factor > 1):
             raise ValueError("color2black_factor has to be in the interval [0,1]")
@@ -771,10 +765,6 @@ class Plot_LuSt:
             ax.set_ylabel("y", fontsize=16)
             ax.tick_params("both", labelsize=16)
             plt.show()
-
-        #time execution
-        if timeit:
-            task.end_task()
 
         return colors, colors_greyscale, colors_combined
 

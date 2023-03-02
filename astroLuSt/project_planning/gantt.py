@@ -440,10 +440,10 @@ class GANTT:
 
         import numpy as np
         import matplotlib.pyplot as plt
-        import astroLuSt.visualization.plotting_astroLuSt as alp
+        from astroLuSt.visualization.plotting import generate_colors
 
         if colors is None:
-            colors = alp.Plot_LuSt.color_generator(len(self.tasks), color2black_factor=.9, color2white_factor=.9)[0]
+            colors = generate_colors(len(self.tasks)+2, cmap='nipy_spectral')[1:-1]
         elif type(colors) != (np.array and list):
             raise TypeError("'colors' has to be a list or an np.array!")
         elif len(colors) != len(self.task):
