@@ -820,15 +820,7 @@ class Data_LuSt:
         
         import numpy as np
         import matplotlib.pyplot as plt
-        from astroLuSt.utility_astroLuSt import Time_stuff
         
-        
-        #time execution
-        if timeit:
-            task = Time_stuff("periodic_shift")
-            task.start_task()
-
-
 
         ################################
         #check if all types are correct#
@@ -889,10 +881,6 @@ class Data_LuSt:
             plt.legend()
             plt.show()
 
-        #time execution
-        if timeit:
-            task.end_task()
-        
         return shifted
 
     def phase2time(phases, period, timeit=False):
@@ -926,19 +914,8 @@ class Data_LuSt:
                 - if you wish to convert phases from the interval [0,1], simply pass phases-0.5 to the function
         """
    
-        from astroLuSt.utility_astroLuSt import Time_stuff
-        
-        #time execution
-        if timeit:
-            task = Time_stuff("phase2time")
-            task.start_task()
-
         time = (phases+0.5)*period
         
-        #time execution
-        if timeit:
-            task.end_task()
-
         return time
 
     def phase_binning(fluxes, phases, nintervals, nbins, centers, widths, go_exact=True, verbose=False, testplot=False, timeit=False):
@@ -1559,11 +1536,6 @@ class Synthetic_Curves:
         import numpy as np
         import matplotlib.pyplot as plt
         import astroLuSt.preprocessing.data_astroLuSt as ald
-        from astroLuSt.utility_astroLuSt import Time_stuff
-
-        if timeit:
-            timer = Time_stuff("synth_eb()")
-            timer.start_task()
 
         def gaussian(times, mu, sigma):
             """
@@ -1729,8 +1701,6 @@ class Synthetic_Curves:
             plt.tight_layout()
             plt.show()
 
-        if timeit:
-            timer.end_task()
 
         return {
             "fluxes":fluxes,
@@ -1799,13 +1769,8 @@ class Synthetic_Curves:
         
         """
         import astroLuSt.preprocessing.data_astroLuSt as ald
-        from astroLuSt.utility_astroLuSt import Time_stuff
         import numpy as np
         import matplotlib.pyplot as plt
-
-        if timeit:
-            timer = Time_stuff("periodize")
-            timer.start_task()
 
         times = ald.Data_LuSt.phase2time(phases+0.5, period, timeit=False)
         times_periodized = np.array([])
@@ -1828,8 +1793,5 @@ class Synthetic_Curves:
             plt.legend()
             plt.tight_layout()
             plt.show()
-
-        if timeit:
-            timer.end_task()
 
         return times_periodized, fluxes_periodized, 
