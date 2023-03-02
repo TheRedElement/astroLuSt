@@ -5,7 +5,10 @@
 # https://github.com/pypa/sampleproject
 
 
-#parsing
+
+#%%imports
+import astroLuSt
+
 import re
 
 from datetime import datetime
@@ -15,7 +18,7 @@ import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
 
-#module specifications
+#%%module specifications
 modulename = 'astroLuSt'
 author = 'Lukas Steinwender'
 author_email = 'lukas.steinwender99@gmail.com'
@@ -32,32 +35,33 @@ dependencies = [
         "datetime",
     ],
 
-# Get long description from the README file
-long_description = (here / "README.md").read_text(encoding="utf-8")
+#Get long description from the README file
+long_description = (here / 'README.md').read_text(encoding='utf-8')
 
+#%%setup
 setup(
-    name=modulename,
-    version=version,
-    author=author,
-    author_email=author_email,
-    maintainer=maintainer,
-    maintainer_email=maintainer_email,
-    url=url,
-    description="Module containing tools useful especially in astronomy.",
+    name=astroLuSt.__modulename__,
+    version=astroLuSt.__version__,
+    author=astroLuSt.__author__,
+    author_email=astroLuSt.__author_email__,
+    maintainer=astroLuSt.__maintainer__,
+    maintainer_email=astroLuSt.__maintainer_email__,
+    url=astroLuSt.__url__,
+    description='Module containing tools useful especially in astronomy.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     download_url=None,
     include_package_data=True,
-    packages=["astroLuSt"],
+    packages=['astroLuSt'],
     classifiers=[
-        "Intended Audience :: Science/Research",
-        "Programming Language :: Python :: 3.9",
-        "Topic :: Scientific/Engineering :: Astronomy",
-        "Natural Language :: English",
-        "Development Status :: 2 - Pre-Alpha",
+        'Intended Audience :: Science/Research',
+        'Programming Language :: Python :: 3.9',
+        'Topic :: Scientific/Engineering :: Astronomy',
+        'Natural Language :: English',
+        'Development Status :: 2 - Pre-Alpha',
     ],
     platforms=[],
-    keywords="Astronomy, Dataanalysis",
+    keywords='Astronomy, Dataanalysis',
     license=None,
     include=['*'],
     exclude=['__pychache__', 'legacy', 'data', 'gfx', 'temp', 'templates', 'tests'],
@@ -65,13 +69,13 @@ setup(
     # packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
     # python_requires=">=3.8, < 4",
     install_requires=dependencies,
-    package_data={
-        "astroLuSt": ["files/Colorcodes.txt"],
-    },    
+    # package_data={
+    #     "astroLuSt": ['files/Colorcodes.txt'],
+    # },    
     # data_files=[
     #     ('files', ['files/Colorcodes.txt']),
     # ],
     project_urls={
-        "Source": "https://github.com/TheRedElement/astroLuSt" 
+        "Source":astroLuSt.__url__
     },
 )
