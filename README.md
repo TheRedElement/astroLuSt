@@ -6,8 +6,8 @@ Author: Lukas Steinwender
 Author Email: lukas.steinwender99@gmail.com
 Maintainer: Lukas Steinwender
 Maintiner Email: lukas.steinwender99@gmail.com
-Last Update: 2023-03-01
-Version: 0.0.2
+Last Update: 2023-03-02
+Version: 0.0.3
 URL: [https://github.com/TheRedElement/astroLuSt](https://github.com/TheRedElement/astroLuSt)
 
 ## Installation

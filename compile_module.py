@@ -1,5 +1,8 @@
 
 #%%imports
+
+import astroLuSt
+
 import re
 
 import glob
@@ -45,7 +48,8 @@ def compile_readme(
     return
 
 def current2legacy(
-    modulename:str, version:str='0.0.0'
+    modulename:str, version:str='0.0.0',
+    write:bool=True,
     ) -> None:
     """
         - function to copy the current state of the module to the 'legacy' directory
@@ -64,45 +68,41 @@ def current2legacy(
 
 
     #copy files into legacy directory
-    dest_dir = f'./legacy/{modulename}_v{version}'
+    if write:
+        dest_dir = f'./legacy/{modulename}_v{version}'
 
-    if os.path.exists(dest_dir):
-        shutil.rmtree(dest_dir)
-    for source in glob.glob('*'):
-        if not re.match(r'legacy|__pycache__|.*~\$+|temp\b|testing|TODOs.md', source):
+        if os.path.exists(dest_dir):
+            shutil.rmtree(dest_dir)
+        for source in glob.glob('*'):
+            if not re.match(r'legacy|__pycache__|.*~\$+|temp\b|testing|TODOs.md', source):
 
-            if os.path.isdir(source):
-                shutil.copytree(f'./{source}', dst=f'{dest_dir}/{source}')
-            else:
-                shutil.copyfile(f'./{source}', dst=f'{dest_dir}/{source}')
+                if os.path.isdir(source):
+                    shutil.copytree(f'./{source}', dst=f'{dest_dir}/{source}')
+                else:
+                    shutil.copyfile(f'./{source}', dst=f'{dest_dir}/{source}')
 
     return
 
 
 def main():
 
-    #module specifications
-    modulename = 'astroLuSt'
-    author = 'Lukas Steinwender'
-    author_email = 'lukas.steinwender99@gmail.com'
-    maintainer = 'Lukas Steinwender'
-    maintainer_email = 'lukas.steinwender99@gmail.com'
-    url = "https://github.com/TheRedElement/astroLuSt"
     lastupdate = str(datetime.date.today())
-    version = '0.0.3'
 
     compile_readme(
-        modulename,
-        author, author_email,
-        maintainer, maintainer_email,
-        lastupdate,
-        version,        
-        url,
+        modulename=astroLuSt.__modulename__,
+        author=astroLuSt.__author__, author_email=astroLuSt.__author_email__,
+        maintainer=astroLuSt.__maintainer__, maintainer_email=astroLuSt.__maintainer_email__,
+        lastupdate=lastupdate,
+        version=astroLuSt.__version__,
+        url=astroLuSt.__url__,
         infilename='./templates/README.md',
         outfilename='README.md'
     )
 
-    current2legacy(modulename=modulename, version=version)
+    current2legacy(
+        modulename=astroLuSt.__modulename__, version=astroLuSt.__version__,
+        write=False
+    )
 
     print('FINISHED')
 
