@@ -11,32 +11,47 @@ import astroLuSt
 
 import re
 
-from datetime import datetime
+import datetime
 
 from setuptools import setup, find_packages
 import pathlib
 
 here = pathlib.Path(__file__).parent.resolve()
 
-#%%module specifications
-modulename = 'astroLuSt'
-author = 'Lukas Steinwender'
-author_email = 'lukas.steinwender99@gmail.com'
-maintainer = 'Lukas Steinwender'
-maintainer_email = 'lukas.steinwender99@gmail.com'
-url = "https://github.com/TheRedElement/astroLuSt"
-lastupdate = str(datetime.date.today())
-version = '0.0.3'
+#%%definitions
+def get_dependencies():
+    """
+        - obtain required packages from requirements.txt
+    """
 
-dependencies = [
-        "numpy",
-        "matplotlib",
-        "scipy",
-        "datetime",
-    ],
+    with open('requirements.txt', 'r') as infile:
+        reqs = infile.read()
+        infile.close()
+    
+    reqs = re.findall(r'.+(?=\n)', reqs)    #with version
+    # reqs = re.findall(r'.+(?===)', reqs)    #without version
+
+    return reqs
+
+
+#%%module specifications
+# modulename = 'astroLuSt'
+# author = 'Lukas Steinwender'
+# author_email = 'lukas.steinwender99@gmail.com'
+# maintainer = 'Lukas Steinwender'
+# maintainer_email = 'lukas.steinwender99@gmail.com'
+# url = "https://github.com/TheRedElement/astroLuSt"
+lastupdate = str(datetime.date.today())
+# version = '0.0.3'
+
+
+#%%get dependencies
+dependencies = get_dependencies()
+
 
 #Get long description from the README file
 long_description = (here / 'README.md').read_text(encoding='utf-8')
+
 
 #%%setup
 setup(
