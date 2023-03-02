@@ -561,13 +561,7 @@ class Plot_LuSt:
         import numpy as np
         import matplotlib.pyplot as plt
         from pathlib import Path
-        from astroLuSt.utility_astroLuSt import Time_stuff
         
-        #time execution
-        if timeit:
-            task = Time_stuff("hexcolor_extract")
-            task.start_task()
-
         here = Path(__file__).parent
         infile = open(here/"files/Colorcodes.txt", "r")
         colors = {"names":[],"hex":[]}
@@ -598,10 +592,6 @@ class Plot_LuSt:
             plt.yticks(fontsize=16)
             plt.show()
             
-        #time execution
-        if timeit:
-            task.end_task()
-                
         return colors
 
 
@@ -883,13 +873,7 @@ class Plot_LuSt:
         """
         import numpy as np
         import matplotlib.pyplot as plt
-        from astroLuSt.utility_astroLuSt import Time_stuff
         
-        #time execution
-        if timeit:
-            task = Time_stuff("color_generator")
-            task.start_task()
-
         wavelengths = np.linspace(np.min(wavelength_range), np.max(wavelength_range), ncolors)        
         colors = []
         for wl in wavelengths:
@@ -907,9 +891,5 @@ class Plot_LuSt:
             plt.xticks(fontsize=16)
             plt.yticks(fontsize=16)
             plt.show()
-        
-        #time execution
-        if timeit:
-            task.end_task()
         
         return colors
