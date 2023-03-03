@@ -145,46 +145,37 @@ def resample(
 
     return interp_x, interp_y, fig, axs
 
-def bin_curve(
-    x:np.ndarray, y:np.ndarray,
-    nintervals:float=100,
-    xmin:float=None, xmax:float=None,
-    ddof:int=0,
-    verbose:int=0
-    ):
+
+class Binning:
     """
-        - function to execute data-binning of 'y' w.r.t. 'x'
+        - class to execute data-binning on a given input series
         - essentially calculates a mean representative curve
         - the scatter of the original data and thus certainty of the representation is captured by the standard deviation of 'y' in an interval
 
-        Parameters
+
+        Attributes
         ----------
-            - x
-                - np.ndarray
-                - x-values w.r.t. which the binning shall be executed
-            - y
-                - np.ndarray
-                - y-values to be binned
             - nintervals
-                - float, optional
-                - number of intervals to use when executing data-binning
-                - if between 0 and 1
-                    - interpreted as a fraction of the shapes of 'x' and 'y'
-                - if > 1
-                    - interpreted as the actual bins to use
-                    - if a float is passed, will be rounded to the nearest integer
-                - only used if any of 'mean_x', 'mean_y', 'std_y' is 'None'
+                - int, optional
+                - nuber of intervals/bins to generate
                 - the default is 100
+            - npoints_per_interval
+                - int, optional
+                - generate intervals/bins automatically such that each bin contains 'npoints_per_interval' datapoints
+                    - the last interval will contain all datapoints until the end of the dataseries
+                - if set will overwrite nintervals
+                - the default is None
+                    - will use 'nintervals' to generate the bins
             - xmin
-                - float|None, optional
-                - minimum value to use for the interval creation
-                - the default is 'None'
-                    - will use the minimum of 'x'
+                - float, optional
+                - the minimum value to consider for the interval/bin creation
+                - the default is None
+                    - will use the minimum of the input-series x-values
             - xmax
-                - float|None, optional
-                - maximum value to use for the interval creation
-                - the default is 'None'
-                    - will use the maximum of 'x'
+                - float, optional
+                - the maximum value to consider for the interval/bin creation
+                - the default is None
+                    - will use the maximum of the input-series x-values
             - ddof
                 - int, optional
                 - Delta Degrees of Freedom used in np.nanstd()
@@ -192,87 +183,290 @@ def bin_curve(
             - verbose
                 - int, optional
                 - verbosity level
+        
+        Derived Attributes
+        ------------------
+            - generated_bins
+                - np.ndarray
+                - boundaries of the generated intervals/bin
 
-        Raises
-        ------
-
-        Returns
+        Methods
         -------
-            - x_binned
-                - np.ndarray
-                - binned values for input 'x'
-                - has shape (1, nintervals)
-            - y_binned
-                - np.ndarray
-                - binned values for input 'y'
-                - has shape (1, nintervals)
-            - y_std
-                - np.ndarray
-                - standard deviation of 'y' for each interval
-                - characterizes the scattering of the input curve
-                - has shape (1, nintervals)
-            - bins
-                - np.ndarray
-                - boundaries of used bins
-            - n_per_bin
-                - np.ndarray
-                - same shape as x_binned
-                - contains the number of samples represented by each bin
-            - fig
-                - matplotlib figure|None
-                - figure created if verbosity level specified accordingly
-            - axs
-                - matplotlib axes|None
-                - axes corresponding to 'fig'                
+            - generate_bins()
+            - bin_curve()
+            - plot_result()
 
         Dependencies
         ------------
-            - numpy
             - matplotlib
+            - numpy
 
+        Comments
+        --------
     """
 
-    #interpret nintervals
-    if 0 < nintervals and nintervals <= 1:
-        #calculate nintervals as fraction of the shape of x and y 
-        nintervals = int(nintervals*x.shape[0])
-    elif nintervals > 1:
-        nintervals = int(nintervals)
-    else:
-        raise ValueError("'nintervals' has to greater than 0!")
+    def __init__(self,
+        nintervals:int=100, npoints_per_interval:int=None,
+        xmin:float=None, xmax:float=None,
+        ddof:int=0,
+        verbose:int=0,     
+        ):
+    
+        self.nintervals = nintervals
+        self.npoints_per_interval= npoints_per_interval
+        self.xmin= xmin
+        self.xmax= xmax
+        self.ddof= ddof
+        self.verbose= verbose
 
-    if verbose > 0:
-        print(f"INFO: number of intervals used: {nintervals}")
+        pass
+
+    def __repr__(self):
+
+        return (
+            f'Binning(\n'
+            f'    nintervals={self.nintervals}, npoints_per_interval={self.npoints_per_interval},\n'
+            f'    xmin={self.xmin}, xmax={self.xmax},\n'
+            f'    ddof={self.ddof},\n'
+            f'    verbose={self.verbose},\n'
+            f')'
+        )
+
+    def generate_bins(self,
+        x:np.ndarray, y:np.ndarray,
+        nintervals:int=None, npoints_per_interval:int=None,
+        verbose:int=None,
+        ) -> np.ndarray:
+        """
+            - method to generate the requested bins
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values w.r.t. which the binning shall be executed
+                - y
+                    - np.ndarray
+                    - y-values to be binned
+                - nintervals
+                    - int, optional
+                    - nuber of intervals/bins to generate
+                    - overwrites self.nintervals
+                    - the default is None
+                        - uses self.nintervals
+                - npoints_per_interval
+                    - int, optional
+                    - generate intervals/bins automatically such that each bin contains 'npoints_per_interval' datapoints
+                        - the last interval will contain all datapoints until the end of the dataseries
+                    - overwrites self.npoints_per_interval
+                    - if set will overwrite nintervals
+                    - the default is None
+                        - will use 'nintervals' to generate the bins
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose if set
+                    - the default is None                
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - self.bins
+                    - np.ndarray
+                    - boundaries of the generated bins
+            
+            Comments
+            --------
+        """
+
+        #set/overwrite internal attributes
+        if npoints_per_interval is not None:
+            nintervals = None
+        elif npoints_per_interval is None and nintervals is None:
+            nintervals = self.nintervals
+            npoints_per_interval = self.npoints_per_interval
+        elif npoints_per_interval is None and nintervals is not None:
+            npoints_per_interval = None
+        elif npoints_per_interval is not None and nintervals is None:
+            nintervals = None
+
+        if verbose is None: verbose = self.verbose
+
+        #dynamically calculate bins if npoints_per_interval is specified 
+        if npoints_per_interval is not None:
+            sortidx = np.argsort(x)
+            x_ = x[sortidx]
+            y_ = y[sortidx]
+            chunck_idxs = np.arange(0, x_.shape[0], npoints_per_interval)
+            
+            bins = x_[chunck_idxs]
+            bins = np.append(bins, np.nanmax(x_)+1E-4)
+
+        #interpret nintervals
+        else:
+            if 0 < nintervals and nintervals <= 1:
+                #calculate nintervals as fraction of the shape of x and y 
+                nintervals = int(self.nintervals*x.shape[0])
+            elif nintervals > 1:
+                nintervals = int(nintervals)
+            else:
+                raise ValueError("'nintervals' has to greater than 0!")
 
 
-    if xmin is None: xmin = np.nanmin(x)
-    if xmax is None: xmax = np.nanmax(x)
+            if self.xmin is None: self.xmin = np.nanmin(x)
+            if self.xmax is None: self.xmax = np.nanmax(x)
 
-    bins = np.linspace(xmin, xmax, nintervals+1)
-    bins[-1] += 1E-4
+            bins = np.linspace(self.xmin, self.xmax, nintervals+1)
+            bins[-1] += 1E-4
 
-    x_binned = np.array([])
-    y_binned = np.array([])
-    y_std = np.array([])
-    n_per_bin = np.array([])    #number of samples per bin
+        #assign as attribute
+        self.bins = bins
 
-    for b1, b2 in zip(bins[:-1], bins[1:]):
 
-        iv_bool = (b1 <= x)&(x < b2)
+        if self.verbose > 0:
+            print(f"INFO: Generated {len(self.bins)} bins")
 
-        x_binned  = np.append(x_binned, np.nanmean(x[iv_bool]))
-        y_binned  = np.append(y_binned, np.nanmean(y[iv_bool]))
-        y_std     = np.append(y_std,    np.nanstd(y[iv_bool], ddof=ddof))
-        n_per_bin = np.append(n_per_bin, np.count_nonzero(iv_bool))
+        return self.bins
+    
+    def bin_curve(self,
+        x:np.ndarray, y:np.ndarray,
+        bins:np.ndarray=None,
+        ddof:int=None,
+        verbose:int=None,
+        **generate_bins_kwargs:dict,
+        ):
+        """
+            - method to execute the binning of y w.r.t. x
 
-    if verbose > 1:
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values w.r.t. which the binning shall be executed
+                - y
+                    - np.ndarray
+                    - y-values to be binned
+                - bins
+                    - np.ndarray
+                    - array containing the boundaries of the intervals/bins to use for binning the curve
+                    - will overwrite the autogeneration-process
+                - ddof
+                    - int, optional
+                    - Delta Degrees of Freedom used in np.nanstd()
+                    - overwrites self.ddof if set
+                    - the default is None
+                - verbose
+                    - int, optional
+                    - overwrites self.verbosity if set
+                    - verbosity level
+                - **generate_bins_kwargs
+                    - kwargs of generate_bins()
+                    
+            Raises
+            ------
+
+            Returns
+            -------
+                - x_binned
+                    - np.ndarray
+                    - binned values for input 'x'
+                    - has shape (1, nintervals)
+                - y_binned
+                    - np.ndarray
+                    - binned values for input 'y'
+                    - has shape (1, nintervals)
+                - y_std
+                    - np.ndarray
+                    - standard deviation of 'y' for each interval
+                    - characterizes the scattering of the input curve
+                    - has shape (1, nintervals)            
+        """
+
+        #set/overwrite class attributes
+        if ddof is None: ddof = self.ddof
+        if verbose is None: verbose = self.verbose
+        
+        if bins is None:
+            bins = self.generate_bins(x, y, verbose=verbose, **generate_bins_kwargs)
+        else:
+            self.bins = bins
+
+        #init result arrays
+        x_binned = np.array([])
+        y_binned = np.array([])
+        y_std = np.array([])
+        self.n_per_bin = np.array([])    #number of samples per bin
+
+        for b1, b2 in zip(bins[:-1], bins[1:]):
+
+            iv_bool = (b1 <= x)&(x < b2)
+
+            x_binned       = np.append(x_binned,       np.nanmean(x[iv_bool]))
+            y_binned       = np.append(y_binned,       np.nanmean(y[iv_bool]))
+            y_std          = np.append(y_std,          np.nanstd(y[iv_bool], ddof=ddof))
+            self.n_per_bin = np.append(self.n_per_bin, np.count_nonzero(iv_bool))
+
+        return x_binned, y_binned, y_std
+
+    def plot_result(self,
+        x, y,
+        x_binned, y_binned, y_std,
+        ):
+        """
+            - function to plot the result of the binning in phase
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values w.r.t. which the binning shall be executed
+                - y
+                    - np.ndarray
+                    - y-values to be binned
+                - x_binned
+                    - np.ndarray
+                    - binned values for input 'x'
+                    - has shape (1, nintervals)
+                    - output of bin_curve()
+                - y_binned
+                    - np.ndarray
+                    - binned values for input 'y'
+                    - has shape (1, nintervals)
+                    - output of bin_curve()
+                - y_std
+                    - np.ndarray
+                    - standard deviation of 'y' for each interval
+                    - characterizes the scattering of the input curve
+                    - has shape (1, nintervals)                        
+                    - output of bin_curve()
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure|None
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes|None
+                    - axes corresponding to 'fig'              
+
+            Comments
+            --------
+        """
+    
+        verbose = self.verbose
+
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         ax1.scatter(x, y, label="Input", zorder=1, color="tab:blue", alpha=0.7)
         ax1.errorbar(x_binned, y_binned, yerr=y_std, linestyle="", marker=".", label="Binned", zorder=2, color="tab:orange", alpha=1)
 
         if verbose > 2:
-            ax1.vlines(bins, ymin=np.nanmin(y), ymax=np.nanmax(y), zorder=3)
+            ax1.vlines(self.bins, ymin=np.nanmin(y), ymax=np.nanmax(y), color='tab:grey', zorder=3, label='Bin Boundaries')
 
         ax1.set_xlabel("x")
         ax1.set_ylabel("y")
@@ -282,26 +476,15 @@ def bin_curve(
         plt.show()
 
         axs = fig.axes
-    else:
-        fig = None
-        axs = None
 
+        return fig, axs
 
-
-
-    return x_binned, y_binned, y_std, bins, n_per_bin, fig, axs
-
-def sigmaclipping(
-    x:np.ndarray, y:np.ndarray,
-    mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,
-    sigma_top:float=2, sigma_bottom:float=2,
-    nintervals:float=0.1,
-    verbose:int=0):
+class SigmaClipping:
     """
-        - function to execute sigma-clipping on x and y
+        - class to execute sigma-clipping on x and y
         - creates a mask retaining only values that lie outside an interval of +/- sigma*std_y around a mean curve
 
-        Parameters
+        Attributes
         ----------
             - x
                 - np.ndarray
@@ -312,14 +495,14 @@ def sigmaclipping(
                 - y-values of the dataseries to clip
                 - same shape as x
             - mean_x
-                - np.ndarray|None, optional
+                - np.ndarray, optional
                 - x-values of a representative mean curve
                 - does not have to have the same shape as x
                 - same shape as mean_y and std_y
                 - if 'None' will infer a mean curve via data-binning
                 - the default is 'None'
             - mean_y
-                - np.ndarray|None, optional
+                - np.ndarray, optional
                 - y-values of a representative mean curve
                 - does not have to have the same shape as y
                 - same shape as mean_x and std_y
@@ -332,48 +515,54 @@ def sigmaclipping(
                 - same shape as mean_x and mean_y
                 - if 'None' will infer a mean curve via data-binning
                 - the default is 'None'
-            - sigma_top
-                - float, optional
-                - multiplier for the top boundary
-                - i.e. top boundary = mean_y + sigma_top*std_y
-                - the default is 2
-                    - i.e. 2*sigma
             - sigma_bottom
                 - float, optional
                 - multiplier for the bottom boundary
                 - i.e. bottom boundary = mean_y - sigma_bottom*std_y
                 - the default is 2
                     - i.e. 2*sigma
-            - nintervals
+            - sigma_top
                 - float, optional
-                - number of intervals to use when executing data-binning
-                - if between 0 and 1
-                    - interpreted as a fraction of the shapes of 'x' and 'y'
-                - if > 1
-                    - interpreted as the actual bins to use
-                    - if a float is passed, will be rounded to the nearest integer
-                - only used if any of 'mean_x', 'mean_y', 'std_y' is 'None'
-                - the default is 0.1
+                - multiplier for the top boundary
+                - i.e. top boundary = mean_y + sigma_top*std_y
+                - the default is 2
+                    - i.e. 2*sigma
             - verbose
                 - int, optional
                 - verbosity level
-        
-        Raises
-        ------
+            - **binning_kwargs
+                - kwargs for the Binning class
+                - used to generate mean curves if none are provided
 
-        Returns
-        -------
+        Derived Attributes
+        ------------------
             - clip_mask
+                        - np.ndarray
+                        - mask for the retained values
+                        - 1 for every value that got retained
+                        - 0 for every value that got cut     
+            - lower_bound
                 - np.ndarray
-                - mask for the retained values
-                - 1 for every value that got retained
-                - 0 for every value that got cut
-            - fig
-                - matplotlib figure|None
-                - figure created if verbosity level specified accordingly
-            - axs
-                - matplotlib axes|None
-                - axes corresponding to 'fig'
+                - traces out the lower bound to be considered for the sigma-clipping
+            - upper_bound
+                - np.ndarray
+                - traces out the upper bound to be considered for the sigma-clipping
+            - sort_array
+                - np.ndarray
+                - indices to sort self.x in ascending order
+                - only needed for plotting y_mean_interp, upper_bound, lower_bound
+            - y_mean_interp
+                - np.array
+                - traces out the interpolated mean representative curve (resulting from binning)
+            - y_std_interp
+                - np.array
+                - traces out the interpolated standard deviation of the mean representative curve
+
+        Methods
+        -------
+            - get_mean_curve()
+            - clip_curve
+            - plot_result()
 
         Dependencies
         ------------
@@ -383,59 +572,215 @@ def sigmaclipping(
         Comments
         --------
     """
-    #TODO: implement ninters, i.e. how often sigma clipping shall be executed consecutively (see maxits of https://docs.astropy.org/en/stable/api/astropy.stats.sigma_clip.html)
 
-    #catching errors
-    assert x.shape == y.shape, f"shapes of 'x' and 'y' have to be equal but are {x.shape}, {y.shape}"
 
-    #calculate mean curve if insufficient information is provided
-    if mean_x is None or mean_y is None or std_y is None:
+    def __init__(self,
+        x:np.ndarray, y:np.ndarray,
+        mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,                 
+        sigma_bottom:float=2, sigma_top:float=2,
+        verbose:int=0,
+        **binning_kwargs:dict,
+        ) -> None:
+
+        self.x = x
+        self.y = y
+
+        self.mean_x = mean_x
+        self.mean_y = mean_y
+        self.std_y  = std_y
         
-        if verbose > 0:
-            print(
-                f"INFO: Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
-            )
+        self.sigma_bottom = sigma_bottom
+        self.sigma_top = sigma_top
+
+        if binning_kwargs == {}:
+            self.binning_kwargs = {'nintervals':0.1}
+        else:
+            self.binning_kwargs = binning_kwargs
+
+
+        self.verbose = verbose
+
+        pass
+    
+    def __repr__(self) -> str:
+
+        return (
+        f'SigmaClipping(\n'
+        f'    x={self.x}, y={self.y},\n'
+        f'    mean_x:={self.mean_x}, mean_y={self.mean_y}, std_y={self.std_y},\n'
+        f'    sigma_bottom={self.sigma_bottom}, sigma_top={self.sigma_top},\n'
+        f'    verbose={self.verbose},\n'
+        f'    **{self.binning_kwargs},\n'
+        f')'
+        )
+    
+    def get_mean_curve(self,
+        verbose:int=None,
+        ) -> None:
+        """
+            - method to adopt the mean curves if provided and generate some if not
+
+            Parameters
+            ----------
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
         
-        mean_x, mean_y, std_y, bins, n_per_bin, fig, axs = \
-            bin_curve(
-                x, y,
-                nintervals=nintervals,
-                verbose=verbose-1
+        if verbose is None:
+            verbose = self.verbose
+
+        #calculate mean curve if insufficient information is provided
+        if self.mean_x is None or self.mean_y is None or self.std_y is None:
+            
+            if verbose > 0:
+                print(
+                    f"INFO: Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
+                )
+            
+            binning = Binning(
+                verbose=verbose-1,
+                **self.binning_kwargs
             )
-    else:
-        assert (mean_x.shape == mean_y.shape) and (mean_y.shape == std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {mean_x.shape}, {mean_y.shape}, {std_y.shape}"
+
+            self.mean_x, self.mean_y, self.std_y = binning.bin_curve(self.x, self.y)
+        else:
+            assert (self.mean_x.shape == self.mean_y.shape) and (self.mean_y.shape == self.std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {self.mean_x.shape}, {self.mean_y.shape}, {self.std_y.shape}"
+        
+        return 
+
+    def clip_curve(self,
+        sigma_bottom:float=None, sigma_top:float=None,
+        verbose:int=None,
+        ):
+        """
+            - method to actually execute sigma-clipping on x and y
+            - creates a mask retaining only values that lie outside an interval of +/- sigma*std_y around a mean curve
+
+            Parameters
+            ----------
+                - sigma_bottom
+                    - float, optional
+                    - multiplier for the bottom boundary
+                    - i.e. bottom boundary = mean_y - sigma_bottom*std_y
+                    - if set will completely overwrite the existing attribute self.sigma_bottom
+                        - i.e. self.sigma_bottom will be set as sigma_bottom
+                    - the default is 2
+                        - i.e. 2*sigma
+                - sigma_top
+                    - float, optional
+                    - multiplier for the top boundary
+                    - i.e. top boundary = mean_y + sigma_top*std_y
+                    - if set will completely overwrite the existing attribute self.sigma_top
+                        - i.e. self.sigma_top will be set as sigma_top
+                    - the default is 2
+                        - i.e. 2*sigma
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None                        
+
+            Raises
+            ------
+        
+            Returns
+            -------
+                - clip_mask
+                    - np.ndarray
+                    - mask for the retained values
+                    - 1 for every value that got retained
+                    - 0 for every value that got cut            
+
+            Dependencies
+            ------------
+
+            Comments
+            --------
+        """
+
+        #overwrite original attributes if specified
+        if sigma_bottom is None:
+            sigma_bottom = self.sigma_bottom
+        else:
+            self.sigma_bottom = sigma_bottom
+        if sigma_top is None:
+            sigma_top = self.sigma_top
+        else:
+            self.sigma_top = sigma_top
 
 
-    #sorting-array
-    sort_array = np.argsort(x)
+        #catching errors
+        assert self.x.shape == self.y.shape, f"shapes of 'x' and 'y' have to be equal but are {self.x.shape}, {self.y.shape}"
 
-    #get mean curve including error
-    y_mean_interp = np.interp(x, mean_x, mean_y)
-    y_std_interp  = np.interp(x, mean_x, std_y)
+        self.get_mean_curve(verbose=verbose)
 
-    #mask of what to retain
-    lower_bound = y_mean_interp-sigma_bottom*y_std_interp 
-    upper_bound = y_mean_interp+sigma_top*y_std_interp
-    clip_mask = (lower_bound<y)&(y<upper_bound)
+        #sorting-array
+        self.sort_array = np.argsort(self.x)
 
+        #get mean curve including error
+        self.y_mean_interp = np.interp(self.x, self.mean_x, self.mean_y)
+        self.y_std_interp  = np.interp(self.x, self.mean_x, self.std_y)
 
-    if verbose > 1:
+        #mask of what to retain
+        self.lower_bound = self.y_mean_interp-sigma_bottom*self.y_std_interp 
+        self.upper_bound = self.y_mean_interp+sigma_top*self.y_std_interp
+        clip_mask = (self.lower_bound<self.y)&(self.y<self.upper_bound)
+
+        self.clip_mask = clip_mask
+
+        return clip_mask
+    
+    def plot_result(self):
+        """
+            - method to create a plot visualizing the sigma-clipping result
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure|None
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes|None
+                    - axes corresponding to 'fig'
+
+            Comments
+            --------
+
+        """
         ret_color = "tab:blue"
         cut_color = "tab:grey"
         used_bins_color = "tab:orange"
         mean_curve_color = "tab:green"
         ulb_color="k"
 
-        ulb_lab = r"$\bar{y}~\{+%g,-%g\}\sigma$"%(sigma_top, sigma_bottom)
+        ulb_lab = r"$\bar{y}~\{+%g,-%g\}\sigma$"%(self.sigma_top, self.sigma_bottom)
         
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1.scatter(x[~clip_mask], y[~clip_mask],          color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
-        ax1.scatter(x[clip_mask], y[clip_mask],            color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
-        ax1.errorbar(mean_x, mean_y, yerr=std_y,           color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
-        ax1.plot(x[sort_array], y_mean_interp[sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
-        ax1.plot(x[sort_array], upper_bound[sort_array],   color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
-        ax1.plot(x[sort_array], lower_bound[sort_array],   color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
+        ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],             color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
+        ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],              color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
+        ax1.errorbar(self.mean_x,            self.mean_y, yerr=self.std_y,        color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
+        ax1.plot(self.x[self.sort_array],    self.y_mean_interp[self.sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
+        ax1.plot(self.x[self.sort_array],    self.upper_bound[self.sort_array],   color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
+        ax1.plot(self.x[self.sort_array],    self.lower_bound[self.sort_array],   color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
 
         ax1.set_xlabel("x")
         ax1.set_ylabel("y")
@@ -444,12 +789,8 @@ def sigmaclipping(
         plt.show()
 
         axs = fig.axes
-    else:
-        fig = None
-        axs = None
-    
 
-    return clip_mask, fig, axs
+        return fig, axs
 
 class PDM:
     """
@@ -618,6 +959,7 @@ class PDM:
         period_start:float=0.1, period_stop:float=None, nperiods:int=100,
         trial_periods:np.ndarray=None,
         nintervals:float=100,
+        npoints_per_interval:int=None,
         #refining found period
         n_retries:int=1,
         nperiods_retry:int=20,
@@ -642,6 +984,7 @@ class PDM:
         self.trial_periods = trial_periods
 
         self.nintervals = nintervals
+        self.npoints_per_interval = npoints_per_interval
         self.n_retries = n_retries
         self.nperiods_retry = nperiods_retry
         self.retry_range = retry_range
@@ -1190,28 +1533,51 @@ def periodic_shift(input_array:np.array, shift:float, borders:list, testplot:boo
 # for s in np.unique(lc['sector']):
 #     y[lc['sector']==s] /= np.nanmedian(y[lc['sector']==s])
 
-# p = 0.5
-# x = np.linspace(0,20,1000)
-# x += np.random.normal(size=x.shape)*0.05
-# y = np.sin(x*2*np.pi/0.5)  + np.random.normal(size=x.shape)*0.05
+p = 0.5
+x = np.linspace(0,20,1000)
+x += np.random.normal(size=x.shape)*0.05
+y = np.sin(x*2*np.pi/0.5)  + np.random.normal(size=x.shape)*0.05
 
-# pdm = PDM(
-#     period_start=0.1, period_stop=1.4, nperiods=100,
-#     # trial_periods=np.array([0.5, 1, 0.333]),
-#     nintervals=30,
-#     n_retries=5,
-#     tolerance_expression='*1.01',
-#     tolerance_decay=0.99,
-#     nperiods_retry=50,
-#     breakloop=False,
-#     n_jobs=1,
-#     verbose=3
-# )
+resample_idxs = np.random.choice(np.arange(0, x.shape[0], 1), size=257, replace=False)
 
-# print(pdm
-#       )
+x = x[resample_idxs]
+y = y[resample_idxs]
 
-# pdm.fit_predict(x, y)
+pdm = PDM(
+    period_start=0.1, period_stop=1.4, nperiods=100,
+    # trial_periods=np.array([0.5, 1, 0.333]),
+    nintervals=30,
+    n_retries=5,
+    tolerance_expression='*1.01',
+    tolerance_decay=0.99,
+    nperiods_retry=50,
+    breakloop=False,
+    n_jobs=1,
+    verbose=3
+)
+
+# print(pdm)
+
+pdm.fit_predict(x, y)
 # # pdm.fit(x, y)
 
 # fig, axs = pdm.plot_result()
+
+#%%
+sigclip = SigmaClipping(
+    pdm.best_fold_x, pdm.best_fold_y,
+    sigma_top=5, sigma_bottom=5,
+    # **{'nintervals':0.1}
+)
+sigclip.clip_curve(sigma_top=1)
+sigclip.plot_result()
+
+# bins = np.linspace(0,0.4,6)
+binning = Binning(nintervals=10, npoints_per_interval=50, verbose=3)
+# print(binning)
+# binning.generate_bins(pdm.best_fold_x, pdm.best_fold_y)
+# x_binned, y_binned, y_std = binning.bin_curve(pdm.best_fold_x, pdm.best_fold_y, **{'nintervals':None, 'npoints_per_interval':None})
+# binning.plot_result(pdm.best_fold_x, pdm.best_fold_y, x_binned, y_binned, y_std)
+
+for a in dir(binning):
+    print(a)
