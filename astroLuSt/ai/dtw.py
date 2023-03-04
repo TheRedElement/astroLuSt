@@ -73,11 +73,11 @@ class DTW:
     
     def __repr__(self):
         return ("DTW(\n"
-                f"X_template = {self.X_template},\n"
-                f"threshold  = {self.threshold},\n"
-                f"window     = {self.window},\n"
-                f"cost_fct   = {self.cost_fct},\n"
-                f"y_template = {self.y_template},\n"
+                f"    X_template = {self.X_template},\n"
+                f"    threshold  = {self.threshold},\n"
+                f"    window     = {self.window},\n"
+                f"    cost_fct   = {self.cost_fct},\n"
+                f"    y_template = {self.y_template},\n"
                 ")\n")
 
 
@@ -288,11 +288,6 @@ class DTW:
         """
 
         import numpy as np
-        import astroLuSt.utility_astroLuSt as alu
-
-        if timeit:
-            timer = alu.Time_stuff("DTW().fit_predict()")
-            timer.start_task()
 
         #initialize return-lists
         y_pred = []
