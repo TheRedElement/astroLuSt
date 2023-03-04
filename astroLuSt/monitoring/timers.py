@@ -133,7 +133,7 @@ class ExecTimer:
             )
             raise LookupError(msg)
 
-        duration = end_time-start_time
+        duration = pd.to_timedelta(end_time-start_time)
 
 
         cur_task = np.where(self.df_protocoll["Task"]==taskname)[0][0]
@@ -147,7 +147,7 @@ class ExecTimer:
             print(
                 f"\n"
                 f"INFO: Finished {taskname} at {end_time}\n"
-                f"Required time: {self.df_protocoll.at[cur_task, 'Duration']}"
+                f"Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, 'Duration'])}"
             )
             print("#"*70)
         return
