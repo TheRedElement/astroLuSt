@@ -288,7 +288,7 @@ class LightkurveInterface:
                     ) for idx, tic in enumerate(chunk)
             )
         
-            res = np.array(res)
+            res = np.array(res, dtype=object)
 
             df_extraction_summary_chunck = pd.DataFrame(
                 data=np.array([

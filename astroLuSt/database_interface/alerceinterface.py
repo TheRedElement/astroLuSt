@@ -153,7 +153,7 @@ class AlerceDatabaseInterface:
             ) for idx, inrow in df_left.iterrows()
         )
 
-        result = np.array(result)
+        result = np.array(result, dtype=object)
 
         self.df_error_msgs_crossmerge = pd.DataFrame(
             data=result[:,1:],
@@ -337,7 +337,7 @@ class AlerceDatabaseInterface:
             ) for idx, ztf_id in enumerate(ztf_ids)
         )
 
-        result = np.array(result)
+        result = np.array(result, dtype=object)
 
         self.df_error_msgs_lcdownload = pd.DataFrame(
             data=result[:,1:],
