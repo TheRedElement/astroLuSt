@@ -61,9 +61,11 @@ class SigmaClipping:
             - verbose
                 - int, optional
                 - verbosity level
-            - **binning_kwargs
+            - binning_kwargs
+                - dict, optional
                 - kwargs for the Binning class
                 - used to generate mean curves if none are provided
+                - the default is None
 
         Derived Attributes
         ------------------
