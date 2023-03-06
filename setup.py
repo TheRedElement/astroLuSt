@@ -67,7 +67,8 @@ setup(
     long_description_content_type='text/markdown',
     download_url=None,
     include_package_data=True,
-    packages=['astroLuSt'],
+    # packages=['astroLuSt'],
+    packages=find_packages(),
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: Python :: 3.9',
