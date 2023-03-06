@@ -29,8 +29,7 @@ def get_dependencies():
         infile.close()
     
     reqs = re.findall(r'.+(?=\n)', reqs)    #with version
-    # reqs = re.findall(r'.+(?===)', reqs)    #without version
-
+    reqs = [r for r in reqs if 'pywin' not in r]     #exclude windows-specific packages
     return reqs
 
 
