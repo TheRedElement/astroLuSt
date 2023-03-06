@@ -81,7 +81,7 @@ setup(
     exclude=['__pychache__', 'legacy', 'data', 'gfx', 'temp', 'templates', 'tests'],
     # package_dir={"": "astroLuSt"},
     # packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
-    # python_requires=">=3.8, < 4",
+    python_requires=">=3.9 < 4",
     install_requires=dependencies,
     # package_data={
     #     "astroLuSt": ['files/Colorcodes.txt'],
