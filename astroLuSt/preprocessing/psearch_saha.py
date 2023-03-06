@@ -451,6 +451,7 @@ class PSearch_Saha:
         
         ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{Saha}}$ = %.3f'%(self.best_period))
 
+        ax1.set_xlabel('Period')
         ax1.set_ylabel(r'$\Psi$',   color=c_saha)
         ax2.set_ylabel(r'$\theta$', color=c_pdm)
         ax3.set_ylabel(r'$\Pi$',    color=c_ls)
