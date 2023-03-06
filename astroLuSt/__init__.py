@@ -3,11 +3,11 @@ astroLuSt package
 """
 
 
-from astroLuSt import ai
-from astroLuSt import database_interface
-from astroLuSt import monitoring
-from astroLuSt import preprocessing
-from astroLuSt import visualization
+import ai
+import database_interface
+import monitoring
+import preprocessing
+import visualization
 
 __modulename__ = 'astroLuSt' 
 __version__ = '0.0.3'
