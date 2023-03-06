@@ -24,6 +24,7 @@ class PDM:
             - period_stop
                 - float, optional
                 - the period to consider as stopping point for the analysis
+                - if n_retries is > 0 will be increased by n_retries*nperiods_retry
                 - the default is 100
             - nperiods
                 - int, optional
@@ -104,7 +105,8 @@ class PDM:
                 - int, optional
                 - verbosity level
                 - the default is 0
-            - **binning_kwargs
+            - binning_kwargs
+                - dict, optional
                 - kwargs for the Binning class
                 - used to bin the folded curves and estimate the variance w.r.t. a mean curve            
         
@@ -185,7 +187,7 @@ class PDM:
         #computation and plotting
         n_jobs:int=-1,
         verbose:int=0,
-        **binning_kwargs:dict,   
+        binning_kwargs:dict=None,   
         ) -> None:
 
         
@@ -206,7 +208,7 @@ class PDM:
         self.normalize = normalize
         self.n_jobs = n_jobs
         self.verbose = verbose
-        if binning_kwargs == {}:
+        if binning_kwargs is None:
             self.binning_kwargs = {'nintervals':100}
         else:
             self.binning_kwargs = binning_kwargs
@@ -234,7 +236,7 @@ class PDM:
             f'    normalize={self.normalize},\n'
             f'    n_jobs={self.n_jobs},\n'
             f'    verbose={self.verbose},\n'
-            f'    **{self.binning_kwargs},\n'
+            f'    binning_kwargs={self.binning_kwargs},\n'
             f')'       
         )
 
@@ -280,41 +282,6 @@ class PDM:
         trial_periods = np.linspace(period_start, period_stop, nperiods)
 
         return trial_periods
-
-    def plot_result(self):
-        """
-            - method to plot the result of the pdm
-            - will produce a plot with 2 panels
-                - top panel contains the periodogram
-                - bottom panel contains the input-dataseries folded onto the best period
-        
-        """
-        fig = plt.figure()
-        ax1 = fig.add_subplot(211)
-        ax1.set_title("PDM-result", fontsize=18)
-        ax1.scatter(self.trial_periods, self.thetas, color="tab:blue", s=1, marker=".", zorder=1)
-        ax1.axvline(self.best_period, color="tab:orange", linestyle="-", label=r"$P_{\mathrm{PDM}} =$" + f"{self.best_period:.3f}", zorder=2)
-        ax1.fill_between([np.nanmin(self.trial_periods), np.nanmax(self.trial_periods)], y1=[self.best_theta]*2, y2=[max(self.theta_tolerance, self.best_theta)]*2, color='tab:grey', alpha=0.2, label='Tolerated as improvement')
-        ax1.axhline(self.best_theta, color="tab:orange", linestyle="-", zorder=2)
-        ax1.tick_params("both")
-        ax1.set_xlabel("Period")
-        ax1.set_ylabel(r"$\theta$")
-        ax1.legend()
-        ax2 = fig.add_subplot(212)
-        ax2.set_title("Resulting lightcurve")
-        ax2.plot(self.best_fold_x, self.best_fold_y, color="tab:blue", marker=".", linestyle="", label="Folded Input-Dataseries")
-        ax2.tick_params("both")
-        ax2.set_xlabel("x")
-        ax2.set_ylabel("y")
-        ax2.legend()
-
-        plt.tight_layout()
-                
-        plt.show()
-
-        axs = fig.axes
-
-        return fig, axs
 
     def get_theta_for_p(self,
             x:np.ndarray, y:np.ndarray, p:float,
@@ -457,8 +424,8 @@ class PDM:
             Raises
             ------
 
-            Returns
-            -------
+            Returns as Attributes
+            ---------------------
                 - best_period
                     - float
                     - the period yielding the lowest variance in the whole curve
@@ -551,22 +518,22 @@ class PDM:
             else:
                 pass
 
-            #calculated desired parameters
-            if   self.sort_output_by   == 'periods':   sortidx = np.argsort(self.trial_periods)
-            elif self.sort_output_by   == 'thetas':    sortidx = np.argsort(self.thetas)
-            elif self.sort_output_by   == 'variances': sortidx = np.argsort(self.var_norms)
-            else: raise ValueError('Unrecognized argument for "sort_output_by". Currently supported are "periods", "thetas", "variances"!')
+        #calculated desired parameters
+        if   self.sort_output_by   == 'periods':   sortidx = np.argsort(self.trial_periods)
+        elif self.sort_output_by   == 'thetas':    sortidx = np.argsort(self.thetas)
+        elif self.sort_output_by   == 'variances': sortidx = np.argsort(self.var_norms)
+        else: raise ValueError('Unrecognized argument for "sort_output_by". Currently supported are "periods", "thetas", "variances"!')
 
-            self.best_theta     = best_theta
-            self.trial_periods  = self.trial_periods[sortidx]
-            self.thetas         = self.thetas[sortidx]
-            self.var_norms      = self.var_norms[sortidx]
-            self.best_period    = self.trial_periods[(self.thetas == self.best_theta)][0]
-            self.best_var       = self.var_norms[(self.thetas == self.best_theta)][0]
-            self.best_fold_x, _ = fold(x, self.best_period)
-            self.best_fold_y    = y
+        self.best_theta     = best_theta
+        self.trial_periods  = self.trial_periods[sortidx]
+        self.thetas         = self.thetas[sortidx]
+        self.var_norms      = self.var_norms[sortidx]
+        self.best_period    = self.trial_periods[(self.thetas == self.best_theta)][0]
+        self.best_var       = self.var_norms[(self.thetas == self.best_theta)][0]
+        self.best_fold_x, _ = fold(x, self.best_period)
+        self.best_fold_y    = y
 
-            self.errestimate = np.nanmax(2*np.diff(np.sort(self.trial_periods)))  #error estimate as 2*maximum difference between periods
+        self.errestimate = np.nanmax(2*np.diff(np.sort(self.trial_periods)))  #error estimate as 2*maximum difference between periods
 
         return
 
@@ -626,3 +593,37 @@ class PDM:
 
         return best_period, errestimate, best_theta
 
+    def plot_result(self):
+        """
+            - method to plot the result of the pdm
+            - will produce a plot with 2 panels
+                - top panel contains the periodogram
+                - bottom panel contains the input-dataseries folded onto the best period
+        
+        """
+        fig = plt.figure()
+        ax1 = fig.add_subplot(211)
+        ax1.set_title("PDM-result", fontsize=18)
+        ax1.scatter(self.trial_periods, self.thetas, color="tab:blue", s=1, marker=".", zorder=1)
+        ax1.axvline(self.best_period, color="tab:orange", linestyle="-", label=r"$P_{\mathrm{PDM}} =$" + f"{self.best_period:.3f}", zorder=2)
+        ax1.fill_between([np.nanmin(self.trial_periods), np.nanmax(self.trial_periods)], y1=[self.best_theta]*2, y2=[max(self.theta_tolerance, self.best_theta)]*2, color='tab:grey', alpha=0.2, label='Tolerated as improvement')
+        ax1.axhline(self.best_theta, color="tab:orange", linestyle="-", zorder=2)
+        ax1.tick_params("both")
+        ax1.set_xlabel("Period")
+        ax1.set_ylabel(r"$\theta$")
+        ax1.legend()
+        ax2 = fig.add_subplot(212)
+        ax2.set_title("Resulting lightcurve")
+        ax2.plot(self.best_fold_x, self.best_fold_y, color="tab:blue", marker=".", linestyle="", label="Folded Input-Dataseries")
+        ax2.tick_params("both")
+        ax2.set_xlabel("x")
+        ax2.set_ylabel("y")
+        ax2.legend()
+
+        plt.tight_layout()
+                
+        plt.show()
+
+        axs = fig.axes
+
+        return fig, axs

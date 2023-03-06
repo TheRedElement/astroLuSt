@@ -110,7 +110,7 @@ class SigmaClipping:
         mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,                 
         sigma_bottom:float=2, sigma_top:float=2,
         verbose:int=0,
-        **binning_kwargs:dict,
+        binning_kwargs:dict=None,
         ) -> None:
 
         self.x = x
@@ -123,7 +123,7 @@ class SigmaClipping:
         self.sigma_bottom = sigma_bottom
         self.sigma_top = sigma_top
 
-        if binning_kwargs == {}:
+        if binning_kwargs is None:
             self.binning_kwargs = {'nintervals':0.1}
         else:
             self.binning_kwargs = binning_kwargs
@@ -141,7 +141,7 @@ class SigmaClipping:
         f'    mean_x:={self.mean_x}, mean_y={self.mean_y}, std_y={self.std_y},\n'
         f'    sigma_bottom={self.sigma_bottom}, sigma_top={self.sigma_top},\n'
         f'    verbose={self.verbose},\n'
-        f'    **{self.binning_kwargs},\n'
+        f'    binning_kwargs={self.binning_kwargs},\n'
         f')'
         )
     

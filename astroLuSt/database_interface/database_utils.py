@@ -683,10 +683,6 @@ class EleanorDatabaseInterface:
 
         """
 
-        from astroquery.mast import Catalogs
-        from tess_stars2px import tess_stars2px_function_entry as tess_stars2px
-        from maxsector import maxsector
-
         try:
             error_msg = None
 
