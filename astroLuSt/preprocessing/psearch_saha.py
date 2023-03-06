@@ -251,7 +251,6 @@ class PSearch_Saha:
 
         self.best_period_ls = self.trial_periods_ls[np.nanargmax(powers_ls)]
         self.best_power_ls  = np.nanmax(powers_ls)
-
         return powers_ls, self.trial_periods_ls
 
     def get_psi(self,
@@ -410,7 +409,8 @@ class PSearch_Saha:
         return best_period, best_psi
     
     def plot_result(self,
-        **kwargs
+        fig_kwargs:dict={},
+        plot_kwargs:dict={},
         ):
         """
             - method to plot the result of the pdm
@@ -420,19 +420,53 @@ class PSearch_Saha:
 
             Parameters
             ----------
-                - **kwargs
+                - fig_kwargs
+                    - dict, optional
+                    - kwargs for matplotlib plt.figure() method
+                - plot_kwargs
                     - dict, optional
                     - kwargs for matplotlib ax.plot() method
         """
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.plot(self.trial_periods_pdm, self.thetas_pdm, **kwargs, label=r'$\theta$ (PDM)')
-        ax1.plot(self.trial_periods_ls,  self.powers_ls,  **kwargs, label=r'$\Pi$ (Lomb-Scargle)')
-        ax1.plot(self.trial_periods_saha,self.psis_saha,  **kwargs, label=r'$\Psi$ (Saha et al., 2017)')
         
-        ax1.axvline(self.best_period, linestyle='--', color='tab:grey', label=r'$\mathrm{P_{Saha}}$ = %.3f'%(self.best_period))
+        c_ls = 'tab:olive'
+        c_pdm = 'tab:green'
+        c_saha = 'tab:orange'
+        
+        fig = plt.figure(**fig_kwargs)
+        ax1 = fig.add_subplot(111)
+        ax2 = ax1.twinx()
+        ax3 = ax1.twinx()
+        ax3.spines["right"].set_position(("axes", 1.2))
 
-        ax1.legend()
+        #sort axis
+        ax1.set_zorder(3)
+        ax2.set_zorder(2)
+        ax3.set_zorder(1)
+        ax1.patch.set_visible(False)
+        ax2.patch.set_visible(False)
+
+        l_saha, = ax1.plot(self.trial_periods_saha,self.psis_saha,  color=c_saha, zorder=3, **plot_kwargs, label=r'Saha et al., 2017)')
+        l_pdm,  = ax2.plot(self.trial_periods_pdm, self.thetas_pdm, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM (Stellingwerf, 1978)')
+        l_ls,   = ax3.plot(self.trial_periods_ls,  self.powers_ls,  color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle (Astropy)')
+        
+        ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{Saha}}$ = %.3f'%(self.best_period))
+
+        ax1.set_ylabel(r'$\Psi$',   color=c_saha)
+        ax2.set_ylabel(r'$\theta$', color=c_pdm)
+        ax3.set_ylabel(r'$\Pi$',    color=c_ls)
+
+        lines = [l_saha, l_pdm, l_ls]
+        ax1.legend(lines, [l.get_label() for l in lines])
+
+        
+        # ax1.spines['right'].set_color(l_saha.get_color())
+        ax2.spines['right'].set_color(c_pdm)
+        ax3.spines['right'].set_color(c_ls)
+
+        ax1.tick_params(axis='y', colors=c_saha)
+        ax2.tick_params(axis='y', colors=c_pdm)
+        ax3.tick_params(axis='y', colors=c_ls)
+        
         plt.tight_layout()
         plt.show()
 
