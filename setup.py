@@ -28,7 +28,8 @@ def get_dependencies():
         reqs = infile.read()
         infile.close()
     
-    reqs = re.findall(r'.+(?=\n)', reqs)    #with version
+    # reqs = re.findall(r'.+(?=\n)', reqs)    #with version
+    reqs = re.findall(r'.+(?===)', reqs)    #without version
     reqs = [r for r in reqs if 'pywin' not in r]     #exclude windows-specific packages
     return reqs
 
@@ -81,7 +82,7 @@ setup(
     exclude=['__pychache__', 'legacy', 'data', 'gfx', 'temp', 'templates', 'tests'],
     # package_dir={"": "astroLuSt"},
     # packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
-    python_requires=">=3.9",
+    python_requires=">=3.8",
     install_requires=dependencies,
     # package_data={
     #     "astroLuSt": ['files/Colorcodes.txt'],
