@@ -41,6 +41,13 @@ class PSearch_Saha:
             - pdm_kwargs
                 - dict, optional
                 - kwargs for the PDM class
+            - ls_kwargs
+                - dict, optional
+                - kwargs for the astropy.timeseries.LombScargle class
+            - lsfit_kwargs
+                - dict, optional
+                - kwargs for the autopower() method of the astropy.timeseries.LombScargle class
+            
 
         Infered Attributes
         ------------------
@@ -117,7 +124,7 @@ class PSearch_Saha:
         period_start:float=0.1, period_stop:float=None, nperiods:int=100,        
         trial_periods:np.ndarray=None,
         verbose:int=0,
-        pdm_kwargs:dict=None
+        pdm_kwargs:dict=None, ls_kwargs:dict=None, lsfit_kwargs:dict=None
         ) -> None:
 
         self.period_start = period_start
@@ -131,6 +138,17 @@ class PSearch_Saha:
             self.pdm_kwargs = {'n_retries':1, 'n_jobs':1}
         else:
             self.pdm_kwargs = pdm_kwargs
+        
+        if ls_kwargs is None:
+            self.ls_kwargs = {}
+        else:
+            self.ls_kwargs = ls_kwargs
+        
+        if lsfit_kwargs is None:
+            self.lsfit_kwargs = {}
+        else:
+            self.lsfit_kwargs = lsfit_kwargs
+        
 
         pass
 
@@ -237,11 +255,12 @@ class PSearch_Saha:
 
         if trial_periods is None: trial_periods = self.trial_periods
 
-        self.ls = LombScargle(x, y)
+        self.ls = LombScargle(x, y, **self.ls_kwargs)
 
         if trial_periods is None:
             frequencies_ls, powers_ls = self.ls.autopower(
                 minimum_frequency=1/self.period_stop, maximum_frequency=1/self.period_start,
+                **self.lsfit_kwargs,
             )
 
             #update pdm trial periods 
