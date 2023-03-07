@@ -10,6 +10,8 @@ import shutil
 import time
 import warnings
 
+from astroLuSt.monitoring.timers import ExecTimer
+
 #%%catch problematic warnings and convert them to exceptions
 w2e1 = r".*The following header keyword is invalid or follows an unrecognized non-standard convention:.*"
 warnings.filterwarnings("error", message=w2e1)
@@ -125,6 +127,8 @@ class EleanorDatabaseInterface:
 
         self.metadata_path = "./mastDownload/HLSP"
 
+        self.ET = ExecTimer()
+
         pass
 
     def data_from_eleanor_alltics(self,
@@ -139,7 +143,7 @@ class EleanorDatabaseInterface:
         save_plot:str=False,
         sleep:float=0,
         n_jobs:int=-1, n_chunks:int=1,
-        verbose:int=2
+        verbose:int=2,
         ):
         """
             - method to extract data for all ids in 'self.tics'
@@ -237,6 +241,9 @@ class EleanorDatabaseInterface:
         """
         #TODO: include exect timer + runtime estimation for verbose > 2
 
+        if verbose > 2:
+            self.ET.checkpoint_start('EleanorDatabaseInterface().data_from_eleanor_alltics()')
+
         def extraction_onetic(cidx, idx, chunk_len, n_chunks, tic, save_plot, sleep):
             """
                 - funtion for parallel execution
@@ -318,6 +325,11 @@ class EleanorDatabaseInterface:
         if verbose > 1:
             print(f"\nExtraction summary:")
             print(df_extraction_summary)
+
+        if verbose > 2:
+            self.ET.checkpoint_end('EleanorDatabaseInterface().data_from_eleanor_alltics()')
+
+
         return df_extraction_summary
 
     def data_from_eleanor(self,

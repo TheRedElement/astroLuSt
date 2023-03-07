@@ -8,10 +8,11 @@ import numpy as np
 import pandas as pd
 import time
 
+from astroLuSt.monitoring.timers import ExecTimer
+
 
 #ALeRCE
 class AlerceDatabaseInterface:
-
     """
         - class to interact with the ZTF database via the Alerce python API
 
@@ -38,6 +39,8 @@ class AlerceDatabaseInterface:
     def __init__(self,
         ):
         self.alerce = Alerce()
+        
+        self.ET = ExecTimer()
 
         return
 
@@ -47,6 +50,7 @@ class AlerceDatabaseInterface:
         ra_colname:str, dec_colname:str, radius:float,
         sleep:float=0,
         n_jobs:int=-1, verbose:int=0,
+        timeit:bool=False,
         ) -> pd.DataFrame:
         """
             - method to crossmerge 'df_left' with the ZTF catalog by coordinates (cone search)
@@ -83,6 +87,10 @@ class AlerceDatabaseInterface:
                     - int, optional
                     - verbosity level
                     - the default is 0
+                - timeit
+                    - bool, optional
+                    - whether to time the execution
+                    - the default is False
 
             Raises
             ------
@@ -101,6 +109,9 @@ class AlerceDatabaseInterface:
             --------
 
         """
+
+        if timeit:
+            self.ET.checkpoint_start('AlerceDatabaseInterface().crossmerge_by_coordinates()')
 
         def query_one(
             idx:int, inrow:pd.DataFrame,
@@ -162,6 +173,9 @@ class AlerceDatabaseInterface:
 
         df = pd.concat(result[:,0], ignore_index=True)
 
+        if timeit:
+            self.ET.checkpoint_end('AlerceDatabaseInterface().crossmerge_by_coordinates()')
+
 
         return df
 
@@ -173,7 +187,8 @@ class AlerceDatabaseInterface:
         plot_result:bool=True, save_plot:str=False, close_plots:bool=True,
         #calculating
         sleep:float=0,
-        n_jobs:int=-1, verbose:int=0
+        n_jobs:int=-1, verbose:int=0,
+        timeit:bool=False,
         ) -> None:
         """
             - function to download all lightcurves corresponding to the ZTF ids in 'ztf_ids'
@@ -216,6 +231,10 @@ class AlerceDatabaseInterface:
                     - int, optional
                     - verbosity level
                     - the default is 0
+                - timeit
+                    - bool, optional
+                    - whether to time the execution
+                    - the default is False                    
 
             Raises
             ------
@@ -237,6 +256,10 @@ class AlerceDatabaseInterface:
             --------
 
         """
+
+        if timeit:
+            self.ET.checkpoint_start('AlerceDatabaseInterface().download_lightcurves()')
+
 
         def query_one(
             ztf_id:str,
@@ -343,6 +366,10 @@ class AlerceDatabaseInterface:
             data=result[:,1:],
             columns=['ztf','success','original error message'],
         )        
+
+        if timeit:
+            self.ET.checkpoint_end('AlerceDatabaseInterface().download_lightcurves()')
+
 
         return 
 

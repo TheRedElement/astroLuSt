@@ -1,5 +1,11 @@
 
+#%%imports
+import matplotlib.pyplot as plt
+import numpy as np
 
+from astroLuSt.monitoring.timers import ExecTimer
+
+#%%definitions
 class DTW:
     #TODO: DTW, correct for wrong assignment of high correlation
     """
@@ -50,7 +56,6 @@ class DTW:
     """
 
     def __init__(self, X_template, threshold=0.9, window=None, cost_fct=None, y_template=None):
-        import numpy as np
         
         assert -1 <= threshold and threshold <= 1, f"'theshold' has to be in the range [-1,1] but has a value of {threshold}"
         try:
@@ -70,6 +75,10 @@ class DTW:
             self.y_template = np.arange(len(self.X_template))  #auto-generate class labels, if none are provided
         self.pearsons = None
         self.y_pred = None
+
+        self.ET = ExecTimer()
+
+        return
     
     def __repr__(self):
         return ("DTW(\n"
@@ -120,8 +129,6 @@ class DTW:
 
         """
         
-        import numpy as np
-
         #initialize window
         if self.window is None:
             window = np.max([len(x1), len(x2)])-1
@@ -192,7 +199,6 @@ class DTW:
             --------
 
         """
-        import numpy as np
 
 
         path = []
@@ -287,7 +293,8 @@ class DTW:
 
         """
 
-        import numpy as np
+        if timeit:
+            self.ET.checkpoint_start('DTW.fit_predict()')
 
         #initialize return-lists
         y_pred = []
@@ -342,7 +349,8 @@ class DTW:
         self.pearson = pearsons
 
         if timeit:
-            timer.end_task()
+            self.ET.checkpoint_end('DTW.fit_predict()')
+
 
         return y_pred, Cs, paths, pearsons
 
@@ -376,8 +384,6 @@ class DTW:
             --------
 
         """
-        import matplotlib.pyplot as plt
-        import numpy as np
 
         if pearson is None:
             tit = None
