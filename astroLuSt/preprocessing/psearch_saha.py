@@ -83,7 +83,13 @@ class PSearch_Saha:
             - trial_periods_saha
                 - np.ndarray
                 - final trial periods used for the execution of Saha et al., 2017 algorithm
-                                    
+            - pdm
+                - instance of PDM class
+                - contains all information of the pdm fit
+            - ls
+                - instance of LombScargle class
+                - contains all information of the LombScargle fit
+                            
         Methods
         -------
             - run_pdm()
@@ -177,21 +183,21 @@ class PSearch_Saha:
         
         if trial_periods is None: trial_periods = self.trial_periods
 
-        pdm = PDM(
+        self.pdm = PDM(
             self.period_start, self.period_stop, self.nperiods,
             trial_periods,
             **self.pdm_kwargs
         )
 
-        self.best_period_pdm, self.errestimate_pdm, self.best_theta_pdm = pdm.fit_predict(x, y)
+        self.best_period_pdm, self.errestimate_pdm, self.best_theta_pdm = self.pdm.fit_predict(x, y)
 
         #update pdm trial periods 
-        self.trial_periods_pdm = pdm.trial_periods
+        self.trial_periods_pdm = self.pdm.trial_periods
 
         #update self.trial_periods to be aligned with pdm (in case n_retries in pdm_kwargs > 0)
-        self.trial_periods = pdm.trial_periods
+        self.trial_periods = self.pdm.trial_periods
 
-        return pdm.thetas, pdm.trial_periods
+        return self.pdm.thetas, self.pdm.trial_periods
 
     def run_lombscargle(self,
         x:np.ndarray, y:np.ndarray,
@@ -231,10 +237,10 @@ class PSearch_Saha:
 
         if trial_periods is None: trial_periods = self.trial_periods
 
-        ls = LombScargle(x, y)
+        self.ls = LombScargle(x, y)
 
         if trial_periods is None:
-            frequencies_ls, powers_ls = ls.autopower(
+            frequencies_ls, powers_ls = self.ls.autopower(
                 minimum_frequency=1/self.period_stop, maximum_frequency=1/self.period_start,
             )
 
@@ -244,7 +250,7 @@ class PSearch_Saha:
             #update self.trial_periods to be aligned with lomb-scargle
             self.trial_periods    = 1/frequencies_ls
         else:
-            powers_ls = ls.power(1/self.trial_periods)
+            powers_ls = self.ls.power(1/self.trial_periods)
             
             #update pdm trial periods 
             self.trial_periods_ls = self.trial_periods
