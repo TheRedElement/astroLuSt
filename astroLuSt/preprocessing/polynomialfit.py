@@ -40,6 +40,9 @@ def polyfit2d(
 
         Returns
         -------
+            - poly
+                - sklearn.preprocessing.PolynomialFeatures instance
+                - fitted model to generate all polynomial features of two inputs in dependence in deg
             - poly_reg_model
                 - sklearn.linear_model.LinearRegression instance
                 - the fitted model
@@ -88,4 +91,4 @@ def polyfit2d(
         plt.show()
 
 
-    return poly_reg_model, coeffs, intercept
+    return poly, poly_reg_model, coeffs, intercept
