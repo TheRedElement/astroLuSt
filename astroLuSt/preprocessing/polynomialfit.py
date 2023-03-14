@@ -79,6 +79,10 @@ def polyfit2d(
         ax1.scatter(x, y, z, label='Data')
         ax1.scatter(x, y, z_pred, color='r', label='Model')
 
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+        ax1.set_zlabel('z')
+
         ax1.legend()
 
         plt.show()
