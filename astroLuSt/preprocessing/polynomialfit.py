@@ -78,16 +78,28 @@ def polyfit2d(
         # print(intercept)
         
         fig = plt.figure()
-        ax1 = fig.add_subplot(111, projection='3d')
-        ax1.scatter(x, y, z, label='Data')
-        ax1.scatter(x, y, z_pred, color='r', label='Model')
+        ax1 = fig.add_subplot(221, projection=None)
+        ax2 = fig.add_subplot(223, projection=None)
+        ax3 = fig.add_subplot(122, projection='3d')
+        
+        ax1.scatter(x, z, label='Data')
+        ax2.scatter(y, z, label='Data')
+        ax3.scatter(x, y, z, label='Data')
+        
+        ax1.scatter(x, z_pred, label='Model')
+        ax2.scatter(y, z_pred, label='Model')
+        ax3.scatter(x, y, z_pred, color='r', label='Model')
 
         ax1.set_xlabel('x')
-        ax1.set_ylabel('y')
-        ax1.set_zlabel('z')
+        ax2.set_xlabel('y')
+        ax3.set_xlabel('x')
+        ax1.set_ylabel('z')
+        ax2.set_ylabel('z')
+        ax3.set_ylabel('y')
+        ax3.set_zlabel('z')
 
         ax1.legend()
-
+        plt.tight_layout()
         plt.show()
 
 
