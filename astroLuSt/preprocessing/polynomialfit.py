@@ -70,9 +70,9 @@ def polyfit2d(
 
     if verbose > 2:
         z_pred = poly_reg_model.predict(poly_features)
-        print(z_pred)
-        print(coeffs)
-        print(intercept)
+        # print(z_pred)
+        # print(coeffs)
+        # print(intercept)
         
         fig = plt.figure()
         ax1 = fig.add_subplot(111, projection='3d')
