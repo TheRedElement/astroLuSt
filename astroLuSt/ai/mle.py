@@ -182,7 +182,6 @@ class MLE:
         data:np.ndarray=None, labels:np.ndarray=None, mus:np.ndarray=None, sigmas:np.ndarray=None,
         bins:int=100, equal_range:bool=False, asstandardnormal:bool=False,
         save:str=False,
-        fontsize:int=16, figsize:int=(9,9)
         ):
         """
             - method to create a corner plot of a given set of input distributions
@@ -227,14 +226,6 @@ class MLE:
                     - location of where to save the created figure
                     - the default is None
                         - will not save the figure
-                - fontsize
-                    - int, optional
-                    - fontsize to use for the plot
-                    - the default si 16
-                - figsize
-                    - tupel, optional
-                    - figure dimensions
-                    - the default is (9,9)
 
             Raises
             ------
@@ -266,7 +257,7 @@ class MLE:
                 sigmas = self.sigmas
         
 
-        fig = plt.figure(figsize=figsize)
+        fig = plt.figure()
         nrowscols = data.shape[1]
 
 
@@ -314,14 +305,14 @@ class MLE:
 
                     #labelling
                     if idx1 == nrowscols-1:
-                        ax1.set_xlabel(l2, fontsize=fontsize)
+                        ax1.set_xlabel(l2)
                     else:
                         ax1.set_xticklabels([])
                     if idx2 == 0:
-                        ax1.set_ylabel(l1, fontsize=fontsize)
+                        ax1.set_ylabel(l1)
                     else:
                         ax1.set_yticklabels([])
-                    ax1.tick_params(labelsize=fontsize)
+                    ax1.tick_params()
 
                     if not equal_range:
                         ax1.set_xlim(np.nanmin(d2), np.nanmax(d2))
@@ -329,7 +320,7 @@ class MLE:
 
                     if len(self.corrcoeff.shape) == 2:
                         ax1.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(self.corrcoeff[idx1, idx2]))
-                        ax1.legend(fontsize=fontsize)
+                        ax1.legend()
 
 
                 #plotting histograms
@@ -368,10 +359,10 @@ class MLE:
                             axhist.set_xticklabels([])
                     
                         axhist.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
-                        axhist.legend(fontsize=fontsize)
+                        axhist.legend()
                     
 
-                    axhist.tick_params(labelsize=fontsize)
+                    axhist.tick_params()
         
         #make x and y limits equal if requested
         if equal_range and not asstandardnormal:
