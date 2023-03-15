@@ -33,6 +33,9 @@ class MLE:
             - self.covmat
                 - np.ndarray
                 - covariance matrix of the input data
+            - self.corrcoeff
+                - np.ndarray
+                - correlation matrix containing pearson correlation coefficient
 
         Methods
         -------
@@ -65,6 +68,8 @@ class MLE:
         self.mus = np.array([])
         self.sigmas = np.array([])
         self.covmat = np.array([])
+        self.corrcoeff = np.array([])
+
         pass
 
     def get_mu(self):
@@ -137,6 +142,7 @@ class MLE:
         self.get_mu()
         self.get_sigma()
         self.covmat = self.get_covmat()
+        self.corrcoeff = np.corrcoef(self.dataseries.T)
 
         return
 
@@ -277,6 +283,7 @@ class MLE:
                         s=1, alpha=.5, zorder=2,
                     )
 
+
                     #normal distribution estimate
                     if mu1 is not None and sigma1 is not None:
                         
@@ -307,7 +314,12 @@ class MLE:
                     if not equal_range:
                         ax1.set_xlim(np.nanmin(d2), np.nanmax(d2))
                         ax1.set_ylim(np.nanmin(d1), np.nanmax(d1))
-                    
+
+                    if len(self.corrcoeff.shape) == 2:
+                        ax1.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(self.corrcoeff[idx1, idx2]))
+                        ax1.legend(fontsize=fontsize)
+
+
                 #plotting histograms
                 elif idx1 == idx2:
                     if idx != 1:
