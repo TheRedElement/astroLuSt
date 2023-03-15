@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
+import os
 import pandas as pd
 import shutil
 import time
@@ -94,10 +95,13 @@ class EleanorDatabaseInterface:
 
         Dependencies
         ------------
-            - pandas
-            - numpy
-            - matplotlib
             - eleanor
+            - matplotlib
+            - numpy
+            - os
+            - pandas
+            - shutil
+            - time
             - warnings
 
     """
@@ -131,206 +135,6 @@ class EleanorDatabaseInterface:
 
         pass
 
-    def data_from_eleanor_alltics(self,
-        #saving data
-        save:str="./",
-        quality_expression:str="(datum.quality == 0)",
-        include_aperture:bool=False, include_tpf:bool=False,
-        #plotting
-        plot_result:bool=True,
-        aperture_detail:int=50, ylims:list=None,
-        fontsize:int=16, figsize:tuple=(16,9),
-        save_plot:str=False,
-        sleep:float=0,
-        n_jobs:int=-1, n_chunks:int=1,
-        verbose:int=2,
-        ):
-        """
-            - method to extract data for all ids in 'self.tics'
-
-            Parameters
-            ----------
-                - save
-                    - str|bool, optional
-                    - path to the directory of where to store the extracted files
-                    - the default is "./"
-                        - will save to the current working directory
-                - quality_expression
-                    - str, optional
-                    - string containing some boolean condition w.r.t. 'datum.quality'
-                    - eval() function will be applied to construct a boolean array
-                    - the default is "(datum.quality == 0)"
-                - include_aperture
-                    - bool, optional
-                    - whether to include the used aperture in the extracted file
-                    - will store the aperture for every single frame
-                        - thus, can lead to quite large files
-                    - the default is False
-                - include_tpf
-                    - bool, optional
-                    - whether to include the target-pixel-files in the extracted file
-                    - will store the tpf for every single frame
-                        - thus, can lead to quite large files
-                    - the default is False
-                - plot_result
-                    - bool, optional
-                    - whether to create a plot of the extracted file
-                    - the default is True
-                - aperture_detail
-                    - int, optional
-                    - how detailed the aperture shall be depicted
-                    - higher values require more computation time
-                    - the default is 50
-                - ylims
-                    - list, tuple, optional
-                    - the ylims of the created plot
-                    - the default is None
-                        - will automatically adapt the ylims
-                - fontsize
-                    - int, optional
-                    - fontsize to use on the created plot
-                    - the default is 16
-                - figsize
-                    - tuple, optional
-                    - size of the created figure/plot
-                    - the default is (16,9)
-                - save_plot
-                    - str, optional
-                    - location of where to save the created plot
-                    - the default is False
-                        - will not save the plot
-                - sleep
-                    - float, optional
-                    - number of seconds to sleep after downloading each target
-                    - the default is 0
-                        - no sleep at all                
-                - n_jobs
-                    - int, optional
-                    - number of workers to use for parallel execution of tasks
-                        - '1' is essentially sequential computaion (useful for debugging)
-                        - '2' uses 2 CPUs
-                        - '-1' will use all available CPUs
-                        - '-2' will use all available CPUs-1
-                    - for more info see https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
-                    - the default is '-1'
-                - n_chunks
-                    - int, optional
-                    - number of chuncks to split the input data into
-                        - will take 'self.tics' and split it into n_chunks more or less equal subarrays
-                    - after processing of each chunk, the metadata will get deleted, if 'self.clear_metadata_after_extract' is set to true
-                    - it is advisable, though not necessary, to choose n_chunks such that each chunck contains an amount of elements that can be evenly distributed across n_jobs
-                    - the default is 1
-                        - i.e. process all the data in one go
-                - verbose
-                    - int, optional
-                    - verbosity level
-                        - also for joblib.Parallel()
-                    - higher numbers will show more information
-                    - the default is 2
-            
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-
-
-        """
-        #TODO: include exect timer + runtime estimation for verbose > 2
-
-        if verbose > 2:
-            self.ET.checkpoint_start('EleanorDatabaseInterface().data_from_eleanor_alltics()')
-
-        def extraction_onetic(cidx, idx, chunk_len, n_chunks, tic, save_plot, sleep):
-            """
-                - funtion for parallel execution
-            """
-            print(f"\nExtracting tic{tic} (chunk {cidx+1}/{n_chunks}, {idx+1}/{chunk_len} = {chunk_len*(cidx)+idx+1}/{len(self.tics)} Total)")
-
-            data, sectors, tess_mags, error_msg = self.data_from_eleanor(
-                tic, sectors=self.sectors,
-                do_psf=self.do_psf, do_pca=self.do_pca,
-                aperture_mode=self.aperture_mode, regressors=self.regressors, try_load=self.try_load,
-                height=self.height, width=self.width, bkg_size=self.bkg_size,
-                verbose=verbose
-            )
-
-            if data is not None:
-
-                #Save data
-                if isinstance(save, str):
-                    df_res = self.result2pandas(
-                        save=f"{save}tic{tic}.csv",
-                        data=data, sectors=sectors, tess_mags=tess_mags, tic=tic,
-                        quality_expression=quality_expression,
-                        include_aperture=include_aperture, include_tpf=include_tpf,
-                        sep=";"
-                    )
-
-                #Plot data
-                if plot_result:
-                    if isinstance(save_plot, str): save_plot = f"{save_plot}tic{tic}.png"
-                    else: save_plot = False
-                    fig, axs = self.plot_result_eleanor(
-                        data=data, tic=tic, sectors=sectors, tess_mags=tess_mags,
-                        quality_expression=quality_expression,
-                        aperture_detail=aperture_detail, ylims=ylims,
-                        fontsize=fontsize, figsize=figsize, save=save_plot,                  
-                    )
-                
-                extraction_summary = {"TIC":tic, "success":True, "original error message":""}
-            else:
-                #append failed extractions
-                extraction_summary = {"TIC":tic, "success":False, "original error message":error_msg}         
-
-            #sleep after each target
-            time.sleep(sleep)
-
-            return extraction_summary
-
-        #split array into n_chuncks chuncks to divide the load
-        chunks = np.array_split(self.tics, n_chunks)
-        if verbose > 1:
-            print(f"INFO: Extracting {len(chunks)} chuncks with shapes {[c.shape for c in chunks]}")
-
-        df_extraction_summary = pd.DataFrame()
-        for cidx, chunk in enumerate(chunks):
-            print(f"INFO: Working on chunk {cidx+1}/{len(chunks)} with size {chunk.shape[0]}")
-            extraction_summary = Parallel(
-                n_jobs=n_jobs, verbose=verbose
-            )(
-                delayed(extraction_onetic)(
-                    cidx, idx, len(chunk), n_chunks, tic, save_plot, sleep=sleep,
-                    ) for idx, tic in enumerate(chunk)
-            )
-
-            #delete metadata after extraction of each chunck
-            if self.clear_metadata_after_extract:
-                
-                try:
-                    print('INFO: Removing Metadata...')
-                    shutil.rmtree(self.metadata_path)
-                except FileNotFoundError as e:
-                    print(f'INFO: No Metadata to clear.')
-                    print(f'    Original ERROR: {e}')
-
-            df_extraction_summary_chunck = pd.DataFrame(data=extraction_summary)
-            df_extraction_summary = pd.concat([df_extraction_summary, df_extraction_summary_chunck], ignore_index=True)
-
-
-        #short protocoll about extraction
-        if verbose > 1:
-            print(f"\nExtraction summary:")
-            print(df_extraction_summary)
-
-        if verbose > 2:
-            self.ET.checkpoint_end('EleanorDatabaseInterface().data_from_eleanor_alltics()')
-
-
-        return df_extraction_summary
 
     def data_from_eleanor(self,
         tic:int, sectors:list="all", 
@@ -479,6 +283,310 @@ class EleanorDatabaseInterface:
         
         return data, sectors, tess_mags, error_msg
 
+    def extraction_onetic(self,
+        tic:int,
+        #saving data
+        save:str='./',
+        redownload:bool=True,
+        #plotting
+        plot_result:bool=True,
+        save_plot:str=False,
+        #computing
+        sleep:float=0,
+        cidx:int=0, idx:int=0, chunk_len:int=1, n_chunks:int=1,
+        verbose:int=0,
+        save_kwargs:dict={},
+        plot_kwargs:dict={},
+        ):
+        """
+            - method to download and store the data for one particular TIC
+
+            Parameters
+            ----------
+                - tic
+                    - int, optional
+                    - TIC number of the target to extract
+                - save
+                    - str|bool, optional
+                    - path to the directory of where to store the extracted files
+                    - the default is "./"
+                        - will save to the current working directory
+                - redownload
+                    - bool, optional
+                    - whether to download a target again, if a file with the same name already exists in 'save'
+                    - the default is True
+                - plot_result
+                    - bool, optional
+                    - whether to create a plot of the extracted file
+                    - the default is True
+                - save_plot
+                    - str, optional
+                    - location of where to save the created plot
+                    - the default is False
+                        - will not save the plot
+                - sleep
+                    - float, optional
+                    - number of seconds to sleep after downloading each target
+                    - the default is 0
+                        - no sleep at all                
+                - n_jobs
+                    - int, optional
+                    - number of workers to use for parallel execution of tasks
+                        - '1' is essentially sequential computaion (useful for debugging)
+                        - '2' uses 2 CPUs
+                        - '-1' will use all available CPUs
+                        - '-2' will use all available CPUs-1
+                    - for more info see https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+                    - the default is '-1'
+                - cidx
+                    - int, optional
+                    - index of the chunk that currently gets extracted
+                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - the default is 0
+                - idx
+                    - int, optional
+                    - index of the target within the current chunk
+                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - the default is 0
+                - chunk_len
+                    - int, optional
+                    - length of the current chunk
+                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - the default is 1
+                - n_chunks
+                    - int, optional
+                    - total number of chunks to be extracted via self.data_from_eleanor_alltics()
+                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - the default is 1
+                - verbose
+                    - int, optional
+                    - verbosity level
+                        - also for joblib.Parallel()
+                    - higher numbers will show more information
+                    - the default is 2
+                - save_kwargs
+                    - dict, optional
+                    - kwargs passed to self.result2pandas()
+                - plot_kwargs
+                    - dict, optional
+                    - kwargs passed to self.plot_result_eleanor()
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+
+
+            
+        """
+        
+        savefile = f"{save}tic{tic}.csv"
+        
+        #get files that already have been extracted
+        try:
+            already_extracted = os.listdir(str(save))
+        except:
+            already_extracted = []
+
+        save_kwargs['save'] = savefile
+        plot_kwargs['save'] = save_plot
+
+        #print protocoll of download
+        print(f"\nExtracting tic{tic} (chunk {cidx+1}/{n_chunks}, {idx+1}/{chunk_len} = {chunk_len*(cidx)+idx+1}/{len(self.tics)} Total)")
+
+        #redownload target if specified, otherwise ignore if it already has been downloaded before
+        if savefile.replace(str(save),'') not in already_extracted or redownload:
+
+            #download data
+            data, sectors, tess_mags, error_msg = self.data_from_eleanor(
+                tic, sectors=self.sectors,
+                do_psf=self.do_psf, do_pca=self.do_pca,
+                aperture_mode=self.aperture_mode, regressors=self.regressors, try_load=self.try_load,
+                height=self.height, width=self.width, bkg_size=self.bkg_size,
+                verbose=verbose
+            )
+
+            #if the download succeeds
+            if data is not None:
+
+                #save data
+                if isinstance(save, str):
+                    df_res = self.result2pandas(
+                        # save=savefile,
+                        data=data, sectors=sectors, tess_mags=tess_mags, tic=tic,
+                        **save_kwargs
+                    )
+
+                #plot data
+                if plot_result:
+                    if isinstance(save_plot, str): save_plot = f"{save_plot}tic{tic}.png"
+                    else: save_plot = False
+                    fig, axs = self.plot_result_eleanor(
+                        data=data, tic=tic, sectors=sectors, tess_mags=tess_mags,
+                        **plot_kwargs              
+                    )
+                
+                extraction_summary = {"TIC":tic, "success":True, "original error message":""}
+            #if the download fails report in extraction summary
+            else:
+                #append failed extractions
+                extraction_summary = {"TIC":tic, "success":False, "original error message":error_msg}         
+
+            #sleep after each target
+            time.sleep(sleep)
+        
+        #report in extraction summary if target already existed before the download
+        else:
+            error_msg = f'WARNING: {savefile} already exists in {save}. Ignoring target because "redownload" == False '
+            print(error_msg)
+            extraction_summary = {'TIC':tic, 'sucess':False, 'original error message':error_msg}
+
+        return extraction_summary
+
+    def data_from_eleanor_alltics(self,
+        #saving data
+        save:str="./",
+        redownload:bool=True,
+        #plotting
+        plot_result:bool=True,
+        save_plot:str=False,
+        #computing
+        sleep:float=0,
+        n_jobs:int=-1, n_chunks:int=1,
+        verbose:int=2,
+        #kwargs
+        extraction_onetic_kwargs:dict={},
+        ):
+        """
+            - method to extract data for all ids in 'self.tics'
+
+            Parameters
+            ----------
+                - save
+                    - str|bool, optional
+                    - path to the directory of where to store the extracted files
+                    - the default is "./"
+                        - will save to the current working directory
+                - redownload
+                    - bool, optional
+                    - whether to download a target again, if a file with the same name already exists in 'save'
+                    - the default is True
+                - plot_result
+                    - bool, optional
+                    - whether to create a plot of the extracted file
+                    - the default is True
+                - save_plot
+                    - str, optional
+                    - location of where to save the created plot
+                    - the default is False
+                        - will not save the plot
+                - sleep
+                    - float, optional
+                    - number of seconds to sleep after downloading each target
+                    - the default is 0
+                        - no sleep at all                
+                - n_jobs
+                    - int, optional
+                    - number of workers to use for parallel execution of tasks
+                        - '1' is essentially sequential computaion (useful for debugging)
+                        - '2' uses 2 CPUs
+                        - '-1' will use all available CPUs
+                        - '-2' will use all available CPUs-1
+                    - for more info see https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+                    - the default is '-1'
+                - n_chunks
+                    - int, optional
+                    - number of chuncks to split the input data into
+                        - will take 'self.tics' and split it into n_chunks more or less equal subarrays
+                    - after processing of each chunk, the metadata will get deleted, if 'self.clear_metadata_after_extract' is set to true
+                    - it is advisable, though not necessary, to choose n_chunks such that each chunck contains an amount of elements that can be evenly distributed across n_jobs
+                    - the default is 1
+                        - i.e. process all the data in one go
+                - verbose
+                    - int, optional
+                    - verbosity level
+                        - also for joblib.Parallel()
+                    - higher numbers will show more information
+                    - the default is 2
+                - extraction_onetic_kwargs
+                    - dict, optional
+                    - kwargs passed to self.extraction_onetic()
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+
+
+        """
+        #TODO: include exect timer + runtime estimation for verbose > 2
+
+        if verbose > 2:
+            self.ET.checkpoint_start('EleanorDatabaseInterface().data_from_eleanor_alltics()')
+
+        #split array into n_chuncks chuncks to divide the load
+        chunks = np.array_split(self.tics, n_chunks)
+        if verbose > 1:
+            print(f"INFO: Extracting {len(chunks)} chuncks with shapes {[c.shape for c in chunks]}")
+
+        #sucess-monitoring
+        df_extraction_summary = pd.DataFrame()
+
+        #iterate over created chunks
+        for cidx, chunk in enumerate(chunks):
+
+            print(f"INFO: Working on chunk {cidx+1}/{len(chunks)} with size {chunk.shape[0]}")
+           
+            #extract data
+            extraction_summary = Parallel(
+                n_jobs=n_jobs, verbose=verbose
+            )(
+                delayed(self.extraction_onetic)(
+                        tic=tic,
+                        save=save,
+                        save_plot=save_plot,
+                        redownload=redownload,
+                        plot_result=plot_result,
+                        sleep=sleep,
+                        verbose=verbose,
+                        cidx=cidx, idx=idx, chunk_len=len(chunk), n_chunks=n_chunks,
+                        **extraction_onetic_kwargs,
+                    ) for idx, tic in enumerate(chunk)
+            )
+
+            #delete metadata after extraction of each chunck
+            if self.clear_metadata_after_extract:
+                
+                try:
+                    print('INFO: Removing Metadata...')
+                    shutil.rmtree(self.metadata_path)
+                except FileNotFoundError as e:
+                    print(f'INFO: No Metadata to clear.')
+                    print(f'    Original ERROR: {e}')
+
+            df_extraction_summary_chunck = pd.DataFrame(data=extraction_summary)
+            df_extraction_summary = pd.concat([df_extraction_summary, df_extraction_summary_chunck], ignore_index=True)
+
+
+        #short protocoll about extraction
+        if verbose > 1:
+            print(f"\nExtraction summary:")
+            print(df_extraction_summary)
+
+        if verbose > 2:
+            self.ET.checkpoint_end('EleanorDatabaseInterface().data_from_eleanor_alltics()')
+
+
+        return df_extraction_summary
+
     def plot_result_eleanor(self,
         data:list, tic:int, sectors:list, tess_mags:list,
         quality_expression:str="(datum.quality == 0)",
@@ -575,7 +683,7 @@ class EleanorDatabaseInterface:
             ax1.imshow(datum.tpf[0])
             
             ##plot aperture
-            ax1.contour(aperture_plot, levels=[1], colors="r", corner_mask=False, origin='lower', aspect='auto', extent=extent, zorder=2)
+            ax1.contour(aperture_plot, colors='r', corner_mask=False, origin='lower', aspect='auto', extent=extent, zorder=2)
 
             #TODO: Maybe check here if extraction worked (only one sector not working?)
             q = eval(quality_expression)
