@@ -280,7 +280,7 @@ class MLE:
                     #normal distribution estimate
                     if mu1 is not None and sigma1 is not None:
                         
-                        covmat = self.get_covmat(np.array([d1,d2]).T, np.array([mu1,mu2]))
+                        covmat = self.get_covmat(np.array([d1,d2]).T)
 
                         xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
                         yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
