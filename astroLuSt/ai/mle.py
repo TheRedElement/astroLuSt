@@ -91,7 +91,7 @@ class MLE:
 
         return
     
-    def get_covmat(self, data=None):
+    def get_covmat(self, data:np.ndarray=None):
         """
             - method to estimate the N-D covariance matrix
 
@@ -179,10 +179,11 @@ class MLE:
         return self.mus, self.sigmas, self.covmat
 
     def corner_plot(self,
-        data=None, labels=None, mus=None, sigmas=None,
-        bins=100, equal_range=False,
-        save=False,
-        fontsize=16, figsize=(9,9)):
+        data:np.ndarray=None, labels:np.ndarray=None, mus:np.ndarray=None, sigmas:np.ndarray=None,
+        bins:int=100, equal_range:bool=False, asstandardnormal:bool=False,
+        save:str=False,
+        fontsize:int=16, figsize:int=(9,9)
+        ):
         """
             - method to create a corner plot of a given set of input distributions
         
@@ -216,6 +217,10 @@ class MLE:
                 - equal_range
                     - bool, optional
                     - whether to plot the data with equal x- and y-limits
+                    - the default is False
+                - asstandardnormal
+                    - bool, optional
+                    - whether to plot the data rescaled to zero mean and unit variance
                     - the default is False
                 - save
                     - str, optional
@@ -269,6 +274,12 @@ class MLE:
         for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(data.T, labels, mus, sigmas)):
             for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(data.T, labels, mus, sigmas)):
                 idx += 1
+
+                if asstandardnormal and mu1 is not None and sigma1 is not None:
+                    d1 = (d1-mu1)/sigma1
+                    d2 = (d2-mu2)/sigma2
+                    mu1, mu2 = 0, 0
+                    sigma1, sigma2 = 1, 1
                 
                 #plotting 2D distributions
                 if idx1 > idx2:
@@ -297,6 +308,7 @@ class MLE:
                         norm = stats.multivariate_normal(
                             mean=np.array([mu1, mu2]),
                             cov=covmat,
+                            allow_singular=True
                         )
                         cont = ax1.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
 
@@ -331,7 +343,7 @@ class MLE:
                     axhist = fig.add_subplot(nrowscols, nrowscols, idx)
 
                     axhist.hist(d1, bins=bins, orientation=orientation, density=True)
-                    
+
                     #normal distribution estimate
                     if mu1 is not None and sigma1 is not None:
                         xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
@@ -362,7 +374,7 @@ class MLE:
                     axhist.tick_params(labelsize=fontsize)
         
         #make x and y limits equal if requested
-        if equal_range:
+        if equal_range and not asstandardnormal:
             for idx, ax in enumerate(fig.axes):
                 
                 #first 1D histogram
@@ -375,7 +387,6 @@ class MLE:
                 elif idx > 0 and (idx+1)%nrowscols == 0:
                     xymin = np.nanmin([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
                     xymax = np.nanmax([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
-
                     ax.set_ylim(xymin, xymax)
 
                 #2D histograms
