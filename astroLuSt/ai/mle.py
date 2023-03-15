@@ -266,8 +266,8 @@ class MLE:
 
                     ax1 = fig.add_subplot(nrowscols, nrowscols, idx)
                     
-                    ax1.axhline(mu1, color="tab:orange", linestyle="--")
-                    ax1.axvline(mu2, color="tab:orange", linestyle="--")
+                    if mu1 is not None: ax1.axhline(mu1, color="tab:orange", linestyle="--")
+                    if mu2 is not None: ax1.axvline(mu2, color="tab:orange", linestyle="--")
 
                     #data
                     sctr = ax1.scatter(d2, d1,
