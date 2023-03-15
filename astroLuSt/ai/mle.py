@@ -13,10 +13,10 @@ class MLE:
         Attributes
         ----------
             - dataseries
-                - list of np.arrays
+                - np.ndarray of np.ndarrays
                 - contains the different datasets to compare
             - series_labels
-                - list, optional
+                - np.ndarray, optional
                 - contains labels corresponding to the dataseries in 'data'
                 - the default is None
         
@@ -52,7 +52,7 @@ class MLE:
 
 
     def __init__(self,
-        dataseries, series_labels=None,
+        dataseries:np.ndarray, series_labels:np.ndarray=None,
         ):
 
         self.dataseries = dataseries
@@ -70,9 +70,8 @@ class MLE:
             - method to estimate the mean of the gaussian via MLE
         """
         
-        for data in self.dataseries:
-            data = np.array(data)
-            self.mus = np.append(self.mus, 1/len(data) * np.nansum(data))
+        self.mus = np.nanmean(self.dataseries, axis=1)
+
         return
     
     def get_sigma(self):
@@ -81,9 +80,8 @@ class MLE:
             - estimate for 1d-case (i.e. 1D histogram)
         """
 
-        for data, mu in zip(self.dataseries, self.mus):
-            data = np.array(data)
-            self.sigmas = np.append(self.sigmas, np.sqrt(1/len(data) * np.nansum((data - mu)**2)))
+        self.sigmas = np.nanstd(self.dataseries, axis=1)
+
         return
     
     def get_covmat(self, data=None, mus=None):
@@ -124,18 +122,8 @@ class MLE:
 
         #N-D data
         if data is None:
-            data = self.dataseries.T
-        if mus is None:
-            mus = self.mus
-
-        covmat = np.zeros((data.shape[1], data.shape[1]))
-        for idx, d in enumerate(data):
-            d = np.expand_dims(d, -1)
-            dm = (d - mus).T@(d - mus)
-            if not np.all(np.isnan(dm)):
-                covmat += dm
-        
-        covmat /= data.shape[0]
+            data = self.dataseries
+        covmat = np.cov(data.T)
 
         return covmat
 
