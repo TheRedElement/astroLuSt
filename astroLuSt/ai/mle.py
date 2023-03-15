@@ -15,6 +15,8 @@ class MLE:
             - dataseries
                 - np.ndarray of np.ndarrays
                 - contains the different datasets to compare
+                - rows are different samples
+                - columns are different features
             - series_labels
                 - np.ndarray, optional
                 - contains labels corresponding to the dataseries in 'data'
@@ -70,7 +72,7 @@ class MLE:
             - method to estimate the mean of the gaussian via MLE
         """
         
-        self.mus = np.nanmean(self.dataseries, axis=1)
+        self.mus = np.nanmean(self.dataseries, axis=0)
 
         return
     
@@ -80,11 +82,11 @@ class MLE:
             - estimate for 1d-case (i.e. 1D histogram)
         """
 
-        self.sigmas = np.nanstd(self.dataseries, axis=1)
+        self.sigmas = np.nanstd(self.dataseries, axis=0)
 
         return
     
-    def get_covmat(self, data=None, mus=None):
+    def get_covmat(self, data=None):
         """
             - method to estimate the N-D covariance matrix
 
@@ -123,9 +125,9 @@ class MLE:
         #N-D data
         if data is None:
             data = self.dataseries
-        covmat = np.cov(data.T)
+        self.covmat = np.cov(data.T)
 
-        return covmat
+        return self.covmat
 
     def fit(self):
         """
@@ -254,11 +256,12 @@ class MLE:
         
 
         fig = plt.figure(figsize=figsize)
-        nrowscols = data.shape[0]
+        nrowscols = data.shape[1]
+
 
         idx = 0
-        for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(data, labels, mus, sigmas)):
-            for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(data, labels, mus, sigmas)):
+        for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(data.T, labels, mus, sigmas)):
+            for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(data.T, labels, mus, sigmas)):
                 idx += 1
                 
                 #plotting 2D distributions
