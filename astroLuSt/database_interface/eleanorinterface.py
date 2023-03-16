@@ -443,7 +443,7 @@ class EleanorDatabaseInterface:
         else:
             error_msg = f'WARNING: {savefile} already exists in {save}. Ignoring target because "redownload" == False '
             print(error_msg)
-            extraction_summary = {'TIC':tic, 'sucess':False, 'original error message':error_msg}
+            extraction_summary = {'TIC':tic, 'success':False, 'original error message':error_msg}
 
         return extraction_summary
 
