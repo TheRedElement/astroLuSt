@@ -144,8 +144,6 @@ class AlerceDatabaseInterface:
         except:
             already_extracted = []
 
-        print(savefile, already_extracted)
-
         print(f"\nExtracting {ztf_id} (#{idx+1}/{total_targets})")
 
         if savefile.replace(str(save),'') not in already_extracted or redownload:
