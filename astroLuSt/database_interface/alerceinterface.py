@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+import os
 import pandas as pd
 import time
 
@@ -21,8 +22,10 @@ class AlerceDatabaseInterface:
 
         Methods
         -------
+            - download_one()
             - crossmatch_by_coordinates()
             - download_lightcurves()
+            - plot_result()
 
         Dependencies
         ------------
@@ -30,6 +33,7 @@ class AlerceDatabaseInterface:
             - joblib
             - matplotlib
             - numpy
+            - os
             - pandas
         Comments
         --------
@@ -43,6 +47,159 @@ class AlerceDatabaseInterface:
         self.ET = ExecTimer()
 
         return
+
+    def download_one(self,
+        ztf_id:str,
+        #saving
+        redownload:bool=False,
+        save:str=False,
+        #plotting
+        plot_result:bool=False, save_plot:bool=False, close_plots:bool=False,
+        #computing
+        sleep:float=0,
+        idx:int=0,
+        total_targets:int=1,
+        verbose:int=0,
+        ):
+        """
+            - method to download the lightcurve on one particular ztf_id
+            - will be called during self.download_lightcurves() in parallel
+            
+            Parameters
+            ----------
+                - ztf_id
+                    - str
+                    - id of the desired target
+                - redownload
+                    - bool, optional
+                    - whether to redownload lightcurves that already have been donwloaded at some point in the past
+                        - i.e. are found in the save-directory
+                    - the default is False
+                - save
+                    - str, bool, optional
+                    - directory of where to store the downloaded lightcurves to
+                    - if set to False, will not save the data
+                    - save has to end with a slash ('/')
+                    - the default is './'
+                - plot_result
+                    - bool, optional
+                    - whether to plot the lightcurve of the downloaded data
+                        - will create one plot for each target
+                    - the default is True
+                - save_plot
+                    - str, optional   
+                    - directory of where to store the created plots
+                    - save_plot has to end with a slash ('/')
+                    - the default is False
+                        - will not save the plots
+                - close_plots
+                    - bool, optional
+                    - whether to close the plots immediately after creation
+                    - useful if one wants to save the plots, but not view at them right away
+                    - the default is True
+                - sleep
+                    - float, optional
+                    - number of seconds to sleep after downloading each target
+                    - the default is 0
+                        - no sleep at all
+                - idx
+                    - int, optional
+                    - index of the currently downloaded target
+                    - only necessary to print in the protocoll when called in self.download_lightcurves()
+                    - the default is 0
+                - total_targets
+                    - int, optional
+                    - total number of targets that get extracted
+                    - only necessary to print in the protocoll when called in self.download_lightcurves()
+                    - the default is 1
+                -  verbose
+                    - int, optional
+                    - verbosity level
+                    - the default is 0 
+
+            Returns
+            -------
+                - df
+                    - pd.DataFrame
+                    - containing the downloaded lightcurve data
+                - ztf_id
+                    - str
+                    - id of the extracted object
+                - sucess
+                    - bool
+                    - whether the download was successful
+                - error_msg
+                    - str
+                    - potential error-messages that occured during the download
+
+            Comments
+            --------  
+
+        """
+
+        savefile = f'{save}{ztf_id}.csv'
+        #get files that already have been extracted
+        try:
+            already_extracted = os.listdir(str(save))
+        except:
+            already_extracted = []
+
+        print(savefile, already_extracted)
+
+        print(f"\nExtracting {ztf_id} (#{idx+1}/{total_targets})")
+
+        if savefile.replace(str(save),'') not in already_extracted or redownload:
+
+            error_msg = None
+            success = True
+
+            try:
+                df = self.alerce.query_detections(
+                    ztf_id,
+                    format='pandas'
+                )
+
+            except Exception as e:
+                #empty placeholder DataFrame
+                df = pd.DataFrame()
+                if verbose > 1:
+                    print("WARNING: Error in alerce.query_objects()")
+                    print(f"ORIGINAL ERROR: {e}")
+                    if len(str(e)) > 80: e = str(e)[:79] + '...'
+                    error_msg = f"{'alerce.query_objects()':25s}: {e}"
+                    success = False
+                # print(len(df['detections']))
+
+            # self.df_error_msgs_lcdownload.loc[len(self.df_error_msgs_lcdownload)] = [ztf_id, success, error_msg]
+
+
+            if plot_result:
+                
+                self.plot_result(
+                    df=df,
+                    ztf_id=ztf_id,
+                    save=save_plot
+                )
+
+                if close_plots: plt.close()
+            
+            if isinstance(save, str): df.to_csv(savefile, index=False)
+
+
+            # print(df)
+            # print(df.columns)
+            # print(df.shape)
+
+            #sleep after downloading one target
+            time.sleep(sleep)
+        else:
+            df = pd.DataFrame() #empty placeholder
+            success = False
+            error_msg = f'WARNING: {savefile} already exists in {save}. Ignoring target because "redownload" == False '
+            print(error_msg)
+
+
+        return df, ztf_id, success, error_msg
 
     def crossmerge_by_coordinates(
         self,
@@ -183,6 +340,7 @@ class AlerceDatabaseInterface:
         ztf_ids:list,
         #saving data
         save:str="./",
+        redownload:bool=False,
         #plotting
         plot_result:bool=True, save_plot:str=False, close_plots:bool=True,
         #calculating
@@ -201,6 +359,11 @@ class AlerceDatabaseInterface:
                     - if set to False, will not save the data
                     - save has to end with a slash ('/')
                     - the default is './'
+                - redownload
+                    - bool, optional
+                    - whether to redownload lightcurves that already have been donwloaded at some point in the past
+                        - i.e. are found in the save-directory
+                    - the default is False                    
                 - plot_result
                     - bool, optional
                     - whether to plot the lightcurve of the downloaded data
@@ -261,90 +424,6 @@ class AlerceDatabaseInterface:
             self.ET.checkpoint_start('AlerceDatabaseInterface().download_lightcurves()')
 
 
-        def query_one(
-            ztf_id:str,
-            idx:int,
-            total_targets:int,
-            sleep:float,
-        ):
-
-            print(f"\nExtracting {ztf_id} (#{idx+1}/{total_targets})")
-
-            error_msg = None
-            success = True
-
-            try:
-                df = self.alerce.query_detections(
-                    ztf_id,
-                    format='pandas'
-                )
-
-            except Exception as e:
-                #empty placeholder DataFrame
-                df = pd.DataFrame()
-                if verbose > 1:
-                    print("WARNING: Error in alerce.query_objects()")
-                    print(f"ORIGINAL ERROR: {e}")
-                    if len(str(e)) > 80: e = str(e)[:79] + '...'
-                    error_msg = f"{'alerce.query_objects()':25s}: {e}"
-                    success = False
-                # print(len(df['detections']))
-
-            # self.df_error_msgs_lcdownload.loc[len(self.df_error_msgs_lcdownload)] = [ztf_id, success, error_msg]
-
-
-            if plot_result:
-                
-                cm = plt.cm.get_cmap('viridis')
-                newcolors = cm(np.linspace(0, 1, 256))
-                newcolors[        :1*256//3, :] = mcolors.to_rgba('tab:green')
-                newcolors[1*256//3:2*256//3, :] = mcolors.to_rgba('tab:red')
-                newcolors[2*256//3:3*256//3, :] = mcolors.to_rgba('tab:purple')
-                newcmap = mcolors.ListedColormap(newcolors)
-
-                fig = plt.figure()
-
-                fig.suptitle(ztf_id)
-
-                ax1 = fig.add_subplot(111)
-                try:
-                    sctr = ax1.scatter(df['mjd'], df['magpsf_corr'], c=df['fid'], cmap=newcmap, vmin=1, vmax=3, marker='^', label='magpsf_corr')
-                except:
-                    pass
-                sctr = ax1.scatter(df['mjd'], df['magpsf'],   c=df['fid'], cmap=newcmap, vmin=1, vmax=3, marker='.', label='magpsf')
-                sctr = ax1.scatter(df['mjd'], df['magapbig'], c=df['fid'], cmap=newcmap, vmin=1, vmax=3, marker='s', label='magapbig')
-                
-                cbar = fig.colorbar(sctr, ax=ax1)
-                cbar.set_label('Filter ID')
-                cbar.set_ticks([1+(3-1)*1/6, 1+(3-1)*3/6, 1+(3-1)*5/6])
-                cbar.set_ticklabels([1, 2, 3])
-
-                ax1.invert_yaxis()
-
-                ax1.set_xlabel('Modified JD')
-                ax1.set_ylabel(r'm [mag]')
-
-                ax1.legend()
-
-                plt.tight_layout()
-                if isinstance(save_plot, str): plt.savefig(f'{save_plot}{ztf_id}.png')
-
-                plt.show()
-
-                if close_plots: plt.close()
-            
-            if isinstance(save, str): df.to_csv(f'{save}{ztf_id}.csv', index=False)
-
-
-            # print(df)
-            # print(df.columns)
-            # print(df.shape)
-
-            #sleep after downloading one target
-            time.sleep(sleep)
-
-            return df, ztf_id, success, error_msg
-
         if isinstance(save, str):
             assert save[-1] == '/' or save[-1] == '\\', \
                 '"save" has to end either with a slash ("/") or backslash ("\\")'
@@ -353,10 +432,15 @@ class AlerceDatabaseInterface:
                 '"save_plot" has to end either with a slash ("/") or backslash ("\\")'
 
         result = Parallel(n_jobs, verbose=verbose)(
-            delayed(query_one)(
-                ztf_id=ztf_id, idx=idx,
-                total_targets=len(ztf_ids),
+            delayed(self.download_one)(
+                ztf_id=ztf_id,
+                save=save,
+                redownload=redownload,
+                plot_result=plot_result, close_plots=close_plots, save_plot=False,
                 sleep=sleep,
+                total_targets=len(ztf_ids),
+                idx=idx,
+                verbose=verbose,                
             ) for idx, ztf_id in enumerate(ztf_ids)
         )
 
@@ -373,3 +457,77 @@ class AlerceDatabaseInterface:
 
         return 
 
+    def plot_result(self,
+        df:pd.DataFrame,
+        ztf_id:str,
+        save:str=False,
+        ):
+        """
+            - method to plot the result of the extraction
+
+            Parameters
+            ----------
+                - df
+                    - pd.DataFrame
+                    - dataframe containing the downloaded data
+                - ztf_id
+                    - str
+                    - id of the current target
+                - save
+                    - str, optional   
+                    - directory of where to store the created plots
+                    - save has to end with a slash ('/')
+                    - the default is False
+                        - will not save the plots
+            
+            Returns
+            -------
+                - fig
+                    - matplotlib figure object
+                - axs
+                    - axis corresponding to fig
+            
+            Comments
+            --------
+
+        """
+
+        cm = plt.cm.get_cmap('viridis')
+        newcolors = cm(np.linspace(0, 1, 256))
+        newcolors[        :1*256//3, :] = mcolors.to_rgba('tab:green')
+        newcolors[1*256//3:2*256//3, :] = mcolors.to_rgba('tab:red')
+        newcolors[2*256//3:3*256//3, :] = mcolors.to_rgba('tab:purple')
+        newcmap = mcolors.ListedColormap(newcolors)
+
+        fig = plt.figure()
+
+        fig.suptitle(ztf_id)
+
+        ax1 = fig.add_subplot(111)
+        try:
+            sctr = ax1.scatter(df['mjd'], df['magpsf_corr'], c=df['fid'], cmap=newcmap, vmin=1, vmax=3, marker='^', label='magpsf_corr')
+        except:
+            pass
+        sctr = ax1.scatter(df['mjd'], df['magpsf'],   c=df['fid'], cmap=newcmap, vmin=1, vmax=3, marker='.', label='magpsf')
+        sctr = ax1.scatter(df['mjd'], df['magapbig'], c=df['fid'], cmap=newcmap, vmin=1, vmax=3, marker='s', label='magapbig')
+        
+        cbar = fig.colorbar(sctr, ax=ax1)
+        cbar.set_label('Filter ID')
+        cbar.set_ticks([1+(3-1)*1/6, 1+(3-1)*3/6, 1+(3-1)*5/6])
+        cbar.set_ticklabels([1, 2, 3])
+
+        ax1.invert_yaxis()
+
+        ax1.set_xlabel('Modified JD')
+        ax1.set_ylabel(r'm [mag]')
+
+        ax1.legend()
+
+        plt.tight_layout()
+        if isinstance(save, str): plt.savefig(f'{save}{ztf_id}.png')
+
+        plt.show()        
+
+        axs = fig.axes
+
+        return fig, axs
