@@ -3,15 +3,17 @@
 from astropy.timeseries import LombScargle
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 
 from astroLuSt.preprocessing.pdm import PDM
 
 
 #%%definitions
-class PSearch_Saha:
+class HPS:
     """
-        - class to execute a period search according to Saha et al., 2017
+        - HPS = Hybrid Period Search
+        - class to execute a period search inspired by Saha et al., 2017
             - https://ui.adsabs.harvard.edu/abs/2017AJ....154..231S/abstract
         
         Attributes
@@ -53,7 +55,7 @@ class PSearch_Saha:
         ------------------
             - best_period
                 - float
-                - best period according to the metric of Saha et al., 2017
+                - best period according to the metric of HPS
             - best_period_ls
                 - float
                 - best period according to Lomb-Scargle
@@ -75,21 +77,32 @@ class PSearch_Saha:
             - powers_ls
                 - np.ndarray
                 - powers corresponding to trial_periods_ls
-            - psis_saha
+            - powers_hps
                 - np.ndarray
-                - phi corresponding to trial_periods_saha
+                - powers of the hps alogrithm
+                - calculated by
+                    - squeezing powers_ls into range(0,1)
+            - psis_hps
+                - np.ndarray
+                - phi corresponding to trial_periods_hps
             - thetas_pdm
                 - np.ndarray
                 - thetas corresponding to trial_periods_pdm
+            - thetas_hps
+                - np.ndarray
+                - thetas of the hps alogrithm
+                - calculated by
+                    - evaluating 1-thetas_pdm 
+                    - squeezing result into range(0,1)
             - trial_periods_ls
                 - np.ndarray
                 - final trial periods used for the execution of Lomb Scargle
             - trial_periods_pdm
                 - np.ndarray
                 - final trial periods used for the execution of PDM
-            - trial_periods_saha
+            - trial_periods_hps
                 - np.ndarray
-                - final trial periods used for the execution of Saha et al., 2017 algorithm
+                - final trial periods used for the execution of HPS algorithm
             - pdm
                 - instance of PDM class
                 - contains all information of the pdm fit
@@ -115,9 +128,22 @@ class PSearch_Saha:
             - astropy
             - matplotlib
             - numpy
+            - sklearn
 
         Comments
         --------
+            - basic runthrough of computation
+                - take dataseries
+                - compute Lomb-Scargle
+                - compute PDM
+                - rescale Lomb-Scargle power to range(0,1) (:=Pi_hps)
+                - invert PDM theta statistics (theta) by evaluating 1-theta
+                - rescale inverted PDM theta statistics to range(0,1) (:=theta_hps)
+                - calculate new metric as Psi = Pi_hps * theta_hps
+            - essentially upweights periods where Lomb-Scargle and PDM agree and downweights those where they disagree
+                - if at some period Lomb-Scargle has a strong peak and PDM has a strong minimum the inverted PDM minimum will amplify the Lomb-Scargle peak
+                - if one has a peak and the other one does not, then the respective peak gets dammed
+
     """
 
     def __init__(self,
@@ -155,7 +181,7 @@ class PSearch_Saha:
     def __repr__(self) -> str:
         
         return (
-            f'PSearch_Saha(\n'
+            f'HPS(\n'
             f'    period_start={self.period_start}, period_stop={self.period_stop}, nperiods={self.nperiods},\n'
             f'    trial_periods={self.trial_periods},\n'
             f'    verbose={self.verbose},\n'
@@ -282,11 +308,18 @@ class PSearch_Saha:
         thetas_pdm:np.ndarray, powers_ls:np.ndarray,
         ):
         """
-            - method to execute the period analysis according to Saha et al., 2017
+            - method to compute the HPS-metric
             - essentially calculates the following
-                - $\frac{\Pi}{\theta}$
-                - $\Pi$ ... powers of Lomb-Scargle
-                - $\theta$ ... theta statistics of PDM
+                - rescale $\Pi$ to range(0,1)
+                - calculate $1-\theta$
+                - rescale $1-\theta$ to range(0,1)
+                - $\Phi = \Pi|_0^1 * (1-\theta)|_0^1$
+                    - i.e. product of the two calculated metrics
+                - $\Pi$             ... powers of Lomb-Scargle
+                - $\Pi|_0^1$        ... powers of Lomb-Scargle squeezed into range(0,1)
+                - $\theta$          ... theta statistics of PDM
+                - $(1-\theta)$      ... inverted theta statistics of PDM
+                - $(1-\theta)|_0^1$ ... inverted theta statistics of PDM squeezed into range(0,1)
 
             Parameters
             ----------
@@ -308,14 +341,20 @@ class PSearch_Saha:
         """
         
         if self.trial_periods is None:
-            trial_periods_saha = self.trial_periods_pdm
+            trial_periods_hps = self.trial_periods_pdm
         elif self.trial_periods_pdm is None:
-            trial_periods_saha = self.trial_periods_ls
+            trial_periods_hps = self.trial_periods_ls
         else:
-            trial_periods_saha = self.trial_periods
+            trial_periods_hps = self.trial_periods
 
-        self.psis_saha = powers_ls / thetas_pdm
-        self.trial_periods_saha = trial_periods_saha
+        #scaler to 'squeeze' 1-theta and lomb-scargle powers into range(0,1) 
+        scaler = MinMaxScaler(feature_range=(0,1))
+
+        self.thetas_hps = scaler.fit_transform((1-thetas_pdm).reshape(-1,1)).reshape(-1)
+        self.powers_hps = scaler.fit_transform(powers_ls.reshape(-1,1)).reshape(-1)
+
+        self.psis_hps = self.powers_hps * self.thetas_hps
+        self.trial_periods_hps = trial_periods_hps
 
         return
 
@@ -374,8 +413,8 @@ class PSearch_Saha:
         #calculate psi
         self.get_psi(self.thetas_pdm, self.powers_ls)
 
-        best_period = self.trial_periods_saha[np.nanargmax(self.psis_saha)]
-        best_psi = np.nanmax(self.psis_saha)
+        best_period = self.trial_periods_hps[np.nanargmax(self.psis_hps)]
+        best_psi = np.nanmax(self.psis_hps)
 
         self.best_period = best_period
         self.best_psi = best_psi
@@ -455,7 +494,7 @@ class PSearch_Saha:
         
         c_ls = 'tab:olive'
         c_pdm = 'tab:green'
-        c_saha = 'tab:orange'
+        c_hps = 'tab:orange'
         
         fig = plt.figure(**fig_kwargs)
         ax1 = fig.add_subplot(111)
@@ -470,26 +509,26 @@ class PSearch_Saha:
         ax1.patch.set_visible(False)
         ax2.patch.set_visible(False)
 
-        l_saha, = ax1.plot(self.trial_periods_saha,self.psis_saha,  color=c_saha, zorder=3, **plot_kwargs, label=r'Saha et al., 2017)')
-        l_pdm,  = ax2.plot(self.trial_periods_pdm, self.thetas_pdm, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM (Stellingwerf, 1978)')
-        l_ls,   = ax3.plot(self.trial_periods_ls,  self.powers_ls,  color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle (Astropy)')
+        l_hps, = ax1.plot(self.trial_periods_hps,  self.psis_hps,   color=c_hps, zorder=3, **plot_kwargs, label=r'HPS')
+        l_pdm,  = ax2.plot(self.trial_periods_pdm, self.thetas_hps, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM')
+        l_ls,   = ax3.plot(self.trial_periods_ls,  self.powers_hps, color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle')
         
-        ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{Saha}}$ = %.3f'%(self.best_period))
+        ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period))
 
         ax1.set_xlabel('Period')
-        ax1.set_ylabel(r'$\Psi$',   color=c_saha)
-        ax2.set_ylabel(r'$\theta$', color=c_pdm)
-        ax3.set_ylabel(r'$\Pi$',    color=c_ls)
+        ax1.set_ylabel(r'$\Psi$',   color=c_hps)
+        ax2.set_ylabel(r'$(1-\theta)\left|_0^1\right.$', color=c_pdm)
+        ax3.set_ylabel(r'$\Pi\left|_0^1\right.$',    color=c_ls)
 
-        lines = [l_saha, l_pdm, l_ls]
+        lines = [l_hps, l_pdm, l_ls]
         ax1.legend(lines, [l.get_label() for l in lines])
 
         
-        # ax1.spines['right'].set_color(l_saha.get_color())
+        # ax1.spines['right'].set_color(l_hps.get_color())
         ax2.spines['right'].set_color(c_pdm)
         ax3.spines['right'].set_color(c_ls)
 
-        ax1.tick_params(axis='y', colors=c_saha)
+        ax1.tick_params(axis='y', colors=c_hps)
         ax2.tick_params(axis='y', colors=c_pdm)
         ax3.tick_params(axis='y', colors=c_ls)
         
