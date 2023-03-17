@@ -41,7 +41,7 @@ class ExecTimer:
 
         self.verbose = verbose
         self.df_protocoll = pd.DataFrame(
-            columns=["Task", "Start", "End", "Duration", "Comment"],
+            columns=["Task", "Start", "End", "Duration", "Comment_Start", 'Comment_End'],
         )
         
         self.df_protocoll["Start"] = pd.to_datetime(self.df_protocoll["Start"])
@@ -91,7 +91,8 @@ class ExecTimer:
             start_time,
             np.empty(1, dtype='datetime64[s]')[0],
             np.empty(1, dtype='timedelta64[s]')[0],
-            comment
+            comment,
+            ''
         ]
 
         if self.verbose > 0:
@@ -102,7 +103,7 @@ class ExecTimer:
         return
 
     def checkpoint_end(self,
-        taskname:str,
+        taskname:str, comment:str='',
         ) -> None:
         """
             - method to wrap up a task of name 'taskname'
@@ -112,6 +113,9 @@ class ExecTimer:
                 - taskname
                     - str
                     - unique name given to the task to finish
+                - comment
+                    - str, optional
+                    - comment to overwrite
                 
             Raises
             ------
@@ -142,6 +146,7 @@ class ExecTimer:
 
         self.df_protocoll.at[cur_task, "End"] = end_time
         self.df_protocoll.at[cur_task, "Duration"] = duration
+        self.df_protocoll.at[cur_task, "Comment_End"] = comment
 
 
         if self.verbose > 0:
