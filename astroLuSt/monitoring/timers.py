@@ -7,7 +7,7 @@ import numpy as np
 #%%definitions
 class ExecTimer:
     """
-        - class to monitor program runtimes
+        - class to monitor and estimate program runtimes
 
         Attributes
         ----------
@@ -23,6 +23,7 @@ class ExecTimer:
         -------
             - checkpoint_start()
             - checkpoint_end()
+            - estimate_runtime()
 
         Dependencies
         ------------
@@ -101,7 +102,7 @@ class ExecTimer:
         return
 
     def checkpoint_end(self,
-        taskname:str
+        taskname:str,
         ) -> None:
         """
             - method to wrap up a task of name 'taskname'
@@ -150,4 +151,46 @@ class ExecTimer:
                 f"Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, 'Duration'])}"
             )
             print("#"*70)
+        return
+
+    def estimate_runtime(self,
+        taskname_pat:str,
+        nrepeats:int, ndone:int=1,
+        ):
+        """
+            - method to estimate the total runtime in dependence of how many repetition have been made and will be made
+
+            Parameters
+            ----------
+                - taskname_pat
+                    - str
+                    - regular expression to query the self.df_protocoll['Task']
+                        - all tasks that contain 'taskname_pat' will contribute to the runtime-estimate
+                - nrepeats
+                    - int
+                    - how often the task will be repeated
+                - ndone
+                    - int, optional
+                    - how often the task has been executed already
+                    - the default is 1
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+
+        tasks_to_consider_bool = self.df_protocoll['Task'].str.contains(taskname_pat, regex=True)
+
+        cur_runtime = np.nansum(self.df_protocoll[tasks_to_consider_bool]['Duration'])
+
+        runtime_estimate = cur_runtime*nrepeats/ndone
+
+        print(f"INFO: Total estimated runtime for {nrepeats} repeats: {runtime_estimate}")        
+
+
         return
