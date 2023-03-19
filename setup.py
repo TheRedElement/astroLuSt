@@ -82,7 +82,6 @@ setup(
     include=['*'],
     exclude=[
         '__pychache__', 'legacy', 'data', 'gfx', 'temp', 'templates', 'tests',
-        'physics'
     ],
     # package_dir={"": "astroLuSt"},
     # packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
