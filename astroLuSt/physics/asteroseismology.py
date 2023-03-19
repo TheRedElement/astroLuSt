@@ -156,15 +156,22 @@ class ScalingRelations:
         self.homological_principle
 
         #init derived parameters with nan
-        self.mass_seism             = np.empty_like(self.delta_nu)
-        self.mass_seism[:]          = np.nan
-        self.radius_seism           = np.empty_like(self.delta_nu)
-        self.radius_seism[:]        = np.nan
-        self.logluminosity_seism    = np.empty_like(self.delta_nu)
-        self.logluminosity_seism[:] = np.nan
-        self.logg_seism             = np.empty_like(self.delta_nu)
-        self.logg_seism[:]          = np.nan
-
+        self.mass_seism            = np.empty_like(self.delta_nu)
+        self.mass_seism[:]         = np.nan
+        self.e_mass_seism          = np.empty_like(self.delta_nu)
+        self.e_mass_seism[:]       = np.nan
+        self.radius_seism          = np.empty_like(self.delta_nu)
+        self.radius_seism[:]       = np.nan
+        self.e_radius_seism        = np.empty_like(self.delta_nu)
+        self.e_radius_seism[:]     = np.nan
+        self.luminosity_seism      = np.empty_like(self.delta_nu)
+        self.luminosity_seism[:]   = np.nan
+        self.e_luminosity_seism    = np.empty_like(self.delta_nu)
+        self.e_luminosity_seism[:] = np.nan
+        self.logg_seism            = np.empty_like(self.delta_nu)
+        self.logg_seism[:]         = np.nan
+        self.e_logg_seism          = np.empty_like(self.delta_nu)
+        self.e_logg_seism[:]       = np.nan
         return
 
     def __repr__(self) -> str:
