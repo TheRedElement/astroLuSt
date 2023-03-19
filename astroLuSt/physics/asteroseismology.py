@@ -66,12 +66,39 @@ class ScalingRelations:
         
         Inferred Attributes
         -------------------
+            - e_radius_seism
+                - np.ndarray
+                - error estimate cor radius_seism
+            - e_logg_seism
+                - np.ndarray
+                - error estimate cor logg_seism
+            - e_luminosity_seism
+                - np.ndarray
+                - error estimate cor luminosity_seism
+            - e_mass_seism
+                - np.ndarray
+                - error estimate cor mass_seism
             - radius_seism
+                - np.ndarray
+                - seismic solution for the radius
             - logg_seism
-            - logluminosity_seism
+                - np.ndarray
+                - seismic solution for the surface gravity
+            - luminosity_seism
+                - np.ndarray
+                - seismic solution for the luminosity
             - mass_seism
+                - np.ndarray
+                - seismic solution for the seismic mass
             - nu_max_hom
+                - np.ndarray
+                - homologically scaled nu max
+            - delta_nu_hom
+                - np.ndarray
+                - homologically scaled delta nu
             - t_eff_hom
+                - np.ndarray
+                - homologically effective temperature
         
         Methods
         -------
@@ -89,6 +116,7 @@ class ScalingRelations:
 
         Comments
         --------
+            - uncertainties are estimated according to gaussian error-propagation
     
     """
 
@@ -181,12 +209,6 @@ class ScalingRelations:
         self.delta_nu_hom = delta_nu/self.delta_nu_sun
         self.t_eff_hom = self.t_eff/self.t_eff_sun
 
-
-        #errors
-        self.perc_e_nu_max = self.e_nu_max/self.nu_max
-        self.perc_e_delta_nu = self.e_delta_nu/delta_nu
-        self.perc_e_t_eff = self.e_t_eff/self.t_eff
-
         return
 
     def get_radius(self) -> np.ndarray:
@@ -201,7 +223,11 @@ class ScalingRelations:
 
             Returns
             -------
-
+                - self.radius_seism
+                    - np.ndarray
+                    - seismic radii of the input parameters
+                - self.e_radius_seism
+                    - error estimate corresponding to radius_seism
             Comments
             --------            
                 - result in Solar Radii
@@ -210,10 +236,10 @@ class ScalingRelations:
 
         self.radius_seism = self.nu_max_hom**1 * self.delta_nu_hom**(-2) * self.t_eff_hom**(1/2)
 
-        #error estimation
-        #TODO
+        #uncertainty estimation
+        self.e_radius_seism = self.radius_seism * np.sqrt((1*self.e_nu_max/self.nu_max)**2 + (2*self.e_delta_nu/self.delta_nu)**2 + (1/2*self.e_t_eff/self.t_eff)**2)
 
-        return self.radius_seism
+        return self.radius_seism, self.e_radius_seism
 
     def get_mass(self) -> np.ndarray:
         """
@@ -227,6 +253,11 @@ class ScalingRelations:
 
             Returns
             -------
+                - self.mass_seism
+                    - np.ndarray
+                    - seismic masses of the input parameters
+                - self.e_mass_seism
+                    - error estimate corresponding to mass_seism
 
             Comments
             --------
@@ -238,11 +269,9 @@ class ScalingRelations:
         self.mass_seism = self.nu_max_hom**3 * self.delta_nu_hom**(-4) * self.t_eff_hom**(3/2)
         
         #uncertainty estimation
-        #TODO
-        # perc_e_mass_seism = np.sqrt(3*self.perc_e_nu_max**2 + 4*self.perc_e_delta_nu**2 + 3/2*self.perc_e_t_eff**2)
-        # self.e_mass_seism = self.mass_seism*perc_e_mass_seism
+        self.e_mass_seism = self.mass_seism * np.sqrt((3*self.e_nu_max/self.nu_max)**2 + (4*self.e_delta_nu/self.delta_nu)**2 + (3/2*self.e_t_eff/self.t_eff)**2)
     
-        return self.mass_seism
+        return self.mass_seism, self.e_mass_seism
 
     def get_logg(self) -> np.ndarray:
         """
@@ -256,22 +285,30 @@ class ScalingRelations:
 
             Returns
             -------
+                - self.logg_seism
+                    - np.ndarray
+                    - seismic estimate for the surface gravity of the input parameters
+                - self.e_logg_seism
+                    - error estimate corresponding to logg_seism
 
             Comments
             -------- 
-                - result will have same units as self.logg_sun
+                - result w.r.t. solar logg
         """
         
         #log(surface gravity)
-        self.logg_seism = np.log10(
-            10**self.logg_sun*(self.nu_max_hom*np.sqrt(self.t_eff_hom))
-        )
+        self.logg_seism = self.nu_max_hom**1 * self.t_eff_hom**(1/2)
 
-        return self.logg_seism
+        #uncertainty estimation
+        self.e_logg_seism = np.sqrt((1*self.e_nu_max/self.nu_max)**2 + (1/2*self.e_t_eff/self.t_eff)**2)
+
+        return self.logg_seism, self.e_logg_seism
 
     def get_luminosity(self) -> np.ndarray:
         """
-            - method to get the (log)luminosity from seismic scaling relations
+            - method to get the luminosity from seismic scaling relations
+                - equation derived by inserting the radius scaling relation into L = 4*pi*r**2*sigma*T_eff**4
+                    - i.e. L/L_sun = (R/R_sun)**2 * (T/T_sun)**4
 
             Parameters
             ----------
@@ -281,10 +318,15 @@ class ScalingRelations:
 
             Returns
             -------
+                - self.luminosity_seism
+                    - np.ndarray
+                    - seismic estimate for the luminosity of the input parameters
+                - self.e_luminosity_seism
+                    - error estimate corresponding to luminosity_seism
 
             Comments
             --------
-                - result in Solar Luminosoties
+                - result in Solar Luminosities
                 
         """
 
@@ -295,11 +337,14 @@ class ScalingRelations:
 
 
         #luminosity
-        self.logluminosity_seism = np.log10(
-            self.mass_seism*self.nu_max_hom**(-1)*self.t_eff_hom**(3.5)
-        )
+        self.luminosity_seism = self.nu_max_hom**(2)*self.delta_nu_hom**(-4)*self.t_eff_hom**5
 
-        return self.logluminosity_seism
+
+        #uncertainty estimation
+        self.e_luminosity_seism = self.luminosity_seism * np.sqrt((2*self.e_nu_max/self.nu_max)**2 + (4*self.e_delta_nu/self.delta_nu)**2 + (5*self.e_t_eff/self.t_eff)**2)
+
+
+        return self.luminosity_seism, self.e_luminosity_seism
         
     def results2pandas(self) -> pd.DataFrame:
         """
@@ -322,14 +367,26 @@ class ScalingRelations:
         """
 
         data=np.array([
-            self.nu_max, self.e_nu_max, self.delta_nu, self.e_delta_nu, self.t_eff, self.e_t_eff,
+            self.nu_max, self.e_nu_max,
+            self.delta_nu, self.e_delta_nu,
+            self.t_eff, self.e_t_eff,
             np.array([self.zeta_corr]*len(self.nu_max)),
-            self.mass_seism, self.radius_seism, self.logluminosity_seism, self.logg_seism,
+            self.mass_seism, self.e_mass_seism,
+            self.radius_seism, self.e_radius_seism,
+            self.luminosity_seism, self.e_luminosity_seism,
+            self.logg_seism, self.e_logg_seism,
         ]).T
 
         df = pd.DataFrame(
             columns=[
-                'nu_max', 'e_nu_max', 'delta_nu', 'e_delta_nu', 't_eff', 'e_t_eff', 'zeta_corr', 'mass_seism', 'radius_seism', 'logluminosity_seism', 'logg_seism'
+                'nu_max', 'e_nu_max',
+                'delta_nu', 'e_delta_nu',
+                't_eff', 'e_t_eff',
+                'zeta_corr',
+                'mass_seism', 'e_mass_seism',
+                'radius_seism', 'e_radius_seism',
+                'luminosity_seism', 'e_luminosity_seism',
+                'logg_seism', 'e_logg_seism',
             ],
             data=data
         )
