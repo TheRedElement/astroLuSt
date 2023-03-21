@@ -14,8 +14,13 @@ class Binning:
         Attributes
         ----------
             - nintervals
-                - int, optional
+                - float, optional
                 - nuber of intervals/bins to generate
+                - if a value between 0 and 1 is passed
+                    - will be interpreted as fraction of input dataseries length
+                - if a value greater than 1 is passed
+                    - will be converted to integer
+                    - will be interpreted as the number of intervals to use
                 - the default is 100
             - npoints_per_interval
                 - int, optional
@@ -164,13 +169,13 @@ class Binning:
 
         #interpret nintervals
         else:
-            if 0 < nintervals and nintervals <= 1:
+            if 0 < nintervals and nintervals < 1:
                 #calculate nintervals as fraction of the shape of x and y 
                 nintervals = int(self.nintervals*x.shape[0])
-            elif nintervals > 1:
+            elif nintervals >= 1:
                 nintervals = int(nintervals)
             else:
-                raise ValueError("'nintervals' has to greater than 0!")
+                raise ValueError("'nintervals' has to be greater than 0!")
 
 
             if self.xmin is None: self.xmin = np.nanmin(x)
