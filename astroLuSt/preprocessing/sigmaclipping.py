@@ -1,4 +1,5 @@
 
+#TODO: issue with overwriting some variable (multiple execution do not lead to the same result)
 #TODO: exit criterion for niter
 #TODO: implement use_polynomial
 #TODO: option to allow history in plot_result
@@ -136,10 +137,21 @@ class SigmaClipping:
         self.bound_history = bound_history
         self.verbose = verbose
 
-        #list to store the history of the clipping
-        self.clip_masks = []
-        self.lower_bounds = []
-        self.upper_bounds = []
+        #init infered attributes
+        self.clip_mask     = np.array([])
+        self.clip_masks    = []
+        self.lower_bound   = np.array([])
+        self.lower_bounds  = []
+        self.mean_x        = np.array([])
+        self.mean_y        = np.array([])
+        self.std_y         = np.array([])
+        self.upper_bound   = np.array([])
+        self.upper_bounds  = []
+        self.x             = np.array([])
+        self.y             = np.array([])
+        self.y_mean_interp = np.array([])
+        self.y_std_interp  = np.array([])
+
 
         pass
     
@@ -222,19 +234,18 @@ class SigmaClipping:
                 **self.binning_kwargs
             )
 
-            mean_x, mean_y, std_y = binning.fit_transform(x, y)
+            mean_x, mean_y, std_y = binning.fit_transform(self.x, self.y)
         else:
             assert (mean_x.shape == mean_y.shape) and (mean_y.shape == std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {mean_x.shape}, {mean_y.shape}, {std_y.shape}"
         
         #adopt mean curves
-        self.mean_x = mean_x
-        self.mean_y = mean_y
-        self.std_y  = std_y
+        self.mean_x = mean_x.copy()
+        self.mean_y = mean_y.copy()
+        self.std_y  = std_y.copy()
 
         return
 
     def clip_curve(self,
-        x:np.ndarray, y:np.ndarray,
         mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,                    
         sigma_bottom:float=None, sigma_top:float=None,
         prev_clip_mask:np.ndarray=None,
@@ -323,15 +334,15 @@ class SigmaClipping:
             self.sigma_top = sigma_top
 
         #initialize parameters
-        if prev_clip_mask is None: prev_clip_mask = np.ones_like(x, dtype=bool)
+        if prev_clip_mask is None: prev_clip_mask = np.ones_like(self.x, dtype=bool)
 
         #create copy of input arrays to not overwrite them during execution
-        x_cur = x.copy()
-        y_cur = y.copy()
+        x_cur = self.x.copy()
+        y_cur = self.y.copy()
 
         #catching errors
         assert x_cur.shape == y_cur.shape, f"shapes of 'x' and 'y' have to be equal but are {x_cur.shape}, {y_cur.shape}"
-        assert x.shape == prev_clip_mask.shape, f"shapes of 'x' and 'prev_clip_mask' have to be equal but are {x_cur.shape}, {prev_clip_mask.shape}"
+        assert x_cur.shape == prev_clip_mask.shape, f"shapes of 'x' and 'prev_clip_mask' have to be equal but are {x_cur.shape}, {prev_clip_mask.shape}"
 
         #set elements in input array of previous mask to np.nan (but keep them in the array to retain the shape!!)
         x_cur[~prev_clip_mask] = np.nan
@@ -343,8 +354,8 @@ class SigmaClipping:
 
 
         #get mean curve including error
-        self.y_mean_interp = np.interp(x, self.mean_x, self.mean_y)
-        self.y_std_interp  = np.interp(x, self.mean_x, self.std_y)
+        self.y_mean_interp = np.interp(self.x, self.mean_x, self.mean_y)
+        self.y_std_interp  = np.interp(self.x, self.mean_x, self.std_y)
 
         #mask of what to retain
         self.lower_bound = self.y_mean_interp-sigma_bottom*self.y_std_interp 
@@ -473,22 +484,23 @@ class SigmaClipping:
             --------
         """
 
-        self.x = x
-        self.y = y
+        #assign input as attribute
+        self.x = x.copy()
+        self.y = y.copy()
 
         if verbose is None:
             verbose = self.verbose
 
         #initialize if not provided
         if 'prev_clip_mask' not in clip_curve_kwargs:
-            clip_curve_kwargs["prev_clip_mask"] = np.ones_like(x, dtype=bool)
+            clip_curve_kwargs["prev_clip_mask"] = np.ones_like(self.x, dtype=bool)
 
 
         for n in range(n_iter):
             if verbose > 0:
                 print(f'INFO(SigmaClipping): Executing iteration #{n+1}/{n_iter}')
 
-            self.clip_curve(x, y, mean_x, mean_y, std_y, **clip_curve_kwargs)
+            self.clip_curve(mean_x, mean_y, std_y, **clip_curve_kwargs)
             clip_curve_kwargs['prev_clip_mask'] = clip_curve_kwargs['prev_clip_mask']&self.clip_mask
 
             #store a history of the generated clip_masks if requested
