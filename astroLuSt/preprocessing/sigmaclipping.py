@@ -479,6 +479,11 @@ class SigmaClipping:
         if verbose is None:
             verbose = self.verbose
 
+        #initialize if not provided
+        if 'prev_clip_mask' not in clip_curve_kwargs:
+            clip_curve_kwargs["prev_clip_mask"] = np.ones_like(x, dtype=bool)
+
+
         for n in range(n_iter):
             if verbose > 0:
                 print(f'INFO(SigmaClipping): Executing iteration #{n+1}/{n_iter}')
