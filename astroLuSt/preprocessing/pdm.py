@@ -338,7 +338,7 @@ class PDM:
             verbose=0,
             **self.binning_kwargs
         )
-        mean_x, mean_y, std_y = binning.bin_curve(folded, y)
+        mean_x, mean_y, std_y = binning.fit_transform(folded, y)
         n_per_bin = binning.n_per_bin
         # mean_x, mean_y, std_y, bins, n_per_bin, fig, axs = \
         #     bin_curve(
