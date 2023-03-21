@@ -197,7 +197,7 @@ class SigmaClipping:
                 **self.binning_kwargs
             )
 
-            mean_x, mean_y, std_y = binning.bin_curve(x, y)
+            mean_x, mean_y, std_y = binning.fit_transform(x, y)
         else:
             assert (mean_x.shape == mean_y.shape) and (mean_y.shape == std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {mean_x.shape}, {mean_y.shape}, {std_y.shape}"
         
