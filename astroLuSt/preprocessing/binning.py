@@ -1,5 +1,4 @@
 
-#TODO: Documentation derived attributes
 
 #%%imports
 import matplotlib.pyplot as plt
@@ -51,9 +50,31 @@ class Binning:
         
         Infered Attributes
         ------------------
-            - generated_bins
+            - bins
                 - np.ndarray
-                - boundaries of the generated intervals/bin
+                - array containing the boundaries of the intervals/bins used for binning the curve
+            - n_per_bin
+                - np.ndarray
+                - contains the number of samples contained within each bin
+            - x
+                - np.ndarray
+                - x-values of the input data series
+            - x_binned
+                - np.ndarray
+                - binned values for input 'x'
+                - has shape (1, nintervals)
+            - y
+                - np.ndarray
+                - y-values of the input data series
+            - y_binned
+                - np.ndarray
+                - binned values for input 'y'
+                - has shape (1, nintervals)
+            - y_std
+                - np.ndarray
+                - standard deviation of 'y' for each interval
+                - characterizes the scattering of the input curve
+                - has shape (1, nintervals)     
 
         Methods
         -------
