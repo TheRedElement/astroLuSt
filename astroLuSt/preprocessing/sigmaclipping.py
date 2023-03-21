@@ -1,5 +1,4 @@
 
-#TODO: documentation: derived parameters
 #TODO: exit criterion for niter
 #TODO: implement use_polynomial
 #TODO: option to allow history in plot_result
@@ -49,28 +48,54 @@ class SigmaClipping:
                 - used to generate mean curves if none are provided
                 - the default is None
 
-        Derived Attributes
+        Infered Attributes
         ------------------
             - clip_mask
                 - np.ndarray
-                - mask for the retained values
+                - final mask for the retained values
                 - 1 for every value that got retained
-                - 0 for every value that got cut     
+                - 0 for every value that got cut
+            - clip_masks
+                - list
+                    - contains np.ndarrays
+                    - every clip_mask created while fitting transformer
+                - only will be filled if clipmask_history == True
             - lower_bound
                 - np.ndarray
                 - traces out the lower bound to be considered for the sigma-clipping
+            - lower_bounds
+                - list
+                    - contains np.ndarrays
+                    - every lower_bound created while fitting transormer
+                - only will be filled if bound_history == True
+            - mean_x
+                - np.ndarray
+                - x-values of the mean curve created in the last iteration of self.fit()
+            - mean_y
+                - np.ndarray
+                - y-values of the mean curve created in the last iteration of self.fit()
+            - std_y
+                - np.ndarray
+                - standard deviation of the y-values of the mean curve created in the last iteration of self.fit()
             - upper_bound
                 - np.ndarray
                 - traces out the upper bound to be considered for the sigma-clipping
-            - sort_array
+            - upper_bounds
+                - list
+                    - contains np.ndarrays
+                    - every upper_bound created while fitting transormer
+                - only will be filled if bound_history == True
+            - x
                 - np.ndarray
-                - indices to sort self.x in ascending order
-                - only needed for plotting y_mean_interp, upper_bound, lower_bound
+                - x values of the input data series
+            - y
+                - np.ndarray
+                - y values of the input data series
             - y_mean_interp
-                - np.array
+                - np.ndarray
                 - traces out the interpolated mean representative curve (resulting from binning)
             - y_std_interp
-                - np.array
+                - np.ndarray
                 - traces out the interpolated standard deviation of the mean representative curve
 
         Methods
