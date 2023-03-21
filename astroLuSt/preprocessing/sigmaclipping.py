@@ -1,4 +1,5 @@
 
+#TODO: documentation: derived parameters
 #TODO: exit criterion for niter
 #TODO: implement use_polynomial
 #TODO: option to allow history in plot_result
@@ -507,6 +508,12 @@ class SigmaClipping:
         """
             - method to fit the transformer and transform the data in one go
             - similar to scikit-learn scalers
+            
+            Parameters
+            ----------
+                - fit_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.fit()        
         """
 
         self.fit(

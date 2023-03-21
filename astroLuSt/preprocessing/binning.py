@@ -1,4 +1,6 @@
 
+#TODO: Documentation derived attributes
+
 #%%imports
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,7 +49,7 @@ class Binning:
                 - int, optional
                 - verbosity level
         
-        Derived Attributes
+        Infered Attributes
         ------------------
             - generated_bins
                 - np.ndarray
@@ -193,15 +195,61 @@ class Binning:
 
         return self.bins
     
-    def bin_curve(self,
+    def plot_result(self,
+        ):
+        """
+            - function to plot the result of the binning in phase
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure|None
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes|None
+                    - axes corresponding to 'fig'              
+
+            Comments
+            --------
+        """
+    
+        verbose = self.verbose
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.scatter(self.x, self.y, label="Input", zorder=1, color="tab:blue", alpha=0.7)
+        ax1.errorbar(self.x_binned, self.y_binned, yerr=self.y_std, linestyle="", marker=".", label="Binned", zorder=2, color="tab:orange", alpha=1)
+
+        if verbose > 2:
+            ax1.vlines(self.bins, ymin=np.nanmin(self.y), ymax=np.nanmax(self.y), color='tab:grey', zorder=3, label='Bin Boundaries')
+
+        ax1.set_xlabel("x")
+        ax1.set_ylabel("y")
+        ax1.legend()
+
+        fig.tight_layout()
+        plt.show()
+
+        axs = fig.axes
+
+        return fig, axs
+
+    def fit(self,
         x:np.ndarray, y:np.ndarray,
         bins:np.ndarray=None,
         ddof:int=None,
         verbose:int=None,
-        **generate_bins_kwargs:dict,
+        generate_bins_kwargs:dict={},
         ):
         """
             - method to execute the binning of y w.r.t. x
+            - similar to scikit-learn scalers
 
             Parameters
             ----------
@@ -224,8 +272,9 @@ class Binning:
                     - int, optional
                     - overwrites self.verbosity if set
                     - verbosity level
-                - **generate_bins_kwargs
-                    - kwargs of generate_bins()
+                - generate_bins_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.generate_bins()
                     
             Raises
             ------
@@ -247,98 +296,86 @@ class Binning:
                     - has shape (1, nintervals)            
         """
 
+        self.x = x
+        self.y = y
+
         #set/overwrite class attributes
         if ddof is None: ddof = self.ddof
         if verbose is None: verbose = self.verbose
         
         if bins is None:
-            bins = self.generate_bins(x, y, verbose=verbose, **generate_bins_kwargs)
+            bins = self.generate_bins(self.x, self.y, verbose=verbose, **generate_bins_kwargs)
         else:
             self.bins = bins
 
         #init result arrays
-        x_binned = np.array([])
-        y_binned = np.array([])
-        y_std = np.array([])
+        self.x_binned  = np.array([])
+        self.y_binned  = np.array([])
+        self.y_std     = np.array([])
         self.n_per_bin = np.array([])    #number of samples per bin
 
         for b1, b2 in zip(bins[:-1], bins[1:]):
 
-            iv_bool = (b1 <= x)&(x < b2)
+            iv_bool = (b1 <= self.x)&(self.x < b2)
 
-            x_binned       = np.append(x_binned,       np.nanmean(x[iv_bool]))
-            y_binned       = np.append(y_binned,       np.nanmean(y[iv_bool]))
-            y_std          = np.append(y_std,          np.nanstd(y[iv_bool], ddof=ddof))
+        #adopt transforms
+            self.x_binned  = np.append(self.x_binned,  np.nanmean(self.x[iv_bool]))
+            self.y_binned  = np.append(self.y_binned,  np.nanmean(self.y[iv_bool]))
+            self.y_std     = np.append(self.y_std,     np.nanstd(self.y[iv_bool], ddof=ddof))
             self.n_per_bin = np.append(self.n_per_bin, np.count_nonzero(iv_bool))
 
-        return x_binned, y_binned, y_std
+        return 
 
-    def plot_result(self,
-        x:np.ndarray, y:np.ndarray,
-        x_binned:np.ndarray, y_binned:np.ndarray, y_std:np.ndarray,
+    def transform(self,
         ):
         """
-            - function to plot the result of the binning in phase
+            - method to transform the input-dataseries
+            - similar to scikit-learn scalers
 
             Parameters
             ----------
                 - x
                     - np.ndarray
-                    - x-values w.r.t. which the binning shall be executed
+                    - x-values of the dataseries to generate the mean curve for
                 - y
                     - np.ndarray
-                    - y-values to be binned
-                - x_binned
-                    - np.ndarray
-                    - binned values for input 'x'
-                    - has shape (1, nintervals)
-                    - output of bin_curve()
-                - y_binned
-                    - np.ndarray
-                    - binned values for input 'y'
-                    - has shape (1, nintervals)
-                    - output of bin_curve()
-                - y_std
-                    - np.ndarray
-                    - standard deviation of 'y' for each interval
-                    - characterizes the scattering of the input curve
-                    - has shape (1, nintervals)                        
-                    - output of bin_curve()
-
+                    - y-values of the dataseries to generate the mean curve for
             Raises
             ------
 
             Returns
             -------
-                - fig
-                    - matplotlib figure|None
-                    - figure created if verbosity level specified accordingly
-                - axs
-                    - matplotlib axes|None
-                    - axes corresponding to 'fig'              
 
             Comments
             --------
         """
+
+        x_binned = self.x_binned
+        y_binned = self.y_binned
+        y_std = self.y_std
+
+        return x_binned, y_binned, y_std
     
-        verbose = self.verbose
+    def fit_transform(self,
+        x:np.ndarray, y:np.ndarray,
+        fit_kwargs:dict={},
+        ):
+        """
+            - method to fit the transformer and transform the data in one go
+            - similar to scikit-learn scalers
 
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.scatter(x, y, label="Input", zorder=1, color="tab:blue", alpha=0.7)
-        ax1.errorbar(x_binned, y_binned, yerr=y_std, linestyle="", marker=".", label="Binned", zorder=2, color="tab:orange", alpha=1)
+            Parameters
+            ----------
+                - fit_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.fit()
+        """
 
-        if verbose > 2:
-            ax1.vlines(self.bins, ymin=np.nanmin(y), ymax=np.nanmax(y), color='tab:grey', zorder=3, label='Bin Boundaries')
+        self.fit(
+            x, y,
+            **fit_kwargs,
+        )
+        x_binned, y_binned, y_std = self.transform()
 
-        ax1.set_xlabel("x")
-        ax1.set_ylabel("y")
-        ax1.legend()
-
-        fig.tight_layout()
-        plt.show()
-
-        axs = fig.axes
-
-        return fig, axs
+        return  x_binned, y_binned, y_std
 
