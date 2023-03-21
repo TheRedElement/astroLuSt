@@ -1,5 +1,5 @@
 
-#TODO: issue with overwriting some variable (multiple execution do not lead to the same result)
+#TODO: issue with overwriting some variable (multiple executions do not lead to the same result)
 #TODO: exit criterion for niter
 #TODO: implement use_polynomial
 #TODO: option to allow history in plot_result
@@ -234,7 +234,7 @@ class SigmaClipping:
                 **self.binning_kwargs
             )
 
-            mean_x, mean_y, std_y = binning.fit_transform(self.x, self.y)
+            mean_x, mean_y, std_y = binning.fit_transform(x, y)
         else:
             assert (mean_x.shape == mean_y.shape) and (mean_y.shape == std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {mean_x.shape}, {mean_y.shape}, {std_y.shape}"
         
@@ -367,12 +367,25 @@ class SigmaClipping:
         return
 
     def plot_result(self,
+        show_cut:bool=True,
+        iteration:int=-1,
         ):
         """
             - method to create a plot visualizing the sigma-clipping result
 
             Parameters
             ----------
+                - show_cut
+                    - bool, optional
+                    - whether to also display the cut datapoints in the summary
+                    - the default is True
+                - iteration
+                    - int, optional
+                    - which iteration of the SigmaClipping to display when plotting
+                    - only usable if self.clipmask_history AND self.bound_history are True
+                        - serves as index to the lists containing the histories
+                    - the default is -1
+                        - i.e. the last iterations
 
             Raises
             ------
@@ -398,17 +411,28 @@ class SigmaClipping:
 
         ulb_lab = r"$\bar{y}~\{+%g,-%g\}\sigma$"%(self.sigma_top, self.sigma_bottom)
         
+        #if clip_mask history has been stored consider iteration as index to plot this particular iteration
+        if self.clipmask_history and self.bound_history:
+            clip_mask   = self.clip_masks[iteration]
+            lower_bound = self.lower_bounds[iteration]
+            upper_bound = self.upper_bounds[iteration]
+        else:
+            clip_mask   = self.clip_mask
+            lower_bound = self.lower_bound
+            upper_bound = self.upper_bound
+
         #sorting-array (needed for plotting)
         sort_array = np.argsort(self.x)
 
         fig = plt.figure()
+        fig.suptitle(f'Iteration: {iteration}')
         ax1 = fig.add_subplot(111)
-        ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],        color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
-        ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],         color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
-        ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,        color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
-        ax1.plot(self.x[sort_array],         self.y_mean_interp[sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
-        ax1.plot(self.x[sort_array],         self.upper_bound[sort_array],   color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
-        ax1.plot(self.x[sort_array],         self.lower_bound[sort_array],   color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
+        if show_cut: ax1.scatter(self.x[~clip_mask], self.y[~clip_mask],             color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
+        ax1.scatter(self.x[ clip_mask], self.y[ clip_mask],             color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
+        ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,   color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
+        ax1.plot(self.x[sort_array],    self.y_mean_interp[sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
+        ax1.plot(self.x[sort_array],    upper_bound[sort_array],        color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
+        ax1.plot(self.x[sort_array],    lower_bound[sort_array],        color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
 
         ax1.set_xlabel("x")
         ax1.set_ylabel("y")
