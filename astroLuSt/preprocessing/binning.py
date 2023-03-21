@@ -189,7 +189,7 @@ class Binning:
 
 
         if self.verbose > 0:
-            print(f"INFO: Generated {len(self.bins)-1} bins")
+            print(f"INFO(Binning): Generated {len(self.bins)-1} bins")
 
         return self.bins
     
@@ -274,8 +274,8 @@ class Binning:
         return x_binned, y_binned, y_std
 
     def plot_result(self,
-        x, y,
-        x_binned, y_binned, y_std,
+        x:np.ndarray, y:np.ndarray,
+        x_binned:np.ndarray, y_binned:np.ndarray, y_std:np.ndarray,
         ):
         """
             - function to plot the result of the binning in phase

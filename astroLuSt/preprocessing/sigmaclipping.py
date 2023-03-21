@@ -1,5 +1,7 @@
 
-#TODO: implement n-iter (i.e. execute SigmaClipping n-iter times consecutively)
+#TODO: exit criterion for niter
+#TODO: implement use_polynomial
+#TODO: option to allow history in plot_result
 
 #%%imports
 import matplotlib.pyplot as plt
@@ -16,36 +18,7 @@ class SigmaClipping:
         - creates a mask retaining only values that lie outside an interval of +/- sigma*std_y around a mean curve
 
         Attributes
-        ----------
-            - x
-                - np.ndarray
-                - x-values of the dataseries to clip
-                - same shape as y
-            - y
-                - np.ndarray
-                - y-values of the dataseries to clip
-                - same shape as x
-            - mean_x
-                - np.ndarray, optional
-                - x-values of a representative mean curve
-                - does not have to have the same shape as x
-                - same shape as mean_y and std_y
-                - if 'None' will infer a mean curve via data-binning
-                - the default is 'None'
-            - mean_y
-                - np.ndarray, optional
-                - y-values of a representative mean curve
-                - does not have to have the same shape as y
-                - same shape as mean_x and std_y
-                - if 'None' will infer a mean curve via data-binning
-                - the default is 'None'
-            - std_y
-                - np.ndarray|Nonw, optional
-                - standard deviation/errorbars of the representative mean curve in y-direction
-                - does not have to have the same shape as y
-                - same shape as mean_x and mean_y
-                - if 'None' will infer a mean curve via data-binning
-                - the default is 'None'
+        ----------'
             - sigma_bottom
                 - float, optional
                 - multiplier for the bottom boundary
@@ -58,6 +31,14 @@ class SigmaClipping:
                 - i.e. top boundary = mean_y + sigma_top*std_y
                 - the default is 2
                     - i.e. 2*sigma
+            - bound_history
+                - bool, optional
+                - whether to store a history of all upper and lower bounds created during self.fit()
+                - the default is False
+            - clipmask_history
+                - bool, optional
+                - whether to store a history of all clip_mask created during self.fit()
+                - the default is False
             - verbose
                 - int, optional
                 - verbosity level
@@ -70,10 +51,10 @@ class SigmaClipping:
         Derived Attributes
         ------------------
             - clip_mask
-                        - np.ndarray
-                        - mask for the retained values
-                        - 1 for every value that got retained
-                        - 0 for every value that got cut     
+                - np.ndarray
+                - mask for the retained values
+                - 1 for every value that got retained
+                - 0 for every value that got cut     
             - lower_bound
                 - np.ndarray
                 - traces out the lower bound to be considered for the sigma-clipping
@@ -94,8 +75,11 @@ class SigmaClipping:
         Methods
         -------
             - get_mean_curve()
-            - clip_curve
+            - clip_curve()
             - plot_result()
+            - fit()
+            - transform()
+            - fit_transform()
 
         Dependencies
         ------------
@@ -107,21 +91,13 @@ class SigmaClipping:
     """
 
 
-    def __init__(self,
-        x:np.ndarray, y:np.ndarray,
-        mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,                 
+    def __init__(self,                
         sigma_bottom:float=2, sigma_top:float=2,
+        bound_history:bool=False, clipmask_history:bool=False,
         verbose:int=0,
         binning_kwargs:dict=None,
         ) -> None:
 
-        self.x = x
-        self.y = y
-
-        self.mean_x = mean_x
-        self.mean_y = mean_y
-        self.std_y  = std_y
-        
         self.sigma_bottom = sigma_bottom
         self.sigma_top = sigma_top
 
@@ -130,24 +106,30 @@ class SigmaClipping:
         else:
             self.binning_kwargs = binning_kwargs
 
-
+        self.clipmask_history = clipmask_history
+        self.bound_history = bound_history
         self.verbose = verbose
+
+        #list to store the history of the clipping
+        self.clip_masks = []
+        self.lower_bounds = []
+        self.upper_bounds = []
 
         pass
     
     def __repr__(self) -> str:
-
         return (
-        f'SigmaClipping(\n'
-        f'    x={self.x}, y={self.y},\n'
-        f'    mean_x:={self.mean_x}, mean_y={self.mean_y}, std_y={self.std_y},\n'
-        f'    sigma_bottom={self.sigma_bottom}, sigma_top={self.sigma_top},\n'
-        f'    verbose={self.verbose},\n'
-        f'    binning_kwargs={self.binning_kwargs},\n'
-        f')'
+            f'SigmaClipping(\n'
+            f'    sigma_bottom={self.sigma_bottom}, sigma_top={self.sigma_top},\n'
+            f'    bound_history={self.bound_history}, clipmask_history={self.clipmask_history},\n'
+            f'    verbose={self.verbose},\n'
+            f'    binning_kwargs={self.binning_kwargs},\n'
+            f')'
         )
     
     def get_mean_curve(self,
+        x:np.ndarray, y:np.ndarray,
+        mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,
         verbose:int=None,
         ) -> None:
         """
@@ -155,6 +137,33 @@ class SigmaClipping:
 
             Parameters
             ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to generate the mean curve for
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to generate the mean curve for
+                - mean_x
+                    - np.ndarray, optional
+                    - x-values of a representative mean curve
+                    - does not have to have the same shape as x
+                    - same shape as mean_y and std_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
+                - mean_y
+                    - np.ndarray, optional
+                    - y-values of a representative mean curve
+                    - does not have to have the same shape as y
+                    - same shape as mean_x and std_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
+                - std_y
+                    - np.ndarray|Nonw, optional
+                    - standard deviation/errorbars of the representative mean curve in y-direction
+                    - does not have to have the same shape as y
+                    - same shape as mean_x and mean_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None
                 - verbose
                     - int, optional
                     - verbosity level
@@ -175,11 +184,11 @@ class SigmaClipping:
             verbose = self.verbose
 
         #calculate mean curve if insufficient information is provided
-        if self.mean_x is None or self.mean_y is None or self.std_y is None:
+        if mean_x is None or mean_y is None or std_y is None:
             
             if verbose > 0:
                 print(
-                    f"INFO: Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
+                    f"INFO(SigmaClipping): Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
                 )
             
             binning = Binning(
@@ -187,22 +196,57 @@ class SigmaClipping:
                 **self.binning_kwargs
             )
 
-            self.mean_x, self.mean_y, self.std_y = binning.bin_curve(self.x, self.y)
+            mean_x, mean_y, std_y = binning.bin_curve(x, y)
         else:
-            assert (self.mean_x.shape == self.mean_y.shape) and (self.mean_y.shape == self.std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {self.mean_x.shape}, {self.mean_y.shape}, {self.std_y.shape}"
+            assert (mean_x.shape == mean_y.shape) and (mean_y.shape == std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {mean_x.shape}, {mean_y.shape}, {std_y.shape}"
         
-        return 
+        #adopt mean curves
+        self.mean_x = mean_x
+        self.mean_y = mean_y
+        self.std_y  = std_y
+
+        return
 
     def clip_curve(self,
+        x:np.ndarray, y:np.ndarray,
+        mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,                    
         sigma_bottom:float=None, sigma_top:float=None,
+        prev_clip_mask:np.ndarray=None,
         verbose:int=None,
-        ):
+        ) -> np.ndarray:
         """
-            - method to actually execute sigma-clipping on x and y
+            - method to actually execute sigma-clipping on x and y (once)
             - creates a mask retaining only values that lie outside an interval of +/- sigma*std_y around a mean curve
 
             Parameters
             ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to generate the mean curve for
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to generate the mean curve for
+                - mean_x
+                    - np.ndarray, optional
+                    - x-values of a representative mean curve
+                    - does not have to have the same shape as x
+                    - same shape as mean_y and std_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
+                - mean_y
+                    - np.ndarray, optional
+                    - y-values of a representative mean curve
+                    - does not have to have the same shape as y
+                    - same shape as mean_x and std_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
+                - std_y
+                    - np.ndarray|Nonw, optional
+                    - standard deviation/errorbars of the representative mean curve in y-direction
+                    - does not have to have the same shape as y
+                    - same shape as mean_x and mean_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
                 - sigma_bottom
                     - float, optional
                     - multiplier for the bottom boundary
@@ -219,6 +263,13 @@ class SigmaClipping:
                         - i.e. self.sigma_top will be set as sigma_top
                     - the default is 2
                         - i.e. 2*sigma
+                - prev_clip_mask
+                    - np.ndarray, optional
+                    - boolean array
+                    - contains any previously used clip_mask
+                    - before the clipping will be applied, x and y will be masked by prev_clip_mask
+                    - the default is None
+                        - no masking applied
                 - verbose
                     - int, optional
                     - verbosity level
@@ -229,15 +280,7 @@ class SigmaClipping:
             ------
         
             Returns
-            -------
-                - clip_mask
-                    - np.ndarray
-                    - mask for the retained values
-                    - 1 for every value that got retained
-                    - 0 for every value that got cut            
-
-            Dependencies
-            ------------
+            -------           
 
             Comments
             --------
@@ -253,29 +296,41 @@ class SigmaClipping:
         else:
             self.sigma_top = sigma_top
 
+        #initialize parameters
+        if prev_clip_mask is None: prev_clip_mask = np.ones_like(x, dtype=bool)
+
+        #create copy of input arrays to not overwrite them during execution
+        x_cur = x.copy()
+        y_cur = y.copy()
 
         #catching errors
-        assert self.x.shape == self.y.shape, f"shapes of 'x' and 'y' have to be equal but are {self.x.shape}, {self.y.shape}"
+        assert x_cur.shape == y_cur.shape, f"shapes of 'x' and 'y' have to be equal but are {x_cur.shape}, {y_cur.shape}"
+        assert x.shape == prev_clip_mask.shape, f"shapes of 'x' and 'prev_clip_mask' have to be equal but are {x_cur.shape}, {prev_clip_mask.shape}"
 
-        self.get_mean_curve(verbose=verbose)
+        #set elements in input array of previous mask to np.nan (but keep them in the array to retain the shape!!)
+        x_cur[~prev_clip_mask] = np.nan
+        y_cur[~prev_clip_mask] = np.nan
 
-        #sorting-array
-        self.sort_array = np.argsort(self.x)
+
+        #obtain mean (binned) curves
+        self.get_mean_curve(x_cur, y_cur, mean_x, mean_y, std_y, verbose=verbose)
+
 
         #get mean curve including error
-        self.y_mean_interp = np.interp(self.x, self.mean_x, self.mean_y)
-        self.y_std_interp  = np.interp(self.x, self.mean_x, self.std_y)
+        self.y_mean_interp = np.interp(x, self.mean_x, self.mean_y)
+        self.y_std_interp  = np.interp(x, self.mean_x, self.std_y)
 
         #mask of what to retain
         self.lower_bound = self.y_mean_interp-sigma_bottom*self.y_std_interp 
         self.upper_bound = self.y_mean_interp+sigma_top*self.y_std_interp
-        clip_mask = (self.lower_bound<self.y)&(self.y<self.upper_bound)
+        
+        #store mask
+        self.clip_mask = (self.lower_bound<y_cur)&(y_cur<self.upper_bound)
 
-        self.clip_mask = clip_mask
+        return
 
-        return clip_mask
-    
-    def plot_result(self):
+    def plot_result(self,
+        ):
         """
             - method to create a plot visualizing the sigma-clipping result
 
@@ -306,14 +361,17 @@ class SigmaClipping:
 
         ulb_lab = r"$\bar{y}~\{+%g,-%g\}\sigma$"%(self.sigma_top, self.sigma_bottom)
         
+        #sorting-array (needed for plotting)
+        sort_array = np.argsort(self.x)
+
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],             color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
-        ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],              color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
-        ax1.errorbar(self.mean_x,            self.mean_y, yerr=self.std_y,        color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
-        ax1.plot(self.x[self.sort_array],    self.y_mean_interp[self.sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
-        ax1.plot(self.x[self.sort_array],    self.upper_bound[self.sort_array],   color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
-        ax1.plot(self.x[self.sort_array],    self.lower_bound[self.sort_array],   color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
+        ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],        color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
+        ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],         color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
+        ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,        color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
+        ax1.plot(self.x[sort_array],         self.y_mean_interp[sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
+        ax1.plot(self.x[sort_array],         self.upper_bound[sort_array],   color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
+        ax1.plot(self.x[sort_array],         self.lower_bound[sort_array],   color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
 
         ax1.set_xlabel("x")
         ax1.set_ylabel("y")
@@ -324,4 +382,139 @@ class SigmaClipping:
         axs = fig.axes
 
         return fig, axs
+
+    def fit(self,
+        x:np.ndarray, y:np.ndarray,
+        mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,                        
+        n_iter:int=1,
+        verbose:int=None,
+        clip_curve_kwargs:dict={},
+        ):
+        """
+            - method to apply SigmaClipping n_iter times consecutively
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to generate the mean curve for
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to generate the mean curve for
+                - mean_x
+                    - np.ndarray, optional
+                    - x-values of a representative mean curve
+                    - does not have to have the same shape as x
+                    - same shape as mean_y and std_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
+                - mean_y
+                    - np.ndarray, optional
+                    - y-values of a representative mean curve
+                    - does not have to have the same shape as y
+                    - same shape as mean_x and std_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
+                - std_y
+                    - np.ndarray|Nonw, optional
+                    - standard deviation/errorbars of the representative mean curve in y-direction
+                    - does not have to have the same shape as y
+                    - same shape as mean_x and mean_y
+                    - if 'None' will infer a mean curve via data-binning
+                    - the default is 'None'
+                - n_iter
+                    - int, optional
+                    - how often to apply SigmaClipping recursively
+                    - the default is 1
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None   
+                - clip_curve_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.clip_curve()
+                    - the default is {}
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+
+        self.x = x
+        self.y = y
+
+        if verbose is None:
+            verbose = self.verbose
+
+        for n in range(n_iter):
+            if verbose > 0:
+                print(f'INFO(SigmaClipping): Executing iteration #{n+1}/{n_iter}')
+
+            self.clip_curve(x, y, mean_x, mean_y, std_y, **clip_curve_kwargs)
+            clip_curve_kwargs['prev_clip_mask'] = clip_curve_kwargs['prev_clip_mask']&self.clip_mask
+
+            #store a history of the generated clip_masks if requested
+            if self.clipmask_history:
+                self.clip_masks.append(self.clip_mask)
+            #store a history of the generated bounds if requested
+            if self.bound_history:
+                self.lower_bounds.append(self.lower_bound)
+                self.upper_bounds.append(self.upper_bound)
+
+        return 
+
+    def transform(self,
+        x:np.ndarray, y:np.ndarray,
+        ):
+        """
+            - method to transform the input-dataseries
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to generate the mean curve for
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to generate the mean curve for
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+
+        x_clipped = x[self.clip_mask]
+        y_clipped = y[self.clip_mask]
+
+        return x_clipped, y_clipped
+    
+    def fit_transform(self,
+        x:np.ndarray, y:np.ndarray,
+        fit_kwargs:dict={},
+        ):
+        """
+            - method to fit the transformer and transform the data in one go
+            - similar to scikit-learn scalers
+        """
+
+        self.fit(
+            x, y,
+            **fit_kwargs,
+        )
+        x_clipped, y_clipped = self.transform()
+
+        return  x_clipped, y_clipped
+
 
