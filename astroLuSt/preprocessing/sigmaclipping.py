@@ -1,5 +1,4 @@
 
-#TODO: issue with overwriting some variable (multiple executions do not lead to the same result)
 #TODO: exit criterion for niter
 #TODO: implement use_polynomial
 #TODO: option to allow history in plot_result
@@ -515,17 +514,23 @@ class SigmaClipping:
         if verbose is None:
             verbose = self.verbose
 
+
         #initialize if not provided
-        if 'prev_clip_mask' not in clip_curve_kwargs:
-            clip_curve_kwargs["prev_clip_mask"] = np.ones_like(self.x, dtype=bool)
+        cur_clip_curve_kwargs = {}  #temporary dict to ensure same results after each call of self.fit()
+        if 'prev_clip_mask' not in clip_curve_kwargs.keys():
+            print('IN IF')
+            cur_clip_curve_kwargs['prev_clip_mask'] = np.ones_like(self.x, dtype=bool)
+        else:
+            cur_clip_curve_kwargs = clip_curve_kwargs
+            print('IN ELSE')
 
 
         for n in range(n_iter):
             if verbose > 0:
                 print(f'INFO(SigmaClipping): Executing iteration #{n+1}/{n_iter}')
 
-            self.clip_curve(mean_x, mean_y, std_y, **clip_curve_kwargs)
-            clip_curve_kwargs['prev_clip_mask'] = clip_curve_kwargs['prev_clip_mask']&self.clip_mask
+            self.clip_curve(mean_x, mean_y, std_y, **cur_clip_curve_kwargs)
+            cur_clip_curve_kwargs['prev_clip_mask'] = cur_clip_curve_kwargs['prev_clip_mask']&self.clip_mask
 
             #store a history of the generated clip_masks if requested
             if self.clipmask_history:
@@ -534,7 +539,7 @@ class SigmaClipping:
             if self.bound_history:
                 self.lower_bounds.append(self.lower_bound)
                 self.upper_bounds.append(self.upper_bound)
-
+    
         return 
 
     def transform(self,
