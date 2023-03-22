@@ -1,12 +1,11 @@
 
-#TODO: allow usage of curve sigma over all iterations - only rele
 #TODO: exit criterion for niter
-#TODO: implement use_polynomial
-#TODO: option to allow history in plot_result
+#TODO: add examples (comparison between last and current clip_mask, ...)
 
 #%%imports
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 
 
 from astroLuSt.preprocessing.binning import Binning
@@ -126,6 +125,7 @@ class SigmaClipping:
         ------------
             - matplotlib
             - numpy
+            - re
 
         Comments
         --------
@@ -178,6 +178,8 @@ class SigmaClipping:
         return (
             f'SigmaClipping(\n'
             f'    sigma_bottom={self.sigma_bottom}, sigma_top={self.sigma_top},\n'
+            f'    use_polynomial={self.use_polynomial},\n'
+            f'    use_init_curve_sigma={self.use_init_curve_sigma},\n'
             f'    bound_history={self.bound_history}, clipmask_history={self.clipmask_history},\n'
             f'    verbose={self.verbose},\n'
             f'    binning_kwargs={self.binning_kwargs},\n'
@@ -245,6 +247,9 @@ class SigmaClipping:
         if verbose is None:
             verbose = self.verbose
 
+        if 'ddof' in self.binning_kwargs.keys(): cur_ddof = self.binning_kwargs['ddof']
+        else: cur_ddof = 1
+
         #calculate mean curve if insufficient information is provided
         if mean_x is None or mean_y is None or std_y is None:
             
@@ -255,9 +260,6 @@ class SigmaClipping:
             
             #fit legendre polynomial
             if self.use_polynomial:
-                if 'ddof' in self.binning_kwargs.keys(): cur_ddof = self.binning_kwargs['ddof']
-                else: cur_ddof = 1
-
                 nanbool = (np.isfinite(x)&np.isfinite(y))   #get rid of np.nan for the fit
                 coeffs = np.polynomial.legendre.legfit(x[nanbool], y[nanbool], **legfit_kwargs)
                 mean_x = x.copy()
@@ -278,7 +280,12 @@ class SigmaClipping:
         #adopt (binned) mean curves
         self.mean_x = mean_x.copy()
         self.mean_y = mean_y.copy()
-        self.std_y  = std_y.copy()
+
+        #update sigma only if reqested
+        if self.use_init_curve_sigma:
+            self.std_y = np.zeros_like(self.mean_y)+np.nanstd(self.y.copy(), ddof=cur_ddof)
+        else:
+            self.std_y  = std_y.copy()
 
 
         #get mean curve including error
@@ -483,8 +490,8 @@ class SigmaClipping:
 
     def fit(self,
         x:np.ndarray, y:np.ndarray,
-        mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,                        
-        n_iter:int=1,
+        mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,
+        n_iter:int=1, stopping_crit:str=None,
         verbose:int=None,
         clip_curve_kwargs:dict={},
         ):
@@ -525,6 +532,29 @@ class SigmaClipping:
                     - int, optional
                     - how often to apply SigmaClipping recursively
                     - the default is 1
+                - stopping_crit
+                    - str, optional
+                    - stopping criterion to exit the SigmaClipping loop
+                    - will be evaluated
+                        - i.e. eval(stopping_crit) will be called
+                        - if it evaluates to True, will break the loop
+                    - some examples
+                        - 'self.clip_mask.sum()<300'
+                            - break if the clipped curve contains a maximum of 300 datapoints
+                        - 'self.clip_mask.sum()/self.x.shape < 0.5'
+                            - break if less than 50% of the initial datapoints remain
+                        - 'np.nanmean(self.y_std_interp) < 0.3'
+                            - break if the mean standard deviation is less than 0.3
+                        - 'self.clip_mask.sum()/cur_clip_curve_kwargs["prev_clip_mask"].sum() < 0.6'
+                            - break if from one iteration to the next one 60% of the datapoints remain
+                        - 'np.nanstd(self.y[self.clip_mask]) < 0.68'
+                            - break if the standard deviation of the clipped curve is less than 0.68
+                        - 'n==3'
+                            - break after 3 iterations
+                    - call dir(SigmaClipping) to figure out all the attributes defined
+                        - likely any of the attributes (apart from methods) can be used in stopping_crit
+                    - the default is None
+                        - will continue until n_iter is reached
                 - verbose
                     - int, optional
                     - verbosity level
@@ -545,9 +575,15 @@ class SigmaClipping:
             --------
         """
 
+        if stopping_crit is None:
+            stopping_crit = 'False'
+
         #assign input as attribute
         self.x = x.copy()
         self.y = y.copy()
+
+        #init self.clip_mask
+        self.clip_mask = np.ones_like(self.x, dtype=bool)
 
         if verbose is None:
             verbose = self.verbose
@@ -565,8 +601,17 @@ class SigmaClipping:
             if verbose > 0:
                 print(f'INFO(SigmaClipping): Executing iteration #{n+1}/{n_iter}')
 
+
             self.clip_curve(mean_x, mean_y, std_y, **cur_clip_curve_kwargs)
+
+            #print the output of the stopping criterion
+            if verbose > 2: print('INFO(SigmaClipping): stopping_crit evaluated to: %g'%(eval(re.findall(r'^[^<>=!]+', stopping_crit)[0])))
+            if eval(stopping_crit):
+                if verbose > 0:
+                    print(f'INFO(SigmaClipping): stopping_crit fullfilled... Exiting after iteration #{n+1}/{n_iter}')
+                break
             cur_clip_curve_kwargs['prev_clip_mask'] = cur_clip_curve_kwargs['prev_clip_mask']&self.clip_mask
+            
 
             #store a history of the generated clip_masks if requested
             if self.clipmask_history:
@@ -576,8 +621,6 @@ class SigmaClipping:
                 self.lower_bounds.append(self.lower_bound)
                 self.upper_bounds.append(self.upper_bound)
             
-            self.plot_result(show_cut=False)
-
         return 
 
     def transform(self,
