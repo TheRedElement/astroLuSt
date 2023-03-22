@@ -518,11 +518,9 @@ class SigmaClipping:
         #initialize if not provided
         cur_clip_curve_kwargs = {}  #temporary dict to ensure same results after each call of self.fit()
         if 'prev_clip_mask' not in clip_curve_kwargs.keys():
-            print('IN IF')
             cur_clip_curve_kwargs['prev_clip_mask'] = np.ones_like(self.x, dtype=bool)
         else:
-            cur_clip_curve_kwargs = clip_curve_kwargs
-            print('IN ELSE')
+            clip_curve_kwargs = clip_curve_kwargs
 
 
         for n in range(n_iter):
@@ -594,5 +592,6 @@ class SigmaClipping:
         x_clipped, y_clipped = self.transform(x, y)
 
         return  x_clipped, y_clipped
+
 
 
