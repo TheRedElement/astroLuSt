@@ -1,4 +1,5 @@
 
+#TODO: allow usage of curve sigma over all iterations - only rele
 #TODO: exit criterion for niter
 #TODO: implement use_polynomial
 #TODO: option to allow history in plot_result
@@ -31,6 +32,19 @@ class SigmaClipping:
                 - i.e. top boundary = mean_y + sigma_top*std_y
                 - the default is 2
                     - i.e. 2*sigma
+            - use_polynomial
+                - bool, optional
+                - whether to use a polynomial fit instead of binning to estimate the mean curve
+                - will use the std of the whole current curve and define upper and lower boundary by
+                    - upper_bound := y_mean + sigma_top    * np.nanstd(y_cur)
+                    - lower_bound := y_mean - sigma_bottom * np.nanstd(y_cur)
+                    - y_cur is the clipped curve after the n-th iteration
+                - the default is False
+            - use_init_curve_sigma
+                - bool, optional
+                - whether to use the standard deviation of the initial curve accross all iterations to generate boundaries
+                - if False will recalculate the standard deviation for each iteration anew and adjust the boundaries accordingly
+                - the default is False 
             - bound_history
                 - bool, optional
                 - whether to store a history of all upper and lower bounds created during self.fit()
@@ -47,6 +61,7 @@ class SigmaClipping:
                 - kwargs for the Binning class
                 - used to generate mean curves if none are provided
                 - the default is None
+                    - will initialize with {'nintervals':0.1, 'ddof':1}
 
         Infered Attributes
         ------------------
@@ -117,8 +132,10 @@ class SigmaClipping:
     """
 
 
-    def __init__(self,                
+    def __init__(self,
         sigma_bottom:float=2, sigma_top:float=2,
+        use_polynomial:bool=True,
+        use_init_curve_sigma:bool=True,
         bound_history:bool=False, clipmask_history:bool=False,
         verbose:int=0,
         binning_kwargs:dict=None,
@@ -127,8 +144,11 @@ class SigmaClipping:
         self.sigma_bottom = sigma_bottom
         self.sigma_top = sigma_top
 
+        self.use_polynomial = use_polynomial
+        self.use_init_curve_sigma = use_init_curve_sigma
+
         if binning_kwargs is None:
-            self.binning_kwargs = {'nintervals':0.1}
+            self.binning_kwargs = {'nintervals':0.1, 'ddof':1}
         else:
             self.binning_kwargs = binning_kwargs
 
@@ -168,6 +188,7 @@ class SigmaClipping:
         x:np.ndarray, y:np.ndarray,
         mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,
         verbose:int=None,
+        legfit_kwargs:dict={'deg':10},
         ) -> None:
         """
             - method to adopt the mean curves if provided and generate some if not
@@ -206,6 +227,10 @@ class SigmaClipping:
                     - verbosity level
                     - overwrites self.verbose
                     - the default is None
+                - legfit_kwargs
+                    - dict, optional
+                    - kwargs to pass to np.polynomial.legfit()
+                    - the default is {'deg':10}
             
             Raises
             ------
@@ -228,19 +253,37 @@ class SigmaClipping:
                     f"INFO(SigmaClipping): Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
                 )
             
-            binning = Binning(
-                verbose=verbose-1,
-                **self.binning_kwargs
-            )
+            #fit legendre polynomial
+            if self.use_polynomial:
+                if 'ddof' in self.binning_kwargs.keys(): cur_ddof = self.binning_kwargs['ddof']
+                else: cur_ddof = 1
 
-            mean_x, mean_y, std_y = binning.fit_transform(x, y)
+                nanbool = (np.isfinite(x)&np.isfinite(y))   #get rid of np.nan for the fit
+                coeffs = np.polynomial.legendre.legfit(x[nanbool], y[nanbool], **legfit_kwargs)
+                mean_x = x.copy()
+                mean_y = np.polynomial.legendre.legval(x, coeffs, tensor=False)
+                std_y  = np.zeros_like(mean_y)+np.nanstd(y.copy(), ddof=cur_ddof)
+
+            #use binning in phase to obtain the mean curve
+            else:
+                binning = Binning(
+                    verbose=verbose-1,
+                    **self.binning_kwargs
+                )
+
+                mean_x, mean_y, std_y = binning.fit_transform(x, y)
         else:
             assert (mean_x.shape == mean_y.shape) and (mean_y.shape == std_y.shape), f"shapes of 'mean_x', 'mean_y' and 'std_y' have to be equal but are {mean_x.shape}, {mean_y.shape}, {std_y.shape}"
         
-        #adopt mean curves
+        #adopt (binned) mean curves
         self.mean_x = mean_x.copy()
         self.mean_y = mean_y.copy()
         self.std_y  = std_y.copy()
+
+
+        #get mean curve including error
+        self.y_mean_interp = np.interp(self.x, self.mean_x[self.mean_x.argsort()], self.mean_y[self.mean_x.argsort()])
+        self.y_std_interp  = np.interp(self.x, self.mean_x[self.mean_x.argsort()], self.std_y[self.mean_x.argsort()])
 
         return
 
@@ -351,11 +394,6 @@ class SigmaClipping:
         #obtain mean (binned) curves
         self.get_mean_curve(x_cur, y_cur, mean_x, mean_y, std_y, verbose=verbose)
 
-
-        #get mean curve including error
-        self.y_mean_interp = np.interp(self.x, self.mean_x, self.mean_y)
-        self.y_std_interp  = np.interp(self.x, self.mean_x, self.std_y)
-
         #mask of what to retain
         self.lower_bound = self.y_mean_interp-sigma_bottom*self.y_std_interp 
         self.upper_bound = self.y_mean_interp+sigma_top*self.y_std_interp
@@ -428,7 +466,7 @@ class SigmaClipping:
         ax1 = fig.add_subplot(111)
         if show_cut: ax1.scatter(self.x[~clip_mask], self.y[~clip_mask],             color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
         ax1.scatter(self.x[ clip_mask], self.y[ clip_mask],             color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
-        ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,   color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
+        if not self.use_polynomial: ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,   color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
         ax1.plot(self.x[sort_array],    self.y_mean_interp[sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
         ax1.plot(self.x[sort_array],    upper_bound[sort_array],        color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
         ax1.plot(self.x[sort_array],    lower_bound[sort_array],        color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
@@ -537,7 +575,9 @@ class SigmaClipping:
             if self.bound_history:
                 self.lower_bounds.append(self.lower_bound)
                 self.upper_bounds.append(self.upper_bound)
-    
+            
+            self.plot_result(show_cut=False)
+
         return 
 
     def transform(self,
