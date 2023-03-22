@@ -586,7 +586,7 @@ class SigmaClipping:
             x, y,
             **fit_kwargs,
         )
-        x_clipped, y_clipped = self.transform()
+        x_clipped, y_clipped = self.transform(x, y)
 
         return  x_clipped, y_clipped
 
