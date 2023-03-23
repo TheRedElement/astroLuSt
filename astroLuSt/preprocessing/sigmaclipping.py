@@ -299,6 +299,7 @@ class SigmaClipping:
         sigma_bottom:float=None, sigma_top:float=None,
         prev_clip_mask:np.ndarray=None,
         verbose:int=None,
+        legfit_kwargs:dict={'deg':10},
         ) -> np.ndarray:
         """
             - method to actually execute sigma-clipping on x and y (once)
@@ -361,6 +362,10 @@ class SigmaClipping:
                     - verbosity level
                     - overwrites self.verbose
                     - the default is None                        
+                - legfit_kwargs
+                    - dict, optional
+                    - kwargs to pass to np.polynomial.legfit()
+                    - the default is {'deg':10}
 
             Raises
             ------
@@ -399,7 +404,7 @@ class SigmaClipping:
 
 
         #obtain mean (binned) curves
-        self.get_mean_curve(x_cur, y_cur, mean_x, mean_y, std_y, verbose=verbose)
+        self.get_mean_curve(x_cur, y_cur, mean_x, mean_y, std_y, verbose=verbose, legfit_kwargs=legfit_kwargs)
 
         #mask of what to retain
         self.lower_bound = self.y_mean_interp-sigma_bottom*self.y_std_interp 
@@ -590,7 +595,7 @@ class SigmaClipping:
 
 
         #initialize if not provided
-        cur_clip_curve_kwargs = {}  #temporary dict to ensure same results after each call of self.fit()
+        cur_clip_curve_kwargs = {**clip_curve_kwargs}  #temporary dict to ensure same results after each call of self.fit()
         if 'prev_clip_mask' not in clip_curve_kwargs.keys():
             cur_clip_curve_kwargs['prev_clip_mask'] = np.ones_like(self.x, dtype=bool)
         else:
@@ -600,7 +605,6 @@ class SigmaClipping:
         for n in range(n_iter):
             if verbose > 0:
                 print(f'INFO(SigmaClipping): Executing iteration #{n+1}/{n_iter}')
-
 
             self.clip_curve(mean_x, mean_y, std_y, **cur_clip_curve_kwargs)
 
