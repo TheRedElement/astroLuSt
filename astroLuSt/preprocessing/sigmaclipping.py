@@ -413,6 +413,14 @@ class SigmaClipping:
         #store mask
         self.clip_mask = (self.lower_bound<y_cur)&(y_cur<self.upper_bound)
 
+        #store a history of the generated clip_masks if requested
+        if self.clipmask_history:
+            self.clip_masks.append(self.clip_mask)
+        #store a history of the generated bounds if requested
+        if self.bound_history:
+            self.lower_bounds.append(self.lower_bound)
+            self.upper_bounds.append(self.upper_bound)
+
         return
 
     def plot_result(self,
@@ -623,17 +631,11 @@ class SigmaClipping:
             if eval(stopping_crit):
                 if verbose > 0:
                     print(f'INFO(SigmaClipping): stopping_crit fullfilled... Exiting after iteration #{n+1}/{n_iter}')
+                
                 break
-            cur_clip_curve_kwargs['prev_clip_mask'] = cur_clip_curve_kwargs['prev_clip_mask']&self.clip_mask
-            
 
-            #store a history of the generated clip_masks if requested
-            if self.clipmask_history:
-                self.clip_masks.append(self.clip_mask)
-            #store a history of the generated bounds if requested
-            if self.bound_history:
-                self.lower_bounds.append(self.lower_bound)
-                self.upper_bounds.append(self.upper_bound)
+            #update previous clip_mask
+            cur_clip_curve_kwargs['prev_clip_mask'] = cur_clip_curve_kwargs['prev_clip_mask']&self.clip_mask
             
         return 
 
