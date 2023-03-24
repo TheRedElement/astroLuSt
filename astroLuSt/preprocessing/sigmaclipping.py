@@ -1,6 +1,4 @@
 
-#TODO: exit criterion for niter
-#TODO: add examples (comparison between last and current clip_mask, ...)
 
 #%%imports
 import matplotlib.pyplot as plt
