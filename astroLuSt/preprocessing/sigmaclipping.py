@@ -580,6 +580,16 @@ class SigmaClipping:
             --------
         """
 
+        #check types
+        if not isinstance(x, np.ndarray):
+            x_type = re.sub(r'[<>]', '', str(type(x)))  #substitue angled brackets because TypeError() ignores them
+            err_msg = str(f'"x" has to be of type np.ndarray and not {x_type}!')
+            raise TypeError(err_msg)
+        if not isinstance(y, np.ndarray):
+            y_type = re.sub(r'[<>]', '', str(type(y)))  #substitue angled brackets because TypeError() ignores them
+            err_msg = str(f'"y" has to be of type np.ndarray and not {y_type}!')
+            raise TypeError(err_msg)
+
         if stopping_crit is None:
             stopping_crit = 'False'
 
