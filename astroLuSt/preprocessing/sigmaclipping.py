@@ -554,6 +554,8 @@ class SigmaClipping:
                     - some examples
                         - 'self.clip_mask.sum()<300'
                             - break if the clipped curve contains a maximum of 300 datapoints
+                        - 'np.count_nonzero(~self.clip_mask) > 900'
+                            - break if more than 900 datapoints get clipped
                         - 'self.clip_mask.sum()/self.x.shape < 0.5'
                             - break if less than 50% of the initial datapoints remain
                         - 'np.nanmean(self.y_std_interp) < 0.3'
@@ -604,9 +606,15 @@ class SigmaClipping:
         #assign input as attribute
         self.x = x.copy()
         self.y = y.copy()
+        
 
-        #init self.clip_mask
+        #initialize zeroth iteration
+        it_zero = np.empty_like(self.x)
+        it_zero[:] = np.nan
         self.clip_mask = np.ones_like(self.x, dtype=bool)
+        self.clip_masks.append(self.clip_mask)
+        self.lower_bounds.append(it_zero)
+        self.upper_bounds.append(it_zero)
 
         if verbose is None:
             verbose = self.verbose
@@ -632,6 +640,13 @@ class SigmaClipping:
                 if verbose > 0:
                     print(f'INFO(SigmaClipping): stopping_crit fullfilled... Exiting after iteration #{n+1}/{n_iter}')
                 
+                #restore values of previous iteration
+                
+                self.clip_mask = self.clip_masks[-2]
+                self.clip_masks = self.clip_masks[:-1]
+                self.lower_bounds = self.lower_bounds[:-1]
+                self.upper_bounds = self.upper_bounds[:-1]
+
                 break
 
             #update previous clip_mask
