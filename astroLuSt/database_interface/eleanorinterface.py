@@ -736,7 +736,7 @@ class EleanorDatabaseInterface:
 
         #save if specified
         if type(save) == str:
-            plt.savefig(save, dpi=180)
+            plt.savefig(f'{save}tic{tic}.csv', dpi=180)
         plt.show()
         
         axs = fig.axes
