@@ -241,30 +241,37 @@ class PDM:
         )
 
     def generate_period_grid(self,
-        x:np.ndarray,
-        period_start:float=0.1, period_stop:float=None, nperiods:float=100,
+        period_start:float=None, period_stop:float=None, nperiods:float=None,
+        x:np.ndarray=None,
         ):
         """
-            - method to automatically generate a period grid w.r.t. x
+            - method to generate a period grid
 
             Parameters
             ----------
-                - x
-                    - np.ndarray
-                    - input array
-                    - x-values of the data-series
                 - period_start
                     - float, optional
                     - the period to consider as starting point for the analysis
-                    - the default is 1
+                    - the default is None
+                        - will default to self.period_start
                 - period_stop
                     - float, optional
                     - the period to consider as stopping point for the analysis
-                    - the default is 100
+                    - the default is None
+                        - will default to self.period_stop if "x" is also None
+                        - otherwise will consider x to generate period_stop
                 - nperiods
                     - int, optional
                     - how many trial periods to consider during the analysis
-                    - the default is 100
+                    - the default is None
+                        - will default to self.nperiods
+                - x
+                    - np.ndarray, optional
+                    - input array
+                    - x-values of the data-series
+                    - the default is None
+                        - if set and period_stop is None, will use max(x)-min(x) as 'period_stop'
+
             
             Raises
             ------
@@ -275,9 +282,14 @@ class PDM:
             Comments
             --------
         """
-
+        #overwrite defaults if requested
+        if period_start is None: period_start = self.period_start
+        if nperiods is None: nperiods = self.nperiods
         if period_stop is None:
-            period_stop = np.nanmax(x)-np.nanmin(x)
+            if x is not None:
+                period_stop = np.nanmax(x)-np.nanmin(x)
+            else:
+                period_stop = self.period_stop
 
         trial_periods = np.linspace(period_start, period_stop, nperiods)
 
@@ -459,7 +471,7 @@ class PDM:
         if verbose is None:              verbose              = self.verbose
 
         if self.trial_periods is None:
-            self.trial_periods = self.generate_period_grid(x, self.period_start, self.period_stop, self.nperiods)
+            self.trial_periods = self.generate_period_grid(self.period_start, self.period_stop, self.nperiods, x=x)
 
         #calculate total variance of curve
         self.tot_var = np.nanvar(y)

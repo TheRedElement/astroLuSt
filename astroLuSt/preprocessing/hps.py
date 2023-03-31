@@ -1,4 +1,17 @@
 
+#TODO: 
+#   - Generate trial periods (for PDM)
+#   - Generate trial frequencies (for LS)
+#   - combine into two arrays (one of P, one of f)
+#   - Run LS on combined f
+#   - Run PDM on combined P
+#   - Generate trial periods for refinement of PDM
+#   - Generate trial frequencies for refinement of LS
+#   - combine into two arrays (one for P, one for f)
+#   - Refine periods
+#   - repeat
+
+
 #%%imports
 from astropy.timeseries import LombScargle
 import matplotlib.pyplot as plt
@@ -188,6 +201,25 @@ class HPS:
             f'    pdm_kwargs={self.pdm_kwargs},\n'
             f')'
         )
+
+    def generate_period_grid(self,
+        period_start:float=None, period_stop:float=None, nperiods:float=100,
+        x:np.ndarray=None,
+        ):
+        """
+ 
+        """
+
+        #overwrite defaults if requested
+        if period_start is None: period_start = self.period_start
+        if period_stop is None: period_stop = self.period_stop
+        if nperiods is None: nperiods = self.nperiods
+
+
+        test_periods_pdm = PDM().generate_period_grid(period_start, period_stop, nperiods, x)
+        print(test_periods_pdm)
+
+        return 
 
     def run_pdm(self,
         x:np.ndarray, y:np.ndarray,
