@@ -10,6 +10,7 @@
 #   - combine into two arrays (one for P, one for f)
 #   - Refine periods
 #   - repeat
+#TODO: generate_period_grid: add nyquist
 
 
 #%%imports
@@ -202,8 +203,10 @@ class HPS:
             f')'
         )
 
+
     def generate_period_grid(self,
-        period_start:float=None, period_stop:float=None, nperiods:float=100,
+        period_start:float=None, period_stop:float=None, nperiods:float=None,
+        n_nyq:int=5,
         x:np.ndarray=None,
         ):
         """
@@ -215,9 +218,30 @@ class HPS:
         if period_stop is None: period_stop = self.period_stop
         if nperiods is None: nperiods = self.nperiods
 
+        grid_gen = PDM()
+        test_periods_pdm    = grid_gen.generate_period_grid(period_start, period_stop, nperiods, x, n_nyq)
+        test_frequencies_ls = grid_gen.generate_period_grid(1/test_periods_pdm.max(), 1/test_periods_pdm.min(), nperiods, None)
 
-        test_periods_pdm = PDM().generate_period_grid(period_start, period_stop, nperiods, x)
-        print(test_periods_pdm)
+        test_periods     = np.sort(np.append(test_periods_pdm, 1/test_frequencies_ls))
+        test_frequencies = np.sort(np.append(1/test_periods_pdm, test_frequencies_ls))
+
+        # tp = np.linspace(0.1, 2, 100)
+        # tf = np.linspace(1/0.1, 1/2, 100)
+        # tps = np.sort(np.append(tp, 1/tf))
+        # tfs = np.sort(np.append(1/tp, tf))
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax2 = ax1.twiny()
+        # # plt.scatter(test_periods, test_frequencies, alpha=0.2)
+        # # plt.scatter(tps, tfs, alpha=0.2)
+        ax1.hist(test_periods,     histtype='step', color='b',      linewidth=9, bins=40, label='Period')
+        ax2.hist(test_frequencies, histtype='step', color='orange', linewidth=3, bins=40, label='Frequency')
+        # plt.hist(tps,     histtype='step')
+        # plt.hist(tfs, histtype='step')
+        ax1.set_xlabel('Period')
+        ax2.set_xlabel('Frequency')
+        fig.legend()
 
         return 
 

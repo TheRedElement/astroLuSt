@@ -169,7 +169,7 @@ class PDM:
 
     def __init__(self,
         #initial period determination
-        period_start:float=0.1, period_stop:float=None, nperiods:int=100,
+        period_start:float=1, period_stop:float=None, nperiods:int=100,
         trial_periods:np.ndarray=None,
         npoints_per_interval:int=None,
         #refining found period
@@ -243,6 +243,7 @@ class PDM:
     def generate_period_grid(self,
         period_start:float=None, period_stop:float=None, nperiods:float=None,
         x:np.ndarray=None,
+        n_nyq:int=5,
         ):
         """
             - method to generate a period grid
@@ -271,7 +272,11 @@ class PDM:
                     - x-values of the data-series
                     - the default is None
                         - if set and period_stop is None, will use max(x)-min(x) as 'period_stop'
-
+                - n_nyq
+                    - float, optional
+                    - nyquist factor
+                    - the nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
+                    - the default is 5
             
             Raises
             ------
@@ -282,14 +287,23 @@ class PDM:
             Comments
             --------
         """
+        
         #overwrite defaults if requested
-        if period_start is None: period_start = self.period_start
+        if period_start is None:
+            if x is not None:
+                #get average nyquist frequency
+                nyq_bar = 0.5*len(x) / (np.nanmax(x) - np.nanmin(x))
+                period_start = 1/(n_nyq*nyq_bar)
+            else:
+                period_start = self.period_start
         if nperiods is None: nperiods = self.nperiods
         if period_stop is None:
             if x is not None:
-                period_stop = np.nanmax(x)-np.nanmin(x)
+                #maximum determinable period (signal has to be observed at least twice)
+                period_stop = 0.5*(np.nanmax(x) - np.nanmin(x))
             else:
                 period_stop = self.period_stop
+
 
         trial_periods = np.linspace(period_start, period_stop, nperiods)
 
