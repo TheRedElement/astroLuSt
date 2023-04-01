@@ -20,12 +20,16 @@ class PDM:
             - period_start
                 - float, optional
                 - the period to consider as starting point for the analysis
-                - the default is 1
+                - the default is None
+                    - will try to consider timeseries and estimate nyquist frequency from that
+                    - if that fails defaults to 1
             - period_stop
                 - float, optional
                 - the period to consider as stopping point for the analysis
                 - if n_retries is > 0 will be increased by n_retries*nperiods_retry
-                - the default is 100
+                - the default is None
+                    - will try to consider the length of the timeseries to analyze (i.e. maximum determinable period = length of dataseries)
+                    - if that fails will be set to 100
             - nperiods
                 - int, optional
                 - how many trial periods to consider during the analysis
@@ -169,7 +173,7 @@ class PDM:
 
     def __init__(self,
         #initial period determination
-        period_start:float=1, period_stop:float=None, nperiods:int=100,
+        period_start:float=None, period_stop:float=None, nperiods:int=100,
         trial_periods:np.ndarray=None,
         npoints_per_interval:int=None,
         #refining found period
@@ -192,9 +196,11 @@ class PDM:
 
         
         self.period_start = period_start
-        self.period_stop  = period_stop 
+        self.period_stop  = period_stop
         self.nperiods     = nperiods
         self.trial_periods = trial_periods
+
+
 
         self.npoints_per_interval = npoints_per_interval
         self.n_retries = n_retries
@@ -213,7 +219,10 @@ class PDM:
         else:
             self.binning_kwargs = binning_kwargs
 
-
+        #adopt period_start and period_stop if trial_periods were passed
+        if self.trial_periods is not None:
+            self.period_start = np.nanmin(self.trial_periods)
+            self.period_stop  = np.nanmax(self.trial_periods)
         
         pass
 
@@ -243,10 +252,12 @@ class PDM:
     def generate_period_grid(self,
         period_start:float=None, period_stop:float=None, nperiods:float=None,
         x:np.ndarray=None,
-        n_nyq:int=5,
+        n_nyq:int=1,
         ):
         """
             - method to generate a period grid
+            - inspired by astropy.timeseries.LombScargle().autofrequency()
+                - https://docs.astropy.org/en/stable/api/astropy.timeseries.LombScargle.html
 
             Parameters
             ----------
@@ -259,7 +270,7 @@ class PDM:
                     - float, optional
                     - the period to consider as stopping point for the analysis
                     - the default is None
-                        - will default to self.period_stop if "x" is also None
+                        - will default to 100 if "x" is also None
                         - otherwise will consider x to generate period_stop
                 - nperiods
                     - int, optional
@@ -296,17 +307,22 @@ class PDM:
                 #convert to nyquist period
                 period_start = 1/(n_nyq*nyq_bar)
             else:
-                period_start = self.period_start
+                period_start = 1
         if nperiods is None: nperiods = self.nperiods
         if period_stop is None:
             if x is not None:
                 #maximum determinable period (signal has to be observed at least twice)
-                period_stop = 2*(np.nanmax(x) - np.nanmin(x))
+                period_stop = (np.nanmax(x) - np.nanmin(x))
             else:
-                period_stop = self.period_stop
+                period_stop = 100
 
 
         trial_periods = np.linspace(period_start, period_stop, nperiods)
+
+        #update period_start, period_stop and trial_periods
+        self.period_start = period_start
+        self.period_stop = period_stop
+        self.trial_periods = trial_periods
 
         return trial_periods
 

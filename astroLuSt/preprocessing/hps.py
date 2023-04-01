@@ -50,6 +50,11 @@ class HPS:
                     - period_start
                     - period_stop
                     - nperiods
+            - n_nyq
+                - float, optional
+                - nyquist factor
+                - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
+                - the default is 1                 
             - verbose
                 - int, optional
                 - verbosity level
@@ -161,8 +166,9 @@ class HPS:
     """
 
     def __init__(self,
-        period_start:float=0.1, period_stop:float=None, nperiods:int=100,        
+        period_start:float=None, period_stop:float=None, nperiods:int=100,        
         trial_periods:np.ndarray=None,
+        n_nyq:float=5,
         verbose:int=0,
         pdm_kwargs:dict=None, ls_kwargs:dict=None, lsfit_kwargs:dict=None
         ) -> None:
@@ -171,6 +177,7 @@ class HPS:
         self.period_stop = period_stop
         self.nperiods = nperiods
         self.trial_periods = trial_periods
+        self.n_nyq = n_nyq
 
         self.verbose = verbose
 
@@ -189,7 +196,6 @@ class HPS:
         else:
             self.lsfit_kwargs = lsfit_kwargs
         
-
         pass
 
     def __repr__(self) -> str:
@@ -204,64 +210,97 @@ class HPS:
         )
 
 
-    def generate_period_grid(self,
+    def generate_period_frequency_grid(self,
         period_start:float=None, period_stop:float=None, nperiods:float=None,
+        n_nyq:int=None,
         x:np.ndarray=None,
-        n_nyq:int=5,
-        autofrequency_kwargs:dict=None
         ):
         """
- 
+            - method to generate a grid of test-periods and test-frequencies
+            - inspired by astropy.timeseries.LombScargle().autofrequency()
+                - https://docs.astropy.org/en/stable/api/astropy.timeseries.LombScargle.html
+
+            Parameters
+            ----------
+                - period_start
+                    - float, optional
+                    - the period to consider as starting point for the analysis
+                    - the default is None
+                        - will default to self.period_start
+                - period_stop
+                    - float, optional
+                    - the period to consider as stopping point for the analysis
+                    - the default is None
+                        - will default to 100 if "x" is also None
+                        - otherwise will consider x to generate period_stop
+                - nperiods
+                    - int, optional
+                    - how many trial periods to consider during the analysis
+                    - the default is None
+                        - will default to self.nperiods
+                - n_nyq
+                    - float, optional
+                    - nyquist factor
+                    - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
+                    - the default is None
+                        - will default to self.n_nyq
+                - x
+                    - np.ndarray, optional
+                    - input array
+                    - x-values of the data-series
+                    - the default is None
+                        - if set and period_stop is None, will use max(x)-min(x) as 'period_stop'
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
         """
 
         #overwrite defaults if requested
         if period_start is None: period_start = self.period_start
         if period_stop is None: period_stop = self.period_stop
         if nperiods is None: nperiods = self.nperiods
-        if autofrequency_kwargs is None:
-            autofrequency_kwargs = {'samples_per_peak':1}
-
-        print(period_start, period_stop, nperiods)
+        if n_nyq is None: n_nyq = self.n_nyq
 
         grid_gen = PDM()
-        test_periods_pdm = grid_gen.generate_period_grid(
-            period_start, period_stop, nperiods,
-            x,
-            n_nyq
-        )
-        test_frequencies_ls = grid_gen.generate_period_grid(1/test_periods_pdm.max(), 1/test_periods_pdm.min(), nperiods, None)
-        print(test_periods_pdm.min(), test_periods_pdm.max())
-        print(test_frequencies_ls.max(), test_frequencies_ls.min())
-        test_f_ls = LombScargle(x, np.ones_like(x)).autofrequency(
-            nyquist_factor=n_nyq, minimum_frequency=None, maximum_frequency=None,
-            **autofrequency_kwargs
-        )
+        trial_periods_pdm    = grid_gen.generate_period_grid(period_start, period_stop, nperiods, x, n_nyq)
+        trial_frequencies_ls = grid_gen.generate_period_grid(1/trial_periods_pdm.max(), 1/trial_periods_pdm.min(), nperiods, x=None)
 
-        # test_periods_pdm    = np.linspace(0.1, 2, 100)
-        # test_frequencies_ls = np.linspace(1/2, 1/0.1, 100)
+        trial_periods     = np.sort(np.append(trial_periods_pdm, 1/trial_frequencies_ls))
+        trial_frequencies = np.sort(np.append(1/trial_periods_pdm, trial_frequencies_ls))
 
-        test_periods     = np.sort(np.append(test_periods_pdm, 1/test_frequencies_ls))
-        test_frequencies = np.sort(np.append(1/test_periods_pdm, test_frequencies_ls))
+        # tp = np.linspace(0.1, 2, 100)
+        # tf = np.linspace(1/0.1, 1/2, 100)
+        # tps = np.sort(np.append(tp, 1/tf))
+        # tfs = np.sort(np.append(1/tp, tf))
 
-        # fig = plt.figure()
-        # ax1 = fig.add_subplot(111)
-        # ax2 = ax1.twiny()
-        # # ax1.scatter(test_periods_pdm, test_frequencies_ls, alpha=0.2)
-        # # ax1.scatter(test_periods, test_frequencies, alpha=0.2)
-        # # # plt.scatter(tps, tfs, alpha=0.2)
-        # # ax1.hist(test_periods_pdm,    histtype='step', color='b',      linewidth=3, linestyle='-',  bins=20, label='Period')
-        # # ax2.hist(1/test_frequencies_ls, histtype='step', color='orange', linewidth=3, linestyle='-.', bins=20, label='Frequency')
-        # ax1.hist(test_periods,        histtype='step', color='b',      linewidth=3, linestyle='-',  bins=40, label='Period')
-        # ax2.hist(test_frequencies,    histtype='step', color='orange', linewidth=3, bins=40, label='Frequency')
-        # # plt.hist(tps,     histtype='step')
-        # # plt.hist(tfs, histtype='step')
+        if self.verbose > 2:
+            c_p = 'tab:blue'
+            c_f = 'tab:orange'
 
-        # ax2.invert_xaxis()
-        # ax1.set_xlabel('Period')
-        # ax2.set_xlabel('Frequency (INVERTED AXIS)')
-        # fig.legend()
+            fig = plt.figure()
+            fig.suptitle('Generated test periods and frequencies')
+            ax1 = fig.add_subplot(111)
+            ax2 = ax1.twiny()
+            # # plt.scatter(trial_periods, trial_frequencies, alpha=0.2)
+            # # plt.scatter(tps, tfs, alpha=0.2)
+            ax1.hist(trial_periods,     histtype='bar',  color=c_p, bins=40, linewidth=2, linestyle='-', alpha=0.8)# label='Period')
+            ax2.hist(trial_frequencies, histtype='step', color=c_f, bins=40, linewidth=2, linestyle='-', alpha=1.0)# label='Frequency')
+            # plt.hist(tps,     histtype='step')
+            # plt.hist(tfs, histtype='step')
+            ax1.set_xlabel('Period', color=c_p)
+            ax2.set_xlabel('Frequency', color=c_f)
+            ax1.set_ylabel('Counts')
+            # ax1.tick_params('y', color=c_p)
+            ax1.set_xticklabels(ax1.get_xticklabels(), color=c_p)
+            ax2.set_xticklabels(ax2.get_xticklabels(), color=c_f)
+            plt.show()
 
-        return 
+        return trial_periods, trial_frequencies
 
     def run_pdm(self,
         x:np.ndarray, y:np.ndarray,
@@ -300,6 +339,8 @@ class HPS:
         """
         
         if trial_periods is None: trial_periods = self.trial_periods
+            # trial_periods, trial_frequencies = self.generate_period_grid(
+                # self.period_start, self.period_stop, self.nperiods, self.n_nyq, x)
 
         self.pdm = PDM(
             self.period_start, self.period_stop, self.nperiods,
@@ -477,6 +518,11 @@ class HPS:
 
 
         if verbose is None: verbose = self.verbose
+
+        if trial_periods is None:
+            trial_periods, trial_frequencies = self.generate_period_frequency_grid(x=x)
+            self.trial_periods = trial_periods
+
 
         #execute pdm
         self.thetas_pdm, trial_periods_pdm = self.run_pdm(x, y, trial_periods)
