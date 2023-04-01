@@ -206,8 +206,9 @@ class HPS:
 
     def generate_period_grid(self,
         period_start:float=None, period_stop:float=None, nperiods:float=None,
-        n_nyq:int=5,
         x:np.ndarray=None,
+        n_nyq:int=5,
+        autofrequency_kwargs:dict=None
         ):
         """
  
@@ -217,31 +218,48 @@ class HPS:
         if period_start is None: period_start = self.period_start
         if period_stop is None: period_stop = self.period_stop
         if nperiods is None: nperiods = self.nperiods
+        if autofrequency_kwargs is None:
+            autofrequency_kwargs = {'samples_per_peak':1}
+
+        print(period_start, period_stop, nperiods)
 
         grid_gen = PDM()
-        test_periods_pdm    = grid_gen.generate_period_grid(period_start, period_stop, nperiods, x, n_nyq)
+        test_periods_pdm = grid_gen.generate_period_grid(
+            period_start, period_stop, nperiods,
+            x,
+            n_nyq
+        )
         test_frequencies_ls = grid_gen.generate_period_grid(1/test_periods_pdm.max(), 1/test_periods_pdm.min(), nperiods, None)
+        print(test_periods_pdm.min(), test_periods_pdm.max())
+        print(test_frequencies_ls.max(), test_frequencies_ls.min())
+        test_f_ls = LombScargle(x, np.ones_like(x)).autofrequency(
+            nyquist_factor=n_nyq, minimum_frequency=None, maximum_frequency=None,
+            **autofrequency_kwargs
+        )
+
+        # test_periods_pdm    = np.linspace(0.1, 2, 100)
+        # test_frequencies_ls = np.linspace(1/2, 1/0.1, 100)
 
         test_periods     = np.sort(np.append(test_periods_pdm, 1/test_frequencies_ls))
         test_frequencies = np.sort(np.append(1/test_periods_pdm, test_frequencies_ls))
 
-        # tp = np.linspace(0.1, 2, 100)
-        # tf = np.linspace(1/0.1, 1/2, 100)
-        # tps = np.sort(np.append(tp, 1/tf))
-        # tfs = np.sort(np.append(1/tp, tf))
+        # fig = plt.figure()
+        # ax1 = fig.add_subplot(111)
+        # ax2 = ax1.twiny()
+        # # ax1.scatter(test_periods_pdm, test_frequencies_ls, alpha=0.2)
+        # # ax1.scatter(test_periods, test_frequencies, alpha=0.2)
+        # # # plt.scatter(tps, tfs, alpha=0.2)
+        # # ax1.hist(test_periods_pdm,    histtype='step', color='b',      linewidth=3, linestyle='-',  bins=20, label='Period')
+        # # ax2.hist(1/test_frequencies_ls, histtype='step', color='orange', linewidth=3, linestyle='-.', bins=20, label='Frequency')
+        # ax1.hist(test_periods,        histtype='step', color='b',      linewidth=3, linestyle='-',  bins=40, label='Period')
+        # ax2.hist(test_frequencies,    histtype='step', color='orange', linewidth=3, bins=40, label='Frequency')
+        # # plt.hist(tps,     histtype='step')
+        # # plt.hist(tfs, histtype='step')
 
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax2 = ax1.twiny()
-        # # plt.scatter(test_periods, test_frequencies, alpha=0.2)
-        # # plt.scatter(tps, tfs, alpha=0.2)
-        ax1.hist(test_periods,     histtype='step', color='b',      linewidth=9, bins=40, label='Period')
-        ax2.hist(test_frequencies, histtype='step', color='orange', linewidth=3, bins=40, label='Frequency')
-        # plt.hist(tps,     histtype='step')
-        # plt.hist(tfs, histtype='step')
-        ax1.set_xlabel('Period')
-        ax2.set_xlabel('Frequency')
-        fig.legend()
+        # ax2.invert_xaxis()
+        # ax1.set_xlabel('Period')
+        # ax2.set_xlabel('Frequency (INVERTED AXIS)')
+        # fig.legend()
 
         return 
 

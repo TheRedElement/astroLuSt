@@ -275,7 +275,7 @@ class PDM:
                 - n_nyq
                     - float, optional
                     - nyquist factor
-                    - the nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
+                    - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
                     - the default is 5
             
             Raises
@@ -292,7 +292,8 @@ class PDM:
         if period_start is None:
             if x is not None:
                 #get average nyquist frequency
-                nyq_bar = 0.5*len(x) / (np.nanmax(x) - np.nanmin(x))
+                nyq_bar = 0.5*(len(x) / (np.nanmax(x) - np.nanmin(x)))
+                #convert to nyquist period
                 period_start = 1/(n_nyq*nyq_bar)
             else:
                 period_start = self.period_start
@@ -300,7 +301,7 @@ class PDM:
         if period_stop is None:
             if x is not None:
                 #maximum determinable period (signal has to be observed at least twice)
-                period_stop = 0.5*(np.nanmax(x) - np.nanmin(x))
+                period_stop = 2*(np.nanmax(x) - np.nanmin(x))
             else:
                 period_stop = self.period_stop
 
@@ -366,13 +367,6 @@ class PDM:
         )
         mean_x, mean_y, std_y = binning.fit_transform(folded, y)
         n_per_bin = binning.n_per_bin
-        # mean_x, mean_y, std_y, bins, n_per_bin, fig, axs = \
-        #     bin_curve(
-        #         folded, y,
-        #         nintervals=self.nintervals,
-        #         ddof=1,
-        #         verbose=0
-        #     )
         
         #get variance for each point
         var_y_interp  = np.interp(x, mean_x, std_y**2)
