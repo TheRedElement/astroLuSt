@@ -374,8 +374,6 @@ class HPS:
         """
         
         if trial_periods is None: trial_periods = self.trial_periods
-            # trial_periods, trial_frequencies = self.generate_period_grid(
-                # self.period_start, self.period_stop, self.nperiods, self.n_nyq, x)
 
         self.pdm = PDM(
             period_start=self.period_start, period_stop=self.period_stop, nperiods=self.nperiods,
@@ -385,17 +383,11 @@ class HPS:
 
         self.best_period_pdm, self.errestimate_pdm, self.best_theta_pdm = self.pdm.fit_predict(x, y)
 
-        #update pdm trial periods
-        self.trial_periods_pdm = self.pdm.trial_periods
-
-        #update self.trial_periods to be aligned with pdm (in case n_retries in pdm_kwargs > 0)
-        self.trial_periods = self.pdm.trial_periods
-
         return self.pdm.thetas, self.pdm.trial_periods
 
     def run_lombscargle(self,
         x:np.ndarray, y:np.ndarray,
-        trial_periods:np.ndarray=None,
+        trial_frequencies:np.ndarray=None,
         ):
         """
             - method for executing the Lomb Scargle
@@ -429,30 +421,22 @@ class HPS:
             --------        
         """
 
-        if trial_periods is None: trial_periods = self.trial_periods
+        if trial_frequencies is None: trial_frequencies = self.trial_frequencies
 
         self.ls = LombScargle(x, y, **self.ls_kwargs)
 
-        if trial_periods is None:
-            frequencies_ls, powers_ls = self.ls.autopower(
-                minimum_frequency=1/self.period_stop, maximum_frequency=1/self.period_start,
-                **self.lsfit_kwargs,
-            )
-
-            #update pdm trial periods 
-            self.trial_periods_ls = 1/frequencies_ls
-
-            #update self.trial_periods to be aligned with lomb-scargle
-            self.trial_periods    = 1/frequencies_ls
-        else:
-            powers_ls = self.ls.power(1/self.trial_periods)
-            
-            #update pdm trial periods 
-            self.trial_periods_ls = self.trial_periods
-
-        self.best_period_ls = self.trial_periods_ls[np.nanargmax(powers_ls)]
+        #get powers
+        powers_ls = self.ls.power(trial_frequencies)
+        
+        #sortupdate self.trial_frequencies to be comparable with thetas_pdm
+        powers_ls = powers_ls[np.argsort(1/trial_frequencies)]
+        trial_frequencies = trial_frequencies[np.argsort(1/trial_frequencies)]
+        
+        #sort frequencies to be comparable
+        self.best_frequency_ls = trial_frequencies[np.nanargmax(powers_ls)]
         self.best_power_ls  = np.nanmax(powers_ls)
-        return powers_ls, self.trial_periods_ls
+
+        return powers_ls, trial_frequencies
 
     def get_psi(self,
         thetas_pdm:np.ndarray, powers_ls:np.ndarray,
@@ -490,21 +474,14 @@ class HPS:
             --------
         """
         
-        if self.trial_periods is None:
-            trial_periods_hps = self.trial_periods_pdm
-        elif self.trial_periods_pdm is None:
-            trial_periods_hps = self.trial_periods_ls
-        else:
-            trial_periods_hps = self.trial_periods
-
         #scaler to 'squeeze' 1-theta and lomb-scargle powers into range(0,1) 
         scaler = MinMaxScaler(feature_range=(0,1))
 
         self.thetas_hps = scaler.fit_transform((1-thetas_pdm).reshape(-1,1)).reshape(-1)
         self.powers_hps = scaler.fit_transform(powers_ls.reshape(-1,1)).reshape(-1)
 
+        #calculate psi
         self.psis_hps = self.powers_hps * self.thetas_hps
-        self.trial_periods_hps = trial_periods_hps
 
         return
 
@@ -557,23 +534,25 @@ class HPS:
         if trial_periods is None:
             trial_periods, trial_frequencies = self.generate_period_frequency_grid(x=x)
             self.trial_periods = trial_periods
+            self.trial_frequencies = trial_frequencies
 
 
         #execute pdm
         self.thetas_pdm, trial_periods_pdm = self.run_pdm(x, y, trial_periods)
 
         #execute lomb-scargle
-        # self.powers_ls, trial_periods_ls = self.run_lombscargle(x, y, trial_periods)
-        self.powers_ls, trial_periods_ls = self.run_lombscargle(x, y, trial_frequencies)
+        self.powers_ls, trial_frequencies_ls = self.run_lombscargle(x, y, trial_frequencies)
 
         #calculate psi
         self.get_psi(self.thetas_pdm, self.powers_ls)
 
-        best_period = self.trial_periods_hps[np.nanargmax(self.psis_hps)]
+        best_period = self.trial_periods[np.nanargmax(self.psis_hps)]
         best_psi = np.nanmax(self.psis_hps)
 
         self.best_period = best_period
         self.best_psi = best_psi
+        self.trial_periods = trial_periods_pdm
+        self.trial_frequencies = trial_frequencies_ls
 
         return
     
@@ -665,9 +644,9 @@ class HPS:
         ax1.patch.set_visible(False)
         ax2.patch.set_visible(False)
 
-        l_hps,  = ax1.plot(self.trial_periods_hps,  self.psis_hps,   color=c_hps, zorder=3, **plot_kwargs, label=r'HPS')
-        l_pdm,  = ax2.plot(self.trial_periods_pdm, self.thetas_hps, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM')
-        l_ls,   = ax3.plot(self.trial_periods_ls,  self.powers_hps, color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle')
+        l_hps,  = ax1.plot(self.trial_periods,  self.psis_hps,   color=c_hps, zorder=3, **plot_kwargs, label=r'HPS')
+        l_pdm,  = ax2.plot(self.trial_periods, self.thetas_hps, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM')
+        l_ls,   = ax3.plot(1/self.trial_frequencies,  self.powers_hps, color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle')
         
         ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period))
 
@@ -680,7 +659,8 @@ class HPS:
         ax1.legend(lines, [l.get_label() for l in lines])
 
         
-        # ax1.spines['right'].set_color(l_hps.get_color())
+        ax1.spines['right'].set_color(c_pdm)
+        ax1.spines['left'].set_color(c_hps)
         ax2.spines['right'].set_color(c_pdm)
         ax3.spines['right'].set_color(c_ls)
 
