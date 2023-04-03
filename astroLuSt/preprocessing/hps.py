@@ -17,6 +17,7 @@ from astropy.timeseries import LombScargle
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+import warnings
 
 
 from astroLuSt.preprocessing.pdm import PDM
@@ -204,6 +205,11 @@ class HPS:
         else:
             self.lsfit_kwargs = lsfit_kwargs
 
+        if 'n_retries' in self.pdm_kwargs.keys():
+            if self.pdm_kwargs['n_retries'] > 0:
+                self.pdm_kwargs['n_retries'] = 0
+                warnings.warn(f'Currently only n_retries == 0 works properly! Will ignore provided value for "n_retries" ({self.pdm_kwargs["n_retries"]})!')
+
         pass
 
     def __repr__(self) -> str:
@@ -281,7 +287,10 @@ class HPS:
         #overwrite defaults if requested
         if period_start is None: period_start = self.period_start
         if period_stop is None: period_stop = self.period_stop
-        if nperiods is None: nperiods = self.nperiods
+        if nperiods is None:
+            nperiods = self.nperiods//2 #divide by 2 because two grids will be generated and combined
+        else:
+            nperiods = nperiods//2      #divide by 2 because two grids will be generated and combined
         if n_nyq is None: n_nyq = self.n_nyq
         if n0 is None: n0 = self.n0
 
@@ -306,23 +315,25 @@ class HPS:
             fig.suptitle('Generated test periods and frequencies')
             ax1 = fig.add_subplot(111)
             ax2 = ax1.twiny()
-            # # plt.scatter(trial_periods, trial_frequencies, alpha=0.2)
-            # # plt.scatter(tps, tfs, alpha=0.2)
-            ax1.hist(trial_periods,     histtype='bar',  color=c_p, bins=40, linewidth=2, linestyle='-', alpha=0.8)# label='Period')
-            ax2.hist(trial_frequencies, histtype='step', color=c_f, bins=40, linewidth=2, linestyle='-', alpha=1.0)# label='Frequency')
-            # plt.hist(tps,     histtype='step')
-            # plt.hist(tfs, histtype='step')
+            ax1.hist(trial_periods,     histtype='bar',  color=c_p, bins='sqrt', linewidth=2, linestyle='-', alpha=0.8)# label='Period')
+            ax2.hist(trial_frequencies, histtype='step', color=c_f, bins='sqrt', linewidth=2, linestyle='-', alpha=1.0)# label='Frequency')
+            # ax1.scatter(trial_periods, trial_frequencies, alpha=0.2)
+            # ax1.scatter(tps, tfs, alpha=0.2)
+            # ax1.hist(tps,     histtype='step')
+            # ax2.hist(tfs, histtype='step')
             ax1.set_xlabel('Period', color=c_p)
             ax2.set_xlabel('Frequency', color=c_f)
             ax1.set_ylabel('Counts')
-            # ax1.tick_params('y', color=c_p)
             ax1.set_xticklabels(ax1.get_xticklabels(), color=c_p)
             ax2.set_xticklabels(ax2.get_xticklabels(), color=c_f)
+
+            ax2.invert_xaxis()
+
             plt.show()
 
 
-        trial_periods = trial_periods_pdm
-        trial_frequencies = trial_frequencies_ls
+        # trial_periods = trial_periods_pdm
+        # trial_frequencies = trial_frequencies_ls
 
         return trial_periods, trial_frequencies
 
@@ -367,14 +378,14 @@ class HPS:
                 # self.period_start, self.period_stop, self.nperiods, self.n_nyq, x)
 
         self.pdm = PDM(
-            self.period_start, self.period_stop, self.nperiods,
-            trial_periods,
+            period_start=self.period_start, period_stop=self.period_stop, nperiods=self.nperiods,
+            trial_periods=trial_periods,
             **self.pdm_kwargs
         )
 
         self.best_period_pdm, self.errestimate_pdm, self.best_theta_pdm = self.pdm.fit_predict(x, y)
 
-        #update pdm trial periods 
+        #update pdm trial periods
         self.trial_periods_pdm = self.pdm.trial_periods
 
         #update self.trial_periods to be aligned with pdm (in case n_retries in pdm_kwargs > 0)
@@ -552,7 +563,8 @@ class HPS:
         self.thetas_pdm, trial_periods_pdm = self.run_pdm(x, y, trial_periods)
 
         #execute lomb-scargle
-        self.powers_ls, trial_periods_ls = self.run_lombscargle(x, y, trial_periods)
+        # self.powers_ls, trial_periods_ls = self.run_lombscargle(x, y, trial_periods)
+        self.powers_ls, trial_periods_ls = self.run_lombscargle(x, y, trial_frequencies)
 
         #calculate psi
         self.get_psi(self.thetas_pdm, self.powers_ls)
@@ -653,7 +665,7 @@ class HPS:
         ax1.patch.set_visible(False)
         ax2.patch.set_visible(False)
 
-        l_hps, = ax1.plot(self.trial_periods_hps,  self.psis_hps,   color=c_hps, zorder=3, **plot_kwargs, label=r'HPS')
+        l_hps,  = ax1.plot(self.trial_periods_hps,  self.psis_hps,   color=c_hps, zorder=3, **plot_kwargs, label=r'HPS')
         l_pdm,  = ax2.plot(self.trial_periods_pdm, self.thetas_hps, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM')
         l_ls,   = ax3.plot(self.trial_periods_ls,  self.powers_hps, color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle')
         

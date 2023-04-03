@@ -208,7 +208,6 @@ class PDM:
         binning_kwargs:dict=None,   
         ) -> None:
 
-        
         self.period_start   = period_start
         self.period_stop    = period_stop
         self.nperiods       = nperiods
@@ -357,11 +356,9 @@ class PDM:
             if self.nperiods is not None:
                 nperiods = self.nperiods
             else:
-                nperiods = 100
                 # nperiods = int(n0*(np.nanmax(x)-np.nanmin(x))*period_stop)
                 nperiods = int(n0*(np.nanmax(x)-np.nanmin(x))*1/period_start)
 
-        print('PDM: ', nperiods, period_start, period_stop, n0, n_nyq)
         trial_periods = np.linspace(period_start, period_stop, nperiods)
 
         #update period_start, period_stop and trial_periods
