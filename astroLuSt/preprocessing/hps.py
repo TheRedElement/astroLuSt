@@ -308,11 +308,6 @@ class HPS:
         trial_frequencies = np.sort(np.append(1/trial_periods_pdm, trial_frequencies_ls))
 
 
-        # tp = np.linspace(0.1, 2, 100)
-        # tf = np.linspace(1/0.1, 1/2, 100)
-        # tps = np.sort(np.append(tp, 1/tf))
-        # tfs = np.sort(np.append(1/tp, tf))
-
         if self.verbose > 2:
             c_p = 'tab:blue'
             c_f = 'tab:orange'
@@ -323,13 +318,11 @@ class HPS:
             ax2 = ax1.twiny()
             ax1.hist(trial_periods,     histtype='bar',  color=c_p, bins='sqrt', linewidth=2, linestyle='-', alpha=0.8)# label='Period')
             ax2.hist(trial_frequencies, histtype='step', color=c_f, bins='sqrt', linewidth=2, linestyle='-', alpha=1.0)# label='Frequency')
-            # ax1.scatter(trial_periods, trial_frequencies, alpha=0.2)
-            # ax1.scatter(tps, tfs, alpha=0.2)
-            # ax1.hist(tps,     histtype='step')
-            # ax2.hist(tfs, histtype='step')
             ax1.set_xlabel('Period', color=c_p)
             ax2.set_xlabel('Frequency', color=c_f)
             ax1.set_ylabel('Counts')
+            ax1.set_xticks(ax1.get_xticks())
+            ax2.set_xticks(ax2.get_xticks())
             ax1.set_xticklabels(ax1.get_xticklabels(), color=c_p)
             ax2.set_xticklabels(ax2.get_xticklabels(), color=c_f)
 
