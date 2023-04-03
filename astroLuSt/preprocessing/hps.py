@@ -82,9 +82,9 @@ class HPS:
             - best_period
                 - float
                 - best period according to the metric of HPS
-            - best_period_ls
+            - best_frequency_ls
                 - float
-                - best period according to Lomb-Scargle
+                - best frequency according to Lomb-Scargle
             - best_period_pdm
                 - float
                 - best period according to PDM
@@ -120,15 +120,16 @@ class HPS:
                 - calculated by
                     - evaluating 1-thetas_pdm 
                     - squeezing result into range(0,1)
-            - trial_periods_ls
+            - trial_frequencies
                 - np.ndarray
-                - final trial periods used for the execution of Lomb Scargle
-            - trial_periods_pdm
-                - np.ndarray
-                - final trial periods used for the execution of PDM
-            - trial_periods_hps
+                - trial frequencies used for execution of HPS algorithm
+                    - relevant in execution of LombScargle
+                - trial_frequencies = 1/trial_periods
+            - trial_periods
                 - np.ndarray
                 - final trial periods used for the execution of HPS algorithm
+                    - relevant in execution of PDM
+                - trial_periods = 1/trial_frequencies
             - pdm
                 - instance of PDM class
                 - contains all information of the pdm fit
@@ -218,8 +219,10 @@ class HPS:
             f'HPS(\n'
             f'    period_start={self.period_start}, period_stop={self.period_stop}, nperiods={self.nperiods},\n'
             f'    trial_periods={self.trial_periods},\n'
+            f'    n_nyq={self.n_nyq},\n'
+            f'    n0={self.n0},\n'
             f'    verbose={self.verbose},\n'
-            f'    pdm_kwargs={self.pdm_kwargs},\n'
+            f'    pdm_kwargs={self.pdm_kwargs}, ls_kwargs={self.ls_kwargs}, lsfit_kwargs={self.lsfit_kwargs}\n'
             f')'
         )
 
