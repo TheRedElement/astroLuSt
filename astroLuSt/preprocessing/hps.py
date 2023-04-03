@@ -291,7 +291,10 @@ class HPS:
         if period_start is None: period_start = self.period_start
         if period_stop is None: period_stop = self.period_stop
         if nperiods is None:
-            nperiods = self.nperiods//2 #divide by 2 because two grids will be generated and combined
+            if self.nperiods is not None:
+                nperiods = self.nperiods//2 #divide by 2 because two grids will be generated and combined
+            else:
+                nperiods = self.nperiods    #if nperiods not provided, infer them based on the dataseries in grid_gen.generate_period_grid()
         else:
             nperiods = nperiods//2      #divide by 2 because two grids will be generated and combined
         if n_nyq is None: n_nyq = self.n_nyq
