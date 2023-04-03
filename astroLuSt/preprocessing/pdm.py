@@ -594,9 +594,6 @@ class PDM:
                             print(f'INFO: Broke loop after retry #{retry} because best theta retry ({retry_best_theta:.3f}) > current best theta ({theta_tolerance:.3f})')
                         break
                 
-                if self.n_retries < 1:
-                    self.theta_tolerance = 0
-                
 
                 #append results to global results
                 self.trial_periods = np.append(self.trial_periods, retry_trial_periods)
@@ -605,6 +602,10 @@ class PDM:
             else:
                 pass
 
+        if self.n_retries < 1:
+            #set theta_tolerance to 0 if no retry-iteration was executed
+            self.theta_tolerance = 0
+            
         #calculated desired parameters
         if   self.sort_output_by   == 'periods':   sortidx = np.argsort(self.trial_periods)
         elif self.sort_output_by   == 'thetas':    sortidx = np.argsort(self.thetas)
