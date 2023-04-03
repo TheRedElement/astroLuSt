@@ -300,7 +300,7 @@ class HPS:
         if n_nyq is None: n_nyq = self.n_nyq
         if n0 is None: n0 = self.n0
 
-        grid_gen = PDM()
+        grid_gen = PDM(verbose=self.verbose)
         trial_periods_pdm    = grid_gen.generate_period_grid(period_start, period_stop, nperiods, x=x, n_nyq=n_nyq, n0=n0)
         trial_frequencies_ls = grid_gen.generate_period_grid(1/trial_periods_pdm.max(), 1/trial_periods_pdm.min(), nperiods=trial_periods_pdm.size, x=None)
 

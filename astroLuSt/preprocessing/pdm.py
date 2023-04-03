@@ -366,6 +366,12 @@ class PDM:
         self.period_stop = period_stop
         self.trial_periods = trial_periods
 
+        if self.verbose > 2:
+            print(f'INFO(PDM): generated grid:')
+            print(f'    start        = {period_start}')
+            print(f'    stop         = {period_stop}')
+            print(f'    trial points = {trial_periods.shape}')
+
         return trial_periods
 
     def get_theta_for_p(self,
