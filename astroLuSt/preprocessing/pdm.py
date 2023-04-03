@@ -273,8 +273,9 @@ class PDM:
         ):
         """
             - method to generate a period grid
-            - inspired by astropy.timeseries.LombScargle().autofrequency()
+            - inspired by astropy.timeseries.LombScargle().autofrequency() and VanderPlas (2018)
                 - https://docs.astropy.org/en/stable/api/astropy.timeseries.LombScargle.html
+                - https://ui.adsabs.harvard.edu/abs/2018ApJS..236...16V/abstract
 
             Parameters
             ----------
