@@ -34,6 +34,18 @@ class PDM:
                 - int, optional
                 - how many trial periods to consider during the analysis
                 - the default is 100
+            - n_nyq
+                - float, optional
+                - nyquist factor
+                - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
+                - the default is None
+                    - will default to 1
+            - n0
+                - int, optional
+                - oversampling factor
+                - i.e. number of datapoints to use on each peak in the periodogram
+                - the default is None
+                    - will default to 5
             - trial_periods
                 - np.ndarray, optional
                 - if passed will use the values in that array and ignore
@@ -173,7 +185,9 @@ class PDM:
 
     def __init__(self,
         #initial period determination
-        period_start:float=None, period_stop:float=None, nperiods:int=100,
+        period_start:float=None, period_stop:float=None, nperiods:int=None,
+        n_nyq:float=None,
+        n0:int=None,
         trial_periods:np.ndarray=None,
         npoints_per_interval:int=None,
         #refining found period
@@ -195,10 +209,12 @@ class PDM:
         ) -> None:
 
         
-        self.period_start = period_start
-        self.period_stop  = period_stop
-        self.nperiods     = nperiods
-        self.trial_periods = trial_periods
+        self.period_start   = period_start
+        self.period_stop    = period_stop
+        self.nperiods       = nperiods
+        self.trial_periods  = trial_periods
+        self.n_nyq          = n_nyq
+        self.n0             = n0
 
 
 
@@ -252,7 +268,8 @@ class PDM:
     def generate_period_grid(self,
         period_start:float=None, period_stop:float=None, nperiods:float=None,
         x:np.ndarray=None,
-        n_nyq:int=1,
+        n_nyq:int=None,
+        n0:int=None,
         ):
         """
             - method to generate a period grid
@@ -287,7 +304,16 @@ class PDM:
                     - float, optional
                     - nyquist factor
                     - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
-                    - the default is 5
+                    - the default is None
+                        - will default to self.n_nyq
+                        - if self.n_nyq is also None will default to 1
+                - n0
+                    - int, optional
+                    - oversampling factor
+                    - i.e. number of datapoints to use on each peak in the periodogram
+                    - the default is None
+                        - will default to self.n0
+                        - if self.n0 is also None will default to 5
             
             Raises
             ------
@@ -298,25 +324,43 @@ class PDM:
             Comments
             --------
         """
+
+        if n_nyq is None:
+            if self.n_nyq is not None:
+                n_nyq = self.n_nyq
+            else:
+                n_nyq = 1
+        if n0 is None:
+            if self.n0 is not None:
+                n0 = self.n0
+            else:
+                n0 = 5
+
         
         #overwrite defaults if requested
         if period_start is None:
             if x is not None:
                 #get average nyquist frequency
-                nyq_bar = 0.5*(len(x) / (np.nanmax(x) - np.nanmin(x)))
+                nyq_bar = 0.5*(x.size / (np.nanmax(x) - np.nanmin(x)))
                 #convert to nyquist period
                 period_start = 1/(n_nyq*nyq_bar)
             else:
                 period_start = 1
-        if nperiods is None: nperiods = self.nperiods
         if period_stop is None:
             if x is not None:
-                #maximum determinable period (signal has to be observed at least twice)
+                #maximum determinable period (signal has to be observed at least once)
                 period_stop = (np.nanmax(x) - np.nanmin(x))
             else:
                 period_stop = 100
+        if nperiods is None:
+            if self.nperiods is not None:
+                nperiods = self.nperiods
+            else:
+                nperiods = 100
+                # nperiods = int(n0*(np.nanmax(x)-np.nanmin(x))*period_stop)
+                nperiods = int(n0*(np.nanmax(x)-np.nanmin(x))*1/period_start)
 
-
+        print('PDM: ', nperiods, period_start, period_stop, n0, n_nyq)
         trial_periods = np.linspace(period_start, period_stop, nperiods)
 
         #update period_start, period_stop and trial_periods

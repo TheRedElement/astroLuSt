@@ -1,8 +1,8 @@
 
 #TODO: 
-#   - Generate trial periods (for PDM)
-#   - Generate trial frequencies (for LS)
-#   - combine into two arrays (one of P, one of f)
+#   -DONE Generate trial periods (for PDM)
+#   -DONE Generate trial frequencies (for LS)
+#   -DONE combine into two arrays (one of P, one of f)
 #   - Run LS on combined f
 #   - Run PDM on combined P
 #   - Generate trial periods for refinement of PDM
@@ -10,7 +10,6 @@
 #   - combine into two arrays (one for P, one for f)
 #   - Refine periods
 #   - repeat
-#TODO: generate_period_grid: add nyquist
 
 
 #%%imports
@@ -54,7 +53,14 @@ class HPS:
                 - float, optional
                 - nyquist factor
                 - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
-                - the default is 1                 
+                - the default is None
+                    - will default to 1
+            - n0
+                - int, optional
+                - oversampling factor
+                - i.e. number of datapoints to use on each peak in the periodogram
+                - the default is None
+                    - will default to 5                
             - verbose
                 - int, optional
                 - verbosity level
@@ -166,9 +172,10 @@ class HPS:
     """
 
     def __init__(self,
-        period_start:float=None, period_stop:float=None, nperiods:int=100,        
+        period_start:float=None, period_stop:float=None, nperiods:int=None,        
         trial_periods:np.ndarray=None,
-        n_nyq:float=5,
+        n_nyq:float=None,
+        n0:float=None,
         verbose:int=0,
         pdm_kwargs:dict=None, ls_kwargs:dict=None, lsfit_kwargs:dict=None
         ) -> None:
@@ -178,6 +185,7 @@ class HPS:
         self.nperiods = nperiods
         self.trial_periods = trial_periods
         self.n_nyq = n_nyq
+        self.n0 = n0
 
         self.verbose = verbose
 
@@ -195,7 +203,7 @@ class HPS:
             self.lsfit_kwargs = {}
         else:
             self.lsfit_kwargs = lsfit_kwargs
-        
+
         pass
 
     def __repr__(self) -> str:
@@ -212,7 +220,8 @@ class HPS:
 
     def generate_period_frequency_grid(self,
         period_start:float=None, period_stop:float=None, nperiods:float=None,
-        n_nyq:int=None,
+        n_nyq:float=None,
+        n0:int=None,
         x:np.ndarray=None,
         ):
         """
@@ -244,6 +253,13 @@ class HPS:
                     - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
                     - the default is None
                         - will default to self.n_nyq
+                - n0
+                    - int, optional
+                    - oversampling factor
+                    - i.e. number of datapoints to use on each peak in the periodogram
+                    - the default is None
+                        - will default to self.n0
+                        - if self.n0 is also None will default to 5                
                 - x
                     - np.ndarray, optional
                     - input array
@@ -265,13 +281,15 @@ class HPS:
         if period_stop is None: period_stop = self.period_stop
         if nperiods is None: nperiods = self.nperiods
         if n_nyq is None: n_nyq = self.n_nyq
+        if n0 is None: n0 = self.n0
 
         grid_gen = PDM()
-        trial_periods_pdm    = grid_gen.generate_period_grid(period_start, period_stop, nperiods, x, n_nyq)
-        trial_frequencies_ls = grid_gen.generate_period_grid(1/trial_periods_pdm.max(), 1/trial_periods_pdm.min(), nperiods, x=None)
+        trial_periods_pdm    = grid_gen.generate_period_grid(period_start, period_stop, nperiods, x=x, n_nyq=n_nyq, n0=n0)
+        trial_frequencies_ls = grid_gen.generate_period_grid(1/trial_periods_pdm.max(), 1/trial_periods_pdm.min(), nperiods=trial_periods_pdm.size, x=None)
 
         trial_periods     = np.sort(np.append(trial_periods_pdm, 1/trial_frequencies_ls))
         trial_frequencies = np.sort(np.append(1/trial_periods_pdm, trial_frequencies_ls))
+
 
         # tp = np.linspace(0.1, 2, 100)
         # tf = np.linspace(1/0.1, 1/2, 100)
@@ -299,6 +317,10 @@ class HPS:
             ax1.set_xticklabels(ax1.get_xticklabels(), color=c_p)
             ax2.set_xticklabels(ax2.get_xticklabels(), color=c_f)
             plt.show()
+
+
+        trial_periods = trial_periods_pdm
+        trial_frequencies = trial_frequencies_ls
 
         return trial_periods, trial_frequencies
 
