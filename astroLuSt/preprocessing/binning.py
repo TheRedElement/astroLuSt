@@ -366,7 +366,19 @@ class Binning:
 
             Returns
             -------
-
+                - x_binned
+                    - np.ndarray
+                    - binned values for input 'x'
+                    - has shape (1, nintervals)
+                - y_binned
+                    - np.ndarray
+                    - binned values for input 'y'
+                    - has shape (1, nintervals)
+                - y_std
+                    - np.ndarray
+                    - standard deviation of 'y' for each interval
+                    - characterizes the scattering of the input curve
+                    - has shape (1, nintervals)
             Comments
             --------
         """
@@ -390,6 +402,27 @@ class Binning:
                 - fit_kwargs
                     - dict, optional
                     - kwargs to pass to self.fit()
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - x_binned
+                    - np.ndarray
+                    - binned values for input 'x'
+                    - has shape (1, nintervals)
+                - y_binned
+                    - np.ndarray
+                    - binned values for input 'y'
+                    - has shape (1, nintervals)
+                - y_std
+                    - np.ndarray
+                    - standard deviation of 'y' for each interval
+                    - characterizes the scattering of the input curve
+                    - has shape (1, nintervals)
+             Comments
+             --------            
         """
 
         self.fit(
