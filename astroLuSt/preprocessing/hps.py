@@ -534,6 +534,10 @@ class HPS:
             trial_periods, trial_frequencies = self.generate_period_frequency_grid(x=x)
             self.trial_periods = trial_periods
             self.trial_frequencies = trial_frequencies
+        else:
+            trial_frequencies = 1/trial_periods
+            self.trial_periods = trial_periods
+            self.trial_frequencies = trial_frequencies
 
 
         #execute pdm
