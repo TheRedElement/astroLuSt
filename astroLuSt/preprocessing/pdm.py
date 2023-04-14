@@ -701,7 +701,7 @@ class PDM:
         ax1.set_ylabel(r"$\theta$")
         ax1.legend()
         ax2 = fig.add_subplot(212)
-        ax2.set_title("Resulting lightcurve")
+        ax2.set_title("Folded Input")
         ax2.plot(self.best_fold_x, self.best_fold_y, color="tab:blue", marker=".", linestyle="", label="Folded Input-Dataseries")
         ax2.tick_params("both")
         ax2.set_xlabel("x")
