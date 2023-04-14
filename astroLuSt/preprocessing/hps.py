@@ -192,9 +192,10 @@ class HPS:
         self.verbose = verbose
 
         if pdm_kwargs is None:
-            self.pdm_kwargs = {'n_retries':1, 'n_jobs':1}
+            self.pdm_kwargs = {'n_retries':0, 'n_jobs':1}
         else:
             self.pdm_kwargs = pdm_kwargs
+            self.pdm_kwargs['n_retries'] = 0    #set n_retries to 0 because it does not work yet
         
         if ls_kwargs is None:
             self.ls_kwargs = {}
