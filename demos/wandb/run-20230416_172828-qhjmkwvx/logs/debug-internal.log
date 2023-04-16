@@ -1,0 +1,899 @@
+2023-04-16 17:28:28,140 INFO    StreamThr :5040 [internal.py:wandb_internal():86] W&B internal server running at pid: 5040, started at: 2023-04-16 17:28:28.136401
+2023-04-16 17:28:28,141 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status
+2023-04-16 17:28:28,166 INFO    WriterThread:5040 [datastore.py:open_for_write():85] open: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\run-qhjmkwvx.wandb
+2023-04-16 17:28:28,169 DEBUG   SenderThread:5040 [sender.py:send():375] send: header
+2023-04-16 17:28:28,317 DEBUG   SenderThread:5040 [sender.py:send():375] send: run
+2023-04-16 17:28:28,550 INFO    SenderThread:5040 [dir_watcher.py:__init__():219] watching files in: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files
+2023-04-16 17:28:28,550 INFO    SenderThread:5040 [sender.py:_start_run_threads():1124] run started: qhjmkwvx with start time 1681680508.144446
+2023-04-16 17:28:28,550 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:28:28,550 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:28:28,550 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: check_version
+2023-04-16 17:28:28,556 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: check_version
+2023-04-16 17:28:28,655 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: run_start
+2023-04-16 17:28:28,677 DEBUG   HandlerThread:5040 [system_info.py:__init__():31] System info init
+2023-04-16 17:28:28,680 DEBUG   HandlerThread:5040 [system_info.py:__init__():46] System info init done
+2023-04-16 17:28:28,680 INFO    HandlerThread:5040 [system_monitor.py:start():181] Starting system monitor
+2023-04-16 17:28:28,681 INFO    SystemMonitor:5040 [system_monitor.py:_start():145] Starting system asset monitoring threads
+2023-04-16 17:28:28,681 INFO    HandlerThread:5040 [system_monitor.py:probe():201] Collecting system info
+2023-04-16 17:28:28,712 INFO    SystemMonitor:5040 [interfaces.py:start():190] Started cpu monitoring
+2023-04-16 17:28:28,731 DEBUG   HandlerThread:5040 [system_info.py:probe():195] Probing system
+2023-04-16 17:28:28,731 INFO    SystemMonitor:5040 [interfaces.py:start():190] Started disk monitoring
+2023-04-16 17:28:28,743 INFO    SystemMonitor:5040 [interfaces.py:start():190] Started memory monitoring
+2023-04-16 17:28:28,762 INFO    SystemMonitor:5040 [interfaces.py:start():190] Started network monitoring
+2023-04-16 17:28:28,781 DEBUG   HandlerThread:5040 [system_info.py:_probe_git():180] Probing git
+2023-04-16 17:28:29,063 DEBUG   HandlerThread:5040 [system_info.py:_probe_git():188] Probing git done
+2023-04-16 17:28:29,063 DEBUG   HandlerThread:5040 [system_info.py:probe():240] Probing system done
+2023-04-16 17:28:29,063 DEBUG   HandlerThread:5040 [system_monitor.py:probe():210] {'os': 'Windows-10-10.0.22621-SP0', 'python': '3.10.8', 'heartbeatAt': '2023-04-16T21:28:28.731867', 'startedAt': '2023-04-16T21:28:28.104569', 'docker': None, 'cuda': None, 'args': ('--ip=127.0.0.1', '--stdin=9003', '--control=9001', '--hb=9000', '--Session.signature_scheme="hmac-sha256"', '--Session.key=b"a10bb89e-dd02-4a96-b0f4-45462a8209c2"', '--shell=9002', '--transport="tcp"', '--iopub=9004', '--f=c:\\Users\\lukas\\AppData\\Roaming\\jupyter\\runtime\\kernel-v2-17976OMZYDcrjbXmo.json'), 'state': 'running', 'program': '<python with no main file>', 'git': {'remote': 'https://github.com/TheRedElement/astroLuSt.git', 'commit': 'f1874f966bdc23cea3ff11afe8fb19eb47bbacbb'}, 'email': 'lukas.steinwender99@gmail.com', 'root': 'C:/Users/lukas/Documents/GitHub/astroLuSt', 'host': 'LuSt_Lenovo', 'username': 'lukas', 'executable': 'c:\\Users\\lukas\\AppData\\Local\\Programs\\Python\\Python310\\venvs\\astrolust\\Scripts\\python.exe', 'cpu_count': 8, 'cpu_count_logical': 16, 'cpu_freq': {'current': 1801.0, 'min': 0.0, 'max': 1801.0}, 'cpu_freq_per_core': [{'current': 1801.0, 'min': 0.0, 'max': 1801.0}], 'disk': {'total': 474.71581649780273, 'used': 226.16135025024414}, 'memory': {'total': 15.349597930908203}}
+2023-04-16 17:28:29,063 INFO    HandlerThread:5040 [system_monitor.py:probe():211] Finished collecting system info
+2023-04-16 17:28:29,063 INFO    HandlerThread:5040 [system_monitor.py:probe():214] Publishing system info
+2023-04-16 17:28:29,063 DEBUG   HandlerThread:5040 [system_info.py:_save_pip():51] Saving list of pip packages installed into the current environment
+2023-04-16 17:28:29,063 DEBUG   HandlerThread:5040 [system_info.py:_save_pip():67] Saving pip packages done
+2023-04-16 17:28:29,071 INFO    HandlerThread:5040 [system_monitor.py:probe():216] Finished publishing system info
+2023-04-16 17:28:29,122 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:29,122 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-metadata.json with policy now
+2023-04-16 17:28:29,154 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: stop_status
+2023-04-16 17:28:29,154 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: stop_status
+2023-04-16 17:28:29,163 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: get_summary
+2023-04-16 17:28:29,290 DEBUG   SenderThread:5040 [sender.py:send():375] send: telemetry
+2023-04-16 17:28:29,290 DEBUG   SenderThread:5040 [sender.py:send():375] send: telemetry
+2023-04-16 17:28:29,292 DEBUG   SenderThread:5040 [sender.py:send():375] send: telemetry
+2023-04-16 17:28:29,292 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:29,292 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file model-best.h5 with policy live
+2023-04-16 17:28:29,535 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\tw0rgffn-wandb-metadata.json
+2023-04-16 17:28:29,551 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-metadata.json
+2023-04-16 17:28:29,551 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:28:29,551 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:29,560 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\requirements.txt
+2023-04-16 17:28:31,561 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:31,930 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:31,930 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\graph\graph_summary_8bed6e2ae18b5d8bf88f.graph.json with policy now
+2023-04-16 17:28:31,932 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:28:31,960 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:28:32,581 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:28:32,581 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:32,581 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\graph\graph_summary_8bed6e2ae18b5d8bf88f.graph.json
+2023-04-16 17:28:32,585 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\graph
+2023-04-16 17:28:32,585 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media
+2023-04-16 17:28:32,667 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ivtmaxr2-media/graph/graph_summary_8bed6e2ae18b5d8bf88f.graph.json
+2023-04-16 17:28:33,274 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:28:34,710 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:36,880 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:38,303 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:28:39,431 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:41,306 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:44,501 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: stop_status
+2023-04-16 17:28:44,502 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:28:44,510 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: stop_status
+2023-04-16 17:28:44,524 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:45,616 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:47,671 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:49,532 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:28:49,721 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:50,232 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:28:50,232 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:28:50,232 DEBUG   SenderThread:5040 [sender.py:send():375] send: history
+2023-04-16 17:28:50,232 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:28:50,232 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:28:50,732 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:28:51,747 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:53,770 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:54,896 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:28:54,912 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,912 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_4765a6a3323bab81763a.png with policy now
+2023-04-16 17:28:54,931 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,931 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_72363b408e0f318c0d2d.png with policy now
+2023-04-16 17:28:54,940 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,940 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_33bf13128fd13c23190f.png with policy now
+2023-04-16 17:28:54,950 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,950 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_d7e589381b51c3aee745.png with policy now
+2023-04-16 17:28:54,960 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,961 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_9c4ef669be5ea4172fac.png with policy now
+2023-04-16 17:28:54,970 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,970 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_1bc798f3d591d142dc45.png with policy now
+2023-04-16 17:28:54,976 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,976 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_69e11b8a1e79ae9a112c.png with policy now
+2023-04-16 17:28:54,981 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,982 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_958ece5dc38620a37709.png with policy now
+2023-04-16 17:28:54,992 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:54,996 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_1ee6fbc49ce07d63fa88.png with policy now
+2023-04-16 17:28:55,006 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,006 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_a573740fba4eeae1cae2.png with policy now
+2023-04-16 17:28:55,016 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,016 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_24ae4056b797e805c6ad.png with policy now
+2023-04-16 17:28:55,024 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,024 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_de821203aac9ecd8f9c5.png with policy now
+2023-04-16 17:28:55,032 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,032 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_f6124535db9080cc271c.png with policy now
+2023-04-16 17:28:55,041 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,042 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_00eae173a7bc2e7c8907.png with policy now
+2023-04-16 17:28:55,052 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,052 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_32f3333eedfaa391c301.png with policy now
+2023-04-16 17:28:55,055 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,059 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_0a3e6179730690269a6a.png with policy now
+2023-04-16 17:28:55,068 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,068 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_c6f064e150351eb3bd2c.png with policy now
+2023-04-16 17:28:55,076 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,076 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_216b1ffeabad94955a44.png with policy now
+2023-04-16 17:28:55,082 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,082 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_b64608b54865acecbe63.png with policy now
+2023-04-16 17:28:55,090 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,090 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_0d95e3eb12c55a84768e.png with policy now
+2023-04-16 17:28:55,097 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,097 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_3695b4066a953e03dfca.png with policy now
+2023-04-16 17:28:55,107 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,107 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_d623a10f5e0e39140e0c.png with policy now
+2023-04-16 17:28:55,111 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,111 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_5963d0fa3c233a8ace1a.png with policy now
+2023-04-16 17:28:55,121 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,121 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_f1fafdc3bd95fc62e4a4.png with policy now
+2023-04-16 17:28:55,132 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,132 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_a0c389f6d1657ae2b707.png with policy now
+2023-04-16 17:28:55,135 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,135 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_d8bccb92a399a2b2b43f.png with policy now
+2023-04-16 17:28:55,143 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,143 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_8beae87499aed3be2268.png with policy now
+2023-04-16 17:28:55,162 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,162 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_e624ab3913031bc6fb2a.png with policy now
+2023-04-16 17:28:55,166 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,166 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_3735dd296354ee4f0f35.png with policy now
+2023-04-16 17:28:55,172 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,172 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_2fc4efebdebb774fa40a.png with policy now
+2023-04-16 17:28:55,182 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,182 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_df95407b6a86519a4661.png with policy now
+2023-04-16 17:28:55,191 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:55,191 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_1_f919b2a9bb5a723d4980.png with policy now
+2023-04-16 17:28:55,272 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ll96rdtd-media/images/images_1_4765a6a3323bab81763a.png
+2023-04-16 17:28:55,342 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\9xhmdsm9-media/images/images_1_72363b408e0f318c0d2d.png
+2023-04-16 17:28:55,422 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\j2tsywga-media/images/images_1_d7e589381b51c3aee745.png
+2023-04-16 17:28:55,431 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\xsptf6on-media/images/images_1_33bf13128fd13c23190f.png
+2023-04-16 17:28:55,452 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\86e1ywiw-media/images/images_1_9c4ef669be5ea4172fac.png
+2023-04-16 17:28:55,487 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\9cqqbfcm-media/images/images_1_69e11b8a1e79ae9a112c.png
+2023-04-16 17:28:55,496 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\thc6491f-media/images/images_1_1bc798f3d591d142dc45.png
+2023-04-16 17:28:55,518 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\938zov2m-media/images/images_1_958ece5dc38620a37709.png
+2023-04-16 17:28:55,543 INFO    wandb-upload_8:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\7elbhupo-media/images/images_1_1ee6fbc49ce07d63fa88.png
+2023-04-16 17:28:55,558 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\isgae82v-media/images/images_1_a573740fba4eeae1cae2.png
+2023-04-16 17:28:55,592 INFO    wandb-upload_10:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\k4risqhq-media/images/images_1_24ae4056b797e805c6ad.png
+2023-04-16 17:28:55,666 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ucdpwei0-media/images/images_1_de821203aac9ecd8f9c5.png
+2023-04-16 17:28:55,686 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\8hah3wzi-media/images/images_1_f6124535db9080cc271c.png
+2023-04-16 17:28:55,734 INFO    wandb-upload_12:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\p76yt3c4-media/images/images_1_00eae173a7bc2e7c8907.png
+2023-04-16 17:28:55,770 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\kfrbu9d6-media/images/images_1_32f3333eedfaa391c301.png
+2023-04-16 17:28:55,775 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\e62b6686-media/images/images_1_c6f064e150351eb3bd2c.png
+2023-04-16 17:28:55,790 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\6yic5fes-media/images/images_1_0a3e6179730690269a6a.png
+2023-04-16 17:28:55,798 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:28:55,801 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_9c4ef669be5ea4172fac.png
+2023-04-16 17:28:55,801 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_f1fafdc3bd95fc62e4a4.png
+2023-04-16 17:28:55,805 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_8beae87499aed3be2268.png
+2023-04-16 17:28:55,805 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_f6124535db9080cc271c.png
+2023-04-16 17:28:55,807 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_e624ab3913031bc6fb2a.png
+2023-04-16 17:28:55,807 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_d7e589381b51c3aee745.png
+2023-04-16 17:28:55,807 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_d623a10f5e0e39140e0c.png
+2023-04-16 17:28:55,810 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_216b1ffeabad94955a44.png
+2023-04-16 17:28:55,811 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_32f3333eedfaa391c301.png
+2023-04-16 17:28:55,811 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_c6f064e150351eb3bd2c.png
+2023-04-16 17:28:55,812 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_5963d0fa3c233a8ace1a.png
+2023-04-16 17:28:55,812 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_33bf13128fd13c23190f.png
+2023-04-16 17:28:55,812 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_2fc4efebdebb774fa40a.png
+2023-04-16 17:28:55,815 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_f919b2a9bb5a723d4980.png
+2023-04-16 17:28:55,815 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_3735dd296354ee4f0f35.png
+2023-04-16 17:28:55,816 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_de821203aac9ecd8f9c5.png
+2023-04-16 17:28:55,816 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_1bc798f3d591d142dc45.png
+2023-04-16 17:28:55,816 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_72363b408e0f318c0d2d.png
+2023-04-16 17:28:55,816 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_df95407b6a86519a4661.png
+2023-04-16 17:28:55,820 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_0a3e6179730690269a6a.png
+2023-04-16 17:28:55,823 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_958ece5dc38620a37709.png
+2023-04-16 17:28:55,823 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\g9vusahw-media/images/images_1_216b1ffeabad94955a44.png
+2023-04-16 17:28:55,826 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_a0c389f6d1657ae2b707.png
+2023-04-16 17:28:55,826 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_b64608b54865acecbe63.png
+2023-04-16 17:28:55,826 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_d8bccb92a399a2b2b43f.png
+2023-04-16 17:28:55,829 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_1ee6fbc49ce07d63fa88.png
+2023-04-16 17:28:55,831 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_a573740fba4eeae1cae2.png
+2023-04-16 17:28:55,831 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_00eae173a7bc2e7c8907.png
+2023-04-16 17:28:55,831 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_24ae4056b797e805c6ad.png
+2023-04-16 17:28:55,831 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_3695b4066a953e03dfca.png
+2023-04-16 17:28:55,831 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_69e11b8a1e79ae9a112c.png
+2023-04-16 17:28:55,839 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_0d95e3eb12c55a84768e.png
+2023-04-16 17:28:55,840 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_4765a6a3323bab81763a.png
+2023-04-16 17:28:55,842 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media
+2023-04-16 17:28:55,842 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images
+2023-04-16 17:28:55,913 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\j3tnecr8-media/images/images_1_0d95e3eb12c55a84768e.png
+2023-04-16 17:28:55,935 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ptjtk129-media/images/images_1_b64608b54865acecbe63.png
+2023-04-16 17:28:55,942 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\o65hbv36-media/images/images_1_3695b4066a953e03dfca.png
+2023-04-16 17:28:56,032 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:28:56,037 DEBUG   SenderThread:5040 [sender.py:send():375] send: history
+2023-04-16 17:28:56,037 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:28:56,041 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:28:56,045 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\9ekvjdh4-media/images/images_1_5963d0fa3c233a8ace1a.png
+2023-04-16 17:28:56,051 INFO    wandb-upload_8:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ekl8rziw-media/images/images_1_d623a10f5e0e39140e0c.png
+2023-04-16 17:28:56,111 INFO    wandb-upload_10:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\pv3b51pd-media/images/images_1_f1fafdc3bd95fc62e4a4.png
+2023-04-16 17:28:56,212 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\lspeh1uo-media/images/images_1_a0c389f6d1657ae2b707.png
+2023-04-16 17:28:56,253 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\5580d2jq-media/images/images_1_8beae87499aed3be2268.png
+2023-04-16 17:28:56,275 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\kltxtf1d-media/images/images_1_d8bccb92a399a2b2b43f.png
+2023-04-16 17:28:56,275 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\4j4xklzw-media/images/images_1_e624ab3913031bc6fb2a.png
+2023-04-16 17:28:56,408 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\n83mdupu-media/images/images_1_3735dd296354ee4f0f35.png
+2023-04-16 17:28:56,423 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\f05od6ol-media/images/images_1_2fc4efebdebb774fa40a.png
+2023-04-16 17:28:56,451 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\3il80a5b-media/images/images_1_f919b2a9bb5a723d4980.png
+2023-04-16 17:28:56,452 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\xczqiepc-media/images/images_1_df95407b6a86519a4661.png
+2023-04-16 17:28:56,999 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:28:57,753 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:57,755 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_3e4fc880fa34db6c1336.png with policy now
+2023-04-16 17:28:57,821 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:57,821 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_ee273b22cc573da9363d.png with policy now
+2023-04-16 17:28:57,882 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:57,882 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_23474a3e03053cba1835.png with policy now
+2023-04-16 17:28:57,920 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:57,920 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_9c95c475ee8497b117cf.png with policy now
+2023-04-16 17:28:57,995 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:57,995 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_2b786e5991100ced5348.png with policy now
+2023-04-16 17:28:58,023 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_3e4fc880fa34db6c1336.png
+2023-04-16 17:28:58,023 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_2b786e5991100ced5348.png
+2023-04-16 17:28:58,023 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_23474a3e03053cba1835.png
+2023-04-16 17:28:58,032 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_ee273b22cc573da9363d.png
+2023-04-16 17:28:58,032 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_9c95c475ee8497b117cf.png
+2023-04-16 17:28:58,032 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images
+2023-04-16 17:28:58,061 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,061 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_f3dd91372ad5dcb8b2b0.png with policy now
+2023-04-16 17:28:58,121 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,121 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_cbb4bc7c80a471d52128.png with policy now
+2023-04-16 17:28:58,145 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,145 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_23a1d705f6c4769be1f9.png with policy now
+2023-04-16 17:28:58,162 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,162 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_b50dee672725b24defde.png with policy now
+2023-04-16 17:28:58,211 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,211 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_d504f34dce8fc8604401.png with policy now
+2023-04-16 17:28:58,223 INFO    wandb-upload_12:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\wri677d3-media/images/reconstructions_2_3e4fc880fa34db6c1336.png
+2023-04-16 17:28:58,271 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,271 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_b91b53a02a8575913c9c.png with policy now
+2023-04-16 17:28:58,291 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ot452gaz-media/images/reconstructions_2_ee273b22cc573da9363d.png
+2023-04-16 17:28:58,293 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,293 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_2ee6f22e4868f59fb6c5.png with policy now
+2023-04-16 17:28:58,302 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,302 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_c0fc5f79c7183e298e01.png with policy now
+2023-04-16 17:28:58,311 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,311 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_466fbd539f8994ff52af.png with policy now
+2023-04-16 17:28:58,355 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:28:58,355 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_5437d2599cee4db7a7bb.png with policy now
+2023-04-16 17:28:58,400 INFO    wandb-upload_10:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\dk5on5li-media/images/reconstructions_2_23474a3e03053cba1835.png
+2023-04-16 17:28:58,463 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ht03knal-media/images/reconstructions_2_9c95c475ee8497b117cf.png
+2023-04-16 17:28:58,501 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\1fq9h94w-media/images/reconstructions_2_2b786e5991100ced5348.png
+2023-04-16 17:28:58,627 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\s465mx2x-media/images/reconstructions_2_f3dd91372ad5dcb8b2b0.png
+2023-04-16 17:28:58,702 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\mnsjkyhp-media/images/reconstructions_2_cbb4bc7c80a471d52128.png
+2023-04-16 17:28:58,726 INFO    wandb-upload_8:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\rdh0zay1-media/images/reconstructions_2_23a1d705f6c4769be1f9.png
+2023-04-16 17:28:58,842 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\smpzx6eu-media/images/reconstructions_2_b50dee672725b24defde.png
+2023-04-16 17:28:58,934 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\nxnmarug-media/images/reconstructions_2_d504f34dce8fc8604401.png
+2023-04-16 17:28:59,125 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\o9raz80d-media/images/reconstructions_2_2ee6f22e4868f59fb6c5.png
+2023-04-16 17:28:59,125 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\hikpstz0-media/images/reconstructions_2_b91b53a02a8575913c9c.png
+2023-04-16 17:28:59,150 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_c0fc5f79c7183e298e01.png
+2023-04-16 17:28:59,150 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b50dee672725b24defde.png
+2023-04-16 17:28:59,155 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_2ee6f22e4868f59fb6c5.png
+2023-04-16 17:28:59,155 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b91b53a02a8575913c9c.png
+2023-04-16 17:28:59,158 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_d504f34dce8fc8604401.png
+2023-04-16 17:28:59,161 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_f3dd91372ad5dcb8b2b0.png
+2023-04-16 17:28:59,162 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_cbb4bc7c80a471d52128.png
+2023-04-16 17:28:59,162 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_23a1d705f6c4769be1f9.png
+2023-04-16 17:28:59,166 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_5437d2599cee4db7a7bb.png
+2023-04-16 17:28:59,170 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_466fbd539f8994ff52af.png
+2023-04-16 17:28:59,171 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images
+2023-04-16 17:28:59,203 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\6lz3rlwn-media/images/reconstructions_2_c0fc5f79c7183e298e01.png
+2023-04-16 17:28:59,372 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\h69gpwgz-media/images/reconstructions_2_466fbd539f8994ff52af.png
+2023-04-16 17:28:59,395 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ucs3tr1t-media/images/reconstructions_2_5437d2599cee4db7a7bb.png
+2023-04-16 17:29:00,121 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: stop_status
+2023-04-16 17:29:00,124 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: stop_status
+2023-04-16 17:29:00,213 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:29:00,328 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,330 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_b0559e99286f96fe8b2e.png with policy now
+2023-04-16 17:29:00,332 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,332 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_75e41dc6388043f04163.png with policy now
+2023-04-16 17:29:00,336 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,336 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_e7da1bb2ddaaa05ecd45.png with policy now
+2023-04-16 17:29:00,341 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,341 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_1f51ac878fedf6eea8ac.png with policy now
+2023-04-16 17:29:00,344 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,344 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_96027d9239fd94107a36.png with policy now
+2023-04-16 17:29:00,353 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,353 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_978965a03ef94932fdfe.png with policy now
+2023-04-16 17:29:00,483 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,483 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_6d11dc9fdb7fa3cc5ab2.png with policy now
+2023-04-16 17:29:00,541 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,542 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_2284854b3d419ad1a2a1.png with policy now
+2023-04-16 17:29:00,579 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,580 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_34515278d7467beceddc.png with policy now
+2023-04-16 17:29:00,591 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,591 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_93a3539fef162607338b.png with policy now
+2023-04-16 17:29:00,604 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,604 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_9e9afb907a17da5b5661.png with policy now
+2023-04-16 17:29:00,628 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,632 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_c1a5667a6a8dfaed2f3c.png with policy now
+2023-04-16 17:29:00,637 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,637 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_4cf2bb85aa50afb57ae4.png with policy now
+2023-04-16 17:29:00,743 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,743 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_4a258ff7d07b7041c465.png with policy now
+2023-04-16 17:29:00,817 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,817 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_6ec105ba7b01c3cfa7a6.png with policy now
+2023-04-16 17:29:00,857 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,857 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_e79e9903af6236e3e899.png with policy now
+2023-04-16 17:29:00,865 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\p750lkab-media/images/reconstructions_2_b0559e99286f96fe8b2e.png
+2023-04-16 17:29:00,932 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:00,932 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_2_b34389a6546d75e3ebdb.png with policy now
+2023-04-16 17:29:00,960 INFO    wandb-upload_8:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\6m4k6sw9-media/images/reconstructions_2_75e41dc6388043f04163.png
+2023-04-16 17:29:00,973 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\vwwuuvvr-media/images/reconstructions_2_e7da1bb2ddaaa05ecd45.png
+2023-04-16 17:29:01,131 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\2rb2bimn-media/images/reconstructions_2_1f51ac878fedf6eea8ac.png
+2023-04-16 17:29:01,195 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\6picxg7s-media/images/reconstructions_2_96027d9239fd94107a36.png
+2023-04-16 17:29:01,253 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\config.yaml
+2023-04-16 17:29:01,261 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_6d11dc9fdb7fa3cc5ab2.png
+2023-04-16 17:29:01,261 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_e79e9903af6236e3e899.png
+2023-04-16 17:29:01,261 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\wc4r7e5l-media/images/reconstructions_2_978965a03ef94932fdfe.png
+2023-04-16 17:29:01,265 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_c1a5667a6a8dfaed2f3c.png
+2023-04-16 17:29:01,265 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_34515278d7467beceddc.png
+2023-04-16 17:29:01,268 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_4cf2bb85aa50afb57ae4.png
+2023-04-16 17:29:01,272 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_6ec105ba7b01c3cfa7a6.png
+2023-04-16 17:29:01,272 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b0559e99286f96fe8b2e.png
+2023-04-16 17:29:01,277 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_93a3539fef162607338b.png
+2023-04-16 17:29:01,280 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b34389a6546d75e3ebdb.png
+2023-04-16 17:29:01,280 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_75e41dc6388043f04163.png
+2023-04-16 17:29:01,285 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_978965a03ef94932fdfe.png
+2023-04-16 17:29:01,285 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_9e9afb907a17da5b5661.png
+2023-04-16 17:29:01,290 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_4a258ff7d07b7041c465.png
+2023-04-16 17:29:01,292 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_e7da1bb2ddaaa05ecd45.png
+2023-04-16 17:29:01,294 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_96027d9239fd94107a36.png
+2023-04-16 17:29:01,294 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_2284854b3d419ad1a2a1.png
+2023-04-16 17:29:01,294 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_1f51ac878fedf6eea8ac.png
+2023-04-16 17:29:01,300 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images
+2023-04-16 17:29:01,455 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\it4whrlo-media/images/reconstructions_2_6d11dc9fdb7fa3cc5ab2.png
+2023-04-16 17:29:01,514 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\9nrprb7u-media/images/reconstructions_2_2284854b3d419ad1a2a1.png
+2023-04-16 17:29:01,598 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\heoo2ch4-media/images/reconstructions_2_34515278d7467beceddc.png
+2023-04-16 17:29:01,632 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\s14xdzg2-media/images/reconstructions_2_93a3539fef162607338b.png
+2023-04-16 17:29:01,692 INFO    wandb-upload_10:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\oj410wk0-media/images/reconstructions_2_9e9afb907a17da5b5661.png
+2023-04-16 17:29:01,696 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:29:01,771 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\nrl1gn2p-media/images/reconstructions_2_c1a5667a6a8dfaed2f3c.png
+2023-04-16 17:29:01,781 DEBUG   SenderThread:5040 [sender.py:send():375] send: history
+2023-04-16 17:29:01,782 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:29:01,812 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:29:01,862 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\pjf4mfp9-media/images/reconstructions_2_4cf2bb85aa50afb57ae4.png
+2023-04-16 17:29:02,053 INFO    wandb-upload_8:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\pwcuhxrh-media/images/reconstructions_2_6ec105ba7b01c3cfa7a6.png
+2023-04-16 17:29:02,071 INFO    wandb-upload_12:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\thrhv2sv-media/images/reconstructions_2_e79e9903af6236e3e899.png
+2023-04-16 17:29:02,071 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\wkcahgtz-media/images/reconstructions_2_4a258ff7d07b7041c465.png
+2023-04-16 17:29:02,202 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\c4uevid2-media/images/reconstructions_2_b34389a6546d75e3ebdb.png
+2023-04-16 17:29:02,317 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:29:03,590 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:05,384 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:29:06,290 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:08,535 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:10,387 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:29:10,703 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:12,892 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:15,092 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:15,133 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: stop_status
+2023-04-16 17:29:15,141 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: stop_status
+2023-04-16 17:29:15,430 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:29:15,432 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:29:15,432 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:29:15,432 DEBUG   SenderThread:5040 [sender.py:send():375] send: history
+2023-04-16 17:29:15,432 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:29:15,436 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:29:16,110 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:29:17,162 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:19,188 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:19,232 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,232 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_4765a6a3323bab81763a.png with policy now
+2023-04-16 17:29:19,233 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,233 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_72363b408e0f318c0d2d.png with policy now
+2023-04-16 17:29:19,251 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,251 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_33bf13128fd13c23190f.png with policy now
+2023-04-16 17:29:19,251 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,251 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_d7e589381b51c3aee745.png with policy now
+2023-04-16 17:29:19,271 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,271 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_9c4ef669be5ea4172fac.png with policy now
+2023-04-16 17:29:19,278 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,278 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_1bc798f3d591d142dc45.png with policy now
+2023-04-16 17:29:19,282 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,282 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_69e11b8a1e79ae9a112c.png with policy now
+2023-04-16 17:29:19,285 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,285 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_958ece5dc38620a37709.png with policy now
+2023-04-16 17:29:19,292 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,292 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_1ee6fbc49ce07d63fa88.png with policy now
+2023-04-16 17:29:19,300 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,300 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_a573740fba4eeae1cae2.png with policy now
+2023-04-16 17:29:19,321 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,321 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_24ae4056b797e805c6ad.png with policy now
+2023-04-16 17:29:19,331 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,331 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_de821203aac9ecd8f9c5.png with policy now
+2023-04-16 17:29:19,335 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,335 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_f6124535db9080cc271c.png with policy now
+2023-04-16 17:29:19,343 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,343 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_00eae173a7bc2e7c8907.png with policy now
+2023-04-16 17:29:19,350 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,350 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_32f3333eedfaa391c301.png with policy now
+2023-04-16 17:29:19,363 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,365 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_0a3e6179730690269a6a.png with policy now
+2023-04-16 17:29:19,378 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,378 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_c6f064e150351eb3bd2c.png with policy now
+2023-04-16 17:29:19,378 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,380 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_216b1ffeabad94955a44.png with policy now
+2023-04-16 17:29:19,381 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,382 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_b64608b54865acecbe63.png with policy now
+2023-04-16 17:29:19,391 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,393 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_0d95e3eb12c55a84768e.png with policy now
+2023-04-16 17:29:19,400 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,401 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_3695b4066a953e03dfca.png with policy now
+2023-04-16 17:29:19,403 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,403 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_d623a10f5e0e39140e0c.png with policy now
+2023-04-16 17:29:19,410 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,410 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_5963d0fa3c233a8ace1a.png with policy now
+2023-04-16 17:29:19,419 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,419 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_f1fafdc3bd95fc62e4a4.png with policy now
+2023-04-16 17:29:19,422 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,422 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_a0c389f6d1657ae2b707.png with policy now
+2023-04-16 17:29:19,432 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,432 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_d8bccb92a399a2b2b43f.png with policy now
+2023-04-16 17:29:19,444 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,444 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_8beae87499aed3be2268.png with policy now
+2023-04-16 17:29:19,452 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,452 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_e624ab3913031bc6fb2a.png with policy now
+2023-04-16 17:29:19,458 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,460 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_3735dd296354ee4f0f35.png with policy now
+2023-04-16 17:29:19,466 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,467 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_2fc4efebdebb774fa40a.png with policy now
+2023-04-16 17:29:19,472 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,472 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_df95407b6a86519a4661.png with policy now
+2023-04-16 17:29:19,482 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:19,482 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\images_4_f919b2a9bb5a723d4980.png with policy now
+2023-04-16 17:29:19,592 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\fnrv4n57-media/images/images_4_4765a6a3323bab81763a.png
+2023-04-16 17:29:19,595 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\7s3wes9f-media/images/images_4_72363b408e0f318c0d2d.png
+2023-04-16 17:29:19,623 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\usbx6hzi-media/images/images_4_d7e589381b51c3aee745.png
+2023-04-16 17:29:19,647 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\e0uea1b9-media/images/images_4_33bf13128fd13c23190f.png
+2023-04-16 17:29:19,696 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\qckb6ibe-media/images/images_4_1ee6fbc49ce07d63fa88.png
+2023-04-16 17:29:19,701 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\z4qt9e93-media/images/images_4_958ece5dc38620a37709.png
+2023-04-16 17:29:19,712 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ryb1u6rj-media/images/images_4_69e11b8a1e79ae9a112c.png
+2023-04-16 17:29:19,722 INFO    wandb-upload_12:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\64fdjotu-media/images/images_4_1bc798f3d591d142dc45.png
+2023-04-16 17:29:19,722 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\egcjj4rn-media/images/images_4_9c4ef669be5ea4172fac.png
+2023-04-16 17:29:19,772 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\wmsju2el-media/images/images_4_a573740fba4eeae1cae2.png
+2023-04-16 17:29:19,796 INFO    wandb-upload_10:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\0y8g49qr-media/images/images_4_24ae4056b797e805c6ad.png
+2023-04-16 17:29:19,831 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:29:19,832 DEBUG   SenderThread:5040 [sender.py:send():375] send: history
+2023-04-16 17:29:19,832 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:29:19,832 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:29:19,881 INFO    wandb-upload_15:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\qmla38yz-media/images/images_4_0a3e6179730690269a6a.png
+2023-04-16 17:29:19,887 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\0r39baie-media/images/images_4_de821203aac9ecd8f9c5.png
+2023-04-16 17:29:19,887 INFO    wandb-upload_8:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\x4aaig86-media/images/images_4_f6124535db9080cc271c.png
+2023-04-16 17:29:19,887 INFO    wandb-upload_13:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\yi1ql1n7-media/images/images_4_00eae173a7bc2e7c8907.png
+2023-04-16 17:29:19,890 INFO    wandb-upload_14:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\wntsc927-media/images/images_4_32f3333eedfaa391c301.png
+2023-04-16 17:29:19,931 INFO    wandb-upload_16:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\3efodml3-media/images/images_4_c6f064e150351eb3bd2c.png
+2023-04-16 17:29:19,940 INFO    wandb-upload_17:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\nk4h2c04-media/images/images_4_b64608b54865acecbe63.png
+2023-04-16 17:29:19,958 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\qx8ygugo-media/images/images_4_216b1ffeabad94955a44.png
+2023-04-16 17:29:19,966 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ksyux7ub-media/images/images_4_0d95e3eb12c55a84768e.png
+2023-04-16 17:29:19,982 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\na0ftts1-media/images/images_4_3695b4066a953e03dfca.png
+2023-04-16 17:29:19,985 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\9w2jlptl-media/images/images_4_d623a10f5e0e39140e0c.png
+2023-04-16 17:29:20,011 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\h8dctzw5-media/images/images_4_f1fafdc3bd95fc62e4a4.png
+2023-04-16 17:29:20,031 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\ljz1lxs3-media/images/images_4_a0c389f6d1657ae2b707.png
+2023-04-16 17:29:20,082 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\y604z0th-media/images/images_4_d8bccb92a399a2b2b43f.png
+2023-04-16 17:29:20,084 INFO    wandb-upload_18:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\odglbkj6-media/images/images_4_5963d0fa3c233a8ace1a.png
+2023-04-16 17:29:20,121 INFO    wandb-upload_10:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\gxc57g27-media/images/images_4_2fc4efebdebb774fa40a.png
+2023-04-16 17:29:20,140 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\61prhr64-media/images/images_4_3735dd296354ee4f0f35.png
+2023-04-16 17:29:20,148 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\p6q7gnvk-media/images/images_4_8beae87499aed3be2268.png
+2023-04-16 17:29:20,151 INFO    wandb-upload_19:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\vfmsltka-media/images/images_4_df95407b6a86519a4661.png
+2023-04-16 17:29:20,154 INFO    wandb-upload_12:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\g0qya3cv-media/images/images_4_e624ab3913031bc6fb2a.png
+2023-04-16 17:29:20,163 INFO    wandb-upload_20:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\zxfuc4go-media/images/images_4_f919b2a9bb5a723d4980.png
+2023-04-16 17:29:20,171 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,172 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_72463a5358a8292b2344.png with policy now
+2023-04-16 17:29:20,177 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,177 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_cd35ec3011c9501c1b71.png with policy now
+2023-04-16 17:29:20,190 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,190 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_0618bf606502916d8da1.png with policy now
+2023-04-16 17:29:20,193 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,193 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_d119e9f134fa1ef3b64d.png with policy now
+2023-04-16 17:29:20,213 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:29:20,217 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_69e11b8a1e79ae9a112c.png
+2023-04-16 17:29:20,218 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,218 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_df95407b6a86519a4661.png
+2023-04-16 17:29:20,218 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_591b7e99d8c3169e38a9.png with policy now
+2023-04-16 17:29:20,220 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_3735dd296354ee4f0f35.png
+2023-04-16 17:29:20,221 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_d8bccb92a399a2b2b43f.png
+2023-04-16 17:29:20,221 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_a0c389f6d1657ae2b707.png
+2023-04-16 17:29:20,221 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_1bc798f3d591d142dc45.png
+2023-04-16 17:29:20,221 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_e624ab3913031bc6fb2a.png
+2023-04-16 17:29:20,221 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_cd35ec3011c9501c1b71.png
+2023-04-16 17:29:20,221 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_32f3333eedfaa391c301.png
+2023-04-16 17:29:20,221 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,226 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_f1fafdc3bd95fc62e4a4.png
+2023-04-16 17:29:20,226 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_933d8e8399606ab61a90.png with policy now
+2023-04-16 17:29:20,227 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_9c4ef669be5ea4172fac.png
+2023-04-16 17:29:20,227 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_216b1ffeabad94955a44.png
+2023-04-16 17:29:20,227 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_d623a10f5e0e39140e0c.png
+2023-04-16 17:29:20,227 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_72463a5358a8292b2344.png
+2023-04-16 17:29:20,227 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_3695b4066a953e03dfca.png
+2023-04-16 17:29:20,231 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_00eae173a7bc2e7c8907.png
+2023-04-16 17:29:20,231 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,231 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_f6a795293008d2d1b28f.png with policy now
+2023-04-16 17:29:20,231 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_72363b408e0f318c0d2d.png
+2023-04-16 17:29:20,232 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_b64608b54865acecbe63.png
+2023-04-16 17:29:20,234 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_d7e589381b51c3aee745.png
+2023-04-16 17:29:20,234 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_8beae87499aed3be2268.png
+2023-04-16 17:29:20,237 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_4765a6a3323bab81763a.png
+2023-04-16 17:29:20,237 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_29350e86de67f0daac70.png with policy now
+2023-04-16 17:29:20,240 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_f919b2a9bb5a723d4980.png
+2023-04-16 17:29:20,241 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_33bf13128fd13c23190f.png
+2023-04-16 17:29:20,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_0618bf606502916d8da1.png
+2023-04-16 17:29:20,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_f6124535db9080cc271c.png
+2023-04-16 17:29:20,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_1ee6fbc49ce07d63fa88.png
+2023-04-16 17:29:20,242 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,242 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_b5d4654384f315f8ca9b.png with policy now
+2023-04-16 17:29:20,245 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_d119e9f134fa1ef3b64d.png
+2023-04-16 17:29:20,245 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_5963d0fa3c233a8ace1a.png
+2023-04-16 17:29:20,245 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_0d95e3eb12c55a84768e.png
+2023-04-16 17:29:20,245 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_2fc4efebdebb774fa40a.png
+2023-04-16 17:29:20,245 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_24ae4056b797e805c6ad.png
+2023-04-16 17:29:20,250 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_a573740fba4eeae1cae2.png
+2023-04-16 17:29:20,251 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_958ece5dc38620a37709.png
+2023-04-16 17:29:20,251 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_de821203aac9ecd8f9c5.png
+2023-04-16 17:29:20,252 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_0a3e6179730690269a6a.png
+2023-04-16 17:29:20,253 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_c6f064e150351eb3bd2c.png
+2023-04-16 17:29:20,253 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images
+2023-04-16 17:29:20,260 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,260 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_d15b6ec8b05dc03debb5.png with policy now
+2023-04-16 17:29:20,267 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,267 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_245f1adb06b960fe5fbe.png with policy now
+2023-04-16 17:29:20,276 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,276 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_b5fb51e8bf5541d4c8b1.png with policy now
+2023-04-16 17:29:20,277 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,279 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_e734d6332c6a27efe717.png with policy now
+2023-04-16 17:29:20,283 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,283 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_e99713795ce1b8bb1b71.png with policy now
+2023-04-16 17:29:20,291 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,291 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_55206299836f4011eabb.png with policy now
+2023-04-16 17:29:20,300 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,301 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_a106d9dd56ba71411a3b.png with policy now
+2023-04-16 17:29:20,302 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,302 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_5656f54b205a1b015fdc.png with policy now
+2023-04-16 17:29:20,315 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,315 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_80dbc617235f72a35b6f.png with policy now
+2023-04-16 17:29:20,322 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,322 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_1ffb1167e748a3903fce.png with policy now
+2023-04-16 17:29:20,328 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,328 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_13946b8bf6819443f99c.png with policy now
+2023-04-16 17:29:20,330 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,336 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_f1b5126d2f2d28a38a94.png with policy now
+2023-04-16 17:29:20,339 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,340 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_8a513c11a07d10e096b3.png with policy now
+2023-04-16 17:29:20,346 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,346 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_2574752434e6de7825de.png with policy now
+2023-04-16 17:29:20,355 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,355 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_da75e1a0258fdc1cadb4.png with policy now
+2023-04-16 17:29:20,360 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,360 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_ef3bf465d428dde12e0e.png with policy now
+2023-04-16 17:29:20,375 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,375 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_ccb83682ed72739c5989.png with policy now
+2023-04-16 17:29:20,380 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,380 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_c311c2f3f2ab356cdda2.png with policy now
+2023-04-16 17:29:20,382 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,382 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_46c5d1e4b0503ec5cc68.png with policy now
+2023-04-16 17:29:20,393 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,393 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_8ecb039195c84b9116b9.png with policy now
+2023-04-16 17:29:20,402 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,402 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_3004d79327293385cfc8.png with policy now
+2023-04-16 17:29:20,404 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,404 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_33f8dee15508e593e149.png with policy now
+2023-04-16 17:29:20,413 DEBUG   SenderThread:5040 [sender.py:send():375] send: files
+2023-04-16 17:29:20,413 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file media\images\reconstructions_5_d7ff887117c62c301e00.png with policy now
+2023-04-16 17:29:20,485 INFO    wandb-upload_15:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\sgbepvdp-media/images/reconstructions_5_72463a5358a8292b2344.png
+2023-04-16 17:29:20,507 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\1vh3rqec-media/images/reconstructions_5_cd35ec3011c9501c1b71.png
+2023-04-16 17:29:20,507 INFO    wandb-upload_14:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\9j6d91m4-media/images/reconstructions_5_0618bf606502916d8da1.png
+2023-04-16 17:29:20,567 INFO    wandb-upload_17:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\dxm5g881-media/images/reconstructions_5_d119e9f134fa1ef3b64d.png
+2023-04-16 17:29:20,578 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\5b6jbd4m-media/images/reconstructions_5_591b7e99d8c3169e38a9.png
+2023-04-16 17:29:20,598 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\aafple7n-media/images/reconstructions_5_933d8e8399606ab61a90.png
+2023-04-16 17:29:20,624 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\98ubyccr-media/images/reconstructions_5_f6a795293008d2d1b28f.png
+2023-04-16 17:29:20,630 INFO    wandb-upload_18:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\vazgy0oh-media/images/reconstructions_5_29350e86de67f0daac70.png
+2023-04-16 17:29:20,662 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\e5qwu4mv-media/images/reconstructions_5_b5d4654384f315f8ca9b.png
+2023-04-16 17:29:20,673 INFO    wandb-upload_19:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\t5x24yyr-media/images/reconstructions_5_d15b6ec8b05dc03debb5.png
+2023-04-16 17:29:20,706 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: partial_history
+2023-04-16 17:29:20,710 DEBUG   SenderThread:5040 [sender.py:send():375] send: history
+2023-04-16 17:29:20,711 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: summary_record
+2023-04-16 17:29:20,711 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:29:20,716 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:29:20,717 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\wehwe9h6-media/images/reconstructions_5_e734d6332c6a27efe717.png
+2023-04-16 17:29:20,717 DEBUG   SenderThread:5040 [sender.py:send():375] send: telemetry
+2023-04-16 17:29:20,718 DEBUG   SenderThread:5040 [sender.py:send():375] send: exit
+2023-04-16 17:29:20,718 INFO    SenderThread:5040 [sender.py:send_exit():598] handling exit code: 0
+2023-04-16 17:29:20,720 INFO    SenderThread:5040 [sender.py:send_exit():600] handling runtime: 52
+2023-04-16 17:29:20,722 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:29:20,722 INFO    SenderThread:5040 [sender.py:send_exit():606] send defer
+2023-04-16 17:29:20,722 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,725 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 0
+2023-04-16 17:29:20,725 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,725 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 0
+2023-04-16 17:29:20,725 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 1
+2023-04-16 17:29:20,725 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,725 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 1
+2023-04-16 17:29:20,725 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,725 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 1
+2023-04-16 17:29:20,725 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 2
+2023-04-16 17:29:20,725 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,725 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 2
+2023-04-16 17:29:20,725 INFO    HandlerThread:5040 [system_monitor.py:finish():190] Stopping system monitor
+2023-04-16 17:29:20,725 DEBUG   SystemMonitor:5040 [system_monitor.py:_start():159] Starting system metrics aggregation loop
+2023-04-16 17:29:20,725 INFO    HandlerThread:5040 [interfaces.py:finish():202] Joined cpu monitor
+2023-04-16 17:29:20,725 DEBUG   SystemMonitor:5040 [system_monitor.py:_start():166] Finished system metrics aggregation loop
+2023-04-16 17:29:20,725 INFO    HandlerThread:5040 [interfaces.py:finish():202] Joined disk monitor
+2023-04-16 17:29:20,730 DEBUG   SystemMonitor:5040 [system_monitor.py:_start():170] Publishing last batch of metrics
+2023-04-16 17:29:20,730 INFO    wandb-upload_20:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\xk0ydg48-media/images/reconstructions_5_245f1adb06b960fe5fbe.png
+2023-04-16 17:29:20,731 INFO    HandlerThread:5040 [interfaces.py:finish():202] Joined memory monitor
+2023-04-16 17:29:20,731 INFO    HandlerThread:5040 [interfaces.py:finish():202] Joined network monitor
+2023-04-16 17:29:20,733 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,733 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 2
+2023-04-16 17:29:20,733 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 3
+2023-04-16 17:29:20,733 DEBUG   SenderThread:5040 [sender.py:send():375] send: stats
+2023-04-16 17:29:20,736 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,736 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 3
+2023-04-16 17:29:20,738 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,738 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 3
+2023-04-16 17:29:20,739 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 4
+2023-04-16 17:29:20,740 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,741 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 4
+2023-04-16 17:29:20,741 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,741 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 4
+2023-04-16 17:29:20,741 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 5
+2023-04-16 17:29:20,741 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,741 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 5
+2023-04-16 17:29:20,741 DEBUG   SenderThread:5040 [sender.py:send():375] send: summary
+2023-04-16 17:29:20,745 INFO    SenderThread:5040 [sender.py:_save_file():1378] saving file wandb-summary.json with policy end
+2023-04-16 17:29:20,747 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,748 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 5
+2023-04-16 17:29:20,748 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 6
+2023-04-16 17:29:20,748 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,750 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 6
+2023-04-16 17:29:20,751 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\it3i7kb7-media/images/reconstructions_5_e99713795ce1b8bb1b71.png
+2023-04-16 17:29:20,751 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,751 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 6
+2023-04-16 17:29:20,755 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:29:20,781 INFO    wandb-upload_10:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\91qz8juv-media/images/reconstructions_5_55206299836f4011eabb.png
+2023-04-16 17:29:20,782 INFO    wandb-upload_13:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\z3csoqwi-media/images/reconstructions_5_b5fb51e8bf5541d4c8b1.png
+2023-04-16 17:29:20,810 INFO    wandb-upload_12:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\6qamcojm-media/images/reconstructions_5_a106d9dd56ba71411a3b.png
+2023-04-16 17:29:20,814 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\sc4phjwf-media/images/reconstructions_5_80dbc617235f72a35b6f.png
+2023-04-16 17:29:20,833 INFO    wandb-upload_16:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\v23tfsf7-media/images/reconstructions_5_5656f54b205a1b015fdc.png
+2023-04-16 17:29:20,875 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 7
+2023-04-16 17:29:20,875 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:20,875 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 7
+2023-04-16 17:29:20,875 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:20,875 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 7
+2023-04-16 17:29:20,887 INFO    wandb-upload_14:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\mluqgspb-media/images/reconstructions_5_f1b5126d2f2d28a38a94.png
+2023-04-16 17:29:20,890 INFO    wandb-upload_15:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\c2n0azse-media/images/reconstructions_5_8a513c11a07d10e096b3.png
+2023-04-16 17:29:20,911 INFO    wandb-upload_3:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\dq0z21nt-media/images/reconstructions_5_13946b8bf6819443f99c.png
+2023-04-16 17:29:20,912 INFO    wandb-upload_9:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\aiwlqiut-media/images/reconstructions_5_2574752434e6de7825de.png
+2023-04-16 17:29:20,920 INFO    wandb-upload_8:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\u1h1rwtl-media/images/reconstructions_5_1ffb1167e748a3903fce.png
+2023-04-16 17:29:20,947 INFO    wandb-upload_17:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\aos5pw31-media/images/reconstructions_5_ef3bf465d428dde12e0e.png
+2023-04-16 17:29:20,957 INFO    wandb-upload_2:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\k6wy08dn-media/images/reconstructions_5_da75e1a0258fdc1cadb4.png
+2023-04-16 17:29:20,971 INFO    wandb-upload_0:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\fuwq6x1j-media/images/reconstructions_5_c311c2f3f2ab356cdda2.png
+2023-04-16 17:29:21,000 INFO    wandb-upload_5:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\njxhsrkj-media/images/reconstructions_5_ccb83682ed72739c5989.png
+2023-04-16 17:29:21,002 INFO    wandb-upload_7:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\4mpqot98-media/images/reconstructions_5_8ecb039195c84b9116b9.png
+2023-04-16 17:29:21,047 INFO    wandb-upload_19:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\zk2mlci8-media/images/reconstructions_5_3004d79327293385cfc8.png
+2023-04-16 17:29:21,080 INFO    wandb-upload_21:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\gw0uz995-media/images/reconstructions_5_d7ff887117c62c301e00.png
+2023-04-16 17:29:21,082 INFO    wandb-upload_6:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\1qyrcxiz-media/images/reconstructions_5_46c5d1e4b0503ec5cc68.png
+2023-04-16 17:29:21,082 INFO    wandb-upload_18:5040 [upload_job.py:push():137] Uploaded file C:\Users\lukas\AppData\Local\Temp\tmpz5lpq0sxwandb\0kc71gdb-media/images/reconstructions_5_33f8dee15508e593e149.png
+2023-04-16 17:29:21,235 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:29:21,235 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\config.yaml
+2023-04-16 17:29:21,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:21,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_f1b5126d2f2d28a38a94.png
+2023-04-16 17:29:21,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_a106d9dd56ba71411a3b.png
+2023-04-16 17:29:21,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_5656f54b205a1b015fdc.png
+2023-04-16 17:29:21,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_c311c2f3f2ab356cdda2.png
+2023-04-16 17:29:21,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_d15b6ec8b05dc03debb5.png
+2023-04-16 17:29:21,237 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_f6a795293008d2d1b28f.png
+2023-04-16 17:29:21,240 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_e734d6332c6a27efe717.png
+2023-04-16 17:29:21,240 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_55206299836f4011eabb.png
+2023-04-16 17:29:21,241 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_e99713795ce1b8bb1b71.png
+2023-04-16 17:29:21,241 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_ef3bf465d428dde12e0e.png
+2023-04-16 17:29:21,241 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_80dbc617235f72a35b6f.png
+2023-04-16 17:29:21,241 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_591b7e99d8c3169e38a9.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_ccb83682ed72739c5989.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_33f8dee15508e593e149.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_2574752434e6de7825de.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_29350e86de67f0daac70.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_3004d79327293385cfc8.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_245f1adb06b960fe5fbe.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_d7ff887117c62c301e00.png
+2023-04-16 17:29:21,242 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_13946b8bf6819443f99c.png
+2023-04-16 17:29:21,246 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_b5fb51e8bf5541d4c8b1.png
+2023-04-16 17:29:21,246 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_8ecb039195c84b9116b9.png
+2023-04-16 17:29:21,246 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_46c5d1e4b0503ec5cc68.png
+2023-04-16 17:29:21,246 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_8a513c11a07d10e096b3.png
+2023-04-16 17:29:21,246 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_933d8e8399606ab61a90.png
+2023-04-16 17:29:21,246 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_1ffb1167e748a3903fce.png
+2023-04-16 17:29:21,246 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_b5d4654384f315f8ca9b.png
+2023-04-16 17:29:21,248 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_created():278] file/dir created: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_da75e1a0258fdc1cadb4.png
+2023-04-16 17:29:21,248 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images
+2023-04-16 17:29:21,727 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: poll_exit
+2023-04-16 17:29:23,256 INFO    Thread-16 :5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:24,502 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 8
+2023-04-16 17:29:24,502 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: poll_exit
+2023-04-16 17:29:24,502 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:24,502 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 8
+2023-04-16 17:29:24,505 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:24,505 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 8
+2023-04-16 17:29:24,505 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 9
+2023-04-16 17:29:24,505 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:24,505 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 9
+2023-04-16 17:29:24,505 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:24,505 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 9
+2023-04-16 17:29:24,505 INFO    SenderThread:5040 [dir_watcher.py:finish():365] shutting down directory watcher
+2023-04-16 17:29:25,305 INFO    SenderThread:5040 [dir_watcher.py:_on_file_modified():295] file/dir modified: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:25,305 INFO    SenderThread:5040 [dir_watcher.py:finish():395] scan: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files
+2023-04-16 17:29:25,305 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\config.yaml config.yaml
+2023-04-16 17:29:25,305 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log output.log
+2023-04-16 17:29:25,308 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\requirements.txt requirements.txt
+2023-04-16 17:29:25,317 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-metadata.json wandb-metadata.json
+2023-04-16 17:29:25,317 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json wandb-summary.json
+2023-04-16 17:29:25,325 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\graph\graph_summary_8bed6e2ae18b5d8bf88f.graph.json media\graph\graph_summary_8bed6e2ae18b5d8bf88f.graph.json
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_00eae173a7bc2e7c8907.png media\images\images_1_00eae173a7bc2e7c8907.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_0a3e6179730690269a6a.png media\images\images_1_0a3e6179730690269a6a.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_0d95e3eb12c55a84768e.png media\images\images_1_0d95e3eb12c55a84768e.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_1bc798f3d591d142dc45.png media\images\images_1_1bc798f3d591d142dc45.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_1ee6fbc49ce07d63fa88.png media\images\images_1_1ee6fbc49ce07d63fa88.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_216b1ffeabad94955a44.png media\images\images_1_216b1ffeabad94955a44.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_24ae4056b797e805c6ad.png media\images\images_1_24ae4056b797e805c6ad.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_2fc4efebdebb774fa40a.png media\images\images_1_2fc4efebdebb774fa40a.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_32f3333eedfaa391c301.png media\images\images_1_32f3333eedfaa391c301.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_33bf13128fd13c23190f.png media\images\images_1_33bf13128fd13c23190f.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_3695b4066a953e03dfca.png media\images\images_1_3695b4066a953e03dfca.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_3735dd296354ee4f0f35.png media\images\images_1_3735dd296354ee4f0f35.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_4765a6a3323bab81763a.png media\images\images_1_4765a6a3323bab81763a.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_5963d0fa3c233a8ace1a.png media\images\images_1_5963d0fa3c233a8ace1a.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_69e11b8a1e79ae9a112c.png media\images\images_1_69e11b8a1e79ae9a112c.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_72363b408e0f318c0d2d.png media\images\images_1_72363b408e0f318c0d2d.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_8beae87499aed3be2268.png media\images\images_1_8beae87499aed3be2268.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_958ece5dc38620a37709.png media\images\images_1_958ece5dc38620a37709.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_9c4ef669be5ea4172fac.png media\images\images_1_9c4ef669be5ea4172fac.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_a0c389f6d1657ae2b707.png media\images\images_1_a0c389f6d1657ae2b707.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_a573740fba4eeae1cae2.png media\images\images_1_a573740fba4eeae1cae2.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_b64608b54865acecbe63.png media\images\images_1_b64608b54865acecbe63.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_c6f064e150351eb3bd2c.png media\images\images_1_c6f064e150351eb3bd2c.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_d623a10f5e0e39140e0c.png media\images\images_1_d623a10f5e0e39140e0c.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_d7e589381b51c3aee745.png media\images\images_1_d7e589381b51c3aee745.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_d8bccb92a399a2b2b43f.png media\images\images_1_d8bccb92a399a2b2b43f.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_de821203aac9ecd8f9c5.png media\images\images_1_de821203aac9ecd8f9c5.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_df95407b6a86519a4661.png media\images\images_1_df95407b6a86519a4661.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_e624ab3913031bc6fb2a.png media\images\images_1_e624ab3913031bc6fb2a.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_f1fafdc3bd95fc62e4a4.png media\images\images_1_f1fafdc3bd95fc62e4a4.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_f6124535db9080cc271c.png media\images\images_1_f6124535db9080cc271c.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_1_f919b2a9bb5a723d4980.png media\images\images_1_f919b2a9bb5a723d4980.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_00eae173a7bc2e7c8907.png media\images\images_4_00eae173a7bc2e7c8907.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_0a3e6179730690269a6a.png media\images\images_4_0a3e6179730690269a6a.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_0d95e3eb12c55a84768e.png media\images\images_4_0d95e3eb12c55a84768e.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_1bc798f3d591d142dc45.png media\images\images_4_1bc798f3d591d142dc45.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_1ee6fbc49ce07d63fa88.png media\images\images_4_1ee6fbc49ce07d63fa88.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_216b1ffeabad94955a44.png media\images\images_4_216b1ffeabad94955a44.png
+2023-04-16 17:29:25,333 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_24ae4056b797e805c6ad.png media\images\images_4_24ae4056b797e805c6ad.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_2fc4efebdebb774fa40a.png media\images\images_4_2fc4efebdebb774fa40a.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_32f3333eedfaa391c301.png media\images\images_4_32f3333eedfaa391c301.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_33bf13128fd13c23190f.png media\images\images_4_33bf13128fd13c23190f.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_3695b4066a953e03dfca.png media\images\images_4_3695b4066a953e03dfca.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_3735dd296354ee4f0f35.png media\images\images_4_3735dd296354ee4f0f35.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_4765a6a3323bab81763a.png media\images\images_4_4765a6a3323bab81763a.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_5963d0fa3c233a8ace1a.png media\images\images_4_5963d0fa3c233a8ace1a.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_69e11b8a1e79ae9a112c.png media\images\images_4_69e11b8a1e79ae9a112c.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_72363b408e0f318c0d2d.png media\images\images_4_72363b408e0f318c0d2d.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_8beae87499aed3be2268.png media\images\images_4_8beae87499aed3be2268.png
+2023-04-16 17:29:25,340 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_958ece5dc38620a37709.png media\images\images_4_958ece5dc38620a37709.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_9c4ef669be5ea4172fac.png media\images\images_4_9c4ef669be5ea4172fac.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_a0c389f6d1657ae2b707.png media\images\images_4_a0c389f6d1657ae2b707.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_a573740fba4eeae1cae2.png media\images\images_4_a573740fba4eeae1cae2.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_b64608b54865acecbe63.png media\images\images_4_b64608b54865acecbe63.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_c6f064e150351eb3bd2c.png media\images\images_4_c6f064e150351eb3bd2c.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_d623a10f5e0e39140e0c.png media\images\images_4_d623a10f5e0e39140e0c.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_d7e589381b51c3aee745.png media\images\images_4_d7e589381b51c3aee745.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_d8bccb92a399a2b2b43f.png media\images\images_4_d8bccb92a399a2b2b43f.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_de821203aac9ecd8f9c5.png media\images\images_4_de821203aac9ecd8f9c5.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_df95407b6a86519a4661.png media\images\images_4_df95407b6a86519a4661.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_e624ab3913031bc6fb2a.png media\images\images_4_e624ab3913031bc6fb2a.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_f1fafdc3bd95fc62e4a4.png media\images\images_4_f1fafdc3bd95fc62e4a4.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_f6124535db9080cc271c.png media\images\images_4_f6124535db9080cc271c.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\images_4_f919b2a9bb5a723d4980.png media\images\images_4_f919b2a9bb5a723d4980.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_1f51ac878fedf6eea8ac.png media\images\reconstructions_2_1f51ac878fedf6eea8ac.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_2284854b3d419ad1a2a1.png media\images\reconstructions_2_2284854b3d419ad1a2a1.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_23474a3e03053cba1835.png media\images\reconstructions_2_23474a3e03053cba1835.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_23a1d705f6c4769be1f9.png media\images\reconstructions_2_23a1d705f6c4769be1f9.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_2b786e5991100ced5348.png media\images\reconstructions_2_2b786e5991100ced5348.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_2ee6f22e4868f59fb6c5.png media\images\reconstructions_2_2ee6f22e4868f59fb6c5.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_34515278d7467beceddc.png media\images\reconstructions_2_34515278d7467beceddc.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_3e4fc880fa34db6c1336.png media\images\reconstructions_2_3e4fc880fa34db6c1336.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_466fbd539f8994ff52af.png media\images\reconstructions_2_466fbd539f8994ff52af.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_4a258ff7d07b7041c465.png media\images\reconstructions_2_4a258ff7d07b7041c465.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_4cf2bb85aa50afb57ae4.png media\images\reconstructions_2_4cf2bb85aa50afb57ae4.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_5437d2599cee4db7a7bb.png media\images\reconstructions_2_5437d2599cee4db7a7bb.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_6d11dc9fdb7fa3cc5ab2.png media\images\reconstructions_2_6d11dc9fdb7fa3cc5ab2.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_6ec105ba7b01c3cfa7a6.png media\images\reconstructions_2_6ec105ba7b01c3cfa7a6.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_75e41dc6388043f04163.png media\images\reconstructions_2_75e41dc6388043f04163.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_93a3539fef162607338b.png media\images\reconstructions_2_93a3539fef162607338b.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_96027d9239fd94107a36.png media\images\reconstructions_2_96027d9239fd94107a36.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_978965a03ef94932fdfe.png media\images\reconstructions_2_978965a03ef94932fdfe.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_9c95c475ee8497b117cf.png media\images\reconstructions_2_9c95c475ee8497b117cf.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_9e9afb907a17da5b5661.png media\images\reconstructions_2_9e9afb907a17da5b5661.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b0559e99286f96fe8b2e.png media\images\reconstructions_2_b0559e99286f96fe8b2e.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b34389a6546d75e3ebdb.png media\images\reconstructions_2_b34389a6546d75e3ebdb.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b50dee672725b24defde.png media\images\reconstructions_2_b50dee672725b24defde.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_b91b53a02a8575913c9c.png media\images\reconstructions_2_b91b53a02a8575913c9c.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_c0fc5f79c7183e298e01.png media\images\reconstructions_2_c0fc5f79c7183e298e01.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_c1a5667a6a8dfaed2f3c.png media\images\reconstructions_2_c1a5667a6a8dfaed2f3c.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_cbb4bc7c80a471d52128.png media\images\reconstructions_2_cbb4bc7c80a471d52128.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_d504f34dce8fc8604401.png media\images\reconstructions_2_d504f34dce8fc8604401.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_e79e9903af6236e3e899.png media\images\reconstructions_2_e79e9903af6236e3e899.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_e7da1bb2ddaaa05ecd45.png media\images\reconstructions_2_e7da1bb2ddaaa05ecd45.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_ee273b22cc573da9363d.png media\images\reconstructions_2_ee273b22cc573da9363d.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_2_f3dd91372ad5dcb8b2b0.png media\images\reconstructions_2_f3dd91372ad5dcb8b2b0.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_0618bf606502916d8da1.png media\images\reconstructions_5_0618bf606502916d8da1.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_13946b8bf6819443f99c.png media\images\reconstructions_5_13946b8bf6819443f99c.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_1ffb1167e748a3903fce.png media\images\reconstructions_5_1ffb1167e748a3903fce.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_245f1adb06b960fe5fbe.png media\images\reconstructions_5_245f1adb06b960fe5fbe.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_2574752434e6de7825de.png media\images\reconstructions_5_2574752434e6de7825de.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_29350e86de67f0daac70.png media\images\reconstructions_5_29350e86de67f0daac70.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_3004d79327293385cfc8.png media\images\reconstructions_5_3004d79327293385cfc8.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_33f8dee15508e593e149.png media\images\reconstructions_5_33f8dee15508e593e149.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_46c5d1e4b0503ec5cc68.png media\images\reconstructions_5_46c5d1e4b0503ec5cc68.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_55206299836f4011eabb.png media\images\reconstructions_5_55206299836f4011eabb.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_5656f54b205a1b015fdc.png media\images\reconstructions_5_5656f54b205a1b015fdc.png
+2023-04-16 17:29:25,341 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_591b7e99d8c3169e38a9.png media\images\reconstructions_5_591b7e99d8c3169e38a9.png
+2023-04-16 17:29:25,350 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_72463a5358a8292b2344.png media\images\reconstructions_5_72463a5358a8292b2344.png
+2023-04-16 17:29:25,350 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_80dbc617235f72a35b6f.png media\images\reconstructions_5_80dbc617235f72a35b6f.png
+2023-04-16 17:29:25,351 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_8a513c11a07d10e096b3.png media\images\reconstructions_5_8a513c11a07d10e096b3.png
+2023-04-16 17:29:25,351 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_8ecb039195c84b9116b9.png media\images\reconstructions_5_8ecb039195c84b9116b9.png
+2023-04-16 17:29:25,351 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_933d8e8399606ab61a90.png media\images\reconstructions_5_933d8e8399606ab61a90.png
+2023-04-16 17:29:25,351 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_a106d9dd56ba71411a3b.png media\images\reconstructions_5_a106d9dd56ba71411a3b.png
+2023-04-16 17:29:25,351 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_b5d4654384f315f8ca9b.png media\images\reconstructions_5_b5d4654384f315f8ca9b.png
+2023-04-16 17:29:25,351 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_b5fb51e8bf5541d4c8b1.png media\images\reconstructions_5_b5fb51e8bf5541d4c8b1.png
+2023-04-16 17:29:25,351 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_c311c2f3f2ab356cdda2.png media\images\reconstructions_5_c311c2f3f2ab356cdda2.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_ccb83682ed72739c5989.png media\images\reconstructions_5_ccb83682ed72739c5989.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_cd35ec3011c9501c1b71.png media\images\reconstructions_5_cd35ec3011c9501c1b71.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_d119e9f134fa1ef3b64d.png media\images\reconstructions_5_d119e9f134fa1ef3b64d.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_d15b6ec8b05dc03debb5.png media\images\reconstructions_5_d15b6ec8b05dc03debb5.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_d7ff887117c62c301e00.png media\images\reconstructions_5_d7ff887117c62c301e00.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_da75e1a0258fdc1cadb4.png media\images\reconstructions_5_da75e1a0258fdc1cadb4.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_e734d6332c6a27efe717.png media\images\reconstructions_5_e734d6332c6a27efe717.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_e99713795ce1b8bb1b71.png media\images\reconstructions_5_e99713795ce1b8bb1b71.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_ef3bf465d428dde12e0e.png media\images\reconstructions_5_ef3bf465d428dde12e0e.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_f1b5126d2f2d28a38a94.png media\images\reconstructions_5_f1b5126d2f2d28a38a94.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [dir_watcher.py:finish():409] scan save: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\media\images\reconstructions_5_f6a795293008d2d1b28f.png media\images\reconstructions_5_f6a795293008d2d1b28f.png
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 10
+2023-04-16 17:29:25,352 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:25,352 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 10
+2023-04-16 17:29:25,352 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 10
+2023-04-16 17:29:25,352 INFO    SenderThread:5040 [file_pusher.py:finish():168] shutting down file pusher
+2023-04-16 17:29:25,621 INFO    wandb-upload_4:5040 [upload_job.py:push():137] Uploaded file c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\config.yaml
+2023-04-16 17:29:25,634 INFO    wandb-upload_13:5040 [upload_job.py:push():137] Uploaded file c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\requirements.txt
+2023-04-16 17:29:25,646 INFO    wandb-upload_1:5040 [upload_job.py:push():137] Uploaded file c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\wandb-summary.json
+2023-04-16 17:29:25,667 INFO    wandb-upload_11:5040 [upload_job.py:push():137] Uploaded file c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\files\output.log
+2023-04-16 17:29:25,871 INFO    Thread-15 (_thread_body):5040 [sender.py:transition_state():626] send defer: 11
+2023-04-16 17:29:25,871 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:25,871 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 11
+2023-04-16 17:29:25,871 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:25,874 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 11
+2023-04-16 17:29:25,874 INFO    SenderThread:5040 [file_pusher.py:join():173] waiting for file pusher
+2023-04-16 17:29:25,874 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 12
+2023-04-16 17:29:25,874 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:25,874 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 12
+2023-04-16 17:29:25,874 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: status_report
+2023-04-16 17:29:25,874 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:25,879 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 12
+2023-04-16 17:29:25,951 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 13
+2023-04-16 17:29:25,952 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:25,952 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 13
+2023-04-16 17:29:25,952 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:25,952 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 13
+2023-04-16 17:29:25,952 INFO    SenderThread:5040 [sender.py:transition_state():626] send defer: 14
+2023-04-16 17:29:25,952 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: defer
+2023-04-16 17:29:25,952 DEBUG   SenderThread:5040 [sender.py:send():375] send: final
+2023-04-16 17:29:25,952 INFO    HandlerThread:5040 [handler.py:handle_request_defer():170] handle defer: 14
+2023-04-16 17:29:25,952 DEBUG   SenderThread:5040 [sender.py:send():375] send: footer
+2023-04-16 17:29:25,952 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: defer
+2023-04-16 17:29:25,952 INFO    SenderThread:5040 [sender.py:send_request_defer():622] handle sender defer: 14
+2023-04-16 17:29:25,952 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: poll_exit
+2023-04-16 17:29:25,952 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: server_info
+2023-04-16 17:29:25,952 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: get_summary
+2023-04-16 17:29:25,952 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: poll_exit
+2023-04-16 17:29:25,952 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: sampled_history
+2023-04-16 17:29:25,959 DEBUG   SenderThread:5040 [sender.py:send_request():402] send_request: server_info
+2023-04-16 17:29:26,072 DEBUG   HandlerThread:5040 [handler.py:handle_request():144] handle_request: shutdown
+2023-04-16 17:29:26,072 INFO    HandlerThread:5040 [handler.py:finish():845] shutting down handler
+2023-04-16 17:29:26,955 INFO    WriterThread:5040 [datastore.py:close():298] close: c:\Users\lukas\Documents\GitHub\astroLuSt\demos\wandb\run-20230416_172828-qhjmkwvx\run-qhjmkwvx.wandb
+2023-04-16 17:29:27,077 INFO    SenderThread:5040 [sender.py:finish():1550] shutting down sender
+2023-04-16 17:29:27,077 INFO    SenderThread:5040 [file_pusher.py:finish():168] shutting down file pusher
+2023-04-16 17:29:27,077 INFO    SenderThread:5040 [file_pusher.py:join():173] waiting for file pusher
