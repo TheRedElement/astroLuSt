@@ -41,14 +41,17 @@ class WandB_parallel_sweep:
                 - the default is 1
             - wandb_mode
                 - str, optional
-                - if not None will set the environment variable 'WANDB_MODE' to 'offline
-                    - i.e. no synching to the web-api will take place
-                    - useful for i.e. SLURM execution when there is no internet connection
-                    - you can always synch your results later with the following command
-                        >>> wand sync <path to run directory>
-                    - usually the path to the run directory is ./wandb/offline
-                    - use wildcards to sync multiple runs at once
-                - the default is None
+                - will set the environment variable 'WANDB_MODE' accordingly
+                    - 'offline'
+                        - i.e. no synching to the web-api will take place
+                        - useful for i.e. SLURM execution when there is no internet connection
+                        - you can always synch your results later with the following command
+                            >>> wand sync <path to run directory>
+                        - usually the path to the run directory is ./wandb/offline...
+                        - use wildcards to sync multiple runs at once
+                    - online
+                        - synching during sweep enabled
+                - the default is 'online'
                     - will sync during sweep
             - verbose
                 - int, optional
@@ -88,8 +91,7 @@ class WandB_parallel_sweep:
         self.ET = ExecTimer(verbose=self.verbose)
         
         
-        if isinstance(wandb_mode, str):
-            os.environ['WANDB_MODE'] = 'offline'  #run wandb offline and sync lateron
+        os.environ['WANDB_MODE'] = str(self.wandb_mode)  #run wandb on/offline
        
         pass
 
