@@ -2,4 +2,5 @@ __pycache__
 astroLuSt_testing.ipynb
 # demos/
 demos/data
+demos/wandb
 maxsector.py
