@@ -1,5 +1,6 @@
 
 #%%imports
+import itertools
 import os
 import wandb
 
@@ -105,6 +106,58 @@ class WandB_parallel_sweep:
             f'    verbose={self.verbose},\n'
             f')'
         )
+
+    def get_upper_bound_agents(self,
+        sweep_config:dict
+        ):
+        """
+            - method to estimate an upper bound of the number of agents needed
+            - will do so by determining the amount of model-instances that will be computed
+            
+            Parameters
+            ----------
+                - sweep_config
+                    - dict
+                    - nested dict
+                    - sweep configuration that gets passed to wandb.sweep()
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+        
+
+        #grid search
+        if sweep_config['method'] == 'grid':
+            #extract hyperparameters from sweep_config
+            params = sweep_config['parameters']
+            print(params.values())
+
+            values = [p['values'] for p in params.values() if 'values' in p.keys()]
+            # value = [[p['value']] for p in params.values() if 'value' in p.keys()]
+            # values += value
+
+            #get number of combinations resulting from hyperparameters
+            n_combs = len(list(itertools.product(*values)))
+
+
+        #random search (sampling from distributions)
+        elif sweep_config['method'] == 'random':
+            n_combs = sweep_config['run_cap']
+            # distributions = [p['distribution'] for p in params.values() if 'distribution' in p.keys()]
+        
+        #bayesian search (sampling from distribution)
+        elif sweep_config['method'] == 'bayes':
+            n_combs = sweep_config['run_cap']
+            # distributions = [p['distribution'] for p in params.values() if 'distribution' in p.keys()]
+
+
+        return n_combs
 
     def sweep_one(self,
         sweep_id:str=None, function:callable=None,
