@@ -126,7 +126,11 @@ class WandB_parallel_sweep:
 
             Returns
             -------
-
+                - n_comb
+                    - int
+                    - number of hyperparameter combinations that will be computed
+                    - equivalent to the upper bound estimate of n_agents
+                    
             Comments
             --------
         """
