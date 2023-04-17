@@ -140,7 +140,6 @@ class WandB_parallel_sweep:
         if sweep_config['method'] == 'grid':
             #extract hyperparameters from sweep_config
             params = sweep_config['parameters']
-            print(params.values())
 
             values = [p['values'] for p in params.values() if 'values' in p.keys()]
             # value = [[p['value']] for p in params.values() if 'value' in p.keys()]
