@@ -39,7 +39,10 @@ class WandB_parallel_sweep:
                 - int, optional
                 - how many agents to use for the sweep
                 - this is the amount of training loops for different parameters executed in parallel
-                - the default is 1
+                - if n_agents < 0
+                    - n_jobs - n_agents agents
+                - the default is -1
+                    - will use as many agents as possible but a maximum of 20 (20 is the maximum allowed number of wokring agents)
             - wandb_mode
                 - str, optional
                 - will set the environment variable 'WANDB_MODE' accordingly
@@ -76,7 +79,7 @@ class WandB_parallel_sweep:
     
     def __init__(self,
         sweep_id:str, function:callable,
-        n_jobs:int=-1, n_agents:int=1,
+        n_jobs:int=-1, n_agents:int=-1,
         wandb_mode:str=None,
         verbose:int=0
         ) -> None:
@@ -159,6 +162,10 @@ class WandB_parallel_sweep:
             n_combs = sweep_config['run_cap']
             # distributions = [p['distribution'] for p in params.values() if 'distribution' in p.keys()]
 
+        if n_combs > 20:
+            if self.verbose > 1:
+                print('INFO(get_upper_bound_agents): The maximum agents working in parallel allowed are 20. Thus returning n_combs=20.')
+            n_combs = 20
 
         return n_combs
 
@@ -301,6 +308,24 @@ class WandB_parallel_sweep:
         if n_agents is None: n_agents = self.n_agents
         if verbose is None: verbose = self.verbose
 
+        if n_jobs > 20:
+            if self.verbose > 1:
+                print('INFO(sweep_parallel): The maximum agents working in parallel allowed are 20. Setting n_jobs = 20.')
+            n_jobs = 20
+        elif n_jobs < 0:
+            n_jobs = os.cpu_count()+(n_jobs+1)
+
+
+        if n_agents > 20:
+            if self.verbose > 1:
+                print('INFO(sweep_parallel): The maximum agents working in parallel allowed are 20. Setting n_agents = 20.')
+            n_agents = 20
+        elif n_agents < 0:
+            n_agents = n_jobs+n_agents+1
+            pass
+        
+        if verbose > 1:
+            print(f'INFO(sweep_parallel()): Using n_jobs={n_jobs} jobs and n_agents={n_agents} agents to run sweep.')
 
         self.ET.checkpoint_start('sweep_parallel')
         #execute paralellized hyperparameter sweep
