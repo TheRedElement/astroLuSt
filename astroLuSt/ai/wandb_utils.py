@@ -228,7 +228,7 @@ class WandB_parallel_sweep:
                 - self.ET will only be able to store the timings in self.ET.df_execprotocoll if n_jobs == 1
         """
 
-        self.ET.checkpoint_start(f'sweep_one, agent {idx}')
+        self.ET.checkpoint_start(f'sweep_one, agent {idx+1}')
 
         #fallback to default if nothing is provided
         if sweep_id is None: sweep_id = self.sweep_id
