@@ -41,8 +41,9 @@ class WandB_parallel_sweep:
                 - this is the amount of training loops for different parameters executed in parallel
                 - if n_agents < 0
                     - n_jobs - n_agents agents
-                - the default is -1
-                    - will use as many agents as possible but a maximum of 20 (20 is the maximum allowed number of wokring agents)
+                - the default is None
+                    - will use as many agents as jobs (i.e. self.n_agents = self.n_jobs)
+                        - a maximum of 20 agents will be used since 20 is the maximum allowed number of wokring agents)
             - wandb_mode
                 - str, optional
                 - will set the environment variable 'WANDB_MODE' accordingly
@@ -79,7 +80,7 @@ class WandB_parallel_sweep:
     
     def __init__(self,
         sweep_id:str, function:callable,
-        n_jobs:int=-1, n_agents:int=-1,
+        n_jobs:int=-1, n_agents:int=None,
         wandb_mode:str=None,
         verbose:int=0
         ) -> None:
@@ -88,7 +89,8 @@ class WandB_parallel_sweep:
         self.sweep_id = sweep_id
         self.function = function
         self.n_jobs = n_jobs
-        self.n_agents = n_agents
+        if n_agents is None:
+            self.n_agents = n_jobs
         self.wandb_mode = wandb_mode
         self.verbose = verbose
 
