@@ -120,6 +120,19 @@ def resample(
 
     """
 
+    #try converting to numpy (otherwise bin generation might fail)
+    if not isinstance(x, np.ndarray):
+        try:
+            x = x.to_numpy()
+        except:
+            raise TypeError(f'"x" hat to be of type np.ndarray and not {type(x)}')
+    if not isinstance(y, np.ndarray):
+        try:
+            y = y.to_numpy()
+        except:
+            raise TypeError(f'"y" hat to be of type np.ndarray and not {type(y)}')
+            
+
     if sort_before:
         idxs = np.argsort(x)
         x_, y_ = x[idxs], y[idxs]
