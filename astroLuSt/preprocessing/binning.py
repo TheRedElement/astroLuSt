@@ -182,9 +182,11 @@ class Binning:
 
         #dynamically calculate bins if npoints_per_interval is specified 
         if npoints_per_interval is not None:
+
+            #sort and flatten to make sure that the bins are calculated correctly (in case a pandas.DataSeries object or 2D array get passed)
             sortidx = np.argsort(x)
-            x_ = x[sortidx]
-            y_ = y[sortidx]
+            x_ = x[sortidx].flatten()
+            y_ = y[sortidx].flatten()
             chunck_idxs = np.arange(0, x_.shape[0], npoints_per_interval)
             
             bins = x_[chunck_idxs]
@@ -339,7 +341,7 @@ class Binning:
 
             iv_bool = (b1 <= self.x)&(self.x < b2)
 
-        #adopt transforms
+            #adopt transforms
             self.x_binned  = np.append(self.x_binned,  np.nanmean(self.x[iv_bool]))
             self.y_binned  = np.append(self.y_binned,  np.nanmean(self.y[iv_bool]))
             self.y_std     = np.append(self.y_std,     np.nanstd(self.y[iv_bool], ddof=ddof))
