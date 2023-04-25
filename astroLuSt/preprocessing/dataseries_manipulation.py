@@ -71,6 +71,7 @@ def fold(
 def resample(
     x:np.ndarray, y:np.ndarray,
     ndatapoints:int=50,
+    sort_before:bool=True,
     verbose:int=0
     ) -> tuple:
     """
@@ -88,6 +89,10 @@ def resample(
                 - int, optional
                 - number of datapoints of the resampled dataseries
                 - the default is 50
+            - sort_before
+                - bool, optional
+                - whether to sort the input arrays x and y with regards to x before resampling
+                - the default is True
             - verbose
                 -  int optional
                 - verbosity level
@@ -114,9 +119,14 @@ def resample(
         --------
 
     """
+
+    if sort_before:
+        idxs = np.argsort(x)
+        x_, y_ = x[idxs], y[idxs]
+
     interp_x = np.linspace(0, 1, ndatapoints)
 
-    interp_y =  np.interp(interp_x, x, y)
+    interp_y =  np.interp(interp_x, x_, y_)
 
     if verbose > 1:
         fig = plt.figure()
