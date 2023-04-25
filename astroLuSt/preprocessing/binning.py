@@ -183,10 +183,21 @@ class Binning:
         #dynamically calculate bins if npoints_per_interval is specified 
         if npoints_per_interval is not None:
 
-            #sort and flatten to make sure that the bins are calculated correctly (in case a pandas.DataSeries object or 2D array get passed)
+            #try converting to numpy (otherwise bin generation might fail)
+            if not isinstance(x, np.ndarray):
+                try:
+                    x = x.to_numpy()
+                except:
+                    raise TypeError(f'"x" hat to be of type np.ndarray and not {type(x)}')
+            if not isinstance(y, np.ndarray):
+                try:
+                    y = y.to_numpy()
+                except:
+                    raise TypeError(f'"y" hat to be of type np.ndarray and not {type(y)}')
+            
             sortidx = np.argsort(x)
-            x_ = x[sortidx].flatten()
-            y_ = y[sortidx].flatten()
+            x_ = np.array(x[sortidx])
+            y_ = np.array(y[sortidx])
             chunck_idxs = np.arange(0, x_.shape[0], npoints_per_interval)
             
             bins = x_[chunck_idxs]
