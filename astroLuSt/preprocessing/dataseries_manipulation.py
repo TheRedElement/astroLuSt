@@ -62,7 +62,7 @@ def fold(
     #this equals getting the decimal numbers of that specific value
     #+1 because else a division by 0 would occur
     #floor always rounds down a value to the ones (returns everything before decimal point)
-    phases_folded = phases-np.floor(phases)
+    phases_folded = np.mod(phases,1)
 
     periods_folded = phases_folded * period
 
