@@ -16,7 +16,7 @@ class SigmaClipping:
         - creates a mask retaining only values that lie outside an interval of +/- sigma*std_y around a mean curve
 
         Attributes
-        ----------'
+        ----------
             - sigma_bottom
                 - float, optional
                 - multiplier for the bottom boundary
