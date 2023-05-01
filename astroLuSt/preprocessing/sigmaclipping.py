@@ -4,6 +4,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import re
+from typing import Union, Callable
+import warnings
 
 
 from astroLuSt.preprocessing.binning import Binning
@@ -124,6 +126,7 @@ class SigmaClipping:
             - matplotlib
             - numpy
             - re
+            - typing
 
         Comments
         --------
@@ -298,7 +301,7 @@ class SigmaClipping:
         prev_clip_mask:np.ndarray=None,
         verbose:int=None,
         legfit_kwargs:dict={'deg':10},
-        ) -> np.ndarray:
+        ) -> None:
         """
             - method to actually execute sigma-clipping on x and y (once)
             - creates a mask retaining only values that lie outside an interval of +/- sigma*std_y around a mean curve
@@ -448,10 +451,10 @@ class SigmaClipping:
             Returns
             -------
                 - fig
-                    - matplotlib figure|None
+                    - matplotlib figure
                     - figure created if verbosity level specified accordingly
                 - axs
-                    - matplotlib axes|None
+                    - matplotlib axes
                     - axes corresponding to 'fig'
 
             Comments
@@ -482,12 +485,12 @@ class SigmaClipping:
         fig = plt.figure()
         fig.suptitle(f'Iteration: {iteration}')
         ax1 = fig.add_subplot(111)
-        if show_cut: ax1.scatter(self.x[~clip_mask], self.y[~clip_mask],             color=cut_color,                                 alpha=0.7, zorder=1, label="Clipped")
-        ax1.scatter(self.x[ clip_mask], self.y[ clip_mask],             color=ret_color,                                 alpha=1.0, zorder=2, label="Retained")
+        if show_cut: ax1.scatter(self.x[~clip_mask], self.y[~clip_mask],color=cut_color,                                                             alpha=0.7, zorder=1, label="Clipped")
+        ax1.scatter(self.x[ clip_mask], self.y[ clip_mask],             color=ret_color,                                                             alpha=1.0, zorder=2, label="Retained")
         if not self.use_polynomial: ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,   color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
-        ax1.plot(self.x[sort_array],    self.y_mean_interp[sort_array], color=mean_curve_color,                                     zorder=4, label="Mean Curve")
-        ax1.plot(self.x[sort_array],    upper_bound[sort_array],        color=ulb_color,       linestyle="--",                      zorder=5, label=ulb_lab)
-        ax1.plot(self.x[sort_array],    lower_bound[sort_array],        color=ulb_color,       linestyle="--",                      zorder=5) #,label=ulb_lab)
+        ax1.plot(self.x[sort_array],    self.y_mean_interp[sort_array], color=mean_curve_color,                                                                 zorder=4, label="Mean Curve")
+        ax1.plot(self.x[sort_array],    upper_bound[sort_array],        color=ulb_color,       linestyle="--",                                                  zorder=5, label=ulb_lab)
+        ax1.plot(self.x[sort_array],    lower_bound[sort_array],        color=ulb_color,       linestyle="--",                                                  zorder=5) #,label=ulb_lab)
 
         ax1.set_xlabel("x")
         ax1.set_ylabel("y")
@@ -514,10 +517,10 @@ class SigmaClipping:
             ----------
                 - x
                     - np.ndarray
-                    - x-values of the dataseries to generate the mean curve for
+                    - x-values of the dataseries to clip
                 - y
                     - np.ndarray
-                    - y-values of the dataseries to generate the mean curve for
+                    - y-values of the dataseries to clip
                 - mean_x
                     - np.ndarray, optional
                     - x-values of a representative mean curve
@@ -654,7 +657,7 @@ class SigmaClipping:
 
     def transform(self,
         x:np.ndarray, y:np.ndarray,
-        ):
+        ) -> tuple[np.ndarray, np.ndarray]:
         """
             - method to transform the input-dataseries
             - similar to scikit-learn scalers
@@ -663,15 +666,21 @@ class SigmaClipping:
             ----------
                 - x
                     - np.ndarray
-                    - x-values of the dataseries to generate the mean curve for
+                    - x-values of the dataseries to clip
                 - y
                     - np.ndarray
-                    - y-values of the dataseries to generate the mean curve for
+                    - y-values of the dataseries to clip
             Raises
             ------
 
             Returns
             -------
+                - x_clipped
+                    - np.ndarray
+                    - the clipped version of the x-values of the input dataseries
+                - y_clipped
+                    - np.ndarray
+                    - the clipped version of the y-values of the input dataseries
 
             Comments
             --------
@@ -685,16 +694,31 @@ class SigmaClipping:
     def fit_transform(self,
         x:np.ndarray, y:np.ndarray,
         fit_kwargs:dict={},
-        ):
+        ) -> tuple[np.ndarray, np.ndarray]:
         """
             - method to fit the transformer and transform the data in one go
             - similar to scikit-learn scalers
             
             Parameters
             ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to clip
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to clip
                 - fit_kwargs
                     - dict, optional
-                    - kwargs to pass to self.fit()        
+                    - kwargs to pass to self.fit()
+            
+            Returns
+            -------
+                - x_clipped
+                    - np.ndarray
+                    - the clipped version of the x-values of the input dataseries
+                - y_clipped
+                    - np.ndarray
+                    - the clipped version of the y-values of the input dataseries                
         """
 
         self.fit(
@@ -707,3 +731,344 @@ class SigmaClipping:
 
 
 
+class StringOfPearls:
+    #TODO: loosness (i.e. allow n points of the window_size consecutive ones to not fullfill the condition)
+    """
+        - class to remove outliers which are at consecutive positions on the input dataseries and the 'metric' of which does not exceed a threshold 'th'
+        - follows a similar convention as the scikit-learn library
+
+        Attributes
+        ----------
+            - window_size, optional
+                - int
+                - minimum number of consecutive datapoints the 'metric' of which shall not exceed 'th'
+                - if 'th' gets exceeded by 'window_size' consecutive points, the respective points get clipped 
+                - the default is 3
+            - th
+                - float, callable, optional
+                - threshold defining the lower boundary of the value the consecutive elements shall not exceed
+                - if a callable is passed
+                    - the callable has to take two arguments (x, and y)
+                    - the callable has to return a float
+                - the default is 0.01
+            - metric
+                - callable, optional
+                - metric to use for comparison with th
+                - the passed callable has to
+                    - take two arguments (x, and y)
+                    - return an array of the same size as x and y
+                - the default is None
+                    - will use the absolute gradient in y direction
+                    - i.e. np.abs(np.gradient(y)) will be called
+            - window
+                - np.ndarray, optoinal
+                - window to use for the convolution of the boolean
+                - if passed, will overwrite window_size
+                - the default is None
+                    - will result in a window of [1]*window_size
+                    - i.e. window_size consecutive entries have to be greater than th to be clipped
+            - verbose   
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+        Infered Attributes
+        ------------------
+            - clip_mask
+                - np.ndarray
+                - final mask for the retained values
+                - 1 for every value that got retained
+                - 0 for every value that got cut
+            - th_float
+                - float
+                - floating point representation of the used threshold given 'x' and 'y' used during the call of fit()
+
+        Methods
+        -------
+            - fit()
+            - transform()
+            - fit_transform()
+            - plot_result()
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+            - warnings
+        
+        Comments
+        --------
+
+
+    """
+    def __init__(self,
+        window_size:int=3,
+        th:Union[float,Callable[[np.ndarray, np.ndarray],float]]=0.01,
+        metric:Callable[[np.ndarray, np.ndarray],np.ndarray]=None,
+        looseness:int=0,
+        window:np.ndarray=None,
+        verbose:int=0,
+        ) -> None:
+        
+
+        self.window_size = window_size
+        self.th = th
+        if metric is None:
+            self.metric = lambda x, y: np.abs(np.gradient(y))
+        else:
+            self.metric = metric
+        self.loosenes = looseness
+        #overwrite window_size if a custom window is passed
+        if window is not None:
+            self.window = window
+            self.window_size = len(window)
+        else:
+            self.window = [1]*self.window_size
+        self.verbose = verbose
+        
+
+        pass
+
+    def __repr__(self) -> str:
+        return (
+            f'StringOfPearls(\n'
+            f'    window_size={self.window_size},\n'
+            f'    th={self.th},\n'
+            f'    metric={self.metric},\n'
+            f'    window={self.window},\n'
+            f'    verbose={self.verbose},\n'
+            f')'
+        )
+
+    def fit(self,
+        x:np.ndarray, y:np.ndarray,
+        verbose:int=None,
+        ):
+        """
+            - method to apply StringOfPearls
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to clip
+                    - preferably sorted
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to clip
+                    - preferably sorted w.r.t. 'x'
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None   
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+
+        if verbose is None:
+            verbose = self.verbose
+
+        if np.any(np.diff(x)<0) and verbose > 1:
+            warnings.warn('The resulting mask might be wrong since "x" is not a sorted array!', category=UserWarning)
+
+
+        #assign input values
+        self.x = x
+        self.y = y
+
+        #check what threshold is used
+        if isinstance(self.th, (float, int)):
+            th = self.th
+        elif callable(self.th):
+            th = self.th(self.x, self.y)
+        else:
+            raise ValueError('self.th has to be any of the following: callable, float, int')
+        self.th_float = th #floating point representation of self.th
+
+
+        #convolution of window to get at least window_size consecutive occurences of metric(x,y) >= th 
+        conv = np.convolve((self.metric(self.x, self.y) >= th).astype(int), self.window, mode="valid")
+        print(conv.shape)
+        
+        #determine where the convolution resulted in self.window_size consecutive elements
+        indexes_start = np.where(conv == self.window_size)[0]
+
+        #generate indices of all
+        idxs = np.array([np.arange(idx, idx+self.window_size) for idx in indexes_start])
+        idxs = np.unique(idxs)
+
+        #create boolean clip_mask
+        self.clip_mask = np.ones_like(self.x, dtype=bool)
+        if len(idxs) > 0:
+            self.clip_mask[idxs] = False
+        
+        if verbose > 1:
+            print(f'INFO(StringOfPearls): Number of clipped entries: {(~self.clip_mask).sum()}/{len(self.x)}')
+
+        return
+
+    def transform(self,
+        x:np.ndarray, y:np.ndarray,        
+        ) -> tuple[np.ndarray, np.ndarray]:
+        """
+            - method to transform the input-dataseries
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to clip
+                    - preferably sorted
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to clip
+                    - preferably sorted w.r.t. 'x'
+            Raises
+            ------
+
+            Returns
+            -------
+                - x_clipped
+                    - np.ndarray
+                    - the clipped version of the x-values of the input dataseries
+                - y_clipped
+                    - np.ndarray
+                    - the clipped version of the y-values of the input dataseries 
+
+            Comments
+            --------
+        """
+
+        x_clipped = x[self.clip_mask]
+        y_clipped = y[self.clip_mask]
+
+        return x_clipped, y_clipped
+    
+    def fit_transform(self,
+        x:np.ndarray, y:np.ndarray,
+        fit_kwargs:dict={}
+        ) -> tuple[np.ndarray, np.ndarray]:
+        """
+            - method to fit the transformer and transform the data in one go
+            - similar to scikit-learn scalers
+            
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to clip
+                    - preferably sorted
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to clip
+                    - preferably sorted w.r.t. 'x'            
+                - fit_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.fit()
+
+            Returns
+            -------
+                - x_clipped
+                    - np.ndarray
+                    - the clipped version of the x-values of the input dataseries
+                - y_clipped
+                    - np.ndarray
+                    - the clipped version of the y-values of the input dataseries               
+        """
+
+        self.fit(x, y, **fit_kwargs)
+        x_clipped, y_clipped = self.transform(x, y)
+
+        return x_clipped, y_clipped
+    
+    def plot_result(self,
+        show_cut:bool=True, 
+        show_metric:bool=False,   
+        ) -> tuple:
+        """
+            - method to create a plot visualizing the sigma-clipping result
+
+            Parameters
+            ----------
+                - show_cut
+                    - bool, optional
+                    - whether to also display the cut datapoints in the summary
+                    - the default is True
+                - show_metric
+                    - bool, optional
+                    - whether to also display the metric used to compare against 'th' in the plot
+                    - the default is False
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure|None
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes|None
+                    - axes corresponding to 'fig'
+
+            Comments
+            --------
+
+        """
+        
+        ret_color = "tab:blue"
+        cut_color = "tab:grey"
+        met_color = 'tab:green'
+        th_color  = 'tab:orange'
+
+
+        patches = []
+        #plot
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax2 = ax1.twinx()
+
+        #sort axis
+        ax1.set_zorder(3)
+        ax2.set_zorder(2)
+        ax1.patch.set_visible(False)
+
+
+        patches.append(    ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],      color=ret_color, alpha=1.0, zorder=3, label='Retained'))
+        if show_cut:
+            patches.append(ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],     color=cut_color, alpha=0.7, zorder=2, label='Clipped'))
+        if show_metric:
+            patches.append(ax2.scatter(self.x,                  self.metric(self.x, self.y), color=met_color, alpha=0.7, zorder=1, label='Metric'))
+            patches.append(ax2.axhline(self.th_float,           linestyle='--',              color=th_color,             zorder=2, label=f'Threshold: {self.th_float:.2f}'))
+        
+        
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y', color=ret_color)
+        ax2.set_ylabel('metric', color=met_color)
+
+        ax1.spines['right'].set_color(met_color)
+        ax2.spines['right'].set_color(met_color)
+
+        ax1.tick_params('y', colors=ret_color)
+        ax2.tick_params('y', colors=met_color)
+
+        ax1.legend(patches, [s.get_label() for s in patches])
+
+        plt.tight_layout()
+        plt.show()
+
+
+        axs = fig.axes
+
+        return fig, axs
