@@ -4,11 +4,13 @@ import eleanor
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.figure import Figure
 import numpy as np
 import os
 import pandas as pd
 import shutil
 import time
+from typing import Union, Tuple, Callable, List
 import warnings
 
 from astroLuSt.monitoring.timers import ExecTimer
@@ -20,7 +22,6 @@ warnings.filterwarnings("error", message=w2e1)
 
 #ELEANOR
 class EleanorDatabaseInterface:
-
     """
         - class to interact with the eleanor code for downloading lightcurves
 
@@ -106,10 +107,8 @@ class EleanorDatabaseInterface:
 
     """
 
-
-
     def __init__(self,
-        tics:list=[], sectors:list="all",
+        tics:List[int]=[], sectors:Union(List[int],str)="all",
         do_psf:bool=False, do_pca:bool=False,
         aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
         height:int=15, width:int=15, bkg_size:int=31,
@@ -137,7 +136,7 @@ class EleanorDatabaseInterface:
 
 
     def data_from_eleanor(self,
-        tic:int, sectors:list="all", 
+        tic:int, sectors:Union(List[int],str)="all", 
         do_psf:bool=False, do_pca:bool=False, 
         aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
         height:int=15, width:int=15, bkg_size:int=31,
@@ -290,7 +289,7 @@ class EleanorDatabaseInterface:
     def extraction_onetic(self,
         tic:int,
         #saving data
-        save:str='./',
+        save:Union(str,bool)='./',
         redownload:bool=True,
         #plotting
         plot_result:bool=True,
@@ -453,7 +452,7 @@ class EleanorDatabaseInterface:
 
     def data_from_eleanor_alltics(self,
         #saving data
-        save:str="./",
+        save:Union(str,bool)="./",
         redownload:bool=True,
         #plotting
         plot_result:bool=True,
@@ -464,7 +463,7 @@ class EleanorDatabaseInterface:
         verbose:int=2,
         #kwargs
         extraction_onetic_kwargs:dict={},
-        ):
+        ) -> pd.DataFrame:
         """
             - method to extract data for all ids in 'self.tics'
 
@@ -525,6 +524,9 @@ class EleanorDatabaseInterface:
 
             Returns
             -------
+                - df_extraction_summary
+                    - pd.DataFrame
+                    - dataframe containing a summary of the extraction success for each tic
 
             Comments
             --------
@@ -595,8 +597,8 @@ class EleanorDatabaseInterface:
         data:list, tic:int, sectors:list, tess_mags:list,
         quality_expression:str="(datum.quality == 0)",
         aperture_detail:int=50, ylims:list=None,
-        fontsize:int=16, figsize:tuple=(16,9), save:str=False
-        ):
+        fontsize:int=16, figsize:tuple=(16,9), save:Union(str, bool)=False
+        ) -> Tuple[Figure, plt.Axes]:
         """
             - function to autogenerate a summary-plot of the data downloaded using eleonor
         
@@ -752,7 +754,7 @@ class EleanorDatabaseInterface:
         quality_expression:str="(datum.quality == 0)",
         sep=";",
         include_aperture=False, include_tpf=False,
-        save:str=False,
+        save:Union(str,bool)=False,
         ) -> pd.DataFrame:
         """
             - method to convert the result returned by eleanor to a pandas DataFrame
@@ -805,6 +807,10 @@ class EleanorDatabaseInterface:
 
             Returns
             -------
+                - df_lc
+                    - pd.DataFrame
+                    - contains all the information extracted for the target
+                    - i.e. various fluxes, times, sectors, tess magnitude, ...
 
             Comments
             --------
