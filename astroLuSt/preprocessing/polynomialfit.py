@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
+from typing import Union, Tuple, Callable
 
 #%%definitions
 
@@ -11,7 +12,7 @@ def polyfit2d(
     x:np.ndarray, y:np.ndarray, z:np.ndarray,
     deg:int=1,
     verbose:int=0
-    ):
+    ) -> Tuple[PolynomialFeatures, LinearRegression, np.ndarray, np.ndarray]:
     """
         - function to make a polynomial fit to a dataset of 3 variables
 

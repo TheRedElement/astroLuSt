@@ -1,14 +1,16 @@
 
 #%%imports
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
+from typing import Union, Tuple, Callable
 
 #%%definitions
 
 def fold(
     time:np.ndarray,
     period:float, tref:float=None,
-    verbose=0) -> np.ndarray:
+    verbose=0) -> Tuple[np.ndarray, np.ndarray]:
     """
         - takes an array of times
             - folds it onto a specified period into phase space
@@ -73,7 +75,7 @@ def resample(
     ndatapoints:int=50,
     sort_before:bool=True,
     verbose:int=0
-    ) -> tuple:
+    ) -> Tuple[np.ndarray, np.ndarray, Figure, plt.Axes]:
     """
         - function to resample a dataseries y(x) to nfeatures new datapoints via interpolation
 
@@ -162,7 +164,12 @@ def resample(
 
     return interp_x, interp_y, fig, axs
 
-def periodic_shift(input_array:np.ndarray, shift:float, borders:list, testplot:bool=False, verbose:int=0):
+def periodic_shift(
+    input_array:np.ndarray,
+    shift:float, borders:list,
+    testplot:bool=False,
+    verbose:int=0
+    ) -> np.ndarray:
     """
         - function to shift an array considering periodic boundaries
 
