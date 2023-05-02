@@ -2,7 +2,9 @@
 #%%imports
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
+from typing import Union, Tuple, Callable
 
 from astroLuSt.preprocessing.binning import Binning
 from astroLuSt.preprocessing.dataseries_manipulation import fold
@@ -241,7 +243,7 @@ class PDM:
         
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
 
         return (
             f'PDM(\n'
@@ -269,7 +271,7 @@ class PDM:
         x:np.ndarray=None,
         n_nyq:int=None,
         n0:int=None,
-        ):
+        ) -> np.ndarray:
         """
             - method to generate a period grid
             - inspired by astropy.timeseries.LombScargle().autofrequency() and VanderPlas (2018)
@@ -320,9 +322,13 @@ class PDM:
 
             Returns
             -------
+                - trial_periods
+                    - np.ndarray
+                    - final trial periods used for the execution of PDM
 
             Comments
             --------
+
         """
 
         if n_nyq is None:
@@ -375,8 +381,8 @@ class PDM:
         return trial_periods
 
     def get_theta_for_p(self,
-            x:np.ndarray, y:np.ndarray, p:float,
-        ):
+        x:np.ndarray, y:np.ndarray, p:float,
+        ) -> Tuple[float, float]:
         """
             - function to get the theta-statistics for one particular period (p) w.r.t. x and y
 
@@ -457,7 +463,7 @@ class PDM:
         breakloop:bool=None,
         n_jobs:int=None,
         verbose:int=None
-        ):
+        ) -> None:
         """
             - method to fit the pdm-estimator
             - will execute the calculation and assign results as attributes
@@ -625,11 +631,28 @@ class PDM:
 
         return
 
-    def predict(self):
+    def predict(self,
+        x:np.ndarray=None, y:np.ndarray=None, 
+        ) -> Tuple[float, float, float]:
         """
             - method to predict with the fitted pdm-estimator
             - will return relevant results
             - similar to predict-method in scikit-learn
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray, optional
+                    - x values of the dataseries to run PDM on
+                    - only here for consistency, will not be considered in the method
+                    - the default is None
+                - y
+                    - np.ndarray
+                    - y values of the dataseries to run PDM on
+                    - only here for consistency, will not be considered in the method
+                    - the default is None
+            Raises
+            ------
 
             Returns
             -------
@@ -642,13 +665,17 @@ class PDM:
                 - best_theta
                     - float
                     - theta-statistics of best period
+
+            Comments
+            --------
+
         """
         return self.best_period, self.errestimate, self.best_theta
     
     def fit_predict(self,
         x:np.ndarray, y:np.ndarray,
-        **kwargs
-        ):
+        fit_kwargs:dict={}
+        ) -> Tuple[float, float, float]:
         """
             - method to fit classifier and predict the results
 
@@ -660,9 +687,12 @@ class PDM:
                 - y
                     - np.ndarray
                     - y values of the dataseries to run phase dispersion minimization on
-                - kwargs
-                    - keyword arguments of fit()
+                - fit_kwargs
+                    - keyword arguments passed to fit()
 
+            Raises
+            ------
+                    
             Returns
             -------
                 - best_period
@@ -673,20 +703,42 @@ class PDM:
                     - error estimation of the best period
                 - best_theta
                     - float
-                    - theta-statistics of best period                            
+                    - theta-statistics of best period
+            
+            Comments
+            --------
+
         """
         
-        self.fit(x, y, **kwargs)
+        self.fit(x, y, **fit_kwargs)
         best_period, errestimate, best_theta = self.predict()
 
         return best_period, errestimate, best_theta
 
-    def plot_result(self):
+    def plot_result(self,
+        ) -> Tuple[Figure, plt.Axes]:
         """
             - method to plot the result of the pdm
             - will produce a plot with 2 panels
                 - top panel contains the periodogram
                 - bottom panel contains the input-dataseries folded onto the best period
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes
+                    - axes corresponding to 'fig'  
+            Comments
+            --------
         
         """
         fig = plt.figure()

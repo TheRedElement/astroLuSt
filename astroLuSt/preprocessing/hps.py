@@ -285,7 +285,16 @@ class HPS:
 
             Returns
             -------
-
+                - trial_frequencies
+                    - np.ndarray
+                    - trial frequencies used for execution of HPS algorithm
+                        - relevant in execution of LombScargle
+                    - trial_frequencies = 1/trial_periods
+                - trial_periods
+                    - np.ndarray
+                    - final trial periods used for the execution of HPS algorithm
+                        - relevant in execution of PDM
+                    - trial_periods = 1/trial_frequencies
             Comments
             --------
         """
@@ -501,10 +510,10 @@ class HPS:
             ----------
                 - x
                     - np.ndarray
-                    - x values of the dataseries to run phase dispersion minimization on
+                    - x values of the dataseries to run HPS on
                 - y
                     - np.ndarray
-                    - y values of the dataseries to run phase dispersion minimization on
+                    - y values of the dataseries to run HPS on
                 - trial_periods
                     - np.ndarray, optional
                     - if passed will overwrite self.trial_periods
@@ -569,6 +578,7 @@ class HPS:
         return
     
     def predict(self,
+        x:np.ndarray=None, y:np.ndarray=None, 
         ) -> Tuple[float, float]:
         """
             - method to predict with the fitted PSearch-estimator
@@ -577,7 +587,16 @@ class HPS:
 
             Parameters
             ----------
-
+                - x
+                    - np.ndarray, optional
+                    - x values of the dataseries to run HPS on
+                    - only here for consistency, will not be considered in the method
+                    - the default is None
+                - y
+                    - np.ndarray
+                    - y values of the dataseries to run HPS on
+                    - only here for consistency, will not be considered in the method
+                    - the default is None
             Raises
             ------
             
@@ -594,6 +613,7 @@ class HPS:
             --------
 
         """
+        
         return self.best_period, self.best_psi
     
     def fit_predict(self,
