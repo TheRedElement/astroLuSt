@@ -4,7 +4,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import re
-from typing import Union, List, Tuple, Callable
+from typing import Union, Tuple, Callable
 import warnings
 
 
@@ -730,7 +730,6 @@ class SigmaClipping:
         return  x_clipped, y_clipped
 
 
-
 class StringOfPearls:
     """
         - class to remove outliers which are at consecutive positions on the input dataseries and the 'metric' of which does not exceed a threshold 'th'
@@ -813,6 +812,7 @@ class StringOfPearls:
 
 
     """
+
     def __init__(self,
         window_size:int=3,
         th:Union[float,Callable[[np.ndarray, np.ndarray],float]]=0.01,
@@ -1039,10 +1039,10 @@ class StringOfPearls:
             Returns
             -------
                 - fig
-                    - matplotlib figure|None
+                    - matplotlib figure
                     - figure created if verbosity level specified accordingly
                 - axs
-                    - matplotlib axes|None
+                    - matplotlib axes
                     - axes corresponding to 'fig'
 
             Comments
@@ -1091,6 +1091,275 @@ class StringOfPearls:
         plt.tight_layout()
         plt.show()
 
+
+        axs = fig.axes
+
+        return fig, axs
+    
+
+class PercentileClipping:
+    """
+        - class to remove outliers
+        - will clip all outliers that lye outside are lower than the pmin-th percentile or higher than the pmax-th percentile of the y values of a given timeseries
+        - follows a similar convention as the scikit-learn library
+
+        Attributes
+        ----------
+            - pmin
+                - int, optional
+                - lower bound of the percentile interval
+                    - value from 0 to 100 inclusive
+                - the default is 5
+            - pmin
+                - int, optional
+                - upper bound of the percentile interval
+                    - value from 0 to 100 inclusive
+                - the default is 95
+            - verbose   
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+        Infered Attributes
+        ------------------
+            - clip_mask
+                - np.ndarray
+                - final mask for the retained values
+                - 1 for every value that got retained
+                - 0 for every value that got cut
+            - percentiles
+                - np.ndarray
+                - array containing the upper and lower value corresponding to the pmin-th and pmax-th percentile, respectively
+
+        Methods
+        -------
+            - fit()
+            - transform()
+            - fit_transform()
+            - plot_result()
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+            - warnings
+        
+        Comments
+        --------
+
+
+    """
+
+    def __init__(self,
+        pmin:int=5, pmax:int=95,
+        verbose:int=0,
+        ) -> None:
+
+        self.pmin = pmin
+        self.pmax = pmax
+
+        self.verbose = verbose
+
+        return
+    
+    def __repr__(self) -> str:
+        
+        return (
+            f'PercentileClipping(\n'
+            f'    pmin={self.pmin},\n'
+            f'    pmax={self.pmax},\n'
+            f'    verbose={self.verbose},\n'
+            f')'
+        )
+
+    def fit(self,
+        x:np.ndarray, y:np.ndarray,
+        verbose:int=None
+    ) -> None:
+        """
+            - method to apply StringOfPearls
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to clip
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to clip
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None   
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+       
+        if verbose is None:
+            verbose = self.verbose
+
+        if np.any(np.diff(x)<0) and verbose > 1:
+            warnings.warn('The resulting mask might be wrong since "x" is not a sorted array!', category=UserWarning)
+
+
+        #assign input values
+        self.x = x
+        self.y = y
+       
+        self.percentiles = np.percentile(y, q=[self.pmin, self.pmax])
+        self.clip_mask = ((self.percentiles[0]<y)&(y<self.percentiles[1]))
+
+        return
+    
+    def transform(self,
+        x:np.ndarray, y:np.ndarray,
+        ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+            - method to transform the input-dataseries
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to clip
+                    - preferably sorted
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to clip
+                    - preferably sorted w.r.t. 'x'
+            Raises
+            ------
+
+            Returns
+            -------
+                - x_clipped
+                    - np.ndarray
+                    - the clipped version of the x-values of the input dataseries
+                - y_clipped
+                    - np.ndarray
+                    - the clipped version of the y-values of the input dataseries 
+
+            Comments
+            --------
+        """
+
+        x_clipped = x[self.clip_mask]
+        y_clipped = y[self.clip_mask]        
+        
+        return x_clipped, y_clipped
+
+    def fit_transform(self,
+        x:np.ndarray, y:np.ndarray,
+        fit_kwargs:dict={}
+        ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+            - method to fit the transformer and transform the data in one go
+            - similar to scikit-learn scalers
+            
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values of the dataseries to clip
+                    - preferably sorted
+                - y
+                    - np.ndarray
+                    - y-values of the dataseries to clip
+                    - preferably sorted w.r.t. 'x'            
+                - fit_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.fit()
+
+            Returns
+            -------
+                - x_clipped
+                    - np.ndarray
+                    - the clipped version of the x-values of the input dataseries
+                - y_clipped
+                    - np.ndarray
+                    - the clipped version of the y-values of the input dataseries               
+        """
+
+        self.fit(x, y, **fit_kwargs)
+        x_clipped, y_clipped = self.transform(x, y)
+
+        return x_clipped, y_clipped
+    
+    def plot_result(self,
+        show_cut:bool=True,
+        show_bounds:bool=True,
+        ) -> tuple:
+        """
+           - method to create a plot visualizing the sigma-clipping result
+
+            Parameters
+            ----------
+                - show_cut
+                    - bool, optional
+                    - whether to also display the cut datapoints in the summary
+                    - the default is True
+                - show_bounds
+                    - bool, optional
+                    - whether to also display the percentile boundaries
+                    - the default is True
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes
+                    - axes corresponding to 'fig'
+
+            Comments
+            --------
+
+        """
+        ret_color = "tab:blue"
+        cut_color = "tab:grey"
+        per_color = 'tab:orange'
+
+
+        patches = []
+        #plot
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+
+        #sort axis
+        ax1.set_zorder(3)
+        # ax1.patch.set_visible(False)
+
+
+        patches.append(    ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],      color=ret_color, alpha=1.0, zorder=3, label='Retained'))
+        if show_cut:
+            patches.append(ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],     color=cut_color, alpha=0.7, zorder=2, label='Clipped'))
+        if show_bounds:
+            patches.append(ax1.axhline(self.percentiles[0],     linestyle='--',              color=per_color, alpha=1.0, zorder=2, label='Chosen Percentile'))
+            patches.append(ax1.axhline(self.percentiles[1],     linestyle='--',              color=per_color, alpha=1.0, zorder=2))
+
+        
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+
+        ax1.legend(patches, [s.get_label() for s in patches])
+
+        plt.tight_layout()
+        plt.show()
 
         axs = fig.axes
 
