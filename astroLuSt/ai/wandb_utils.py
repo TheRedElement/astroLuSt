@@ -2,6 +2,7 @@
 #%%imports
 import itertools
 import os
+from typing import Union, Tuple, Callable
 import wandb
 
 from joblib import Parallel, delayed
@@ -79,7 +80,7 @@ class WandB_parallel_sweep:
     """
     
     def __init__(self,
-        sweep_id:str, function:callable,
+        sweep_id:str, function:Callable,
         n_jobs:int=-1, n_agents:int=None,
         wandb_mode:str=None,
         verbose:int=0
@@ -114,7 +115,7 @@ class WandB_parallel_sweep:
 
     def get_upper_bound_agents(self,
         sweep_config:dict
-        ):
+        ) -> int:
         """
             - method to estimate an upper bound of the number of agents needed
             - will do so by determining the amount of model-instances that will be computed
@@ -245,7 +246,7 @@ class WandB_parallel_sweep:
         return
 
     def sweep_parallel(self,
-        sweep_id:str=None, function:callable=None,
+        sweep_id:str=None, function:Callable=None,
         n_jobs:int=None, n_agents:int=None,
         verbose:int=None
         ) -> None:

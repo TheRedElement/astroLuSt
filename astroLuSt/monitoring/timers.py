@@ -37,7 +37,7 @@ class ExecTimer:
 
     def __init__(self,
         verbose:int=1
-        ):
+        ) -> None:
 
         self.verbose = verbose
         self.df_protocoll = pd.DataFrame(
@@ -48,9 +48,7 @@ class ExecTimer:
         self.df_protocoll["End"] = pd.to_datetime(self.df_protocoll["End"])
         self.df_protocoll["Duration"] = pd.to_timedelta(self.df_protocoll["Duration"])
         
-
-
-        pass
+        return
 
     def checkpoint_start(self,
         taskname:str, comment:str=""
@@ -161,7 +159,7 @@ class ExecTimer:
     def estimate_runtime(self,
         taskname_pat:str,
         nrepeats:int, ndone:int=1,
-        ):
+        ) -> None:
         """
             - method to estimate the total runtime in dependence of how many repetition have been made and will be made
 
