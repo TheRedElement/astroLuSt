@@ -2,6 +2,7 @@
 
 #%%imports
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 import re
 from typing import Union, Tuple, Callable
@@ -424,84 +425,6 @@ class SigmaClipping:
 
         return
 
-    def plot_result(self,
-        show_cut:bool=True,
-        iteration:int=-1,
-        ) -> tuple:
-        """
-            - method to create a plot visualizing the sigma-clipping result
-
-            Parameters
-            ----------
-                - show_cut
-                    - bool, optional
-                    - whether to also display the cut datapoints in the summary
-                    - the default is True
-                - iteration
-                    - int, optional
-                    - which iteration of the SigmaClipping to display when plotting
-                    - only usable if self.clipmask_history AND self.bound_history are True
-                        - serves as index to the lists containing the histories
-                    - the default is -1
-                        - i.e. the last iterations
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - fig
-                    - matplotlib figure
-                    - figure created if verbosity level specified accordingly
-                - axs
-                    - matplotlib axes
-                    - axes corresponding to 'fig'
-
-            Comments
-            --------
-
-        """
-        ret_color = "tab:blue"
-        cut_color = "tab:grey"
-        used_bins_color = "tab:orange"
-        mean_curve_color = "tab:green"
-        ulb_color="k"
-
-        ulb_lab = r"$\bar{y}~\{+%g,-%g\}\sigma$"%(self.sigma_top, self.sigma_bottom)
-        
-        #if clip_mask history has been stored consider iteration as index to plot this particular iteration
-        if self.clipmask_history and self.bound_history:
-            clip_mask   = self.clip_masks[iteration]
-            lower_bound = self.lower_bounds[iteration]
-            upper_bound = self.upper_bounds[iteration]
-        else:
-            clip_mask   = self.clip_mask
-            lower_bound = self.lower_bound
-            upper_bound = self.upper_bound
-
-        #sorting-array (needed for plotting)
-        sort_array = np.argsort(self.x)
-
-        fig = plt.figure()
-        fig.suptitle(f'Iteration: {iteration}')
-        ax1 = fig.add_subplot(111)
-        if show_cut: ax1.scatter(self.x[~clip_mask], self.y[~clip_mask],color=cut_color,                                                             alpha=0.7, zorder=1, label="Clipped")
-        ax1.scatter(self.x[ clip_mask], self.y[ clip_mask],             color=ret_color,                                                             alpha=1.0, zorder=2, label="Retained")
-        if not self.use_polynomial: ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,   color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
-        ax1.plot(self.x[sort_array],    self.y_mean_interp[sort_array], color=mean_curve_color,                                                                 zorder=4, label="Mean Curve")
-        ax1.plot(self.x[sort_array],    upper_bound[sort_array],        color=ulb_color,       linestyle="--",                                                  zorder=5, label=ulb_lab)
-        ax1.plot(self.x[sort_array],    lower_bound[sort_array],        color=ulb_color,       linestyle="--",                                                  zorder=5) #,label=ulb_lab)
-
-        ax1.set_xlabel("x")
-        ax1.set_ylabel("y")
-
-        ax1.legend()
-        plt.show()
-
-        axs = fig.axes
-
-        return fig, axs
-
     def fit(self,
         x:np.ndarray, y:np.ndarray,
         mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,
@@ -736,6 +659,85 @@ class SigmaClipping:
         x_clipped, y_clipped = self.transform(x, y)
 
         return  x_clipped, y_clipped
+
+    def plot_result(self,
+        show_cut:bool=True,
+        iteration:int=-1,
+        ) -> Tuple[Figure, plt.Axes]:
+        """
+            - method to create a plot visualizing the sigma-clipping result
+
+            Parameters
+            ----------
+                - show_cut
+                    - bool, optional
+                    - whether to also display the cut datapoints in the summary
+                    - the default is True
+                - iteration
+                    - int, optional
+                    - which iteration of the SigmaClipping to display when plotting
+                    - only usable if self.clipmask_history AND self.bound_history are True
+                        - serves as index to the lists containing the histories
+                    - the default is -1
+                        - i.e. the last iterations
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes
+                    - axes corresponding to 'fig'
+
+            Comments
+            --------
+
+        """
+        ret_color = "tab:blue"
+        cut_color = "tab:grey"
+        used_bins_color = "tab:orange"
+        mean_curve_color = "tab:green"
+        ulb_color="k"
+
+        ulb_lab = r"$\bar{y}~\{+%g,-%g\}\sigma$"%(self.sigma_top, self.sigma_bottom)
+        
+        #if clip_mask history has been stored consider iteration as index to plot this particular iteration
+        if self.clipmask_history and self.bound_history:
+            clip_mask   = self.clip_masks[iteration]
+            lower_bound = self.lower_bounds[iteration]
+            upper_bound = self.upper_bounds[iteration]
+        else:
+            clip_mask   = self.clip_mask
+            lower_bound = self.lower_bound
+            upper_bound = self.upper_bound
+
+        #sorting-array (needed for plotting)
+        sort_array = np.argsort(self.x)
+
+        fig = plt.figure()
+        fig.suptitle(f'Iteration: {iteration}')
+        ax1 = fig.add_subplot(111)
+        if show_cut: ax1.scatter(self.x[~clip_mask], self.y[~clip_mask],color=cut_color,                                                             alpha=0.7, zorder=1, label="Clipped")
+        ax1.scatter(self.x[ clip_mask], self.y[ clip_mask],             color=ret_color,                                                             alpha=1.0, zorder=2, label="Retained")
+        if not self.use_polynomial: ax1.errorbar(self.mean_x,       self.mean_y, yerr=self.std_y,   color=used_bins_color, linestyle="", marker=".",            zorder=3, label="Used Bins")
+        ax1.plot(self.x[sort_array],    self.y_mean_interp[sort_array], color=mean_curve_color,                                                                 zorder=4, label="Mean Curve")
+        ax1.plot(self.x[sort_array],    upper_bound[sort_array],        color=ulb_color,       linestyle="--",                                                  zorder=5, label=ulb_lab)
+        ax1.plot(self.x[sort_array],    lower_bound[sort_array],        color=ulb_color,       linestyle="--",                                                  zorder=5) #,label=ulb_lab)
+
+        ax1.set_xlabel("x")
+        ax1.set_ylabel("y")
+
+        ax1.legend()
+        plt.show()
+
+        axs = fig.axes
+
+        return fig, axs
+
 
 
 class StringOfPearls:
@@ -1035,7 +1037,7 @@ class StringOfPearls:
     def plot_result(self,
         show_cut:bool=True, 
         show_metric:bool=False,   
-        ) -> tuple:
+        ) -> Tuple[Figure, plt.Axes]:
         """
             - method to create a plot visualizing the sigma-clipping result
 
@@ -1336,7 +1338,7 @@ class PercentileClipping:
     def plot_result(self,
         show_cut:bool=True,
         show_bounds:bool=True,
-        ) -> tuple:
+        ) -> Tuple[Figure, plt.Axes]:
         """
            - method to create a plot visualizing the sigma-clipping result
 

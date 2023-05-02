@@ -2,6 +2,7 @@
 
 #%%imports
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 
 from typing import Union, Tuple, Callable
@@ -450,7 +451,7 @@ class Binning:
         return  x_binned, y_binned, y_std
 
     def plot_result(self,
-        ) -> tuple:
+        ) -> Tuple[Figure, plt.Axes]:
         """
             - function to plot the result of the binning in phase
 
@@ -463,10 +464,10 @@ class Binning:
             Returns
             -------
                 - fig
-                    - matplotlib figure|None
+                    - matplotlib figure
                     - figure created if verbosity level specified accordingly
                 - axs
-                    - matplotlib axes|None
+                    - matplotlib axes
                     - axes corresponding to 'fig'              
 
             Comments

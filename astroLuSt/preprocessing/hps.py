@@ -15,8 +15,10 @@
 #%%imports
 from astropy.timeseries import LombScargle
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+from typing import Union, Tuple, Callable
 import warnings
 
 
@@ -233,7 +235,7 @@ class HPS:
         n_nyq:float=None,
         n0:int=None,
         x:np.ndarray=None,
-        ):
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to generate a grid of test-periods and test-frequencies
             - inspired by astropy.timeseries.LombScargle().autofrequency() and VanderPlas (2018)
@@ -340,7 +342,7 @@ class HPS:
     def run_pdm(self,
         x:np.ndarray, y:np.ndarray,
         trial_periods:np.ndarray=None,
-        ):
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to execute a Phase-Dispersion Minimization
             
@@ -388,7 +390,7 @@ class HPS:
     def run_lombscargle(self,
         x:np.ndarray, y:np.ndarray,
         trial_frequencies:np.ndarray=None,
-        ):
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method for executing the Lomb Scargle
         
@@ -440,7 +442,7 @@ class HPS:
 
     def get_psi(self,
         thetas_pdm:np.ndarray, powers_ls:np.ndarray,
-        ):
+        ) -> None:
         """
             - method to compute the HPS-metric
             - essentially calculates the following
@@ -489,7 +491,7 @@ class HPS:
         x:np.ndarray, y:np.ndarray,
         trial_periods:np.ndarray=None,
         verbose:int=None,
-        ):
+        ) -> None:
         """
             - method to fit the PSearch-estimator
             - will execute the calculation and assign results as attributes
@@ -524,6 +526,12 @@ class HPS:
                 - best_psi
                     - float
                     - psi value corresponding to best_period
+            
+            Returns
+            -------
+
+            Comments
+            --------
 
 
         """
@@ -560,12 +568,19 @@ class HPS:
 
         return
     
-    def predict(self):
+    def predict(self,
+        ) -> Tuple[float, float]:
         """
             - method to predict with the fitted PSearch-estimator
             - will return relevant results
             - similar to predict-method in scikit-learn
 
+            Parameters
+            ----------
+
+            Raises
+            ------
+            
             Returns
             -------
                 - best_period
@@ -574,13 +589,17 @@ class HPS:
                 - best_psi
                     - float
                     - psi-value of best period
+            
+            Comments
+            --------
+
         """
         return self.best_period, self.best_psi
     
     def fit_predict(self,
         x:np.ndarray, y:np.ndarray,
         trial_periods:np.ndarray=None,
-        ):
+        ) -> Tuple[float, float]:
         """
             - method to fit classifier and predict the results
 
@@ -596,7 +615,9 @@ class HPS:
                     - np.ndarray, optional
                     - if passed will overwrite self.trial_periods
                     - the default is None                      
-
+            Raises
+            ------
+                    
             Returns
             -------
                 - best_period
@@ -605,7 +626,12 @@ class HPS:
                 - best_psi
                     - float
                     - psi value corresponding to best_period                          
+            
+            Comments
+            --------
+
         """
+
         self.fit(x, y, trial_periods)
         best_period, best_psi = self.predict()
 
@@ -614,7 +640,7 @@ class HPS:
     def plot_result(self,
         fig_kwargs:dict={},
         plot_kwargs:dict={},
-        ):
+        ) -> Tuple[Figure, plt.Axes]:
         """
             - method to plot the result of the pdm
             - will produce a plot with 2 panels
@@ -629,6 +655,21 @@ class HPS:
                 - plot_kwargs
                     - dict, optional
                     - kwargs for matplotlib ax.plot() method
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - matplotlib figure
+                    - figure created if verbosity level specified accordingly
+                - axs
+                    - matplotlib axes
+                    - axes corresponding to 'fig'   
+            Comments
+            --------
+
         """
         
         c_ls = 'tab:olive'
