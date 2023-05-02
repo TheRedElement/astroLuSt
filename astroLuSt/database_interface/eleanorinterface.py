@@ -108,7 +108,7 @@ class EleanorDatabaseInterface:
     """
 
     def __init__(self,
-        tics:List[int]=[], sectors:Union(List[int],str)="all",
+        tics:List[int]=[], sectors:Union[List[int],str]="all",
         do_psf:bool=False, do_pca:bool=False,
         aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
         height:int=15, width:int=15, bkg_size:int=31,
@@ -136,7 +136,7 @@ class EleanorDatabaseInterface:
 
 
     def data_from_eleanor(self,
-        tic:int, sectors:Union(List[int],str)="all", 
+        tic:int, sectors:Union[List[int],str]="all", 
         do_psf:bool=False, do_pca:bool=False, 
         aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
         height:int=15, width:int=15, bkg_size:int=31,
@@ -289,7 +289,7 @@ class EleanorDatabaseInterface:
     def extraction_onetic(self,
         tic:int,
         #saving data
-        save:Union(str,bool)='./',
+        save:Union[str,bool]='./',
         redownload:bool=True,
         #plotting
         plot_result:bool=True,
@@ -452,7 +452,7 @@ class EleanorDatabaseInterface:
 
     def data_from_eleanor_alltics(self,
         #saving data
-        save:Union(str,bool)="./",
+        save:Union[str,bool]="./",
         redownload:bool=True,
         #plotting
         plot_result:bool=True,
@@ -597,7 +597,7 @@ class EleanorDatabaseInterface:
         data:list, tic:int, sectors:list, tess_mags:list,
         quality_expression:str="(datum.quality == 0)",
         aperture_detail:int=50, ylims:list=None,
-        fontsize:int=16, figsize:tuple=(16,9), save:Union(str, bool)=False
+        fontsize:int=16, figsize:tuple=(16,9), save:Union[str,bool]=False
         ) -> Tuple[Figure, plt.Axes]:
         """
             - function to autogenerate a summary-plot of the data downloaded using eleonor
@@ -754,7 +754,7 @@ class EleanorDatabaseInterface:
         quality_expression:str="(datum.quality == 0)",
         sep=";",
         include_aperture=False, include_tpf=False,
-        save:Union(str,bool)=False,
+        save:Union[str,bool]=False,
         ) -> pd.DataFrame:
         """
             - method to convert the result returned by eleanor to a pandas DataFrame
