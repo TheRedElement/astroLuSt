@@ -47,9 +47,24 @@ class Binning:
                 - int, optional
                 - Delta Degrees of Freedom used in np.nanstd()
                 - the default is 0
+            - meanfunc_x
+                - callable, optional
+                - function to use to calculate the mean of each interval in 'x'
+                - the function shall take one argument
+                - the function shall return a single floating point value
+                - the default is None
+                    - will use np.nanmean
+            - meanfunc_y
+                - callable, optional
+                - function to use to calculate the mean of each interval in 'y'
+                - the function shall take one argument
+                - the function shall return a single floating point value
+                - the default is None
+                    - will use np.nanmean
             - verbose
                 - int, optional
                 - verbosity level
+                - the default is 0
         
         Infered Attributes
         ------------------
@@ -98,6 +113,8 @@ class Binning:
         nintervals:int=100, npoints_per_interval:int=None,
         xmin:float=None, xmax:float=None,
         ddof:int=0,
+        meanfunc_x:Callable=None,
+        meanfunc_y:Callable=None,
         verbose:int=0,     
         ):
     
@@ -106,6 +123,14 @@ class Binning:
         self.xmin= xmin
         self.xmax= xmax
         self.ddof= ddof
+        if meanfunc_x is None:
+            self.meanfunc_x = np.nanmean
+        else:
+            self.meanfunc_x = meanfunc_x
+        if meanfunc_y is None:
+            self.meanfunc_y = np.nanmean
+        else:
+            self.meanfunc_y = meanfunc_y
         self.verbose= verbose
 
         pass
@@ -236,6 +261,8 @@ class Binning:
         x:np.ndarray, y:np.ndarray,
         bins:np.ndarray=None,
         ddof:int=None,
+        meanfunc_x:Callable=None,
+        meanfunc_y:Callable=None,
         verbose:int=None,
         generate_bins_kwargs:dict={},
         ) -> None:
@@ -255,15 +282,31 @@ class Binning:
                     - np.ndarray, optional
                     - array containing the boundaries of the intervals/bins to use for binning the curve
                     - will overwrite the autogeneration-process
+                    - the default is None
                 - ddof
                     - int, optional
                     - Delta Degrees of Freedom used in np.nanstd()
                     - overwrites self.ddof if set
                     - the default is None
+                - meanfunc_x
+                    - callable, optional
+                    - function to use to calculate the mean of each interval in 'x'
+                    - the function shall take one argument
+                    - the function shall return a single floating point value
+                    - will overwrite self.meanfunc_x if passed
+                    - the default is None
+                - meanfunc_y
+                    - callable, optional
+                    - function to use to calculate the mean of each interval in 'y'
+                    - the function shall take one argument
+                    - the function shall return a single floating point value
+                    - will overwrite self.meanfunc_y if passed
+                    - the default is None
                 - verbose
                     - int, optional
-                    - overwrites self.verbosity if set
                     - verbosity level
+                    - overwrites self.verbosity if set
+                    - the default is None
                 - generate_bins_kwargs
                     - dict, optional
                     - kwargs to pass to self.generate_bins()
@@ -287,6 +330,8 @@ class Binning:
             bins = self.generate_bins(self.x, self.y, verbose=verbose, **generate_bins_kwargs)
         else:
             self.bins = bins
+        if meanfunc_x is None: meanfunc_x = self.meanfunc_x
+        if meanfunc_y is None: meanfunc_y = self.meanfunc_y
 
         #init result arrays
         self.x_binned  = np.array([])
@@ -299,8 +344,8 @@ class Binning:
             iv_bool = (b1 <= self.x)&(self.x < b2)
 
             #adopt transforms
-            self.x_binned  = np.append(self.x_binned,  np.nanmean(self.x[iv_bool]))
-            self.y_binned  = np.append(self.y_binned,  np.nanmean(self.y[iv_bool]))
+            self.x_binned  = np.append(self.x_binned,  meanfunc_x(self.x[iv_bool]))
+            self.y_binned  = np.append(self.y_binned,  meanfunc_y(self.y[iv_bool]))
             self.y_std     = np.append(self.y_std,     np.nanstd(self.y[iv_bool], ddof=ddof))
             self.n_per_bin = np.append(self.n_per_bin, np.count_nonzero(iv_bool))
 
