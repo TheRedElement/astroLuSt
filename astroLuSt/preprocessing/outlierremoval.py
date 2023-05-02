@@ -136,7 +136,7 @@ class SigmaClipping:
 
     def __init__(self,
         sigma_bottom:float=2, sigma_top:float=2,
-        use_polynomial:bool=True,
+        use_polynomial:bool=False,
         use_init_curve_sigma:bool=True,
         bound_history:bool=False, clipmask_history:bool=False,
         verbose:int=0,
@@ -737,7 +737,6 @@ class SigmaClipping:
         axs = fig.axes
 
         return fig, axs
-
 
 
 class StringOfPearls:
