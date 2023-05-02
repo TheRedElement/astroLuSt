@@ -308,7 +308,7 @@ class Binning:
 
     def transform(self,
         x:np.ndarray=None, y:np.ndarray=None,
-        ):
+        ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
             - method to transform the input-dataseries
             - similar to scikit-learn scalers
@@ -356,7 +356,7 @@ class Binning:
     def fit_transform(self,
         x:np.ndarray, y:np.ndarray,
         fit_kwargs:dict={},
-        ):
+        ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
             - method to fit the transformer and transform the data in one go
             - similar to scikit-learn scalers
@@ -405,7 +405,7 @@ class Binning:
         return  x_binned, y_binned, y_std
 
     def plot_result(self,
-        ):
+        ) -> tuple:
         """
             - function to plot the result of the binning in phase
 

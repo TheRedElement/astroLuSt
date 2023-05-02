@@ -1192,6 +1192,7 @@ class PercentileClipping:
 
     def fit(self,
         x:np.ndarray, y:np.ndarray,
+        pmin:int=None, pmax:int=None,
         verbose:int=None
     ) -> None:
         """
@@ -1206,11 +1207,23 @@ class PercentileClipping:
                 - y
                     - np.ndarray
                     - y-values of the dataseries to clip
-                - verbose
-                    - int, optional
-                    - verbosity level
-                    - overwrites self.verbose
-                    - the default is None   
+            - pmin
+                - int, optional
+                - lower bound of the percentile interval
+                    - value from 0 to 100 inclusive
+                - will overwrite self.pmin if set
+                - the default is None
+            - pmax
+                - int, optional
+                - upper bound of the percentile interval
+                    - value from 0 to 100 inclusive
+                - will overwrite self.pmax if set
+                - the default is None
+            - verbose
+                - int, optional
+                - verbosity level
+                - overwrites self.verbose
+                - the default is None   
 
             Raises
             ------
@@ -1221,15 +1234,18 @@ class PercentileClipping:
             Comments
             --------
         """
-       
+    
         if verbose is None:
             verbose = self.verbose
+
+        if pmin is None: pmin = self.pmin
+        if pmax is None: pmax = self.pmax
 
         #assign input values
         self.x = x
         self.y = y
        
-        self.percentiles = np.percentile(y, q=[self.pmin, self.pmax])
+        self.percentiles = np.percentile(y, q=[pmin, pmax])
         self.clip_mask = ((self.percentiles[0]<y)&(y<self.percentiles[1]))
 
         return
