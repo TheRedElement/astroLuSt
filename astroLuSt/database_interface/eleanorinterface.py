@@ -238,8 +238,9 @@ class EleanorDatabaseInterface:
             data = []
             sectors = []
             tess_mags = []
-            try:
-                for s in star:
+            for s in star:
+                #try if sector works
+                try:
                     datum = eleanor.TargetData(
                         s, height=height, width=width, bkg_size=bkg_size, 
                         do_psf=do_psf, 
@@ -256,16 +257,19 @@ class EleanorDatabaseInterface:
 
                     #Get TESS-magnitude
                     tess_mags.append(s.tess_mag)
-                    
-            except Exception as e:
-                if verbose > 1:
-                    print("WARNING: Error in eleanor.TargetData()")
-                    print(f"ORIGINAL ERROR: {e}")
-                data = None
-                sectors = None
-                tess_mags = None
-                if len(str(e)) > 80: e = str(e)[:79] + '...'
-                error_msg = f"{'eleanor.TargetData()':25s}: {e}"
+                
+                #if sector fails return row of np.nan
+                except Exception as e:
+                    if verbose > 1:
+                        print(f"WARNING: Error in eleanor.TargetData(sector={s.sector})")
+                        print(f"ORIGINAL ERROR: {e}")
+                    data.append(None)
+                    sectors.append(s.sector)
+                    tess_mags.append(s.tess_mag)
+
+                    if len(str(e)) > 80: e = str(e)[:79] + '...'
+                    td_text = f"eleanor.TargetData(sector={s.sector})"
+                    error_msg = f"{td_text:35s}: {e}"
 
 
         except Exception as e:
@@ -410,7 +414,7 @@ class EleanorDatabaseInterface:
                 verbose=verbose
             )
 
-            #if the download succeeds
+            #if the download succeeded
             if data is not None:
 
                 #save data
@@ -430,7 +434,7 @@ class EleanorDatabaseInterface:
                         **plot_kwargs              
                     )
                 
-                extraction_summary = {"TIC":tic, "success":True, "original error message":""}
+                extraction_summary = {"TIC":tic, "success":True, "original error message":error_msg}
             #if the download fails report in extraction summary
             else:
                 #append failed extractions
@@ -817,32 +821,47 @@ class EleanorDatabaseInterface:
 
         for idx, (datum, sector, tess_mag) in enumerate(zip(data, sectors, tess_mags)):
 
-            q = eval(quality_expression)
+            #if TargetData() did not fail (i.e. if the sector was successfully extracted)
+            if datum is not None:
+                q = eval(quality_expression)
 
-            if self.do_pca:
-                pca_flux = datum.pca_flux[q]
+                if self.do_pca:
+                    pca_flux = datum.pca_flux[q]
+                else:
+                    pca_flux = [None]*len(datum.time[q])
+                if self.do_psf:
+                    psf_flux = datum.pca_flux[q]
+                else:
+                    psf_flux = [None]*len(datum.time[q])
+
+                df_datum = pd.DataFrame({
+                    "time":datum.time[q],
+                    "raw_flux":datum.raw_flux[q],
+                    "corr_flux":datum.corr_flux[q],
+                    "pca_flux":pca_flux,
+                    "psf_flux":psf_flux,
+                    "sector":[sector]*len(datum.time[q]),
+                    "q_eleanor":datum.quality[q],
+                    "tess_mag":[tess_mag]*len(datum.time[q]),
+                })
+
+                if include_aperture:
+                    df_datum["aperture"] = [datum.aperture]*len(datum.time[q])
+                if include_tpf:
+                    df_datum["tpf"] = datum.tpf[q].tolist()
+            
+            #insert row of np.nan if the sector failed
             else:
-                pca_flux = [None]*len(datum.time[q])
-            if self.do_psf:
-                psf_flux = datum.pca_flux[q]
-            else:
-                psf_flux = [None]*len(datum.time[q])
-
-            df_datum = pd.DataFrame({
-                "time":datum.time[q],
-                "raw_flux":datum.raw_flux[q],
-                "corr_flux":datum.corr_flux[q],
-                "pca_flux":pca_flux,
-                "psf_flux":psf_flux,
-                "sector":[sector]*len(datum.time[q]),
-                "q_eleanor":datum.quality[q],
-                "tess_mag":[tess_mag]*len(datum.time[q]),
-            })
-
-            if include_aperture:
-                df_datum["aperture"] = [datum.aperture]*len(datum.time[q])
-            if include_tpf:
-                df_datum["tpf"] = datum.tpf[q].tolist()
+                df_datum = pd.DataFrame({
+                    "time":[np.nan],
+                    "raw_flux":[np.nan],
+                    "corr_flux":[np.nan],
+                    "pca_flux":[np.nan],
+                    "psf_flux":[np.nan],
+                    "sector":[sector],
+                    "q_eleanor":[np.nan],
+                    "tess_mag":[tess_mag],
+                })                
 
 
             df_lc = pd.concat((df_lc, df_datum), ignore_index=True)
