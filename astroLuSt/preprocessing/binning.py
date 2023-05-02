@@ -232,6 +232,178 @@ class Binning:
 
         return self.bins
     
+    def fit(self,
+        x:np.ndarray, y:np.ndarray,
+        bins:np.ndarray=None,
+        ddof:int=None,
+        verbose:int=None,
+        generate_bins_kwargs:dict={},
+        ) -> None:
+        """
+            - method to execute the binning of y w.r.t. x
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values w.r.t. which the binning shall be executed
+                - y
+                    - np.ndarray
+                    - y-values to be binned
+                - bins
+                    - np.ndarray, optional
+                    - array containing the boundaries of the intervals/bins to use for binning the curve
+                    - will overwrite the autogeneration-process
+                - ddof
+                    - int, optional
+                    - Delta Degrees of Freedom used in np.nanstd()
+                    - overwrites self.ddof if set
+                    - the default is None
+                - verbose
+                    - int, optional
+                    - overwrites self.verbosity if set
+                    - verbosity level
+                - generate_bins_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.generate_bins()
+                    
+            Raises
+            ------
+
+            Returns
+            -------
+           
+        """
+
+        self.x = x
+        self.y = y
+
+        #set/overwrite class attributes
+        if ddof is None: ddof = self.ddof
+        if verbose is None: verbose = self.verbose
+        
+        if bins is None:
+            bins = self.generate_bins(self.x, self.y, verbose=verbose, **generate_bins_kwargs)
+        else:
+            self.bins = bins
+
+        #init result arrays
+        self.x_binned  = np.array([])
+        self.y_binned  = np.array([])
+        self.y_std     = np.array([])
+        self.n_per_bin = np.array([])    #number of samples per bin
+
+        for b1, b2 in zip(bins[:-1], bins[1:]):
+
+            iv_bool = (b1 <= self.x)&(self.x < b2)
+
+            #adopt transforms
+            self.x_binned  = np.append(self.x_binned,  np.nanmean(self.x[iv_bool]))
+            self.y_binned  = np.append(self.y_binned,  np.nanmean(self.y[iv_bool]))
+            self.y_std     = np.append(self.y_std,     np.nanstd(self.y[iv_bool], ddof=ddof))
+            self.n_per_bin = np.append(self.n_per_bin, np.count_nonzero(iv_bool))
+
+        return 
+
+    def transform(self,
+        x:np.ndarray=None, y:np.ndarray=None,
+        ):
+        """
+            - method to transform the input-dataseries
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray, optional
+                    - x-values w.r.t. which the binning shall be executed
+                    - only here for consistency, will not be considered in the method
+                    - the default is None
+                - y
+                    - np.ndarray
+                    - y-values to be binned  
+                    - only here for consistency, will not be considered in the method
+                    - the default is None
+            Raises
+            ------
+
+            Returns
+            -------
+                - x_binned
+                    - np.ndarray
+                    - binned values for input 'x'
+                    - has shape (1, nintervals)
+                - y_binned
+                    - np.ndarray
+                    - binned values for input 'y'
+                    - has shape (1, nintervals)
+                - y_std
+                    - np.ndarray
+                    - standard deviation of 'y' for each interval
+                    - characterizes the scattering of the input curve
+                    - has shape (1, nintervals)
+            Comments
+            --------
+        """
+
+        x_binned = self.x_binned
+        y_binned = self.y_binned
+        y_std = self.y_std
+
+        return x_binned, y_binned, y_std
+    
+    def fit_transform(self,
+        x:np.ndarray, y:np.ndarray,
+        fit_kwargs:dict={},
+        ):
+        """
+            - method to fit the transformer and transform the data in one go
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - x-values w.r.t. which the binning shall be executed
+                - y
+                    - np.ndarray
+                    - y-values to be binned            
+                - fit_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.fit()
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - x_binned
+                    - np.ndarray
+                    - binned values for input 'x'
+                    - has shape (1, nintervals)
+                - y_binned
+                    - np.ndarray
+                    - binned values for input 'y'
+                    - has shape (1, nintervals)
+                - y_std
+                    - np.ndarray
+                    - standard deviation of 'y' for each interval
+                    - characterizes the scattering of the input curve
+                    - has shape (1, nintervals)
+
+             Comments
+             --------            
+        """
+
+        self.fit(
+            x, y,
+            **fit_kwargs,
+        )
+        x_binned, y_binned, y_std = self.transform()
+
+        return  x_binned, y_binned, y_std
+
     def plot_result(self,
         ):
         """
@@ -276,176 +448,3 @@ class Binning:
         axs = fig.axes
 
         return fig, axs
-
-    def fit(self,
-        x:np.ndarray, y:np.ndarray,
-        bins:np.ndarray=None,
-        ddof:int=None,
-        verbose:int=None,
-        generate_bins_kwargs:dict={},
-        ):
-        """
-            - method to execute the binning of y w.r.t. x
-            - similar to scikit-learn scalers
-
-            Parameters
-            ----------
-                - x
-                    - np.ndarray
-                    - x-values w.r.t. which the binning shall be executed
-                - y
-                    - np.ndarray
-                    - y-values to be binned
-                - bins
-                    - np.ndarray
-                    - array containing the boundaries of the intervals/bins to use for binning the curve
-                    - will overwrite the autogeneration-process
-                - ddof
-                    - int, optional
-                    - Delta Degrees of Freedom used in np.nanstd()
-                    - overwrites self.ddof if set
-                    - the default is None
-                - verbose
-                    - int, optional
-                    - overwrites self.verbosity if set
-                    - verbosity level
-                - generate_bins_kwargs
-                    - dict, optional
-                    - kwargs to pass to self.generate_bins()
-                    
-            Raises
-            ------
-
-            Returns
-            -------
-                - x_binned
-                    - np.ndarray
-                    - binned values for input 'x'
-                    - has shape (1, nintervals)
-                - y_binned
-                    - np.ndarray
-                    - binned values for input 'y'
-                    - has shape (1, nintervals)
-                - y_std
-                    - np.ndarray
-                    - standard deviation of 'y' for each interval
-                    - characterizes the scattering of the input curve
-                    - has shape (1, nintervals)            
-        """
-
-        self.x = x
-        self.y = y
-
-        #set/overwrite class attributes
-        if ddof is None: ddof = self.ddof
-        if verbose is None: verbose = self.verbose
-        
-        if bins is None:
-            bins = self.generate_bins(self.x, self.y, verbose=verbose, **generate_bins_kwargs)
-        else:
-            self.bins = bins
-
-        #init result arrays
-        self.x_binned  = np.array([])
-        self.y_binned  = np.array([])
-        self.y_std     = np.array([])
-        self.n_per_bin = np.array([])    #number of samples per bin
-
-        for b1, b2 in zip(bins[:-1], bins[1:]):
-
-            iv_bool = (b1 <= self.x)&(self.x < b2)
-
-            #adopt transforms
-            self.x_binned  = np.append(self.x_binned,  np.nanmean(self.x[iv_bool]))
-            self.y_binned  = np.append(self.y_binned,  np.nanmean(self.y[iv_bool]))
-            self.y_std     = np.append(self.y_std,     np.nanstd(self.y[iv_bool], ddof=ddof))
-            self.n_per_bin = np.append(self.n_per_bin, np.count_nonzero(iv_bool))
-
-        return 
-
-    def transform(self,
-        ):
-        """
-            - method to transform the input-dataseries
-            - similar to scikit-learn scalers
-
-            Parameters
-            ----------
-                - x
-                    - np.ndarray
-                    - x-values of the dataseries to generate the mean curve for
-                - y
-                    - np.ndarray
-                    - y-values of the dataseries to generate the mean curve for
-            Raises
-            ------
-
-            Returns
-            -------
-                - x_binned
-                    - np.ndarray
-                    - binned values for input 'x'
-                    - has shape (1, nintervals)
-                - y_binned
-                    - np.ndarray
-                    - binned values for input 'y'
-                    - has shape (1, nintervals)
-                - y_std
-                    - np.ndarray
-                    - standard deviation of 'y' for each interval
-                    - characterizes the scattering of the input curve
-                    - has shape (1, nintervals)
-            Comments
-            --------
-        """
-
-        x_binned = self.x_binned
-        y_binned = self.y_binned
-        y_std = self.y_std
-
-        return x_binned, y_binned, y_std
-    
-    def fit_transform(self,
-        x:np.ndarray, y:np.ndarray,
-        fit_kwargs:dict={},
-        ):
-        """
-            - method to fit the transformer and transform the data in one go
-            - similar to scikit-learn scalers
-
-            Parameters
-            ----------
-                - fit_kwargs
-                    - dict, optional
-                    - kwargs to pass to self.fit()
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - x_binned
-                    - np.ndarray
-                    - binned values for input 'x'
-                    - has shape (1, nintervals)
-                - y_binned
-                    - np.ndarray
-                    - binned values for input 'y'
-                    - has shape (1, nintervals)
-                - y_std
-                    - np.ndarray
-                    - standard deviation of 'y' for each interval
-                    - characterizes the scattering of the input curve
-                    - has shape (1, nintervals)
-             Comments
-             --------            
-        """
-
-        self.fit(
-            x, y,
-            **fit_kwargs,
-        )
-        x_binned, y_binned, y_std = self.transform()
-
-        return  x_binned, y_binned, y_std
-

@@ -656,7 +656,7 @@ class SigmaClipping:
         return 
 
     def transform(self,
-        x:np.ndarray, y:np.ndarray,
+        x:np.ndarray=None, y:np.ndarray=None,
         ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to transform the input-dataseries
@@ -665,11 +665,15 @@ class SigmaClipping:
             Parameters
             ----------
                 - x
-                    - np.ndarray
+                    - np.ndarray, optional
                     - x-values of the dataseries to clip
+                    - the default is None
+                        - will return the clipped version of the array's passed to last call of self.fit()
                 - y
-                    - np.ndarray
+                    - np.ndarray, optional
                     - y-values of the dataseries to clip
+                    - the default is None
+                        - will return the clipped version of the array's passed to last call of self.fit()
             Raises
             ------
 
@@ -685,6 +689,10 @@ class SigmaClipping:
             Comments
             --------
         """
+
+        if x is None: x = self.x
+        if y is None: y = self.y
+
 
         x_clipped = x[self.clip_mask]
         y_clipped = y[self.clip_mask]
@@ -941,7 +949,7 @@ class StringOfPearls:
         return
 
     def transform(self,
-        x:np.ndarray, y:np.ndarray,        
+        x:np.ndarray=None, y:np.ndarray=None,
         ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to transform the input-dataseries
@@ -953,10 +961,16 @@ class StringOfPearls:
                     - np.ndarray
                     - x-values of the dataseries to clip
                     - preferably sorted
+                    - the default is None
+                        - will return the clipped version of the array's passed to last call of self.fit()
+
                 - y
                     - np.ndarray
                     - y-values of the dataseries to clip
                     - preferably sorted w.r.t. 'x'
+                    - the default is None
+                        - will return the clipped version of the array's passed to last call of self.fit()
+           
             Raises
             ------
 
@@ -972,6 +986,9 @@ class StringOfPearls:
             Comments
             --------
         """
+
+        if x is None: x = self.x
+        if y is None: y = self.y
 
         x_clipped = x[self.clip_mask]
         y_clipped = y[self.clip_mask]
@@ -1208,10 +1225,6 @@ class PercentileClipping:
         if verbose is None:
             verbose = self.verbose
 
-        if np.any(np.diff(x)<0) and verbose > 1:
-            warnings.warn('The resulting mask might be wrong since "x" is not a sorted array!', category=UserWarning)
-
-
         #assign input values
         self.x = x
         self.y = y
@@ -1222,7 +1235,7 @@ class PercentileClipping:
         return
     
     def transform(self,
-        x:np.ndarray, y:np.ndarray,
+        x:np.ndarray=None, y:np.ndarray=None,
         ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to transform the input-dataseries
@@ -1234,10 +1247,15 @@ class PercentileClipping:
                     - np.ndarray
                     - x-values of the dataseries to clip
                     - preferably sorted
+                    - the default is None
+                        - will return the clipped version of the array's passed to last call of self.fit()
                 - y
                     - np.ndarray
                     - y-values of the dataseries to clip
                     - preferably sorted w.r.t. 'x'
+                    - the default is None
+                        - will return the clipped version of the array's passed to last call of self.fit()
+
             Raises
             ------
 
@@ -1253,6 +1271,9 @@ class PercentileClipping:
             Comments
             --------
         """
+
+        if x is None: x = self.x
+        if y is None: y = self.y
 
         x_clipped = x[self.clip_mask]
         y_clipped = y[self.clip_mask]        
