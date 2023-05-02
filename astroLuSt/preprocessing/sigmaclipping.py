@@ -4,7 +4,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import re
-from typing import Union, Callable
+from typing import Union, List, Tuple, Callable
 import warnings
 
 
@@ -427,7 +427,7 @@ class SigmaClipping:
     def plot_result(self,
         show_cut:bool=True,
         iteration:int=-1,
-        ):
+        ) -> tuple:
         """
             - method to create a plot visualizing the sigma-clipping result
 
@@ -508,7 +508,7 @@ class SigmaClipping:
         n_iter:int=1, stopping_crit:str=None,
         verbose:int=None,
         clip_curve_kwargs:dict={},
-        ):
+        ) -> None:
         """
             - method to apply SigmaClipping n_iter times consecutively
             - similar to scikit-learn scalers
@@ -657,7 +657,7 @@ class SigmaClipping:
 
     def transform(self,
         x:np.ndarray, y:np.ndarray,
-        ) -> tuple[np.ndarray, np.ndarray]:
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to transform the input-dataseries
             - similar to scikit-learn scalers
@@ -694,7 +694,7 @@ class SigmaClipping:
     def fit_transform(self,
         x:np.ndarray, y:np.ndarray,
         fit_kwargs:dict={},
-        ) -> tuple[np.ndarray, np.ndarray]:
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to fit the transformer and transform the data in one go
             - similar to scikit-learn scalers
@@ -867,7 +867,7 @@ class StringOfPearls:
     def fit(self,
         x:np.ndarray, y:np.ndarray,
         verbose:int=None,
-        ):
+        ) -> None:
         """
             - method to apply StringOfPearls
             - similar to scikit-learn scalers
@@ -942,7 +942,7 @@ class StringOfPearls:
 
     def transform(self,
         x:np.ndarray, y:np.ndarray,        
-        ) -> tuple[np.ndarray, np.ndarray]:
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to transform the input-dataseries
             - similar to scikit-learn scalers
@@ -981,7 +981,7 @@ class StringOfPearls:
     def fit_transform(self,
         x:np.ndarray, y:np.ndarray,
         fit_kwargs:dict={}
-        ) -> tuple[np.ndarray, np.ndarray]:
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method to fit the transformer and transform the data in one go
             - similar to scikit-learn scalers
