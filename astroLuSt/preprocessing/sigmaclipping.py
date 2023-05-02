@@ -732,15 +732,14 @@ class SigmaClipping:
 
 
 class StringOfPearls:
-    #TODO: loosness (i.e. allow n points of the window_size consecutive ones to not fullfill the condition)
     """
         - class to remove outliers which are at consecutive positions on the input dataseries and the 'metric' of which does not exceed a threshold 'th'
         - follows a similar convention as the scikit-learn library
 
         Attributes
         ----------
-            - window_size, optional
-                - int
+            - window_size
+                - int, optional
                 - minimum number of consecutive datapoints the 'metric' of which shall not exceed 'th'
                 - if 'th' gets exceeded by 'window_size' consecutive points, the respective points get clipped 
                 - the default is 3
@@ -760,6 +759,18 @@ class StringOfPearls:
                 - the default is None
                     - will use the absolute gradient in y direction
                     - i.e. np.abs(np.gradient(y)) will be called
+            - looseness
+                - float, int, optional
+                - number of points in a window that are allowed not to exceed 'th' for the series to still get clipped
+                - if an int is passed
+                    - interpreted as the number of points that are allowed to not exceed 'th'
+                - if a float is passed
+                    - if between 0 and 1
+                        - interpreted as the fraction of 'window_size'
+                    - if > 1
+                        - will be converted to an int and then interpreted as if an int was passed
+                - the default is 0
+                    - all points in a window much exceed 'th'
             - window
                 - np.ndarray, optoinal
                 - window to use for the convolution of the boolean
@@ -806,7 +817,7 @@ class StringOfPearls:
         window_size:int=3,
         th:Union[float,Callable[[np.ndarray, np.ndarray],float]]=0.01,
         metric:Callable[[np.ndarray, np.ndarray],np.ndarray]=None,
-        looseness:int=0,
+        looseness:Union[int,float]=0,
         window:np.ndarray=None,
         verbose:int=0,
         ) -> None:
@@ -825,6 +836,17 @@ class StringOfPearls:
             self.window_size = len(window)
         else:
             self.window = [1]*self.window_size
+
+        if (0 <= looseness)&(looseness < 1):
+            self.loosenes = int(self.window_size*looseness)  #relative to window_size
+        elif looseness >= 1 and looseness < self.window_size:
+            self.loosenes = int(looseness)
+        else:
+            raise ValueError(
+                f'"looseness" has to be a positive number of type float or int and not {type(looseness)}.\n'
+                f'    If you passed a float it has to be between 0 and 1 exclusive!\n'
+                f'    If you passed an int its value shall be smaller than "window_size"!'
+            )
         self.verbose = verbose
         
 
@@ -836,6 +858,7 @@ class StringOfPearls:
             f'    window_size={self.window_size},\n'
             f'    th={self.th},\n'
             f'    metric={self.metric},\n'
+            f'    looseness={self.loosenes},\n'
             f'    window={self.window},\n'
             f'    verbose={self.verbose},\n'
             f')'
@@ -898,10 +921,10 @@ class StringOfPearls:
 
         #convolution of window to get at least window_size consecutive occurences of metric(x,y) >= th 
         conv = np.convolve((self.metric(self.x, self.y) >= th).astype(int), self.window, mode="valid")
-        print(conv.shape)
         
         #determine where the convolution resulted in self.window_size consecutive elements
-        indexes_start = np.where(conv == self.window_size)[0]
+        ##looseness allows this many datapoints to not 
+        indexes_start = np.where(conv >= self.window_size-self.loosenes)[0]
 
         #generate indices of all
         idxs = np.array([np.arange(idx, idx+self.window_size) for idx in indexes_start])
