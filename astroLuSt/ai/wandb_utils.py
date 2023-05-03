@@ -92,6 +92,8 @@ class WandB_parallel_sweep:
         self.n_jobs = n_jobs
         if n_agents is None:
             self.n_agents = n_jobs
+        else: 
+            self.n_agents = n_agents
         self.wandb_mode = wandb_mode
         self.verbose = verbose
 
