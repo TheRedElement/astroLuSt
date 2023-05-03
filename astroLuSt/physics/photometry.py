@@ -2,6 +2,7 @@
 #%%imports
 import numpy as np
 
+from typing import Union, Tuple, Callable
 
 #%%definitions
 
@@ -60,9 +61,93 @@ def wesenheit_magnitude(
     else:
         raise ValueError('Either "R" or both "A_M" and E_CI" have to be not None')
 
-    
-
 
     w = M - R*CI
 
     return w
+
+def mags2fluxes(
+    mag:Union[np.ndarray,float],
+    m_ref:Union[np.ndarray,float],
+    f_ref:Union[np.ndarray,float],
+    ) -> Union[np.ndarray,float]:
+    """
+        - function to convert magnitudes to flux
+        
+        Parameters
+        ----------
+            - mag
+                - float, np.ndarray
+                - magnitudes to be converted
+            - m_ref
+                - float, np.ndarray
+                - reference magnitude for the conversion
+                    - this value is dependent on the passband in use
+            - f_ref
+                - float, np.ndarray
+                - reference flux for the conversion
+                    - corresponding to m_ref
+                    - this value is dependent on the passband in use
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - flux
+                - float, np.array
+                - flux corresponding to mag
+
+        Dependencies
+        ------------
+
+        Comments
+        --------
+
+    """
+    flux = 10**(-0.4*(mag - m_ref)) + f_ref
+    return flux
+
+def fluxes2mags(
+    flux:Union[np.ndarray,float],
+    m_ref:Union[np.ndarray,float],
+    f_ref:Union[np.ndarray,float],
+    ) -> Union[np.ndarray,float]:
+    """
+        - function to convert photon flux to magnitudes
+
+        Parameters
+        ----------
+            - flux
+                - float, np.array
+                - fluxes to be converted
+            - m_ref
+                - float, np.ndarray
+                - reference magnitude for the conversion
+                    - this value is dependent on the passband in use
+            - f_ref
+                - float, np.ndarray
+                - reference flux for the conversion
+                    - corresponding to m_ref
+                    - this value is dependent on the passband in use
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - mags
+                - float, np.array
+                - magnitudes corresponding to flux
+
+        Dependencies
+        ------------
+            - numpy
+
+        Comments
+        --------
+    """
+    mags = -2.5*np.log10(flux/f_ref) + m_ref
+
+    return mags
+

@@ -1402,3 +1402,4 @@ class PercentileClipping:
         axs = fig.axes
 
         return fig, axs
+    

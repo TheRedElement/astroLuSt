@@ -7,6 +7,55 @@ from typing import Union, Tuple, Callable
 
 #%%definitions
 
+def phase2time(
+    phase:Union[np.ndarray,float],
+    period:Union[np.ndarray,float],
+    tref:Union[np.ndarray,float]=0,
+    verbose:int=0,
+    ):
+    """
+        - converts a given array of phases into its respective time equivalent
+
+        Parameters
+        ----------
+            - phases
+                - np.ndarray, float
+                - the phases to convert to times
+            - period
+                - np.ndarray, float
+                - the given period(s) the phase describes
+            - tref
+                - np.ndarray, float, optional
+                - reference time
+                    - i.e. offset from time=0
+                - the default is 0
+            - verbose
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - time
+                - np.array, float
+                - the resulting time array, when the phases are converted 
+
+        Dependencies
+        ------------
+
+        Comments
+        --------
+            - operates with phases in the interval [-0.5,0.5]
+            - if you wish to convert phases from the interval [0,1], simply pass phases-0.5 to the function
+    """
+
+    time = phase*period + tref
+    
+    return time
+
 def fold(
     time:np.ndarray,
     period:float, tref:float=None,
@@ -166,7 +215,7 @@ def resample(
 
 def periodic_shift(
     input_array:np.ndarray,
-    shift:float, borders:list,
+    shift:float, borders:Union[list,np.ndarray],
     testplot:bool=False,
     verbose:int=0
     ) -> np.ndarray:
@@ -176,13 +225,13 @@ def periodic_shift(
         Parameters
         ----------
             - input_array
-                - np.array
+                - np.ndarray
                 - array to be shifted along an interval with periodic boundaries
             - shift
-                - float/int
-                - magnizude of the shift to apply to the array
+                - float
+                - magnitude of the shift to apply to the array
             - borders
-                - list/np.array
+                - list/np.ndarray
                 - upper and lower boundary of the periodic interval
             - testplot
                 - bool, optional
@@ -211,14 +260,12 @@ def periodic_shift(
 
         Comments
         --------
+
     """        
     
     import numpy as np
     import matplotlib.pyplot as plt
     
-    #time execution
-
-
 
     ################################
     #check if all types are correct#
@@ -277,3 +324,212 @@ def periodic_shift(
         plt.show()
 
     return shifted
+
+def periodize(
+    x:np.ndarray, y:np.ndarray,
+    period:np.ndarray, repetitions:int,
+    testplot:bool=True,
+    ):
+    """
+        - function to create a periodic signal out of a time-series given in phase space
+        - works for phases given in the interval [0, 1]
+
+        Parameters
+        ----------
+            - x
+                - np.ndarray
+                - x-values to be periodized
+                - usually phases
+            - y
+                - np.ndarray
+                - y-values to be periodized
+            - period
+                - float
+                - period to use for the repetition
+            - repetitions
+                - int
+                - number of times the signal shall be repeated
+            - testplot
+                - bool, optional
+                - whether to show a test-plot
+                - the default is True
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - x_periodized
+                - times of the periodized signal
+            - y_periodized
+                - fluxes of the periodized signal
+
+        Dependencies
+        ------------
+            - numpy
+            - matplotlib
+
+        Comments
+        --------
+    
+    """
+
+    x_times = phase2time(x, period)
+    x_periodized = np.array([])
+    y_periodized = np.array([])
+
+    for r in range(repetitions):
+        times_add = x_times + (r*period)
+        x_periodized = np.append(x_periodized, times_add)
+        y_periodized = np.append(y_periodized, y)
+    
+    sortidx = np.argsort(x_periodized)
+    x_periodized = x_periodized[sortidx]
+    y_periodized = y_periodized[sortidx]
+
+    if testplot:
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.scatter(x_periodized, y_periodized, color="tab:blue", label="Periodized signal")
+        ax1.set_xlabel("x")
+        ax1.set_ylabel("y")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    return x_periodized, y_periodized, 
+
+def periodic_expansion(
+    x:np.ndarray, y:np.ndarray,
+    x_ref_min:float=0, x_ref_max:float=0,
+    minmax:str="max",
+    testplot=False,
+    ):
+    """
+        - function to expand a periodic timeseries on either side
+            - takes all datapoints up to a reference phase
+            - appends them to the original array according to specification  
+
+        Parameters
+        ----------
+            - x
+                - np.ndarray
+                - x-values of the datapoints to be expanded
+            - y 
+                - np.ndarray
+                - y-values of the datapoints to be expanded
+            - phase_ref_min
+                - float, optional
+                - reference phase
+                    - will be used in order to determine which phases to consider for appending
+                - used in the case of appending to the minimum and both ends
+                - the default is 0
+            - phase_ref_max
+                - float, optional
+                - reference phase
+                    - will be used in order to determine which phases to consider for appending
+                - used in the case of appending to the minimum and both ends
+                - the default is 0
+            - minmax
+                - str, optional
+                - wether to append to the maximum or minimum of the dataseries
+                - can take either
+                    - 'min'
+                        - will expand on the minimum side
+                        - will consider all phases from phase_ref to the maximum phase
+                    - 'max'
+                        - will expand on the maximum side
+                        - will consider all phases the minimum phase up to phase_ref
+                    - 'both'
+                        - will expand on both ends of the curve
+                        - requires 'phase_ref' to be a list with two entries
+                - the default is 'max'
+            - testplot
+                - bool, optional
+                - whether to show a testplot of the result
+                - the default is False
+
+        Raises
+        ------
+            - ValueError
+                - if 'minmax' gets passed a wrong argument
+            - TypeError
+                - if 'phase_ref' gets passed a wrong type
+
+        Returns
+        -------
+            - expanded_x
+                - np.ndarray
+                - x-values including the expanded part
+            - expanded_y
+                - np.ndarray
+                - y-values including the expanded part
+
+        Dependencies
+        ------------
+            - numpy
+            - matplotlib
+
+        Comments
+        --------
+    """
+    
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    #sort to get correct appendix in the end
+    sortidx = np.argsort(x)
+    x = x[sortidx]
+    y = y[sortidx]
+
+    #append to maximum
+    if minmax == "max":
+        x_bool = (x < x_ref_max)
+        appendix_phases = np.nanmax(x) + (x[phase_bool] - np.nanmin(x))
+        x_ref = x_ref_max
+    #append to minimum
+    elif minmax == "min":
+        phase_bool = (x > x_ref_min)
+        appendix_phases = np.nanmin(x) - (np.nanmax(x) - x[phase_bool])
+        x_ref = x_ref_min
+    elif minmax == "both":
+        if x_ref_min < x_ref_max:
+            raise ValueError("'x_ref_min' has to be greater or equal than 'x_ref_max' ")
+        x_ref = [x_ref_min, x_ref_max]
+        x_bool_max = (x < x_ref_max)
+        x_bool_min = (x > x_ref_min)
+        x_bool = x_bool_max|x_bool_min
+        appendix_x_max = np.nanmax(x) + (x[x_bool_max] - np.nanmin(x))
+        appendix_x_min = np.nanmin(x) - (np.nanmax(x) - x[x_bool_min])
+        appendix_x = np.append(appendix_x_max, appendix_x_min)
+    else:
+        raise ValueError("'minmax' has to bei either 'min', 'max' or 'both'!")
+    
+    appendix_y = y[phase_bool]
+
+
+    expanded_x = np.append(x, appendix_x)
+    expanded_y = np.append(y, appendix_y)
+
+    if testplot:
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.scatter(x,          y,          color="tab:grey", alpha=0.5, zorder=2, label="Original Input")
+        ax1.scatter(expanded_x, expanded_y, color="tab:blue", alpha=1,   zorder=1, label="Expanded Input")
+    
+        if minmax == 'both':
+            ax1.axvline(x_ref[0], color="g", linestyle="--", label="Reference Phase")
+            ax1.axvline(x_ref[1], color="g", linestyle="--")
+        else:
+            ax1.axvline(x_ref,    color="g", linestyle="--", label="Reference Phase")
+        
+        ax1.set_xlabel("x")
+        ax1.set_ylabel("y")
+        
+        ax1.legend()
+
+        plt.tight_layout()
+        plt.show()
+    
+    return expanded_x, expanded_y
