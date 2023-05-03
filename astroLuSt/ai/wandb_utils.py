@@ -73,6 +73,7 @@ class WandB_parallel_sweep:
         -------------
             - joblib
             - os
+            - typing
             - wandb
 
         Comments
