@@ -243,7 +243,7 @@ class WandB_parallel_sweep:
 
         wandb.agent(sweep_id=sweep_id, function=function)
 
-        self.ET.checkpoint_end(f'sweep_one, agent {idx}')
+        self.ET.checkpoint_end(f'sweep_one, agent {idx+1}')
 
         return
 
