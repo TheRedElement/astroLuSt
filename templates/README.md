@@ -74,6 +74,15 @@ The current dependencies are
 
 To get a feel on how the different functions and classes behave, I provided some information in __astroLuSt_example_usage.ipynb__.
 
+## Styles
+
+There are some custom styles for matplotlib included in the package.
+To use the styles in your project you can import the styles by copying the following line into your code:
+```python
+import matplotlib.pyplot as plt
+plt.style.use('astroLuSt.styles.LuSt_style')
+```
+
 ## Referencing
 
 If you use any of the utilities provided in the __astroLuSt__-module, I would be very glad if you reference the current homepage:
