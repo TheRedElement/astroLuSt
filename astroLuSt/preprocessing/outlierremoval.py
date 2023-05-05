@@ -835,7 +835,7 @@ class StringOfPearls:
         self.window_size = window_size
         self.th = th
         if metric is None:
-            self.metric = lambda x, y: np.abs(np.gradient(y))
+            self.metric = lambda x, y: np.abs(np.gradient(y,x))
         else:
             self.metric = metric
         self.loosenes = looseness
