@@ -2,8 +2,9 @@
 #%%imports
 import itertools
 import os
-from typing import Union, Tuple, Callable
+from typing import Union, Tuple, Dict, Callable
 import wandb
+import warnings
 
 from joblib import Parallel, delayed
 
@@ -349,3 +350,56 @@ class WandB_parallel_sweep:
 
         return
 
+
+def sweep_config2grid(
+    sweep_config:Dict[str,dict],
+    distributions:bool=False
+    ) -> Tuple[dict,dict]:
+    """
+        - function to transform a sweep_config dictionary used by wandb into a sklearn ParameterGrid
+
+        Parameters
+        ----------
+            - sweep_config
+                - dict
+                - nested dictionary as used by wand hyperparameter sweeps
+                - the entry for 'parameters' will be converted into a sklearn.model_selection.ParameterGrid
+                - all other entries will be stored in a separate dictionary
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - grid
+                - dict
+                - grid corresponding to sweep_config
+                - the grid is formatted such that it can be transformed into a sklearn.model_selection.ParameterGrid by simply passing it to the corresponding constructor
+            - config_dict
+                - dict
+                - dictionary containing the rest of the parameters stored in sweep_config
+
+        Dependencies
+        ------------
+            - typing
+
+        Comments
+        --------
+
+    """
+
+    #mapping dictionary for distribution names
+    config_dict = {key:value for key, value in sweep_config.items() if key != 'parameters'}
+    
+    if distributions:
+        warnings.warn('"distribution" is not implemented yet. For now we only support parameter grids!')
+
+    else:
+        #will ignore distributions
+        grid_val  = {key:[value['value']] for key, value in sweep_config['parameters'].items()  if 'value'  in value.keys() and 'distribution' not in value.keys()}
+        grid_vals = {key:value['values'] for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys()}
+
+        grid = {**grid_val, **grid_vals}
+
+
+    return grid, config_dict
