@@ -14,7 +14,7 @@ from typing import Union, Tuple, List, Callable
 
 
 #%%definitions
-class WAND_HypsearchPlot:
+class WB_HypsearchPlot:
 
     def __init__(self,
         interpkind:str='quadratic',
