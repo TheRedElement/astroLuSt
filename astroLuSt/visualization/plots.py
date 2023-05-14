@@ -358,25 +358,39 @@ class WB_HypsearchPlot:
                 e = True
                 nretries += 1
                 if verbose > 0:
-                    print(
+                   print(
                         f'INFO(WB_HypsearchPlot):\n'
-                        f'    The following error occured while plotting the models: {err}.'
-                        f'    Retrying to plot for the {nretries}-th try.'
+                        f'    The following error occured while plotting the models: {err}.\n'
+                        f'    Retrying to plot. Number of elapsed retries: {nretries}.'
                     )
 
         #plot one additional y-axis for every single hyperparameter
-        res = Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
-            delayed(self.add_hypaxes)(
-                ax1=ax1,
-                df=df,
-                ylabs=ylabs,
-                hyperparameter=hyperparameter,
-                fill_value=fill_value,
-                idx=idx, n_hyperparams=n_hyperparams,
-                tickcolor=tickcolor, ticks2display=ticks2display, ticklabelrotation=ticklabelrotation,
-                sleep=sleep,
-            ) for idx, (hyperparameter, ylabs) in enumerate(zip(hyperparams, ylabels))
-        )
+        e = True
+        nretries = 0
+        while e and nretries < max_nretries:
+            try:
+                res = Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
+                    delayed(self.add_hypaxes)(
+                        ax1=ax1,
+                        df=df,
+                        ylabs=ylabs,
+                        hyperparameter=hyperparameter,
+                        fill_value=fill_value,
+                        idx=idx, n_hyperparams=n_hyperparams,
+                        tickcolor=tickcolor, ticks2display=ticks2display, ticklabelrotation=ticklabelrotation,
+                        sleep=sleep,
+                    ) for idx, (hyperparameter, ylabs) in enumerate(zip(hyperparams, ylabels))
+                )
+                e = False
+            except RuntimeError as err:
+                e = True
+                nretries += 1
+                if verbose > 0:
+                    print(
+                        f'INFO(WB_HypsearchPlot):\n'
+                        f'    The following error occured while plotting the models: {err}.\n'
+                        f'    Retrying to plot. Number of elapsed retries: {nretries}.'
+                    )
         axps, hyps = np.array(res)[:,0], np.array(res)[:,1]
         
         
@@ -467,7 +481,26 @@ class WB_HypsearchPlot:
         return
     
 
-    def deal_with_runtimeerror(self):
+    def deal_with_runtimeerror(self,
+        func:callable,
+        max_nretries:int=5,
+        verbose:int=0
+        ):
 
-        return
+        e = True
+        nretries = 0
+        while e and nretries < max_nretries:
+            try:
+                res = func
+                e = False
+            except RuntimeError as err:
+                e = True
+                nretries += 1
+                if verbose > 0:
+                    print(
+                        f'INFO(WB_HypsearchPlot):\n'
+                        f'    The following error occured while plotting the models: {err}.'
+                        f'    Retrying to plot for the {nretries}-th try.'
+                    )
+        return res
 # %%
