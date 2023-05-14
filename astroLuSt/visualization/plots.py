@@ -30,7 +30,7 @@ class WB_HypsearchPlot:
         nancolor:Union[str,tuple]='tab:grey', nanfrac:float=4/256,
         linealpha:float=1, linewidth:float=1,
         base_cmap:Union[str,mcolors.Colormap]='plasma', cbar_over_hist:bool=False,
-        n_jobs:int=1, sleep:float=0.1,
+        n_jobs:int=1, sleep:float=0.1, n_jobs_addaxes:int=1,
         verbose:int=0,
         ) -> None:
         
@@ -48,13 +48,14 @@ class WB_HypsearchPlot:
         self.base_cmap          = base_cmap
         self.cbar_over_hist     = cbar_over_hist
         self.n_jobs             = n_jobs
+        self.n_jobs_addaxes     = n_jobs_addaxes
         self.sleep              = sleep
         self.verbose            = verbose
         
-        if axpos_hyp is None:  self.axpos_hyp  = (1,2,1)
-        else:                  self.axpos_hyp  = axpos_hyp
-        if axpos_hist is None: self.axpos_hist = (1,6,4)
-        else:                  self.axpos_hist = axpos_hist
+        if axpos_hyp is None:       self.axpos_hyp      = (1,2,1)
+        else:                       self.axpos_hyp      = axpos_hyp
+        if axpos_hist is None:      self.axpos_hist     = (1,6,4)
+        else:                       self.axpos_hist     = axpos_hist
 
 
         
@@ -217,7 +218,7 @@ class WB_HypsearchPlot:
         nancolor:Union[str,tuple]=None, nanfrac:float=None,
         linealpha:float=None, linewidth:float=None,
         base_cmap:Union[str,mcolors.Colormap]=None, cbar_over_hist:bool=None,
-        n_jobs:int=None, sleep:float=None,
+        n_jobs:int=None, sleep:float=None, n_jobs_addaxes:int=None,
         save:Union[str,bool]=False,
         show:bool=True,
         max_nretries:int=4,
@@ -241,6 +242,7 @@ class WB_HypsearchPlot:
         if cbar_over_hist is None:      cbar_over_hist      = self.cbar_over_hist
         if n_jobs is None:              n_jobs              = self.n_jobs
         if sleep is None:               sleep               = self.sleep
+        if n_jobs_addaxes is None:      n_jobs_addaxes      = self.n_jobs_addaxes
         if verbose is None:             verbose             = self.verbose
 
         if min_score is None: min_score = -np.inf
@@ -369,7 +371,7 @@ class WB_HypsearchPlot:
         nretries = 0
         while e and nretries < max_nretries:
             try:
-                res = Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
+                res = Parallel(n_jobs=n_jobs_addaxes, verbose=verbose, prefer='threads')(
                     delayed(self.add_hypaxes)(
                         ax1=ax1,
                         df=df,
