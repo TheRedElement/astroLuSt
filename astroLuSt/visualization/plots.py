@@ -1,4 +1,5 @@
 
+
 #%%imports
 from joblib.parallel import Parallel, delayed
 import matplotlib.pyplot as plt
@@ -8,8 +9,8 @@ import numpy as np
 import polars as pl
 import pandas as pd
 from scipy.interpolate import interp1d
+import time
 from typing import Union, Tuple, List, Callable
-
 
 
 
@@ -19,28 +20,43 @@ class WB_HypsearchPlot:
     def __init__(self,
         interpkind:str='quadratic',
         res:int=1000,
-        ticks2display:int=5,
-        tickcolor:Union[str,tuple]='tab:grey',
+        ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45,
         nancolor:Union[str,tuple]='tab:grey',
         linealpha:float=1,
         base_cmap:Union[str,mcolors.Colormap]='plasma',
-        n_jobs:int=1,
+        n_jobs:int=1, sleep:float=0.1,
         verbose:int=0,
         ) -> None:
         
         
-        self.interpkind     = interpkind
-        self.res            = res
-        self.ticks2display  = ticks2display
-        self.tickcolor      = tickcolor
-        self.nancolor       = nancolor
-        self.linealpha      = linealpha
-        self.base_cmap      = base_cmap
-        self.n_jobs         = n_jobs
-        self.verbose        = verbose
+        self.interpkind         = interpkind
+        self.res                = res
+        self.ticks2display      = ticks2display
+        self.tickcolor          = tickcolor
+        self.ticklabelrotation  = ticklabelrotation
+        self.nancolor           = nancolor
+        self.linealpha          = linealpha
+        self.base_cmap          = base_cmap
+        self.n_jobs             = n_jobs
+        self.sleep              = sleep
+        self.verbose            = verbose
 
         
         return
+
+    def __repr__(self) -> str:
+        return (
+            f'WB_HypsearchPlot(\n'
+            f'    interpkind={self.interpkind},\n'
+            f'    res={self.res},\n'
+            f'    ticks2display={self.ticks2display}, tickcolor={self.tickcolor}, ticklabelrotation={self.ticklabelrotation},\n'
+            f'    nancolor={self.nancolor},\n'
+            f'    linealpha={self.linealpha},\n'
+            f'    base_cmap={self.base_cmap},\n'
+            f'    n_jobs={self.n_jobs}, sleep={self.sleep},\n'
+            f'    verbose={self.verbose},\n'
+            f')'
+        )
 
     def make_new_cmap(self,
         cmap:mcolors.Colormap,
@@ -79,6 +95,7 @@ class WB_HypsearchPlot:
         cmap:mcolors.Colormap, nancolor:Tuple[str,tuple]='tab:grey',
         resolution:int=1000, interpkind:str='quadratic',
         linealpha:float=1,
+        sleep=0,
         ) -> None:
 
         #interpolate using a spline to make everything look nice and neat (also ensures that the lines are separable by eye)
@@ -97,6 +114,8 @@ class WB_HypsearchPlot:
         else:
             line, = ax1.plot(x_plot, y_plot, label=name[0], alpha=linealpha, color=cmap(hyperparams_cat[-1]))
 
+        time.sleep(sleep)
+
         return
 
     def add_hypaxes(self,
@@ -106,7 +125,8 @@ class WB_HypsearchPlot:
         hyperparameter:str,
         fill_value:float,
         idx:int, n_hyperparams:int,
-        tickcolor:Union[str,tuple], ticks2display:int,
+        tickcolor:Union[str,tuple]='tab:grey', ticks2display:int=5, ticklabelrotation:float=45,
+        sleep=0,
         ) -> plt.Axes:
 
         #initialize new axis
@@ -136,25 +156,33 @@ class WB_HypsearchPlot:
             #if only one value got tried, show a single tick of that value
             if len(df.select(pl.col(hyperparameter+'_cat')).unique()) == 1:
                 axp.set_yticks([1.00])
-                axp.set_yticklabels([lab if lab != fill_value else 'nan' for lab in df.select(pl.col(hyperparameter)).unique().to_numpy().flatten()])
+                axp.set_yticklabels(
+                    [lab if lab != fill_value else 'nan' for lab in df.select(pl.col(hyperparameter)).unique().to_numpy().flatten()],
+                    rotation=ticklabelrotation
+                )
             #'ticks2display' equidistant ticks for the whole value range
             else:
                 axp.set_yticks(np.linspace(0, 1, ticks2display, endpoint=True))
                 labs = np.linspace(np.nanmin(df.select(pl.col(hyperparameter)).to_numpy()), np.nanmax(df.select(pl.col(hyperparameter)).to_numpy()), ticks2display, endpoint=True)
-                axp.set_yticklabels([f'{lab:.2f}' if lab != fill_value else 'nan' for lab in labs])
+                axp.set_yticklabels(
+                    [f'{lab:.2f}' if lab != fill_value else 'nan' for lab in labs],
+                    rotation=ticklabelrotation
+                )
 
         ##non-numeric hyperparameter
         else:
             #get ticks
             axp.set_yticks(df.select(pl.col(hyperparameter+'_cat')).unique().to_numpy().flatten())
             #set labels to categories
-            axp.set_yticklabels(ylabs)
+            axp.set_yticklabels(ylabs, rotation=ticklabelrotation)
 
 
         #add spine labels (ylabs) on top  of each additional axis
         ax1.text(x=(idx/n_hyperparams), y=1.01, s=hyperparameter, rotation=45, transform=ax1.transAxes, color=tickcolor)
 
-        return axp
+        time.sleep(sleep)
+
+        return axp, hyperparameter
 
     def plot(self,
         grid:List[dict],
@@ -163,27 +191,28 @@ class WB_HypsearchPlot:
         param_cols:Union[str,list]=r'^param_.*$',
         interpkind:str=None,
         res:int=None,
-        ticks2display:int=None,
-        tickcolor:Union[str,tuple]=None,
+        ticks2display:int=None, tickcolor:Union[str,tuple]=None, ticklabelrotation:float=None,
         nancolor:Union[str,tuple]=None,
         linealpha:float=None,
         base_cmap:Union[str,mcolors.Colormap]=None,
-        n_jobs:int=None,
+        n_jobs:int=None, sleep:float=None,
         save:Union[str,bool]=False,
         show:bool=True,
         verbose:int=None,
         fig_kwargs:dict=None,
         ) -> Tuple[Figure, plt.Axes]:
 
-        if interpkind is None:      interpkind      = self.interpkind
-        if res is None:             res             = self.res
-        if ticks2display is None:   ticks2display   = self.ticks2display
-        if tickcolor is None:       tickcolor       = self.tickcolor
-        if nancolor is None:        nancolor        = self.nancolor
-        if linealpha is None:       linealpha       = self.linealpha
-        if base_cmap is None:       base_cmap       = self.base_cmap
-        if n_jobs is None:          n_jobs          = self.n_jobs
-        if verbose is None:         verbose         = self.verbose
+        if interpkind is None:          interpkind          = self.interpkind
+        if res is None:                 res                 = self.res
+        if ticks2display is None:       ticks2display       = self.ticks2display
+        if tickcolor is None:           tickcolor           = self.tickcolor
+        if ticklabelrotation is None:   ticklabelrotation   = self.tickcolor
+        if nancolor is None:            nancolor            = self.nancolor
+        if linealpha is None:           linealpha           = self.linealpha
+        if base_cmap is None:           base_cmap           = self.base_cmap
+        if n_jobs is None:              n_jobs              = self.n_jobs
+        if sleep is None:               sleep               = self.sleep
+        if verbose is None:             verbose             = self.verbose
 
 
         #initialize
@@ -249,12 +278,13 @@ class WB_HypsearchPlot:
                 ax1=ax1,
                 cmap=cmap, nancolor=nancolor,
                 resolution=res, interpkind=interpkind,
-                linealpha=linealpha,                
+                linealpha=linealpha,
+                sleep=sleep,
             ) for idx, (row_cat, row, name) in enumerate(zip(df.select(cat_cols).iter_rows(), df.drop(cat_cols).iter_rows(), names.iter_rows()))
         )
 
         #plot one additional y-axis for every single hyperparameter
-        axps = Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
+        res = Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
             delayed(self.add_hypaxes)(
                 ax1=ax1,
                 df=df,
@@ -262,13 +292,15 @@ class WB_HypsearchPlot:
                 hyperparameter=hyperparameter,
                 fill_value=fill_value,
                 idx=idx, n_hyperparams=n_hyperparams,
-                tickcolor=tickcolor, ticks2display=ticks2display,            
+                tickcolor=tickcolor, ticks2display=ticks2display, ticklabelrotation=ticklabelrotation,
+                sleep=sleep,
             ) for idx, (hyperparameter, ylabs) in enumerate(zip(hyperparams, ylabels))
         )
-        
+        axps, hyps = np.array(res)[:,0], np.array(res)[:,1]
         #add colorbar
         norm = mcolors.Normalize(vmin=df.select(pl.col(score_col)).min(), vmax=df.select(pl.col(score_col)).max())
-        cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[-1], pad=0.0005, anchor=(0,0), drawedges=False)
+        # cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[-1], pad=0.0005, drawedges=False, anchor=(0,0))
+        cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[hyps==score_col], pad=0.0005, drawedges=False, anchor=(0,0))
         cbar.outline.set_visible(False) #hide colorbar outline
         cbar.set_label(score_col, color=tickcolor)
         cbar.ax.set_zorder(0)
@@ -276,28 +308,11 @@ class WB_HypsearchPlot:
 
         
         if isinstance(save, str): plt.savefig(save, bbox_inches='tight')
-        plt.tight_layout()
+        # plt.tight_layout()
         if show: plt.show()
 
         axs = fig.axes
         
         return fig, axs
     
-    def update(self,
-        fig:Figure, grid:List[dict],
-        ):
-        
-        #convert grid to polars DataFrame
-        df = pl.DataFrame(grid)
-
-
-        self.plot_model()
-        fig.axes[0].plot(np.linspace(0,1,100), np.ones(100)*0.5, 'c')
-
-        axs = fig.axes
-
-        plt.show()
-
-        return fig, axs
-
 # %%
