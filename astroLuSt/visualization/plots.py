@@ -22,6 +22,7 @@ from typing import Union, Tuple, List, Callable
 class WB_HypsearchPlot:
 
     def __init__(self,
+        show_idcol:bool=True,                 
         interpkind:str='quadratic',
         res:int=1000,
         axpos_hyp:tuple=None, axpos_hist:tuple=None,
@@ -34,6 +35,7 @@ class WB_HypsearchPlot:
         ) -> None:
         
         
+        self.show_idcol         = show_idcol
         self.interpkind         = interpkind
         self.res                = res
         self.ticks2display      = ticks2display
@@ -202,11 +204,12 @@ class WB_HypsearchPlot:
 
     def plot(self,
         grid:Union[pl.DataFrame,List[dict]],
-        idcol:str='param_name',
+        idcol:str=None,
         score_col:str='mean_test_score',
         param_cols:Union[str,list]=r'^param_.*$',
         min_score:float=None, max_score:float=None, remove_nanscore:bool=False,
         score_scaling:str='pl.col(score_col)',
+        show_idcol:bool=None,
         interpkind:str=None,
         res:int=None,
         axpos_hyp:tuple=None, axpos_hist:tuple=None,
@@ -222,6 +225,7 @@ class WB_HypsearchPlot:
         fig_kwargs:dict=None, save_kwargs:dict=None
         ) -> Tuple[Figure, plt.Axes]:
 
+        if show_idcol is None:          show_idcol          = self.show_idcol
         if interpkind is None:          interpkind          = self.interpkind
         if res is None:                 res                 = self.res
         if axpos_hyp is None:           axpos_hyp           = self.axpos_hyp
@@ -253,6 +257,12 @@ class WB_HypsearchPlot:
             df = pl.DataFrame(grid)
         df_input_shape = df.shape[0]    #shape if input dataframe (for verbosity)
         
+        #initialize idcol correctly (generate id none has been passed)
+        if idcol is None:
+            idcol = 'id'
+            df = df.insert_at_idx(0, pl.Series(idcol, np.arange(0, df.shape[0], 1, dtype=np.int64)))
+        
+        
         #filter which range of scores to display and remove scores evaluating to nan if desired
         df = df.filter(((pl.col(score_col).is_between(min_score, max_score))|(pl.col(score_col).is_nan())))
         df_minmaxscore_shape = df.shape[0]  #shape of dataframe after score_col boundaries got applied
@@ -283,8 +293,11 @@ class WB_HypsearchPlot:
 
         #extract model-names, parameter-columns, ...
         names = df.select(pl.col(idcol))
-        df = df.drop(idcol)
+        df = df.drop(idcol)                 #in case idcol is part of the searched parameters
         df = df.select(pl.col(param_cols),pl.col(score_col))
+        
+        #if desired also show the individual model-ids
+        if show_idcol: df.insert_at_idx(0, names.to_series())
 
         #deal with missing values (necessary because otherwise raises issues in plotting)
         fill_value = df.min()
@@ -391,13 +404,13 @@ class WB_HypsearchPlot:
                 fig=fig, axpos=axpos_hist,
                 cmap=cmap
             )
+            plt.subplots_adjust(wspace=0)
         
 
 
         if isinstance(save, str): plt.savefig(save, bbox_inches='tight', **save_kwargs)
-        # plt.tight_layout()    #not working because of additional axes
+        # plt.tight_layout()    #moves cbar around
 
-        plt.subplots_adjust(wspace=0)
 
         axs = fig.axes
         
