@@ -188,10 +188,11 @@ class WB_HypsearchPlot:
         return axp, hyperparameter
 
     def plot(self,
-        grid:List[dict],
+        grid:Union[pl.DataFrame,List[dict]],
         idcol:str='param_name',
         score_col:str='mean_test_score',
         param_cols:Union[str,list]=r'^param_.*$',
+        min_score:float=-np.inf, max_score:float=np.inf, remove_nanscore:bool=False,
         interpkind:str=None,
         res:int=None,
         ticks2display:int=None, tickcolor:Union[str,tuple]=None, ticklabelrotation:float=None,
@@ -222,9 +223,14 @@ class WB_HypsearchPlot:
         if fig_kwargs is None: fig_kwargs = {}
 
         #convert grid to polars DataFrame
-        df = pl.DataFrame(grid)
+        if isinstance(grid, pl.DataFrame):
+            df = grid
+        else:
+            df = pl.DataFrame(grid)
         
-                
+        df = df.filter(((pl.col(score_col).is_between(min_score, max_score))|(pl.col(score_col).is_nan())))
+        if remove_nanscore: df = df.filter(pl.col(score_col).is_not_nan())
+
         #get colormap
         ##check if there are nan in the 'score_col'
         if isinstance(base_cmap, str): cmap = plt.get_cmap(base_cmap)
