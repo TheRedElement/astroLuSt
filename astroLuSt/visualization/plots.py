@@ -1,4 +1,7 @@
 
+#TODO: cbar scale
+#TODO: subplot with distribution of score_column - optional
+#TODO: subplot with model-labels (i.e. legend?) - optional
 
 #%%imports
 from joblib.parallel import Parallel, delayed
@@ -315,4 +318,13 @@ class WB_HypsearchPlot:
         
         return fig, axs
     
+    def add_score_distribution(self
+        ):
+    
+        return
+    
+    def add_model_legend(self,
+        ):
+
+        return
 # %%
