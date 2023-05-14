@@ -10,7 +10,7 @@ import matplotlib.colors as mcolors
 from matplotlib.figure import Figure
 import numpy as np
 import polars as pl
-import pandas as pd
+import re
 from scipy.interpolate import interp1d
 import time
 from typing import Union, Tuple, List, Callable
@@ -25,7 +25,7 @@ class WB_HypsearchPlot:
         res:int=1000,
         ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45,
         nancolor:Union[str,tuple]='tab:grey',
-        linealpha:float=1,
+        linealpha:float=1, linewidth:float=1,
         base_cmap:Union[str,mcolors.Colormap]='plasma',
         n_jobs:int=1, sleep:float=0.1,
         verbose:int=0,
@@ -39,6 +39,7 @@ class WB_HypsearchPlot:
         self.ticklabelrotation  = ticklabelrotation
         self.nancolor           = nancolor
         self.linealpha          = linealpha
+        self.linewidth          = linewidth
         self.base_cmap          = base_cmap
         self.n_jobs             = n_jobs
         self.sleep              = sleep
@@ -97,7 +98,7 @@ class WB_HypsearchPlot:
         ax1:plt.Axes,
         cmap:mcolors.Colormap, nancolor:Tuple[str,tuple]='tab:grey',
         resolution:int=1000, interpkind:str='quadratic',
-        linealpha:float=1,
+        linealpha:float=1, linewidth:float=1,
         sleep=0,
         ) -> None:
 
@@ -113,9 +114,9 @@ class WB_HypsearchPlot:
         
         #actually plot the line for current model (colomap according to cmap)
         if hyperparams[-1] == fill_value:
-            line, = ax1.plot(x_plot, y_plot, label=name[0], alpha=linealpha, color=nancolor)
+            line, = ax1.plot(x_plot, y_plot, label=name[0], alpha=linealpha, lw=linewidth, color=nancolor)
         else:
-            line, = ax1.plot(x_plot, y_plot, label=name[0], alpha=linealpha, color=cmap(hyperparams_cat[-1]))
+            line, = ax1.plot(x_plot, y_plot, label=name[0], alpha=linealpha, lw=linewidth, color=cmap(hyperparams_cat[-1]))
 
         time.sleep(sleep)
 
@@ -193,11 +194,12 @@ class WB_HypsearchPlot:
         score_col:str='mean_test_score',
         param_cols:Union[str,list]=r'^param_.*$',
         min_score:float=-np.inf, max_score:float=np.inf, remove_nanscore:bool=False,
+        score_scaling:str='pl.col(score_col)',
         interpkind:str=None,
         res:int=None,
         ticks2display:int=None, tickcolor:Union[str,tuple]=None, ticklabelrotation:float=None,
         nancolor:Union[str,tuple]=None,
-        linealpha:float=None,
+        linealpha:float=None, linewidth:float=None,
         base_cmap:Union[str,mcolors.Colormap]=None,
         n_jobs:int=None, sleep:float=None,
         save:Union[str,bool]=False,
@@ -213,6 +215,7 @@ class WB_HypsearchPlot:
         if ticklabelrotation is None:   ticklabelrotation   = self.tickcolor
         if nancolor is None:            nancolor            = self.nancolor
         if linealpha is None:           linealpha           = self.linealpha
+        if linewidth is None:           linewidth           = self.linewidth
         if base_cmap is None:           base_cmap           = self.base_cmap
         if n_jobs is None:              n_jobs              = self.n_jobs
         if sleep is None:               sleep               = self.sleep
@@ -227,9 +230,27 @@ class WB_HypsearchPlot:
             df = grid
         else:
             df = pl.DataFrame(grid)
+        df_input_shape = df.shape[0]    #shape if input dataframe (for verbosity)
         
+        #filter which range of scores to display and remove scores evaluating to nan if desired
         df = df.filter(((pl.col(score_col).is_between(min_score, max_score))|(pl.col(score_col).is_nan())))
-        if remove_nanscore: df = df.filter(pl.col(score_col).is_not_nan())
+        df_minmaxscore_shape = df.shape[0]  #shape of dataframe after score_col boundaries got applied
+        
+        if remove_nanscore:
+            df = df.filter(pl.col(score_col).is_not_nan())
+        df_nonan_shape = df.shape[0]    #shape of dataframe after nans got removed
+        
+        if verbose > 0:
+            print(
+                f'INFO(WB_HypsearchPlot): Removed\n'
+                f'    {df_input_shape-df_minmaxscore_shape} row(s) via ({min_score} < {score_col} < {max_score}),\n'
+                f'    {df_minmaxscore_shape-df_nonan_shape} row(s) containig nans,\n'
+                f'    {df_input_shape-df_nonan_shape} row(s) total.\n'
+            )
+
+
+        #apply user defined expression to scale the score-function and thus color-scale
+        df = df.with_columns(eval(score_scaling).alias(score_col))
 
         #get colormap
         ##check if there are nan in the 'score_col'
@@ -287,7 +308,7 @@ class WB_HypsearchPlot:
                 ax1=ax1,
                 cmap=cmap, nancolor=nancolor,
                 resolution=res, interpkind=interpkind,
-                linealpha=linealpha,
+                linealpha=linealpha, linewidth=linewidth,
                 sleep=sleep,
             ) for idx, (row_cat, row, name) in enumerate(zip(df.select(cat_cols).iter_rows(), df.drop(cat_cols).iter_rows(), names.iter_rows()))
         )
@@ -306,12 +327,18 @@ class WB_HypsearchPlot:
             ) for idx, (hyperparameter, ylabs) in enumerate(zip(hyperparams, ylabels))
         )
         axps, hyps = np.array(res)[:,0], np.array(res)[:,1]
+        
+        
         #add colorbar
         norm = mcolors.Normalize(vmin=df.select(pl.col(score_col)).min(), vmax=df.select(pl.col(score_col)).max())
-        # cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[-1], pad=0.0005, drawedges=False, anchor=(0,0))
         cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[hyps==score_col], pad=0.0005, drawedges=False, anchor=(0,0))
         cbar.outline.set_visible(False) #hide colorbar outline
-        cbar.set_label(score_col, color=tickcolor)
+
+        ##generate colorbar-label from score_scaling expression
+        cbar_lab = re.sub(r'pl\.col\(score\_col\)', score_col, score_scaling)
+        cbar_lab = re.sub(r'(np|pl|pd)\.', '', cbar_lab)
+        cbar.set_label(cbar_lab, color=tickcolor)
+
         cbar.ax.set_zorder(0)
         cbar.ax.set_yticks([])  #use ticks from last subplot
 
