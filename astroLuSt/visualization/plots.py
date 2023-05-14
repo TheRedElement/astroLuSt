@@ -1,7 +1,8 @@
 
-#TODO: cbar scale
+#Done: cbar scale
 #TODO: subplot with distribution of score_column - optional
 #TODO: subplot with model-labels (i.e. legend?) - optional
+#TODO: Deal with RuntimeError
 
 #%%imports
 from joblib.parallel import Parallel, delayed
@@ -23,10 +24,11 @@ class WB_HypsearchPlot:
     def __init__(self,
         interpkind:str='quadratic',
         res:int=1000,
+        axpos_hyp:tuple=None, axpos_hist:tuple=None,
         ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45,
-        nancolor:Union[str,tuple]='tab:grey',
+        nancolor:Union[str,tuple]='tab:grey', nanfrac:float=4/256,
         linealpha:float=1, linewidth:float=1,
-        base_cmap:Union[str,mcolors.Colormap]='plasma',
+        base_cmap:Union[str,mcolors.Colormap]='plasma', cbar_over_hist:bool=False,
         n_jobs:int=1, sleep:float=0.1,
         verbose:int=0,
         ) -> None:
@@ -38,12 +40,20 @@ class WB_HypsearchPlot:
         self.tickcolor          = tickcolor
         self.ticklabelrotation  = ticklabelrotation
         self.nancolor           = nancolor
+        self.nanfrac            = nanfrac
         self.linealpha          = linealpha
         self.linewidth          = linewidth
         self.base_cmap          = base_cmap
+        self.cbar_over_hist     = cbar_over_hist
         self.n_jobs             = n_jobs
         self.sleep              = sleep
         self.verbose            = verbose
+        
+        if axpos_hyp is None:  self.axpos_hyp  = (1,2,1)
+        else:                  self.axpos_hyp  = axpos_hyp
+        if axpos_hist is None: self.axpos_hist = (1,6,4)
+        else:                  self.axpos_hist = axpos_hist
+
 
         
         return
@@ -64,12 +74,13 @@ class WB_HypsearchPlot:
 
     def make_new_cmap(self,
         cmap:mcolors.Colormap,
-        nancolor:Union[str,tuple]='tab:grey'
+        nancolor:Union[str,tuple]='tab:grey',
+        nanfrac:float=4/256,
         ) -> mcolors.Colormap:
         
         newcolors = cmap(np.linspace(0, 1, 256))
         c_nan = mcolors.to_rgba(nancolor)
-        newcolors[:4] = c_nan                       #tiny fraction of the colormap gets attributed to nan values
+        newcolors[:int(256*nanfrac)] = c_nan                       #tiny fraction of the colormap gets attributed to nan values
         cmap = mcolors.ListedColormap(newcolors)
 
         return cmap
@@ -188,42 +199,52 @@ class WB_HypsearchPlot:
 
         return axp, hyperparameter
 
+
     def plot(self,
         grid:Union[pl.DataFrame,List[dict]],
         idcol:str='param_name',
         score_col:str='mean_test_score',
         param_cols:Union[str,list]=r'^param_.*$',
-        min_score:float=-np.inf, max_score:float=np.inf, remove_nanscore:bool=False,
+        min_score:float=None, max_score:float=None, remove_nanscore:bool=False,
         score_scaling:str='pl.col(score_col)',
         interpkind:str=None,
         res:int=None,
+        axpos_hyp:tuple=None, axpos_hist:tuple=None,
         ticks2display:int=None, tickcolor:Union[str,tuple]=None, ticklabelrotation:float=None,
-        nancolor:Union[str,tuple]=None,
+        nancolor:Union[str,tuple]=None, nanfrac:float=None,
         linealpha:float=None, linewidth:float=None,
-        base_cmap:Union[str,mcolors.Colormap]=None,
+        base_cmap:Union[str,mcolors.Colormap]=None, cbar_over_hist:bool=None,
         n_jobs:int=None, sleep:float=None,
         save:Union[str,bool]=False,
         show:bool=True,
+        max_nretries:int=4,
         verbose:int=None,
-        fig_kwargs:dict=None,
+        fig_kwargs:dict=None, save_kwargs:dict=None
         ) -> Tuple[Figure, plt.Axes]:
 
         if interpkind is None:          interpkind          = self.interpkind
         if res is None:                 res                 = self.res
+        if axpos_hyp is None:           axpos_hyp           = self.axpos_hyp
+        if axpos_hist is None:           axpos_hist         = self.axpos_hist
         if ticks2display is None:       ticks2display       = self.ticks2display
         if tickcolor is None:           tickcolor           = self.tickcolor
         if ticklabelrotation is None:   ticklabelrotation   = self.tickcolor
         if nancolor is None:            nancolor            = self.nancolor
+        if nanfrac is None:             nanfrac             = self.nanfrac
         if linealpha is None:           linealpha           = self.linealpha
         if linewidth is None:           linewidth           = self.linewidth
         if base_cmap is None:           base_cmap           = self.base_cmap
+        if cbar_over_hist is None:      cbar_over_hist      = self.cbar_over_hist
         if n_jobs is None:              n_jobs              = self.n_jobs
         if sleep is None:               sleep               = self.sleep
         if verbose is None:             verbose             = self.verbose
 
+        if min_score is None: min_score = -np.inf
+        if max_score is None: max_score =  np.inf
 
         #initialize
-        if fig_kwargs is None: fig_kwargs = {}
+        if fig_kwargs is None:  fig_kwargs  = {}
+        if save_kwargs is None: save_kwargs = {}
 
         #convert grid to polars DataFrame
         if isinstance(grid, pl.DataFrame):
@@ -258,7 +279,7 @@ class WB_HypsearchPlot:
         else: cmap = base_cmap
 
         if df.select(pl.col(score_col).is_nan().any()).item():
-            cmap = self.make_new_cmap(cmap=cmap, nancolor=nancolor)
+            cmap = self.make_new_cmap(cmap=cmap, nancolor=nancolor, nanfrac=nanfrac)
 
         #extract model-names, parameter-columns, ...
         names = df.select(pl.col(idcol))
@@ -288,7 +309,10 @@ class WB_HypsearchPlot:
         fig = plt.figure(**fig_kwargs)
         
         ##axis used for plotting models
-        ax1 = fig.add_subplot(111)
+        if isinstance(axpos_hyp, (int, float)):
+            ax1 = fig.add_subplot(int(axpos_hyp))
+        else:
+            ax1 = fig.add_subplot(*axpos_hyp)
         
         #no space between figure edge and plot
         ax1.set_xmargin(0)
@@ -299,19 +323,33 @@ class WB_HypsearchPlot:
         ax1.set_yticks([])
         
         #iterate over all rows in the dataframe (i.e. all fitted models) and plot a line for every model
+        ##try except to retry if a RuntimeError occured
         cat_cols = df.select(pl.col(r'^*_cat$')).columns
-        # for idx, (row_cat, row, name) in enumerate(zip(df.select(cat_cols).iter_rows(), df.drop(cat_cols).iter_rows(), names.iter_rows())):
-        Parallel(n_jobs, verbose=verbose, prefer='threads')(
-            delayed(self.plot_model)(
-                hyperparams=row, hyperparams_cat=row_cat,
-                fill_value=fill_value, name=name,
-                ax1=ax1,
-                cmap=cmap, nancolor=nancolor,
-                resolution=res, interpkind=interpkind,
-                linealpha=linealpha, linewidth=linewidth,
-                sleep=sleep,
-            ) for idx, (row_cat, row, name) in enumerate(zip(df.select(cat_cols).iter_rows(), df.drop(cat_cols).iter_rows(), names.iter_rows()))
-        )
+        e = True
+        nretries = 0
+        while e and nretries < max_nretries:
+            try:
+                Parallel(n_jobs, verbose=verbose, prefer='threads')(
+                    delayed(self.plot_model)(
+                        hyperparams=row, hyperparams_cat=row_cat,
+                        fill_value=fill_value, name=name,
+                        ax1=ax1,
+                        cmap=cmap, nancolor=nancolor,
+                        resolution=res, interpkind=interpkind,
+                        linealpha=linealpha, linewidth=linewidth,
+                        sleep=sleep,
+                    ) for idx, (row_cat, row, name) in enumerate(zip(df.select(cat_cols).iter_rows(), df.drop(cat_cols).iter_rows(), names.iter_rows()))
+                )
+                e = False
+            except RuntimeError as err:
+                e = True
+                nretries += 1
+                if verbose > 0:
+                    print(
+                        f'INFO(WB_HypsearchPlot):\n'
+                        f'    The following error occured while plotting the models: {err}.'
+                        f'    Retrying to plot for the {nretries}-th try.'
+                    )
 
         #plot one additional y-axis for every single hyperparameter
         res = Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
@@ -329,35 +367,94 @@ class WB_HypsearchPlot:
         axps, hyps = np.array(res)[:,0], np.array(res)[:,1]
         
         
-        #add colorbar
-        norm = mcolors.Normalize(vmin=df.select(pl.col(score_col)).min(), vmax=df.select(pl.col(score_col)).max())
-        cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[hyps==score_col], pad=0.0005, drawedges=False, anchor=(0,0))
-        cbar.outline.set_visible(False) #hide colorbar outline
-
-        ##generate colorbar-label from score_scaling expression
-        cbar_lab = re.sub(r'pl\.col\(score\_col\)', score_col, score_scaling)
-        cbar_lab = re.sub(r'(np|pl|pd)\.', '', cbar_lab)
-        cbar.set_label(cbar_lab, color=tickcolor)
-
-        cbar.ax.set_zorder(0)
-        cbar.ax.set_yticks([])  #use ticks from last subplot
-
+        #generate score label score_scaling expression
+        score_lab = re.sub(r'pl\.col\(score\_col\)', score_col, score_scaling)
+        score_lab = re.sub(r'(np|pl|pd)\.', '', score_lab)
         
-        if isinstance(save, str): plt.savefig(save, bbox_inches='tight')
-        # plt.tight_layout()
-        if show: plt.show()
+        if cbar_over_hist:
+            #add colorbar
+            norm = mcolors.Normalize(vmin=df.select(pl.col(score_col)).min(), vmax=df.select(pl.col(score_col)).max())
+            cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[hyps==score_col], pad=0.0005, drawedges=False, anchor=(0,0))
+            cbar.outline.set_visible(False) #hide colorbar outline
+            cbar.set_label(score_lab, color=tickcolor)
+
+
+            cbar.ax.set_zorder(0)
+            cbar.ax.set_yticks([])  #use ticks from last subplot
+
+        else:
+            #generate a histogram including the colorbar
+            self.add_score_distribution(
+                df=df, score_col=score_col,
+                nanfrac=nanfrac,
+                lab=score_lab, ticklab_color=tickcolor,
+                fig=fig, axpos=axpos_hist,
+                cmap=cmap
+            )
+        
+
+
+        if isinstance(save, str): plt.savefig(save, bbox_inches='tight', **save_kwargs)
+        # plt.tight_layout()    #not working because of additional axes
+
+        plt.subplots_adjust(wspace=0)
 
         axs = fig.axes
         
         return fig, axs
     
-    def add_score_distribution(self
-        ):
-    
+    def add_score_distribution(self,
+        df:pl.DataFrame, score_col:str,
+        nanfrac:float,
+        lab:str, ticklab_color:Union[str,tuple],
+        fig:Figure, axpos:tuple,
+        cmap:mcolors.Colormap,
+        ) -> None:
+
+        #initialize new axis
+        if isinstance(axpos, (int, float)):
+            ax = fig.add_subplot(int(axpos))
+        else:
+            ax = fig.add_subplot(*axpos)
+        ax.set_zorder(0)
+        ax.set_ymargin(0)
+
+        #use scaled score_col for plotting
+        to_plot = df.select(pl.col(score_col+'_cat'))
+
+        #adjust bins to colorbar
+        bins = np.linspace(to_plot.min().item(), to_plot.max().item(), int(1//nanfrac))
+
+        #get colors for bins
+        colors = cmap(bins)
+        
+        #get histogram
+        hist, bin_edges = np.histogram(to_plot, bins)
+
+        #plot and colormap hostogram
+        ax.barh(bin_edges[:-1], hist, height=nanfrac, color=colors)
+        ax.set_xscale('symlog')
+
+        #labelling
+        ax.set_ylabel(lab, rotation=270, labelpad=15, va='bottom', ha='center', color=ticklab_color)
+        ax.yaxis.set_label_position("right")
+        
+        ax.tick_params(axis='x', colors=ticklab_color)
+        ax.spines[['top', 'left', 'right']].set_visible(False)
+        ax.spines['bottom'].set_color(ticklab_color)
+        ax.set_yticks([])
+        ax.set_xlabel('Counts', color=ticklab_color)
+        
+
         return
     
     def add_model_legend(self,
         ):
+
+        return
+    
+
+    def deal_with_runtimeerror(self):
 
         return
 # %%
