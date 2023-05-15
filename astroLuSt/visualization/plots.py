@@ -126,6 +126,13 @@ class ParallelCoordinates:
                 - int, optional
                 - verbosity level
                 - the default is 0
+            - text_kwargs
+                - dict, optional
+                - kwargs passed to ax.text()
+                    - affect the labels of the created subplots for each coordinate
+                - if the passed dict does not contain 'rotation', 'rotation':45 will be added
+                - the default is None
+                    - will be initialized with {'rotation':45}                
 
         Methods
         -------
@@ -168,6 +175,7 @@ class ParallelCoordinates:
         base_cmap:Union[str,mcolors.Colormap]='plasma', cbar_over_hist:bool=False,
         n_jobs:int=1, n_jobs_addaxes:int=1, sleep:float=0.1,
         verbose:int=0,
+        text_kwargs:dict=None,
         ) -> None:
         
         
@@ -195,6 +203,11 @@ class ParallelCoordinates:
         if axpos_hist is None:      self.axpos_hist     = (1,6,4)
         else:                       self.axpos_hist     = axpos_hist
 
+        if text_kwargs is None: self.text_kwargs = {'rotation':45}
+        else:
+            self.text_kwargs = text_kwargs
+            if 'rotation' not in self.text_kwargs.keys():
+                self.text_kwargs['rotation'] = 45
 
         
         return
@@ -414,6 +427,7 @@ class ParallelCoordinates:
         idx:int, n_coords:int,
         ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45, tickformat:str='%g',
         sleep=0,
+        text_kwargs:dict=None,
         ) -> plt.Axes:
         """
             - method to add a new axis for each coordinate
@@ -465,7 +479,13 @@ class ParallelCoordinates:
                 - sleep
                     - float, optional
                     - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - the default is 0.1                    
+                    - the default is 0.1
+                - text_kwargs
+                    - dict, optional
+                    - kwargs passed to ax.text()
+                        - affect the labels of the created subplots for each coordinate
+                    - the default is None
+                        - will be initialized with an empty dict
 
             Raises
             ------
@@ -479,6 +499,8 @@ class ParallelCoordinates:
             Comments
             --------
         """
+
+        if text_kwargs is None: text_kwargs = {}
 
         #initialize new axis
         axp = ax.twinx()
@@ -532,7 +554,13 @@ class ParallelCoordinates:
         # print(coordinate.unique().to_numpy().flatten())
         
         #add spine labels (ylabs) on top  of each additional axis
-        ax.text(x=(idx/n_coords), y=1.01, s=coordinate.name, rotation=45, transform=ax.transAxes, color=tickcolor)
+        ax.text(
+            x=(idx/n_coords), y=1.01,
+            s=coordinate.name,
+            transform=ax.transAxes,
+            color=tickcolor,
+            **text_kwargs
+        )
 
         time.sleep(sleep)
 
@@ -847,7 +875,7 @@ class ParallelCoordinates:
         save:Union[str,bool]=False,
         max_nretries:int=4,
         verbose:int=None,
-        fig_kwargs:dict=None, save_kwargs:dict=None
+        text_kwargs:dict=None, fig_kwargs:dict=None, save_kwargs:dict=None
         ) -> Tuple[Figure, plt.Axes]:
         """
             - method to create a coordinate plot
@@ -1059,6 +1087,13 @@ class ParallelCoordinates:
                     - overwrites self.verbose
                     - the default is None
                         - defaults to self.verbose
+                - text_kwargs
+                    - dict, optional
+                    - kwargs passed to ax.text()
+                        - affect the labels of the created subplots for each coordinate
+                    - overwrites self.text_kwargs
+                    - the default is None
+                        - defaults to self.text_kwargs
                 - fig_kwargs
                     - dict, optional
                     - kwargs to pass to plt.figure()
@@ -1107,10 +1142,12 @@ class ParallelCoordinates:
         if map_suffix is None:          map_suffix          = self.map_suffix
         if n_jobs_addaxes is None:      n_jobs_addaxes      = self.n_jobs_addaxes
         if verbose is None:             verbose             = self.verbose
+        if text_kwargs is None:         text_kwargs         = self.text_kwargs
 
         if min_score is None: min_score = -np.inf
         if max_score is None: max_score =  np.inf
         
+
         if fig_kwargs is None:  fig_kwargs  = {}
         if save_kwargs is None: save_kwargs = {}
 
@@ -1232,6 +1269,7 @@ class ParallelCoordinates:
                         idx=idx, n_coords=n_coords,
                         ticks2display=ticks2display, tickcolor=tickcolor, ticklabelrotation=ticklabelrotation, tickformat=tickformat,
                         sleep=sleep,
+                        text_kwargs=text_kwargs,
                     ) for idx, (coordinate, coordinate_map) in enumerate(zip(df.select(pl.col(coords)), df.select(pl.col(coords_map))))
                 )
                 e = False
