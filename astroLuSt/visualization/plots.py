@@ -130,10 +130,13 @@ class ParallelCoordinates:
         Methods
         -------
             - make_new_cmap()
-            - categorical2indices()
+            - col2range01()
             - plot_model()
-            - add_hypaxes()
+            - add_coordaxes()
             - add_score_distribution()
+            - __init_scorecol()
+            - __deal_with_nan()
+            - __deal_with_inf()
             - plot()
 
         Dependencies
@@ -314,7 +317,6 @@ class ParallelCoordinates:
         
         return df
 
-    #TODO: add param for score
     def plot_model(self,
         coordinates:Union[tuple,list], coordinates_map:Union[tuple,list],
         fill_value:float,
@@ -766,8 +768,62 @@ class ParallelCoordinates:
         cols = np.array(fill_value.columns)[(np.array(fill_value.dtypes, dtype=str)!='Utf8')]
         fill_value = np.nanmin(fill_value.select(pl.col(cols)).to_numpy())-0.5                  #fill with value slightly lower than minimum of whole dataframe -> Ensures that nan end up in respective part of colormap
         df = df.fill_nan(fill_value=fill_value)
+        df = df.fill_null(value=fill_value)
 
         return df, fill_value
+
+    def __deal_with_inf(self,
+        df:pl.DataFrame, score_col:str,
+        verbose:int=0,
+        ):
+        """
+            - method that removes rows with infinite values in 'score_col' resulting from 'score_scaling'
+
+            Parameters
+            ----------
+                -  df
+                    - pl.DataFrame
+                    - input dataframe that will be modified (inf and -inf will be replaced by nan)
+                - score_col
+                    - str
+                    - name of the score column
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - the default is 0
+            Raises
+            ------
+                
+            Returns
+            -------
+                - df
+                    - pl.DataFrame
+                    - dataframe with the inf and -inf in score_col removed
+
+            Comment
+            -------
+                
+        """
+
+        df_input_shape = df.shape[0]
+        df = df.filter(pl.col(score_col).is_finite())
+
+        df_inf_shape = df.shape[0]
+
+        if verbose > 0:
+            print(
+                f'INFO(WB_HypsearchPlot): Removed\n'
+                f'    {df_input_shape-df_inf_shape} row(s) where {score_col} evaluated to inf or -inf due to "score_scaling",\n'
+                # f'    {df_input_shape-df_inf_shape} row(s) total.\n'
+            )
+        # df = df.with_columns(
+        #     pl.when(pl.col(score_col).is_infinite())
+        #     .then(float("nan"))
+        #     .otherwise(pl.col(score_col))
+        #     .keep_name()
+        # )
+
+        return df
 
     def plot(self,
         coordinates:Union[pl.DataFrame,List[dict]],
@@ -1096,9 +1152,11 @@ class ParallelCoordinates:
         if show_idcol: df.insert_at_idx(0,  ids.to_series())
         #only display score, if score_col is provided
         if score_col is not None: df.insert_at_idx(df.shape[1], scores.to_series())
-        
-        #deal with missing values
+                
+        #deal with missing and inifinite values
         df, fill_value = self.__deal_withnan(df)
+        df = self.__deal_with_inf(df, score_col, verbose=verbose)
+
 
         #all fitted hyperparameters
         coords = df.columns
