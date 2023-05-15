@@ -1185,7 +1185,7 @@ class ParallelCoordinates:
                     )
         
         #generate score label from score_scaling expression
-        score_lab = re.sub(r'pl\.col\(score\_col\_use\)', score_col_use, score_scaling)
+        score_lab = re.sub(r'pl\.col\(score\_col\)', score_col_use, score_scaling)
         score_lab = re.sub(r'(np|pl|pd)\.', '', score_lab)
         
         #if a score column has been passed use it
