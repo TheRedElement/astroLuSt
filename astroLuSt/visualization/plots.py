@@ -17,7 +17,7 @@ from typing import Union, Tuple, List, Callable
 #%%definitions
 class ParallelCoordinates:
     """
-        - class to display a plot of a previously executed hyperparameter search
+        - class to create a Prallel-Coordinate plot
         - inspired by the Weights&Biases Parallel-Coordinates plot 
             - https://docs.wandb.ai/guides/app/features/panels/parallel-coordinates (last access: 15.05.2023)
 
@@ -30,7 +30,7 @@ class ParallelCoordinates:
                 - the default is False
             - interpkind
                 - str, optional
-                - function to use for the interpolation between the different hyperparameters
+                - function to use for the interpolation between the different coordinates
                 - argument passed as 'kind' to scipy.interpolate.interp1d()
                 - the default is 'quadratic'
             - res
@@ -59,7 +59,7 @@ class ParallelCoordinates:
                 - the default is '__map'
             - ticks2display
                 - int, optional
-                - number of ticks to show for numeric hyperparameters
+                - number of ticks to show for numeric coordinates
                 - the default is 5
             - tickcolor
                 - str, tuple, optional
@@ -106,21 +106,21 @@ class ParallelCoordinates:
                 - the default is False
             - n_jobs
                 - int, optional
-                - number of threads to use when plotting the runs/modes
-                - use for large hyperparameter-searches
+                - number of threads to use when plotting the runs/models
+                - use for large coordinate-plots
                 - argmument passed to joblib.Parallel
                 - the default is 1
             - n_jobs_addaxes
                 - int, optional
-                - number of threads to use when plotting the axes for the different hyperparameters
-                - use if a lot hyperparameters have been searched
+                - number of threads to use when plotting the axes for the different coordinates
+                - use if a lot coordinates shall be plotted
                 - argmument passed to joblib.Parallel
                 - it could be that that a RuntimeError occurs if too many threads try to add axes at the same time
                     - this error should be caught with a try-except statement, but in case it something still goes wrong try setting 'n_jobs_addaxes' to 1
                 - the default is 1
             - sleep
                 - float, optional
-                - time to sleep after finishing each job in plotting runs/models and hyperparameter-axes
+                - time to sleep after finishing each job in plotting runs/models and coordinate-axes
                 - the default is 0.1
             - verbose
                 - int, optional
@@ -299,14 +299,16 @@ class ParallelCoordinates:
             Comments
             --------
         """
-        
+                
         coordinate = df.select(pl.col(colname)).to_series()
+
         #for numeric columns squeeze them into range(0,1) to be comparable accross hyperparams
         if coordinate.is_numeric() and len(coordinate.unique()) > 1:
             exp = (pl.col(colname)-pl.col(colname).min())/(pl.col(colname).max()-pl.col(colname).min())
        
         #for categorical columns convert them to unique indices in the range(0,1)
         else:
+            # coordinate = coordinate.fill_null('None')
             #convert categorical columns to unique indices
             uniques = coordinate.unique()
             mapping = {u:m for u,m in zip(uniques.sort(), np.linspace(0,1,len(uniques)))}
@@ -333,10 +335,10 @@ class ParallelCoordinates:
             ----------
                 - coordinates
                     - tuple, list
-                    - iterable of hyperparameters specifying this particular run/model
+                    - iterable of coordinates specifying this particular run/model
                 - coordinates_map
                     - tuple, list
-                    - iterable of hyperparameters specifying this particular run/model mapped to the interval [0,1]
+                    - iterable of coordinates specifying this particular run/model mapped to the interval [0,1]
                 - fill_value
                     - float
                     - value to use for plotting instead of nan
@@ -354,7 +356,7 @@ class ParallelCoordinates:
                     - the default is 'tab:grey'
                 - interpkind
                     - str, optional
-                    - function to use for the interpolation between the different hyperparameters
+                    - function to use for the interpolation between the different coordinates
                     - argument passed as 'kind' to scipy.interpolate.interp1d()
                     - the default is 'quadratic'                
                 - res
@@ -372,7 +374,7 @@ class ParallelCoordinates:
                     - the default is 1    
                 - sleep
                     - float, optional
-                    - time to sleep after finishing each job in plotting runs/models and hyperparameter-axes
+                    - time to sleep after finishing each job in plotting runs/models and coordinate-axes
                     - the default is 0.1
 
             Raises
@@ -414,7 +416,7 @@ class ParallelCoordinates:
         sleep=0,
         ) -> plt.Axes:
         """
-            - method to add a new axis for each coordinate (hyperparameter)
+            - method to add a new axis for each coordinate
             - will move the spine to be aligned with the cordinates x-position in 'ax'
 
             Parameters
@@ -445,7 +447,7 @@ class ParallelCoordinates:
                     - number of coordinates to plot in total
                 - ticks2display
                     - int, optional
-                    - number of ticks to show for numeric hyperparameters
+                    - number of ticks to show for numeric coordinates
                     - the default is 5
                 - tickcolor
                     - str, tuple, optional
@@ -462,7 +464,7 @@ class ParallelCoordinates:
                     - the default is '%g'                   
                 - sleep
                     - float, optional
-                    - time to sleep after finishing each job in plotting runs/models and hyperparameter-axes
+                    - time to sleep after finishing each job in plotting runs/models and coordinate-axes
                     - the default is 0.1                    
 
             Raises
@@ -483,7 +485,7 @@ class ParallelCoordinates:
         
         #hide all spines but one (the one that will show the chosen values)
         axp.spines[['right','top','bottom']].set_visible(False)
-        #position the axis to be aligned with the respective hyperparameter
+        #position the axis to be aligned with the respective coordinate
         axp.spines['left'].set_position(('axes', (idx/n_coords)))
         axp.yaxis.set_ticks_position('left')
         axp.yaxis.set_label_position('left')
@@ -518,7 +520,7 @@ class ParallelCoordinates:
                     rotation=ticklabelrotation
                 )
 
-        ##non-numeric hyperparameter
+        ##non-numeric coordinate
         else:
             #get ticks
             axp.set_yticks(coordinate_map.unique().to_numpy().flatten())
@@ -915,7 +917,7 @@ class ParallelCoordinates:
                         - will default to self.show_idcol
                 - interpkind
                     - str, optional
-                    - function to use for the interpolation between the different hyperparameters
+                    - function to use for the interpolation between the different coordinates
                     - argument passed as 'kind' to scipy.interpolate.interp1d()
                     - overwrites self.interpkind
                     - the default is None
@@ -945,7 +947,7 @@ class ParallelCoordinates:
                         - defaults to self.axpos_hist
                 - ticks2display
                     - int, optional
-                    - number of ticks to show for numeric hyperparameters
+                    - number of ticks to show for numeric coordinates
                     - overwrites self.ticks2display
                     - the default is None
                         - defaults to self.ticks2display
@@ -1013,15 +1015,15 @@ class ParallelCoordinates:
                 - n_jobs
                     - int, optional
                     - number of threads to use when plotting the runs/modes
-                    - use for large hyperparameter-searches
+                    - use for large coordinate-plots
                     - argmument passed to joblib.Parallel
                     - overwrites self.n_jobs
                     - the default is None
                         - defaults to self.n_jobs
                 - n_jobs_addaxes
                     - int, optional
-                    - number of threads to use when plotting the axes for the different hyperparameters
-                    - use if a lot hyperparameters have been searched
+                    - number of threads to use when plotting the axes for the different coordinates
+                    - use if a lot coordinates shall be plotted
                     - argmument passed to joblib.Parallel
                     - it could be that that a RuntimeError occurs if too many threads try to add axes at the same time
                         - this error should be caught with a try-except statement, but in case it something still goes wrong try setting 'n_jobs_addaxes' to 1
@@ -1030,7 +1032,7 @@ class ParallelCoordinates:
                         - defaults to self.n_jobs_addaxes
                 - sleep
                     - float, optional
-                    - time to sleep after finishing each job in plotting runs/models and hyperparameter-axes
+                    - time to sleep after finishing each job in plotting runs/models and coordinate-axes
                     - overwrites self.sleep
                     - the default is None
                         - defaults to self.sleep
@@ -1158,12 +1160,13 @@ class ParallelCoordinates:
         df = self.__deal_with_inf(df, score_col, verbose=verbose)
 
 
-        #all fitted hyperparameters
+        #coordinates
         coords = df.columns
         coords_map = [c+map_suffix for c in df.columns]
         n_coords = len(coords)-1
 
-        #convert categorical columns to unique integers for plotting - ensures that each hyperparameter lies within range(0,1)
+        #convert categorical columns to unique integers for plotting - ensures that each coordinate lies within range(0,1)
+        df = df.fill_null('None') #replace None with 'None' because otherwise mapping does not work        
         for c in df.columns:
             df = self.col2range01(df=df, colname=c, map_suffix=map_suffix)
             
@@ -1215,7 +1218,7 @@ class ParallelCoordinates:
                         f'    Retrying to plot. Number of elapsed retries: {nretries}.'
                     )
 
-        #plot one additional y-axis for every single hyperparameter
+        #plot one additional y-axis for every single coordinate
         ##try except to retry if a RuntimeError occured
         e = True
         nretries = 0
