@@ -1,5 +1,3 @@
-#TODO: don't pass grid but pass 'id', 'coordinates', 'scores' -> ALSO NEEDS TO BE CHANGED IN plot_mode()
-#TODO: add_distribution: only pass score_col and score_col__map
 
 
 #%%imports
@@ -203,11 +201,13 @@ class ParallelCoordinates:
             f'WB_HypsearchPlot(\n'
             f'    interpkind={self.interpkind},\n'
             f'    res={self.res},\n'
-            f'    ticks2display={self.ticks2display}, tickcolor={self.tickcolor}, ticklabelrotation={self.ticklabelrotation},\n'
-            f'    nancolor={self.nancolor},\n'
-            f'    linealpha={self.linealpha},\n'
-            f'    base_cmap={self.base_cmap},\n'
-            f'    n_jobs={self.n_jobs}, sleep={self.sleep},\n'
+            f'    axpos_coord={self.axpos_coord}, axpos_hist={self.axpos_hist},\n'
+            f'    map_suffix={self.map_suffix},\n'
+            f'    ticks2display={self.ticks2display}, tickcolor={self.tickcolor}, ticklabelrotation={self.ticklabelrotation}, tickformat={self.tickformat},\n'
+            f'    nancolor={self.nancolor}, nanfrac={self.nanfrac},\n'
+            f'    linealpha={self.linealpha}, linewidth={self.linewidth},\n'
+            f'    base_cmap={self.base_cmap}, cmap_over_hist={self.cbar_over_hist},\n'
+            f'    n_jobs={self.n_jobs}, n_jobs_addaxes={self.n_jobs_addaxes}, sleep={self.sleep},\n'
             f'    verbose={self.verbose},\n'
             f')'
         )
@@ -226,18 +226,18 @@ class ParallelCoordinates:
                 - cmap
                     - mcolors.Colormap
                     - template-colormap to use for the creation
-            - nancolor
-                - str, tuple, optional
-                - color to draw values representing nan in
-                - if a tuple is passed it has to be a RGBA-tuple
-                - the default is 'tab:grey'
-            - nanfrac
-                - float, optional
-                - the fraction of the colormap to use for nan-values (i.e. failed runs)
-                    - fraction of 256 (resolution of the colormap)
-                - will also influence the number of bins/binsize used in the performance-histogram
-                - a value between 0 and 1
-                - the default is 4/256
+                - nancolor
+                    - str, tuple, optional
+                    - color to draw values representing nan in
+                    - if a tuple is passed it has to be a RGBA-tuple
+                    - the default is 'tab:grey'
+                - nanfrac
+                    - float, optional
+                    - the fraction of the colormap to use for nan-values (i.e. failed runs)
+                        - fraction of 256 (resolution of the colormap)
+                    - will also influence the number of bins/binsize used in the performance-histogram
+                    - a value between 0 and 1
+                    - the default is 4/256
 
             Raises
             ------
@@ -262,7 +262,7 @@ class ParallelCoordinates:
     def col2range01(self,
         df:pl.DataFrame, colname:str,
         map_suffix:str='__map',
-        ) -> Tuple[pl.DataFrame,np.ndarray]:
+        ) -> pl.DataFrame:
         """
             - method to map any column onto the interval [0,1]
             - a unique value for every unique element in categorical columns will be assigned to them
@@ -275,9 +275,9 @@ class ParallelCoordinates:
                     - input dataframe
                         - the mapped column (name = original name with the appendix __map) will be append to it
                         - the new colum is the input column ('colname') mapped onto the interval [0,1]
-                    - colname
-                        - str
-                        - name of the column to be mapped
+                - colname
+                    - str
+                    - name of the column to be mapped
                 - map_suffix
                     - str, optional
                     - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
@@ -291,7 +291,7 @@ class ParallelCoordinates:
             -------
                 - df
                     - pl.DataFrame
-                    - input dataframe with additional column ('colname__map') appended to it
+                    - input dataframe with additional column ('colname'+'map_suffix') appended to it
 
             Comments
             --------
@@ -312,20 +312,6 @@ class ParallelCoordinates:
         #apply expression
         df = df.with_columns(exp.alias(f'{colname}{map_suffix}'))
         
-
-        """
-        #for numeric columns squeeze them into range(0,1) to be comparable accross hyperparams
-        if str(df.select(pl.col(colname)).dtypes[0]) != 'Utf8' and len(df.select(pl.col(colname)).unique()) > 1:
-            exp = (pl.col(colname)-pl.col(colname).min())/(pl.col(colname).max()-pl.col(colname).min())
-        #for categorical columns convert them to unique indices in the range(0,1)
-        else:
-            #convert categorical columns to unique indices
-            exp = (pl.col(colname).rank('dense')/pl.col(colname).rank('dense').max())
-        
-        #apply expression
-        df = df.with_columns(exp.alias(f'{colname}{map_suffix}'))
-        """
-
         return df
 
     #TODO: add param for score
@@ -422,7 +408,7 @@ class ParallelCoordinates:
         coordinate:pl.Series, coordinate_map:pl.Series,
         fill_value:float,
         idx:int, n_coords:int,
-        tickcolor:Union[str,tuple]='tab:grey', ticks2display:int=5, ticklabelrotation:float=45, tickformat:str='%g',
+        ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45, tickformat:str='%g',
         sleep=0,
         ) -> plt.Axes:
         """
@@ -548,14 +534,12 @@ class ParallelCoordinates:
 
         return axp
 
-    #TODO: remove df from params
     def add_score_distribution(self,
-        df:pl.DataFrame, score_col:str,
+        score_col_map:pl.Series,
         nanfrac:float=4/256,
-        lab:str=None, ticklab_color:Union[str,tuple]='tab:grey',
+        lab:str=None, ticklabcolor:Union[str,tuple]='tab:grey',
         cmap:Union[mcolors.Colormap,str]='plasma',
         fig:Figure=None, axpos:Union[tuple,int]=None,
-        map_suffix:str='__map',
         ) -> None:
         """
             - method to add a distribution of scores into the figure
@@ -563,12 +547,9 @@ class ParallelCoordinates:
 
             Parameters
             ----------
-                - df
-                    - pl.DataFrame
-                    - input dataframe to draw the score from
-                - score_col
-                    - str
-                    - name of the column containing the score
+                - score_col_map
+                    - pl.Series
+                    - series containing some score mapped onto the interval [0,1]
                 - nanfrac
                     - float, optional
                     - the fraction of the colormap to use for nan-values (i.e. failed runs)
@@ -600,11 +581,6 @@ class ParallelCoordinates:
                     - will be passed to fig.add_subplot()
                     - the default is None
                         - will use 111
-                - map_suffix
-                    - str, optional
-                    - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
-                    - only use if your column-names contain the default ('__map')
-                    - the default is '__map'
                 
             Raises
             ------
@@ -627,42 +603,177 @@ class ParallelCoordinates:
         ax.set_zorder(0)
         ax.set_ymargin(0)
 
-        #use scaled score_col for plotting
-        to_plot = df.select(pl.col(score_col+map_suffix))
-
         #adjust bins to colorbar
-        bins = np.linspace(to_plot.min().item(), to_plot.max().item(), int(1//nanfrac))
+        bins = np.linspace(score_col_map.min().item(), score_col_map.max().item(), int(1//nanfrac))
 
         #get colors for bins
         if isinstance(cmap, str): cmap = plt.get_cmpa(cmap)
         colors = cmap(bins)
         
         #get histogram
-        hist, bin_edges = np.histogram(to_plot, bins)
+        hist, bin_edges = np.histogram(score_col_map, bins)
 
         #plot and colormap hostogram
         ax.barh(bin_edges[:-1], hist, height=nanfrac, color=colors)
         ax.set_xscale('symlog')
 
         #labelling
-        ax.set_ylabel(lab, rotation=270, labelpad=15, va='bottom', ha='center', color=ticklab_color)
+        ax.set_ylabel(lab, rotation=270, labelpad=15, va='bottom', ha='center', color=ticklabcolor)
         ax.yaxis.set_label_position("right")
         
-        ax.tick_params(axis='x', colors=ticklab_color)
+        ax.tick_params(axis='x', colors=ticklabcolor)
         ax.spines[['top', 'left', 'right']].set_visible(False)
-        ax.spines['bottom'].set_color(ticklab_color)
+        ax.spines['bottom'].set_color(ticklabcolor)
         ax.set_yticks([])
-        ax.set_xlabel('Counts', color=ticklab_color)
+        ax.set_xlabel('Counts', color=ticklabcolor)
         
 
         return
+
+    def __init_scorecol(self,
+        df:pl.DataFrame,
+        score_col:str=None, score_scaling:str='pl.col(score_col)',
+        min_score:float=None, max_score:float=None,
+        remove_nanscore:bool=False,
+        verbose:int=0
+        ) -> Tuple[pl.DataFrame,str]:
+        """
+            - method to inizialize the score column
+            - will be called in self.plot()
+
+            Parameters
+            ----------
+                - df
+                    - pl.DataFrame
+                    - input dataframe containing the score column/coordinate columns
+                    - this dataframe will be modified
+                - score_col
+                    - str, optional
+                    - name of the column to use for scoring
+                    - the default is None
+                        - will generate a placeholder column
+                - score_scaling
+                    - str, optional
+                    - a polars expression
+                    - scaling to apply to the (generated) score column
+                    - the default is 'pl.col(score_col)'
+                - min_score
+                    - float, optional
+                    - minimum score to plot
+                    - everything below will be dropped from 'df'
+                    - the default is None
+                        - will be set to -np.inf
+                - max_score
+                    - float, optional
+                    - maximum score to plot
+                    - everything above will be dropped from 'df'
+                    - the default is None
+                        - will be set to np.inf
+                - remove_nanscore
+                    - bool, optional
+                    - whether to drop all rows that have a score evaluating to np.nan
+                    - the default is False
+                - verbose
+                    - int
+                    - verbosity level
+                    - the default is 0
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - df
+                    - pl.DataFrame
+                    - dataframe modified according to the specifications
+                    - if score_col is None will contain one additional column
+                        - this is a placeholder for score-col
+                        - this column has only 0 as entries
+                - score_col_use
+                    - str
+                    - modified version of the input 'score_col'
+
+            Comments
+            --------
+        """
+        
+        #get initial shape of dataframe
+        df_input_shape = df.shape[0]    #shape if input dataframe (for verbosity)
+
+
+        #initialize a score_col placeholder if no score-col is provided
+        if score_col is None:
+            score_col_use = '<score_placeholder>'
+            while score_col in df.columns:
+                score_col_use += '_'
+            df = df.insert_at_idx(df.shape[1], pl.Series(score_col_use, np.zeros(df.shape[0])))
+        else:
+            score_col_use = score_col
+        ##replace 'score_col' with 'score_col_use'
+        score_scaling = score_scaling.replace('score_col', 'score_col_use')
+
+        #filter which range of scores to display and remove scores evaluating to nan if desired
+        df = df.filter(((pl.col(score_col_use).is_between(min_score, max_score))|(pl.col(score_col_use).is_nan())))
+        df_minmaxscore_shape = df.shape[0]  #shape of dataframe after score_col_use boundaries got applied
+        
+        if remove_nanscore:
+            df = df.filter(pl.col(score_col_use).is_not_nan())
+        df_nonan_shape = df.shape[0]    #shape of dataframe after nans got removed
     
+        if verbose > 0:
+            print(
+                f'INFO(WB_HypsearchPlot): Removed\n'
+                f'    {df_input_shape-df_minmaxscore_shape} row(s) via ({min_score} < {score_col_use} < {max_score}),\n'
+                f'    {df_minmaxscore_shape-df_nonan_shape} row(s) containig nans,\n'
+                f'    {df_input_shape-df_nonan_shape} row(s) total.\n'
+            )
+        #apply user defined expression to scale the score-function and thus color-scale
+        df = df.with_columns(eval(score_scaling).alias(score_col_use))
+        
+        return df, score_col_use
+    
+    def __deal_withnan(self,
+        df
+        ) -> Tuple[pl.DataFrame,float]:
+        """
+            - method to deal with nan values in df
+            - essentially will replace all nan with a value 0.5 lower than the minimum of the numerical columns in the dataframe
+            - necessary to avoid issues while plotting
+
+            Parameters
+            ----------
+                - df
+                    - pl.DataFrame
+                    - input dataframe that will be modified (nan will be filled)
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - df
+                    - pl.DataFrame
+                    - dataframe with the nan filled as 0.5 lower than the minimum of all numerical columns in the input 'df'
+                - fill_value
+                    - float
+                    - the value used to fill the nan
+
+            Comments
+            --------
+        """
+
+        fill_value = df.min()
+        cols = np.array(fill_value.columns)[(np.array(fill_value.dtypes, dtype=str)!='Utf8')]
+        fill_value = np.nanmin(fill_value.select(pl.col(cols)).to_numpy())-0.5                  #fill with value slightly lower than minimum of whole dataframe -> Ensures that nan end up in respective part of colormap
+        df = df.fill_nan(fill_value=fill_value)
+
+        return df, fill_value
 
     def plot(self,
-        grid:Union[pl.DataFrame,List[dict]],
-        idcol:str=None,
-        score_col:str='mean_test_score',
-        param_cols:Union[str,list]=r'^param_.*$',
+        coordinates:Union[pl.DataFrame,List[dict]],
+        id_col:str=None,
+        score_col:str=None,
+        coords_cols:Union[str,list]=r'^.*$',
         min_score:float=None, max_score:float=None, remove_nanscore:bool=False,
         score_scaling:str='pl.col(score_col)',
         show_idcol:bool=None,
@@ -676,26 +787,248 @@ class ParallelCoordinates:
         n_jobs:int=None, n_jobs_addaxes:int=None, sleep:float=None,
         map_suffix:str=None,
         save:Union[str,bool]=False,
-        show:bool=True,
         max_nretries:int=4,
         verbose:int=None,
         fig_kwargs:dict=None, save_kwargs:dict=None
         ) -> Tuple[Figure, plt.Axes]:
         """
-            - method to create a coordinate plot 
+            - method to create a coordinate plot
 
             Parameters
             ----------
+                - coordinates
+                    - pl.DataFrame, list(dict)
+                    - structure contianing the coordinates to plot
+                        - rows denote different runs/models
+                        - columns different coordinates
+                    - the structure should (but does not have to) contain
+                        - an id column used for identification
+                        - a score column used for rating different runs/models
+                - id_col
+                    - str, optional
+                    - name of the column to use as an ID
+                    - the default is None
+                        - will generate an id column by assigning a unique integer to each row
+                - score_col
+                    - str, optional
+                    - name of the column used for scoring the different runs/models
+                    - the default is None
+                        - no scoring will be used
+                        - a dummy column consisting of zeros will be added to 'df'
+                - coords_cols
+                    - str, list
+                    - expression or list specifying the columns in 'df' to use as coordinates
+                    - the default is '^.*$'
+                        - will select all columns
+                - min_score
+                    - float, optional
+                    - minimum score to plot
+                    - everything below will be dropped from 'df'
+                    - the default is None
+                        - will be set to -np.inf
+                - max_score
+                    - float, optional
+                    - maximum score to plot
+                    - everything above will be dropped from 'df'
+                    - the default is None
+                        - will be set to np.inf
+                - remove_nanscore
+                    - bool, optional
+                    - whether to drop all rows that have a score evaluating to np.nan
+                    - the default is False
+                - score_scaling
+                    - str, optional
+                    - str representing a polars expression
+                    - will be applied to 'score_col' to scale it
+                        - might be useful for better visualization
+                    - some useful examples
+                        - 'np.log10(pl.col(score_col))'
+                            - logarithmic score
+                        - 'np.abs(pl.col(score_col))'
+                            - absolute score
+                        - 'pl.col(score_col)**2'
+                            - squared score
+                    - the default is 'pl.col(score_col)'
+                        - i.e. no modification
+                - show_idcol
+                    - bool, optional
+                    - whether to show a column encoding the ID of a particular run/model
+                    - only recommended if the number of models is not too large
+                    - overwrites self.show_idcol
+                    - the default is None
+                        - will default to self.show_idcol
+                - interpkind
+                    - str, optional
+                    - function to use for the interpolation between the different hyperparameters
+                    - argument passed as 'kind' to scipy.interpolate.interp1d()
+                    - overwrites self.interpkind
+                    - the default is None
+                        - will default to self.interpkind
+                - res
+                    - int, optional
+                    - resolution of the interpolated line
+                        - i.e. the number of points used to plot each run/model
+                    - overwrites self.res
+                    - the default is None
+                        - defaults to self.res
+                - axpos_coord
+                    - tuple, int, optional
+                    - position of where to place the axis containing the coordinate-plot
+                    - specification following the matplotlib convention
+                        - will be passed to fig.add_subplot()
+                    - overwrites self.axpos_coord
+                    - the default is None
+                        - defaults to self.axpos_coord
+                - axpos_hist
+                    - tuple, int, optional
+                    - position of where to place the axis containing the histogram of scorings
+                    - specification following the matplotlib convention
+                        - will be passed to fig.add_subplot()
+                    - overwrites self.axpos_hist
+                    - the default is None
+                        - defaults to self.axpos_hist
+                - ticks2display
+                    - int, optional
+                    - number of ticks to show for numeric hyperparameters
+                    - overwrites self.ticks2display
+                    - the default is None
+                        - defaults to self.ticks2display
+                - tickcolor
+                    - str, tuple, optional
+                    - color to draw ticks and ticklabels in
+                    - if a tuple is passed it has to be a RGBA-tuple
+                    - overwrites self.tickcolor
+                    - the default is None
+                        - defaults to self.tickcolor
+                - ticklabelrotation
+                    - float, optional
+                    - rotation of the ticklabels
+                    - overwrites self.ticklabelrotation
+                    - the default is None
+                        - defaults to self.ticklabelrotation
+                - tickformat
+                    - str, optional
+                    - formatstring for the (numeric) ticklabels
+                    - overwrites self.tickformat
+                    - the default is None
+                        - defaults to self.tickformat
+                - nancolor
+                    - str, tuple, optional
+                    - color to draw failed runs (evaluate to nan) in
+                    - if a tuple is passed it has to be a RGBA-tuple
+                    - overwrites self.nancolor
+                    - the default is None
+                        - defaults to self.nancolor
+                - nanfrac
+                    - float, optional
+                    - the fraction of the colormap to use for nan-values (i.e. failed runs)
+                        - fraction of 256 (resolution of the colormap)
+                    - will also influence the number of bins/binsize used in the performance-histogram
+                    - a value between 0 and 1
+                    - overwrites self.nanfrac
+                    - the default is None
+                        - defaults to self.nanfrac
+                - linealpha
+                    - float, optional
+                    - alpha value of the lines representing runs/models
+                    - overwrites self.linealpha
+                    - the default is None
+                        - defaults to self.linealpha
+                - linewidth
+                    - float, optional
+                    - linewidth of the lines representing runs/models
+                    - overwrites self.linewidth
+                    - the default is None
+                        - defaults to self.linewidth
+                - base_cmap
+                    - str, mcolors.Colormap
+                    - colormap to map the scores onto
+                    - some space will be allocated for nan, if nans shall be displayed as well
+                    - overwrites self.base_cmap
+                    - the default is None
+                        - defaults to self.base_cmap
+                - cbar_over_hist
+                    - bool, optional
+                    - whether to plot a colorbar instead of the default performance-histogram
+                    - the histogram also has a colorbar encoded
+                    - overwrites self.cbar_over_hist
+                    - the default is None
+                        - defaults to self.cbar_over_hist
+                - n_jobs
+                    - int, optional
+                    - number of threads to use when plotting the runs/modes
+                    - use for large hyperparameter-searches
+                    - argmument passed to joblib.Parallel
+                    - overwrites self.n_jobs
+                    - the default is None
+                        - defaults to self.n_jobs
+                - n_jobs_addaxes
+                    - int, optional
+                    - number of threads to use when plotting the axes for the different hyperparameters
+                    - use if a lot hyperparameters have been searched
+                    - argmument passed to joblib.Parallel
+                    - it could be that that a RuntimeError occurs if too many threads try to add axes at the same time
+                        - this error should be caught with a try-except statement, but in case it something still goes wrong try setting 'n_jobs_addaxes' to 1
+                    - overwrites self.n_jobs_addaxes
+                    - the default is None
+                        - defaults to self.n_jobs_addaxes
+                - sleep
+                    - float, optional
+                    - time to sleep after finishing each job in plotting runs/models and hyperparameter-axes
+                    - overwrites self.sleep
+                    - the default is None
+                        - defaults to self.sleep
+                - map_suffix
+                    - str, optional
+                    - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
+                    - only use if your column-names contain the default ('__map')
+                    - overwrites self.map_suffix
+                    - the default is None
+                        - defaults to self.map_suffix
+                - save
+                    - str, optional
+                    - filename to save the plot to
+                    - the default is False
+                        - will not save the plot
+                - max_nretries
+                    - int, optional
+                    - maximum number of retries in case a RuntimeError occurs during parallelized plotting
+                    - only relevant if 'n_jobs' or 'n_jobs_addaxes' is greater than 1 or -1
+                    - the default is 4
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None
+                        - defaults to self.verbose
+                - fig_kwargs
+                    - dict, optional
+                    - kwargs to pass to plt.figure()
+                    - the default is None
+                        - will not pass any additional arguments
+                - save_kwargs
+                    - dict, optional
+                    - kwargs to pass to plt.savefig()
+                    - the default is None
+                        - will not pass any additional arguments
 
             Raises
             ------
 
             Returns
             -------
+                - fig
+                    - Figure
+                    - created figure
+                - axs
+                    - plt.Axes
+                    - axes corresponding to 'fig'
 
             Comments
             --------
         """
+
+        #initialize
         if show_idcol is None:          show_idcol          = self.show_idcol
         if interpkind is None:          interpkind          = self.interpkind
         if res is None:                 res                 = self.res
@@ -719,88 +1052,69 @@ class ParallelCoordinates:
 
         if min_score is None: min_score = -np.inf
         if max_score is None: max_score =  np.inf
-
-        #initialize
+        
         if fig_kwargs is None:  fig_kwargs  = {}
         if save_kwargs is None: save_kwargs = {}
 
+
         #convert grid to polars DataFrame
-        if isinstance(grid, pl.DataFrame):
-            df = grid
+        if isinstance(coordinates, pl.DataFrame):
+            df = coordinates
         else:
-            df = pl.DataFrame(grid)
-        df_input_shape = df.shape[0]    #shape if input dataframe (for verbosity)
-        
-        #initialize idcol correctly (generate id none has been passed)
-        if idcol is None:
-            idcol = 'id'
-            df = df.insert_at_idx(0, pl.Series(idcol, np.arange(0, df.shape[0], 1, dtype=np.int64)))
-        
-        #filter which range of scores to display and remove scores evaluating to nan if desired
-        df = df.filter(((pl.col(score_col).is_between(min_score, max_score))|(pl.col(score_col).is_nan())))
-        df_minmaxscore_shape = df.shape[0]  #shape of dataframe after score_col boundaries got applied
-        
-        if remove_nanscore:
-            df = df.filter(pl.col(score_col).is_not_nan())
-        df_nonan_shape = df.shape[0]    #shape of dataframe after nans got removed
-        
-        if verbose > 0:
-            print(
-                f'INFO(WB_HypsearchPlot): Removed\n'
-                f'    {df_input_shape-df_minmaxscore_shape} row(s) via ({min_score} < {score_col} < {max_score}),\n'
-                f'    {df_minmaxscore_shape-df_nonan_shape} row(s) containig nans,\n'
-                f'    {df_input_shape-df_nonan_shape} row(s) total.\n'
-            )
+            df = pl.DataFrame(coordinates)
 
-
-        #apply user defined expression to scale the score-function and thus color-scale
-        df = df.with_columns(eval(score_scaling).alias(score_col))
-
+        
+        #initialize idcol correctly (generate id if None has been passed)
+        if id_col is None:
+            id_col = 'id'
+            df = df.insert_at_idx(0, pl.Series(id_col, np.arange(0, df.shape[0], 1, dtype=np.int64)))
+        
+        #initialize score column
+        df, score_col_use = self.__init_scorecol(
+            df=df,
+            score_col=score_col, score_scaling=score_scaling,
+            min_score=min_score, max_score=max_score,
+            remove_nanscore=remove_nanscore,
+            verbose=verbose
+        )
+        
         #get colormap
-        ##check if there are nan in the 'score_col'
         if isinstance(base_cmap, str): cmap = plt.get_cmap(base_cmap)
         else: cmap = base_cmap
-
-        if df.select(pl.col(score_col).is_nan().any()).item():
+        ##if any score evaluates to nan, generate a cmap accordingly
+        if df.select(pl.col(score_col_use).is_nan().any()).item():
             cmap = self.make_new_cmap(cmap=cmap, nancolor=nancolor, nanfrac=nanfrac)
 
         #extract model-names, parameter-columns, ...
-        names = df.select(pl.col(idcol))
-        df = df.drop(idcol)                 #in case idcol is part of the searched parameters
-        df = df.select(pl.col(param_cols),pl.col(score_col))
+        ids = df.select(pl.col(id_col))
+        scores = df.select(pl.col(score_col_use))
+        df = df.drop(id_col)                 #in case idcol is part of the searched parameters
+        df = df.drop(score_col_use)          #in case score_col_use is part of the coords_cols
+        df = df.select(pl.col(coords_cols))
         
         #if desired also show the individual model-ids
-        if show_idcol: df.insert_at_idx(0, names.to_series())
-
-        #deal with missing values (necessary because otherwise raises issues in plotting)
-        fill_value = df.min()
-        cols = np.array(fill_value.columns)[(np.array(fill_value.dtypes, dtype=str)!='Utf8')]
-        fill_value = np.nanmin(fill_value.select(pl.col(cols)).to_numpy())-0.5                  #fill with value slightly lower than minimum of whole dataframe -> Ensures that nan end up in respective part of colormap
-
-        df = df.fill_nan(fill_value=fill_value)
+        if show_idcol: df.insert_at_idx(0,  ids.to_series())
+        #only display score, if score_col is provided
+        if score_col is not None: df.insert_at_idx(df.shape[1], scores.to_series())
+        
+        #deal with missing values
+        df, fill_value = self.__deal_withnan(df)
 
         #all fitted hyperparameters
         coords = df.columns
         coords_map = [c+map_suffix for c in df.columns]
         n_coords = len(coords)-1
 
-        #generate labels for the axis ticks of categorical columns
-        #convert categorical columns to unique integers for plotting - ensures that each hyperparameter lyes within range(0,1)
-        ylabels = []
+        #convert categorical columns to unique integers for plotting - ensures that each hyperparameter lies within range(0,1)
         for c in df.columns:
             df = self.col2range01(df=df, colname=c, map_suffix=map_suffix)
             
-            #get labels to put on yaxis
-            ylabs = df.select(pl.col(c)).unique().to_numpy().flatten()
-            ylabels.append(ylabs)
-
-        from IPython.display import display
-        display(df.select([pl.col(r'^param_.*$'),pl.col('mean_test_score')]))
-
-        #plot        
+        #################
+        #actual plotting#
+        #################
         fig = plt.figure(**fig_kwargs)
         
-        ##axis used for plotting models
+        #axis used for plotting models
         if isinstance(axpos_coord, (int, float)):
             ax1 = fig.add_subplot(int(axpos_coord))
         else:
@@ -838,12 +1152,13 @@ class ParallelCoordinates:
                 nretries += 1
                 if verbose > 0:
                    print(
-                        f'INFO(WB_HypsearchPlot):\n'
+                        f'INFO(WB_HypsearchPlot.plot_model()):\n'
                         f'    The following error occured while plotting the models: {err}.\n'
                         f'    Retrying to plot. Number of elapsed retries: {nretries}.'
                     )
 
         #plot one additional y-axis for every single hyperparameter
+        ##try except to retry if a RuntimeError occured
         e = True
         nretries = 0
         while e and nretries < max_nretries:
@@ -851,14 +1166,12 @@ class ParallelCoordinates:
                 axps = Parallel(n_jobs=n_jobs_addaxes, verbose=verbose, prefer='threads')(
                     delayed(self.add_coordaxes)(
                         ax=ax1,
-                        ylabs=ylabs,
                         coordinate=coordinate, coordinate_map=coordinate_map,
                         fill_value=fill_value,
                         idx=idx, n_coords=n_coords,
-                        tickcolor=tickcolor, ticks2display=ticks2display, ticklabelrotation=ticklabelrotation, tickformat=tickformat,
+                        ticks2display=ticks2display, tickcolor=tickcolor, ticklabelrotation=ticklabelrotation, tickformat=tickformat,
                         sleep=sleep,
-                    # ) for idx, (coordinate, ylabs) in enumerate(zip(coords, ylabels))
-                    ) for idx, (coordinate, coordinate_map, ylabs) in enumerate(zip(df.select(pl.col(coords)), df.select(pl.col(coords_map)), ylabels))
+                    ) for idx, (coordinate, coordinate_map) in enumerate(zip(df.select(pl.col(coords)), df.select(pl.col(coords_map))))
                 )
                 e = False
             except RuntimeError as err:
@@ -866,45 +1179,41 @@ class ParallelCoordinates:
                 nretries += 1
                 if verbose > 0:
                     print(
-                        f'INFO(WB_HypsearchPlot):\n'
+                        f'INFO(WB_HypsearchPlot.add_coordaxes()):\n'
                         f'    The following error occured while plotting the models: {err}.\n'
                         f'    Retrying to plot. Number of elapsed retries: {nretries}.'
                     )
-        # axps, hyps = np.array(res)[:,0], np.array(res)[:,1]
         
-        
-        #generate score label score_scaling expression
-        score_lab = re.sub(r'pl\.col\(score\_col\)', score_col, score_scaling)
+        #generate score label from score_scaling expression
+        score_lab = re.sub(r'pl\.col\(score\_col\_use\)', score_col_use, score_scaling)
         score_lab = re.sub(r'(np|pl|pd)\.', '', score_lab)
         
-        if cbar_over_hist:
+        #if a score column has been passed use it
+        if score_col is not None:
             #add colorbar
-            norm = mcolors.Normalize(vmin=df.select(pl.col(score_col)).min(), vmax=df.select(pl.col(score_col)).max())
-            cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[-1], pad=0.0005, drawedges=False, anchor=(0,0))
-            cbar.outline.set_visible(False) #hide colorbar outline
-            cbar.set_label(score_lab, color=tickcolor)
+            if cbar_over_hist:
+                norm = mcolors.Normalize(vmin=df.select(pl.col(score_col_use)).min(), vmax=df.select(pl.col(score_col)).max())
+                cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[-1], pad=0.0005, drawedges=False, anchor=(0,0))
+                cbar.outline.set_visible(False) #hide colorbar outline
+                cbar.set_label(score_lab, color=tickcolor)
 
 
-            cbar.ax.set_zorder(0)
-            cbar.ax.set_yticks([])  #use ticks from last subplot
+                cbar.ax.set_zorder(0)
+                cbar.ax.set_yticks([])  #use ticks from last subplot
 
-        else:
             #generate a histogram including the colorbar
-            self.add_score_distribution(
-                df=df, score_col=score_col,
-                nanfrac=nanfrac,
-                lab=score_lab, ticklab_color=tickcolor,
-                cmap=cmap,
-                fig=fig, axpos=axpos_hist,
-                map_suffix=map_suffix,
-            )
-            plt.subplots_adjust(wspace=0)
+            else:
+                self.add_score_distribution(
+                    score_col_map=df.select(pl.col(score_col_use+map_suffix)),
+                    nanfrac=nanfrac,
+                    lab=score_lab, ticklabcolor=tickcolor,
+                    cmap=cmap,
+                    fig=fig, axpos=axpos_hist,
+                )
+                plt.subplots_adjust(wspace=0) #will move around colorbar if applied there
         
-
-
         if isinstance(save, str): plt.savefig(save, bbox_inches='tight', **save_kwargs)
         # plt.tight_layout()    #moves cbar around
-
 
         axs = fig.axes
         
