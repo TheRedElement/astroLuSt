@@ -1210,6 +1210,11 @@ class ParallelCoordinates:
         #################
         #actual plotting#
         #################
+
+        #temporarily disable tight-layout if enabled by default
+        plt.rcParams['figure.autolayout'] = False
+
+
         fig = plt.figure(**fig_kwargs)
         
         #axis used for plotting models
@@ -1315,6 +1320,9 @@ class ParallelCoordinates:
         # plt.tight_layout()    #moves cbar around
 
         axs = fig.axes
-        
+
+        plt.rcParams['figure.autolayout'] = False
+
+
         return fig, axs
     
