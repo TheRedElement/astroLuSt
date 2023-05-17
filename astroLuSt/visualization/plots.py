@@ -1328,7 +1328,6 @@ class ParallelCoordinates:
         return fig, axs
     
 
-
 def plot_dbe(
     X:np.ndarray, y:np.ndarray,
     res:int=100, k:int=1,
@@ -1369,7 +1368,7 @@ def plot_dbe(
                 - dict, optional
                 - kwargs to pass to .contourf() function
                 - the default is None
-                    - will be initialized with {'alpha':0.5}
+                    - will be initialized with {'alpha':0.5, 'zorder':-1}
 
 
         Raises
@@ -1392,7 +1391,7 @@ def plot_dbe(
     """
     
     #initialize parameters
-    if contourf_kwargs is None: contourf_kwargs = {'alpha':0.5}
+    if contourf_kwargs is None: contourf_kwargs = {'alpha':0.5, 'zorder':-1}
 
     y = y.flatten()
 
