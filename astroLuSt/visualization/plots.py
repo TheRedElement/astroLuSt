@@ -9,6 +9,7 @@ import numpy as np
 import polars as pl
 import re
 from scipy.interpolate import interp1d
+from sklearn.neighbors import KNeighborsClassifier
 import time
 from typing import Union, Tuple, List, Callable
 
@@ -1327,7 +1328,6 @@ class ParallelCoordinates:
         return fig, axs
     
 
-from sklearn.neighbors import KNeighborsClassifier
 
 def plot_dbe(
     X:np.ndarray, y:np.ndarray,
