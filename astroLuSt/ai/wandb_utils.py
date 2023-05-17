@@ -398,11 +398,16 @@ def sweep_config2grid(
 
     else:
         #will ignore distributions
-        grid_val  = {key:[value['value']]       for key, value in sweep_config['parameters'].items()  if 'value'   in value.keys() and 'distribution' not in value.keys()}
-        grid_vals = {key:value['values']        for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys() and not isinstance(value['values'], np.ndarray)}
-        grid_vals = {key:list(value['values'])  for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys() and     isinstance(value['values'], np.ndarray)}  #if a np.array was passed, convert it to a list
+        ##single value
+        grid_val     = {key:[value['value']]      for key, value in sweep_config['parameters'].items()  if 'value'   in value.keys() and 'distribution' not in value.keys()}
+        
+        #list of values or distribution function
+        grid_vals    = {key:value['values']       for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys() and not isinstance(value['values'], np.ndarray)}
+    
+        #np.ndarray (has to be converted to list)
+        grid_vals_np = {key:list(value['values']) for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys() and     isinstance(value['values'], np.ndarray)} 
 
-        grid = {**grid_val, **grid_vals}
+        grid = {**grid_val, **grid_vals, **grid_vals_np}
 
 
     return grid, config_dict
