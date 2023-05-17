@@ -1,6 +1,7 @@
 
 #%%imports
 import itertools
+import numpy as np
 import os
 from typing import Union, Tuple, Dict, Callable
 import wandb
@@ -381,6 +382,7 @@ def sweep_config2grid(
 
         Dependencies
         ------------
+            - numpy
             - typing
 
         Comments
@@ -396,8 +398,9 @@ def sweep_config2grid(
 
     else:
         #will ignore distributions
-        grid_val  = {key:[value['value']] for key, value in sweep_config['parameters'].items()  if 'value'  in value.keys() and 'distribution' not in value.keys()}
-        grid_vals = {key:list(value['values']) for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys()}
+        grid_val  = {key:[value['value']]       for key, value in sweep_config['parameters'].items()  if 'value'   in value.keys() and 'distribution' not in value.keys()}
+        grid_vals = {key:value['values']        for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys() and not isinstance(value['values'], np.ndarray)}
+        grid_vals = {key:list(value['values'])  for key, value in sweep_config['parameters'].items()   if 'values' in value.keys() and 'distribution' not in value.keys() and     isinstance(value['values'], np.ndarray)}  #if a np.array was passed, convert it to a list
 
         grid = {**grid_val, **grid_vals}
 
