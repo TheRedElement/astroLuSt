@@ -10,6 +10,7 @@ def model_summary2pandas(
     model, width:int=250,
     latex_to_file:str=False, write_mode:str="a",
     save:str=False,
+    verbose:int=0,
     ):
     """
         - function to convert the keras model.summary() output into a pandas DataFrame
@@ -36,6 +37,9 @@ def model_summary2pandas(
             - save
                 - str, optional
                 - path to location of where to save the model summary
+            - verbose
+                - int, optional
+                - verbosity level
         
         Returns
         -------
@@ -109,7 +113,7 @@ def model_summary2pandas(
             kernel_size,
             u,
         ]
-    print(df_summary)
+    if verbose > 0: print(df_summary)
 
     #extract paramter summary and format as pandas dataframe
     df_params = pd.DataFrame({
@@ -117,7 +121,7 @@ def model_summary2pandas(
         "Trainable Parameters":[int(re.sub(r"\,", "", footer[1][18:]))],
         "Non-Trainable Parameters":[int(re.sub(r"\,", "", footer[2][22:]))],
     })
-    print(df_params)
+    if verbose > 0: print(df_params)
 
     #write latex-table to external file
     if isinstance(latex_to_file, str):
