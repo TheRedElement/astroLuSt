@@ -1581,6 +1581,19 @@ class PlotLatentExamples:
 
             Comments
             --------
+                - if you want to show something in the background simply follow this structure:
+                
+                >>> PLE = PlotLatentExamples(...)
+                >>> fig, axs = PLE.plot_1d(...)
+                >>> axs[-1].plot(...)
+                >>> plt.show()
+                
+                - you can also use function that take plt.Axes as parameters. The following example plots some decision boundary estmiate in the background of the latent space examples:
+                
+                >>> PLE = PlotLatentExamples(...)
+                >>> fig, axs = PLE.plot_1d(...)
+                >>> plot_dbe(..., ax=axs[-1])
+                >>> plt.show()            
         """
         #check shapes
         if len(np.unique(np.diff(z0))) > 1:
@@ -1646,7 +1659,9 @@ class PlotLatentExamples:
             axs[col].set_xlabel('')
             axs[col].set_xticks([])
             axs[col].set_yticks([])
-
+            
+            #set subplot background transparent (to show content of ax0)
+            axs[col].patch.set_alpha(0.0)
 
         #get axes
         axs = fig.axes
@@ -1753,10 +1768,23 @@ class PlotLatentExamples:
 
             Comments
             --------
+                - if you want to show something in the background simply follow this structure:
+                
+                >>> PLE = PlotLatentExamples(...)
+                >>> fig, axs = PLE.plot_2d(...)
+                >>> axs[-1].plot(...)
+                >>> plt.show()
+                
+                - you can also use function that take plt.Axes as parameters. The following example plots some decision boundary estmiate in the background of the latent space examples:
+                
+                >>> PLE = PlotLatentExamples(...)
+                >>> fig, axs = PLE.plot_2d(...)
+                >>> plot_dbe(..., ax=axs[-1])
+                >>> plt.show()
         """
 
         #check shapes
-        if np.any((np.diff(z0)-1) > 1e-8) or np.any((np.diff(z1)-1) > 1e-8):
+        if np.any((np.diff(np.diff(z0))) > 1e-8) or np.any(np.diff((np.diff(z1))) > 1e-8):
             warnings.warn(f'"z0" and "z1" have to be equally spaced!')
         if z0_idx == z1_idx:
             raise ValueError(
@@ -1765,7 +1793,6 @@ class PlotLatentExamples:
             )
 
             
-
         #initialize properly
         z0         = np.array(z0)
         z1         = np.array(z1)
@@ -1839,6 +1866,9 @@ class PlotLatentExamples:
                 axs[row, col].set_ylabel('')
                 axs[row, col].set_xticks([])
                 axs[row, col].set_yticks([])
+
+                #set subplot background transparent (to show content of ax0)
+                axs[row, col].patch.set_alpha(0.0)
 
         #get axes
         axs = fig.axes
