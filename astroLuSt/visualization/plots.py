@@ -1751,7 +1751,7 @@ class PlotLatentExamples:
         """
 
         #check shapes
-        if len(np.unique(np.diff(z0))) > 1 or len(np.unique(np.diff(z1))) > 1:
+        if np.any((np.diff(z0)-1) > 1e-8) or np.any((np.diff(z1)-1) > 1e-8):
             raise ValueError(f'"z0" and "z1" have to be equally spaced!')
         if z0_idx == z1_idx:
             raise ValueError(
