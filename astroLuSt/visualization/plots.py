@@ -1322,7 +1322,7 @@ class ParallelCoordinates:
 
         axs = fig.axes
 
-        plt.rcParams['figure.autolayout'] = False
+        plt.rcParams['figure.autolayout'] = True
 
 
         return fig, axs
@@ -1418,4 +1418,216 @@ def plot_dbe(
         plt.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
 
     return
+
+
+class PlotLatentExamples:
+    """
+        - class to plot generated samples from latent variables
+
+        Attributes
+        ----------
+            - plot_func
+                - str, optional
+                - function to use for visualizing each individual sample
+                - has to be the string equivalent of any method that can be called on plt.Axes
+                - the corresponding function has to take at least one argument (the values to plot)
+                - the default is 'plot'
+            - subplots_kwargs
+                - dict, optional
+                - kwargs to pass to plt.subplots()
+                - the default is None
+                    - will be initialized with {}
+            - predict_kwargs
+                - dict, optional
+                - kwargs to pass to generator.predict()
+                    - generator is a parameter passed self.plot()
+                - the default is None
+                    - will be initialized with {}
+            - plot_func_kwargs
+                - dict, optional
+                - kwargs to pass to the function passed to 'plot_func'
+                - the default is None
+                    - will be initialized with {}
+            - verbose
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+        Methods
+        -------
+            - plot()
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+
+        Comments
+        --------
+
+    """
+
+    def __init__(self,
+        plot_func:str='plot',
+        subplots_kwargs:dict=None, predict_kwargs:dict=None, plot_func_kwargs:dict=None,
+        verbose:int=0
+        ) -> None:
+
+        self.plot_func = plot_func
+
+        if subplots_kwargs is None:     self.subplots_kwargs     = {}
+        else:                           self.subplots_kwargs     = subplots_kwargs
+        if predict_kwargs is None:      self.predict_kwargs      = {}
+        else:                           self.predict_kwargs      = predict_kwargs
+        if plot_func_kwargs is None:    self.plot_func_kwargs    = {}
+        else:                           self.plot_func_kwargs    = plot_func_kwargs
+
+        self.verbose = verbose
+
+        return
+    
+    def __repr__(self) -> str:
+        return (
+            f'PlotLatentExamples(\n'
+            f'    plot_func={self.plot_func},\n'
+            f'    subplots_kwargs={self.subplots_kwargs}, predict_kwargs={self.predict_kwargs}, plot_func_kwargs={self.plot_func_kwargs},\n'
+            f'    verbose={self.verbose},\n'
+            f')'
+        )
+
+    def plot(self,
+        generator:Callable,
+        z0:list, z1:list,
+        zi_f:Union[list,int],
+        z0_idx:int=0, z1_idx:int=1,
+        plot_func:str=None,
+        subplots_kwargs:dict=None, predict_kwargs:dict=None, plot_func_kwargs:dict=None,
+        verbose:int=None,
+        ) -> Tuple[Figure, List[plt.Axes]]:
+        """
+            - method to actually generate the plot
+
+            Parameters
+            ----------
+                - generator
+                - z0
+                - z1
+                - zi_f
+                - z0_idx
+                - z1_idx
+                - subplots_kwargs
+                    - dict, optional
+                    - kwargs to pass to plt.subplots()
+                    - overwrites self.subplot_kwargs
+                    - the default is None
+                        - will default to self.subplot_kwargs
+                - predict_kwargs
+                    - dict, optional
+                    - kwargs to pass to generator.predict()
+                        - generator is a parameter passed self.plot()
+                    - overwrites self.subplot_kwargs
+                    - the default is None
+                        - will default to self.subplot_kwargs
+                - plot_func_kwargs
+                    - dict, optional
+                    - kwargs to pass to the function passed to 'plot_func'
+                    - overwrites self.plot_func_kwargs
+                    - the default is None
+                        - will default to self.plot_func_kwargs
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None
+                        - will default to self.verbose
+                    
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - Figure
+                    - created figure
+                - axs
+                    - list(plt.Axes)
+                    - axes corresponding to fig
+                    - contains an axis to set labels and title as last entry
+
+            Comments
+            --------
+        """
+
+        #initialize properly
+        z0         = np.array(z0)
+        z1         = np.array(z1)
+        if isinstance(zi_f, int):
+            zi_f   = np.zeros(zi_f)
+        else:
+            zi_f       = zi_f
+        if plot_func is None:           plot_func           = self.plot_func
+        if subplots_kwargs is None:     subplots_kwargs     = self.subplots_kwargs
+        if predict_kwargs is None:      predict_kwargs      = self.predict_kwargs
+        if plot_func_kwargs is None:    plot_func_kwargs    = self.plot_func_kwargs
+        if verbose is None:             verbose             = self.verbose
+        
+
+        #get indices of fixed zi
+        zi_f_idxs = [i for i in range(len(zi_f)+2) if i not in [z0_idx, z1_idx]]
+
+
+
+        #temporarily disable autolayout
+        plt.rcParams['figure.autolayout'] = False
+
+
+        fig, axs = plt.subplots(nrows=z0.shape[0], ncols=z1.shape[0], **subplots_kwargs)
+        
+
+        tit = ', '.join([f'z{fzi_idx}: {fzi}' for fzi_idx, fzi in zip(zi_f_idxs, zi_f)])
+
+        #subplot for axis labels
+        ax0 = fig.add_subplot(111, zorder=-1)
+        ax0.set_title(f'Latent Space\n({tit})')
+        ax0.set_xlabel(f'z[{z0_idx}]')
+        ax0.set_ylabel(f'z[{z1_idx}]')
+        ax0.set_xlim(np.min(z0), np.max(z0))
+        ax0.set_ylim(np.min(z1), np.max(z1))
+        
+        for row, z1i in enumerate(z1):
+            for col, z0i in enumerate(z0):
+
+                #construct latent-vector - fixed_zi never change, variable_zi get iterated over
+                z = np.zeros((np.shape(zi_f)[0]+2))
+                z[z0_idx] = z0i
+                z[z1_idx] = z1i
+                z[zi_f_idxs] = zi_f
+
+
+
+                z_sample = np.array([z])
+
+                x_decoded = generator.predict(z_sample, **predict_kwargs)
+
+                if x_decoded.shape[0] == 1: x_decoded = x_decoded.flatten()
+
+
+                eval(f'axs[row, col].{plot_func}(x_decoded, **plot_func_kwargs)')
+
+                #hide labels of latent samples
+                axs[row, col].set_xlabel('')
+                axs[row, col].set_ylabel('')
+                axs[row, col].set_xticks([])
+                axs[row, col].set_yticks([])
+
+        #get axes
+        axs = fig.axes
+
+        plt.subplots_adjust(wspace=0, hspace=0)
+        
+        plt.rcParams['figure.autolayout'] = True
+
+        return fig, axs
+    
 
