@@ -1496,26 +1496,46 @@ class PlotLatentExamples:
             f')'
         )
 
-    def plot(self,
+    def plot_1d(self,
         generator:Callable,
-        z0:list, z1:list,
+        z0:list,
         zi_f:Union[list,int],
-        z0_idx:int=0, z1_idx:int=1,
+        z0_idx:int=0,
         plot_func:str=None,
         subplots_kwargs:dict=None, predict_kwargs:dict=None, plot_func_kwargs:dict=None,
         verbose:int=None,
         ) -> Tuple[Figure, List[plt.Axes]]:
         """
-            - method to actually generate the plot
+            - method to actually generate a plot showing samples out of the latent space while varying 2 latent variables
 
             Parameters
             ----------
                 - generator
+                    - Callable class
+                    - has to implement a predict method
+                    - will be called to generate samples from the provided latent variables
+                        - the latent variables are a list of the length len(zi_f)+1
+                            - i.e. the zi_f fixed variables + the iterated z0 latent variable
                 - z0
-                - z1
+                    - list
+                    - values of one of the latent dimensions interpretable by generator
+                    - will be iterated over and used to generate a grid
+                    - has to be equally spaced
                 - zi_f
+                    - list, int
+                    - fixed variables of all latent dimensions which are not z0
+                    - if a list gets passed
+                        - has to contain as many entries as the list that get interpreted by generator.predict - 1
+                        - each entry represents one latent dimensions value in order
+                    - if an integer gets passed
+                        - has to be of same value as the length of the list that get interpreted by generator.predict - 1
+                        - will be initialized with a list of zeros length zi_f
                 - z0_idx
-                - z1_idx
+                    - int, optional
+                    - index of where in the list of latent dimensions z0 is located
+                    - has to differ from z1_idx
+                    - the deafult is 0
+                        - will set z0 as the first element of the latent vector 
                 - subplots_kwargs
                     - dict, optional
                     - kwargs to pass to plt.subplots()
@@ -1544,6 +1564,8 @@ class PlotLatentExamples:
                     
             Raises
             ------
+                - ValueError
+                    - if 'z0' is not equally spaced
 
             Returns
             -------
@@ -1558,6 +1580,186 @@ class PlotLatentExamples:
             Comments
             --------
         """
+        #check shapes
+        if len(np.unique(np.diff(z0))) > 1:
+            raise ValueError(f'"z0" has to be equally spaced!')
+        
+        #initialize properly
+        z0         = np.array(z0)
+        if isinstance(zi_f, int):
+            zi_f   = np.zeros(zi_f)
+        else:
+            zi_f       = zi_f
+        if plot_func is None:           plot_func           = self.plot_func
+        if subplots_kwargs is None:     subplots_kwargs     = self.subplots_kwargs
+        if predict_kwargs is None:      predict_kwargs      = self.predict_kwargs
+        if plot_func_kwargs is None:    plot_func_kwargs    = self.plot_func_kwargs
+        if verbose is None:             verbose             = self.verbose
+        
+        #get indices of fixed zi
+        zi_f_idxs = [i for i in range(len(zi_f)+1) if i != z0_idx]
+
+
+
+        #temporarily disable autolayout
+        plt.rcParams['figure.autolayout'] = False
+
+
+        fig, axs = plt.subplots(nrows=1, ncols=z0.shape[0], **subplots_kwargs)
+        
+
+        tit = ', '.join([f'z{fzi_idx}: {fzi}' for fzi_idx, fzi in zip(zi_f_idxs, zi_f)])
+
+        #subplot for axis labels
+        ax0 = fig.add_subplot(111, zorder=-1)
+        ax0.set_title(f'Latent Space\n({tit})')
+        ax0.set_xlabel(f'z[{z0_idx}]')
+        ax0.set_xlim(np.min(z0), np.max(z0))
+        ax0.set_yticks([])
+
+
+        for col, z0i in enumerate(z0):
+
+            #construct latent-vector - fixed_zi never change, variable_zi get iterated over
+            z = np.zeros((np.shape(zi_f)[0]+1))
+            z[z0_idx] = z0i
+            z[zi_f_idxs] = zi_f
+            z_sample = np.array([z])
+
+            try:
+                x_decoded = generator.predict(z_sample, **predict_kwargs)
+            except Exception as e:
+                raise ValueError(f'"generator" has to implement a "predict()" method that takes a list of len(zi_f)+1 parameters as input!')
+
+
+            if x_decoded.shape[0] == 1: x_decoded = x_decoded.flatten()
+
+
+            eval(f'axs[col].{plot_func}(x_decoded, **plot_func_kwargs)')
+
+            #hide labels of latent samples
+            axs[col].set_xlabel('')
+            axs[col].set_xticks([])
+            axs[col].set_yticks([])
+
+
+        #get axes
+        axs = fig.axes
+
+        plt.subplots_adjust(wspace=0, hspace=0)
+        
+        plt.rcParams['figure.autolayout'] = True
+
+        return fig, axs
+
+    def plot_2d(self,
+        generator:Callable,
+        z0:list, z1:list,
+        zi_f:Union[list,int],
+        z0_idx:int=0, z1_idx:int=1,
+        plot_func:str=None,
+        subplots_kwargs:dict=None, predict_kwargs:dict=None, plot_func_kwargs:dict=None,
+        verbose:int=None,
+        ) -> Tuple[Figure, List[plt.Axes]]:
+        """
+            - method to actually generate a plot showing samples out of the latent space while varying 2 latent variables
+
+            Parameters
+            ----------
+                - generator
+                    - Callable class
+                    - has to implement a predict method
+                    - will be called to generate samples from the provided latent variables
+                        - the latent variables are a list of the length len(zi_f)+2 
+                            - i.e. the zi_f fixed variables + the iterated z0 and z1 variables 
+                - z0
+                    - list
+                    - values of one of the latent dimensions interpretable by generator
+                    - will be iterated over and used to generate a grid
+                    - has to be equally spaced
+                - z1
+                    - list
+                    - values of the second latent dimension interpretable by generator
+                    - will be iterated over and used to generate a grid
+                    - has to be equally spaced
+                - zi_f
+                    - list, int
+                    - fixed variables of all latent dimensions which are not 'z0' and 'z1'
+                    - if a list gets passed
+                        - has to contain as many entries as the list that get interpreted by generator.predict - 2
+                        - each entry represents one latent dimensions value in order
+                    - if an integer gets passed
+                        - has to be of same value as the length of the list that get interpreted by generator.predict - 2
+                        - will be initialized with a list of zeros length zi_f
+                - z0_idx
+                    - int, optional
+                    - index of where in the list of latent dimensions z0 is located
+                    - has to differ from z1_idx
+                    - the deafult is 0
+                        - will set z0 as the first element of the latent vector 
+                - z1_idx
+                    - int, optional
+                    - index of where in the list of latent dimensions z1 is located
+                    - has to differ from z0_idx
+                    - the deafult is 1
+                        - will set z1 as the second element of the latent vector 
+                    - int, optional
+                - subplots_kwargs
+                    - dict, optional
+                    - kwargs to pass to plt.subplots()
+                    - overwrites self.subplot_kwargs
+                    - the default is None
+                        - will default to self.subplot_kwargs
+                - predict_kwargs
+                    - dict, optional
+                    - kwargs to pass to generator.predict()
+                        - generator is a parameter passed self.plot()
+                    - overwrites self.subplot_kwargs
+                    - the default is None
+                        - will default to self.subplot_kwargs
+                - plot_func_kwargs
+                    - dict, optional
+                    - kwargs to pass to the function passed to 'plot_func'
+                    - overwrites self.plot_func_kwargs
+                    - the default is None
+                        - will default to self.plot_func_kwargs
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - overwrites self.verbose
+                    - the default is None
+                        - will default to self.verbose
+                    
+            Raises
+            ------
+                - ValueError
+                    - if 'z0' or 'z1' is not equally spaced
+                    - if 'z0_idx' and 'z1_idx' have the same value
+
+            Returns
+            -------
+                - fig
+                    - Figure
+                    - created figure
+                - axs
+                    - list(plt.Axes)
+                    - axes corresponding to fig
+                    - contains an axis to set labels and title as last entry
+
+            Comments
+            --------
+        """
+
+        #check shapes
+        if len(np.unique(np.diff(z0))) > 1 or len(np.unique(np.diff(z1))) > 1:
+            raise ValueError(f'"z0" and "z1" have to be equally spaced!')
+        if z0_idx == z1_idx:
+            raise ValueError(
+                f'"z0_idx" and "z1_idx" have to have different values!\n'
+                f'    If you want to only vary one latent dimension use plot_1d()!'
+            )
+
+            
 
         #initialize properly
         z0         = np.array(z0)
@@ -1608,7 +1810,11 @@ class PlotLatentExamples:
 
                 z_sample = np.array([z])
 
-                x_decoded = generator.predict(z_sample, **predict_kwargs)
+                try:
+                    x_decoded = generator.predict(z_sample, **predict_kwargs)
+                except Exception as e:
+                    raise ValueError(f'"generator" has to implement a "predict()" method that takes a list of len(zi_f)+2 parameters as input!')
+
 
                 if x_decoded.shape[0] == 1: x_decoded = x_decoded.flatten()
 
@@ -1630,4 +1836,3 @@ class PlotLatentExamples:
 
         return fig, axs
     
-
