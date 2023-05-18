@@ -1616,8 +1616,10 @@ class PlotLatentExamples:
         ax0 = fig.add_subplot(111, zorder=-1)
         ax0.set_title(f'Latent Space\n({tit})')
         ax0.set_xlabel(f'z[{z0_idx}]')
-        ax0.set_xlim(np.min(z0), np.max(z0))
         ax0.set_yticks([])
+        #set ticks and ticklabels correctly
+        ax0.set_xlim(np.min(z0)-np.mean(np.diff(z0))/2, np.max(z0)+np.mean(np.diff(z0))/2)
+        ax0.xaxis.set_major_locator(MaxNLocator(len(z0), prune='both'))        
 
 
         for col, z0i in enumerate(z0):
@@ -1640,6 +1642,7 @@ class PlotLatentExamples:
             eval(f'axs[col].{plot_func}(x_decoded, **plot_func_kwargs)')
 
             #hide labels of latent samples
+            # axs[col].set_title(z0i)
             axs[col].set_xlabel('')
             axs[col].set_xticks([])
             axs[col].set_yticks([])
@@ -1831,7 +1834,7 @@ class PlotLatentExamples:
                 eval(f'axs[row, col].{plot_func}(x_decoded, **plot_func_kwargs)')
 
                 #hide labels of latent samples
-                axs[row, col].set_title(f'{z0i},{z1i}')
+                # axs[row, col].set_title(f'{z0i},{z1i}')
                 axs[row, col].set_xlabel('')
                 axs[row, col].set_ylabel('')
                 axs[row, col].set_xticks([])
