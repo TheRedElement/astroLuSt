@@ -5,6 +5,7 @@ from joblib.parallel import Parallel, delayed
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.figure import Figure
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 import polars as pl
 import re
@@ -12,6 +13,7 @@ from scipy.interpolate import interp1d
 from sklearn.neighbors import KNeighborsClassifier
 import time
 from typing import Union, Tuple, List, Callable
+import warnings
 
 
 
@@ -1752,7 +1754,7 @@ class PlotLatentExamples:
 
         #check shapes
         if np.any((np.diff(z0)-1) > 1e-8) or np.any((np.diff(z1)-1) > 1e-8):
-            raise ValueError(f'"z0" and "z1" have to be equally spaced!')
+            warnings.warn(f'"z0" and "z1" have to be equally spaced!')
         if z0_idx == z1_idx:
             raise ValueError(
                 f'"z0_idx" and "z1_idx" have to have different values!\n'
@@ -1784,20 +1786,27 @@ class PlotLatentExamples:
         plt.rcParams['figure.autolayout'] = False
 
 
-        fig, axs = plt.subplots(nrows=z0.shape[0], ncols=z1.shape[0], **subplots_kwargs)
+        fig, axs = plt.subplots(nrows=z1.shape[0], ncols=z0.shape[0], **subplots_kwargs)
         
 
         tit = ', '.join([f'z{fzi_idx}: {fzi}' for fzi_idx, fzi in zip(zi_f_idxs, zi_f)])
+
+        z0_step = np.max(z0)-np.min(z0)
+        z1_step = np.max(z1)-np.min(z1)
 
         #subplot for axis labels
         ax0 = fig.add_subplot(111, zorder=-1)
         ax0.set_title(f'Latent Space\n({tit})')
         ax0.set_xlabel(f'z[{z0_idx}]')
         ax0.set_ylabel(f'z[{z1_idx}]')
-        ax0.set_xlim(np.min(z0), np.max(z0))
-        ax0.set_ylim(np.min(z1), np.max(z1))
-        
-        for row, z1i in enumerate(z1):
+
+        #set ticks and ticklabels correctly
+        ax0.set_ylim(np.min(z1)-np.mean(np.diff(z1))/2, np.max(z1)+np.mean(np.diff(z1))/2)
+        ax0.set_xlim(np.min(z0)-np.mean(np.diff(z0))/2, np.max(z0)+np.mean(np.diff(z0))/2)
+        ax0.yaxis.set_major_locator(MaxNLocator(len(z1), prune='both'))
+        ax0.xaxis.set_major_locator(MaxNLocator(len(z0), prune='both'))
+
+        for row, z1i in enumerate(z1[::-1]):
             for col, z0i in enumerate(z0):
 
                 #construct latent-vector - fixed_zi never change, variable_zi get iterated over
@@ -1822,6 +1831,7 @@ class PlotLatentExamples:
                 eval(f'axs[row, col].{plot_func}(x_decoded, **plot_func_kwargs)')
 
                 #hide labels of latent samples
+                axs[row, col].set_title(f'{z0i},{z1i}')
                 axs[row, col].set_xlabel('')
                 axs[row, col].set_ylabel('')
                 axs[row, col].set_xticks([])
