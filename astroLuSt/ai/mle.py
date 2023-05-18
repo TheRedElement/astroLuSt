@@ -1,8 +1,10 @@
 
 #%%imports
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 import scipy.stats as stats
+from typing import Union, Tuple
 
 #%%definitions
 class MLE:
@@ -52,19 +54,14 @@ class MLE:
             - matplotlib
             - numpy
             - scipy
+            - typing
     
     """
 
 
     def __init__(self,
-        dataseries:np.ndarray, series_labels:np.ndarray=None,
         ):
 
-        self.dataseries = dataseries
-        if series_labels is None:
-            self.series_labels = [f"Dataseries {i}" for i in np.arange(self.dataseries.shape[0])]
-        else:
-            self.series_labels = series_labels
         self.mus = np.array([])
         self.sigmas = np.array([])
         self.covmat = np.array([])
@@ -72,26 +69,54 @@ class MLE:
 
         pass
 
-    def get_mu(self):
+    def get_mu(self,
+        X:np.ndarray
+        ):
         """
             - method to estimate the mean of the gaussian via MLE
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
         """
         
-        self.mus = np.nanmean(self.dataseries, axis=0)
+        self.mus = np.nanmean(X, axis=0)
 
         return
     
-    def get_sigma(self):
+    def get_sigma(self,
+        X:np.ndarray
+        ):
         """
             - method to estimate the standard deviation of the gaussian via MLE
             - estimate for 1d-case (i.e. 1D histogram)
+            
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
         """
 
-        self.sigmas = np.nanstd(self.dataseries, axis=0)
+        self.sigmas = np.nanstd(X, axis=0)
 
         return
     
-    def get_covmat(self, data:np.ndarray=None):
+    def get_covmat(self, X:np.ndarray=None):
         """
             - method to estimate the N-D covariance matrix
 
@@ -128,41 +153,72 @@ class MLE:
         """
 
         #N-D data
-        if data is None:
-            data = self.dataseries
-        self.covmat = np.cov(data.T)
+        if X is None:
+            X = self.X
+        self.covmat = np.cov(X.T)
 
         return self.covmat
 
-    def fit(self):
+    def fit(self,
+        X:np.ndarray, y:np.ndarray=None
+        ):
         """
             - method to fit the estimator
             - similar to scikit-learn framework
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
         """
-        self.get_mu()
-        self.get_sigma()
-        self.covmat = self.get_covmat()
-        self.corrcoeff = np.corrcoef(self.dataseries.T)
+
+        #adopt inputs
+        self.X = X
+        self.y = y
+
+        #fit estimator
+        self.get_mu(X)
+        self.get_sigma(X)
+        self.covmat = self.get_covmat(X)
+        self.corrcoeff = np.corrcoef(X.T)
 
         return
 
-    def predict(self):
+    def predict(self,
+        X:np.ndarray=None, y:np.ndarray=None):
         """
             - method to predict using the estimator
             - similar to scikit-learn framework
+
+            Parameters
+            ----------
+
+            Raises
+            ------
 
             Returns
             -------
                 - self.mus
                 - self.sigmas
                 - self.convmat
+
+            Comments
+            --------
             
         """
 
 
         return self.mus, self.sigmas, self.covmat
 
-    def fit_predict(self):
+    def fit_predict(self,
+        X:np.ndarray, y:np.ndarray=None):
         """
             - method to fit the estimator and predict the result afterwards
             
@@ -173,16 +229,18 @@ class MLE:
                 - self.convmat        
         """
 
-        self.fit()
-        self.predict()
+        self.fit(X=X, y=y)
+        mus, sigmas, covmat = self.predict()
 
-        return self.mus, self.sigmas, self.covmat
+        return mus, sigmas, covmat
 
     def corner_plot(self,
-        data:np.ndarray=None, labels:np.ndarray=None, mus:np.ndarray=None, sigmas:np.ndarray=None,
+        X:np.ndarray=None, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
+        mus:np.ndarray=None, sigmas:np.ndarray=None,
         bins:int=100, equal_range:bool=False, asstandardnormal:bool=False,
         save:str=False,
-        ):
+        sctr_kwargs:dict=None
+        ) -> Tuple[Figure,plt.Axes]:
         """
             - method to create a corner plot of a given set of input distributions
         
@@ -241,29 +299,35 @@ class MLE:
         """
 
 
-        if data is None:
-            data = self.dataseries
-        if labels is None:
-            labels = self.series_labels
+        #initialize correctly
+        if X is None: X = self.X
+        if y is None:
+            y = 'tab:blue'
+            # y = self.y
+            # if self.y is None:
+        if featurenames is None: featurenames = [f"Feature {i}" for i in np.arange(X.shape[1])]
+
         if mus is None:
             if len(self.mus) == 0:
-                mus = [None]*len(data)
+                mus = [None]*len(X)
             else:
                 mus = self.mus
         if sigmas is None:
             if len(self.sigmas) == 0:
-                sigmas = [None]*len(data)
+                sigmas = [None]*len(X)
             else:
                 sigmas = self.sigmas
-        
+        if sctr_kwargs is None:
+            sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
+
 
         fig = plt.figure()
-        nrowscols = data.shape[1]
+        nrowscols = X.shape[1]
 
 
         idx = 0
-        for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(data.T, labels, mus, sigmas)):
-            for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(data.T, labels, mus, sigmas)):
+        for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(X.T, featurenames, mus, sigmas)):
+            for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(X.T, featurenames, mus, sigmas)):
                 idx += 1
 
                 if asstandardnormal and mu1 is not None and sigma1 is not None:
@@ -281,8 +345,10 @@ class MLE:
                     if mu2 is not None: ax1.axvline(mu2, color="tab:orange", linestyle="--")
 
                     #data
-                    sctr = ax1.scatter(d2, d1,
-                        s=1, alpha=.5, zorder=2,
+                    sctr = ax1.scatter(
+                        d2, d1,
+                        c=y,               
+                        **sctr_kwargs,
                     )
 
 
