@@ -1773,6 +1773,7 @@ class PlotLatentExamples:
                 >>> PLE = PlotLatentExamples(...)
                 >>> fig, axs = PLE.plot_2d(...)
                 >>> axs[-1].plot(...)
+                >>> plt.rcParams['figure.autolayout'] = False #to keep no whitespace between generated samples
                 >>> plt.show()
                 
                 - you can also use function that take plt.Axes as parameters. The following example plots some decision boundary estmiate in the background of the latent space examples:
@@ -1780,6 +1781,7 @@ class PlotLatentExamples:
                 >>> PLE = PlotLatentExamples(...)
                 >>> fig, axs = PLE.plot_2d(...)
                 >>> plot_dbe(..., ax=axs[-1])
+                >>> plt.rcParams['figure.autolayout'] = False #to keep no whitespace between generated samples
                 >>> plt.show()
         """
 
