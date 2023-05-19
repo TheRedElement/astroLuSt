@@ -1371,6 +1371,7 @@ class LatentSpaceExplorer:
         ------------
             - matplotlib
             - numpy
+            - scipy
             - typing
 
         Comments
@@ -1500,16 +1501,61 @@ class LatentSpaceExplorer:
         return
 
     def corner_plot(self,
-        X:np.ndarray, y:np.ndarray=None,
+        X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
+        corner_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
-        from astroLuSt.ai.mle import MLE
+        """
+            - method to generate a corner_plot of pairwise latent dimensions
+
+            Parameters
+            ----------
+                - X
+                    - np.ndarray
+                    - input dataset
+                    - contains samples as rows and features as columns
+                - y
+                    - np.ndarray, str, optional
+                    - labels corresponding to X
+                    - if np.ndarray
+                        - will be used as a colormap
+                    - if str
+                        - will be interpreted as that specific color
+                    - the default is None
+                        - will be set to 'tab:blue'
+                - featurenames
+                    - np.ndarray, optional
+                    - names to give to the features present in X
+                    - the deafault is None
+                - corner_kwargs
+                    - dict, optional
+                    - kwargs to pass to astroLuSt.visualization.plots.corner_plot()
+                    - the default is None
+                        - will initialize with {}                    
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - Figure
+                    - the created matplotlib figure
+                - axs
+                    - plt.Axes
+                    - axes corresponding to 'fig'
+            Comments
+            --------
+        """
 
         if y is None: y = 'tab:blue'
-        fig, axs = MLE().corner_plot(
-            X=X, y=y, featurenames=[f'z[{idx}]' for idx in range(X.shape[1])]
+        if corner_kwargs is None: corner_kwargs = {}
+
+        fig, axs = corner_plot(
+            X=X, y=y, featurenames=featurenames,
+            **corner_kwargs,
         )
 
-        return
+        return fig, axs
 
     def generated_1d(self,
         generator:Callable,
