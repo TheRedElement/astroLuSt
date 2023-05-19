@@ -10,6 +10,7 @@ import numpy as np
 import polars as pl
 import re
 from scipy.interpolate import interp1d
+from scipy import stats
 from sklearn.neighbors import KNeighborsClassifier
 import time
 from typing import Union, Tuple, List, Callable
@@ -17,7 +18,7 @@ import warnings
 
 
 
-#%%definitions
+#%%classes
 class ParallelCoordinates:
     """
         - class to create a Prallel-Coordinate plot
@@ -1329,99 +1330,6 @@ class ParallelCoordinates:
 
         return fig, axs
     
-
-def plot_dbe(
-    X:np.ndarray, y:np.ndarray,
-    res:int=100, k:int=1,
-    ax:plt.Axes=None,
-    contourf_kwargs:dict=None,
-    ) -> None:        
-    """
-        - function to plot estimated desicion-boundaries of data
-        - uses voronoi diagrams to to do so
-            - estimates the decision boundaries using KNN with k=1
-            - Source: https://stackoverflow.com/questions/37718347/plotting-decision-boundary-for-high-dimension-data
-                - last access: 17.05.2023
-        
-        Parameters
-        ----------
-            - X
-                - np.ndarray
-                - 2d array containing the features of the data
-                    - i.e. 2 features
-            - y
-                - np.ndarray
-                - 1d array of shape X.shape[0]
-                - labels corresponding to X
-            - res
-                - int, optional
-                - resolution of the estimated boundary
-                - the default is 100
-            - k
-                - int, optional
-                - number of neighbours to use in the KNN estimator
-                - the default is 1
-            - ax
-                - plt.Axes
-                - axes to add the density estimate to
-                - the default is None
-                    - will call plt.contourf() instead of ax.contourf()
-            - contourf_kwargs
-                - dict, optional
-                - kwargs to pass to .contourf() function
-                - the default is None
-                    - will be initialized with {'alpha':0.5, 'zorder':-1}
-
-
-        Raises
-        ------
-            - ValueError
-                - if either 'X' or 'y' are not passed in coorect shapes
-
-        Returns
-        -------
-
-        Dependencies
-        ------------
-            - matplotlib
-            - numpy
-            - sklearn
-
-        Comments
-        --------
-
-    """
-    
-    #initialize parameters
-    if contourf_kwargs is None: contourf_kwargs = {'alpha':0.5, 'zorder':-1}
-
-    y = y.flatten()
-
-    #check shapes
-    if X.shape[1] != 2:
-        raise ValueError(f'"X" has to contain 2 features. I.e. it has to be of shape (n_samples,2) and not {X.shape}')
-    if y.shape[0] != X.shape[0]:
-        raise ValueError(f'"y" has to be a 1d version of "X" containing the labels corresponding to the samples. I.e. it has to be of shape (n_samples,) and not {y.shape}')
-
-    #get background model
-    background_model = KNeighborsClassifier(n_neighbors=k)
-    background_model.fit(X, y)
-    xx, yy = np.meshgrid(
-        np.linspace(X[:,0].min(), X[:,0].max(), res),
-        np.linspace(X[:,1].min(), X[:,1].max(), res),
-    )
-
-    voronoiBackground = background_model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape((res, res))
-
-    #(add) plot
-    if ax is not None:
-        ax.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
-    else:
-        plt.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
-
-    return
-
-
 class LatentSpaceExplorer:
     """
         - class to plot generated samples from latent variables
@@ -1986,3 +1894,340 @@ class LatentSpaceExplorer:
 
         return fig, axs
 
+
+#%%functions
+def plot_dbe(
+    X:np.ndarray, y:np.ndarray,
+    res:int=100, k:int=1,
+    ax:plt.Axes=None,
+    contourf_kwargs:dict=None,
+    ) -> None:        
+    """
+        - function to plot estimated desicion-boundaries of data
+        - uses voronoi diagrams to to do so
+            - estimates the decision boundaries using KNN with k=1
+            - Source: https://stackoverflow.com/questions/37718347/plotting-decision-boundary-for-high-dimension-data
+                - last access: 17.05.2023
+        
+        Parameters
+        ----------
+            - X
+                - np.ndarray
+                - 2d array containing the features of the data
+                    - i.e. 2 features
+            - y
+                - np.ndarray
+                - 1d array of shape X.shape[0]
+                - labels corresponding to X
+            - res
+                - int, optional
+                - resolution of the estimated boundary
+                - the default is 100
+            - k
+                - int, optional
+                - number of neighbours to use in the KNN estimator
+                - the default is 1
+            - ax
+                - plt.Axes
+                - axes to add the density estimate to
+                - the default is None
+                    - will call plt.contourf() instead of ax.contourf()
+            - contourf_kwargs
+                - dict, optional
+                - kwargs to pass to .contourf() function
+                - the default is None
+                    - will be initialized with {'alpha':0.5, 'zorder':-1}
+
+
+        Raises
+        ------
+            - ValueError
+                - if either 'X' or 'y' are not passed in coorect shapes
+
+        Returns
+        -------
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - sklearn
+
+        Comments
+        --------
+
+    """
+    
+    #initialize parameters
+    if contourf_kwargs is None: contourf_kwargs = {'alpha':0.5, 'zorder':-1}
+
+    y = y.flatten()
+
+    #check shapes
+    if X.shape[1] != 2:
+        raise ValueError(f'"X" has to contain 2 features. I.e. it has to be of shape (n_samples,2) and not {X.shape}')
+    if y.shape[0] != X.shape[0]:
+        raise ValueError(f'"y" has to be a 1d version of "X" containing the labels corresponding to the samples. I.e. it has to be of shape (n_samples,) and not {y.shape}')
+
+    #get background model
+    background_model = KNeighborsClassifier(n_neighbors=k)
+    background_model.fit(X, y)
+    xx, yy = np.meshgrid(
+        np.linspace(X[:,0].min(), X[:,0].max(), res),
+        np.linspace(X[:,1].min(), X[:,1].max(), res),
+    )
+
+    voronoiBackground = background_model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape((res, res))
+
+    #(add) plot
+    if ax is not None:
+        ax.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
+    else:
+        plt.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
+
+    return
+
+def corner_plot(
+    X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
+    mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
+    bins:int=100,
+    equal_range:bool=False, asstandardnormal:bool=False,
+    fig:Figure=None,
+    sctr_kwargs:dict=None
+    ) -> Tuple[Figure,plt.Axes]:
+    """
+        - function to create a corner plot of a given set of input data X
+    
+        Parameters
+        ----------
+            - X
+                - np.ndarray
+                - contains samples as rows
+                - contains features as columns
+            - y
+                - np.ndarray, str, optional
+                - contains labels corresponding to X
+                - if a np.ndarray is passed
+                    - will be used as the colormap
+                - if a string is passed
+                    - will be interpreted as the actual color
+                - the default is None
+                    - will default to 'tab:blue'
+            - featurenames
+                - np.ndarray, optional
+                - names to give to the features present in X
+                - the default is None
+                    - will initialize with 'Feature i', where i is the index the feature appears in X
+            - mus
+                - np.ndarray, optional
+                - contains the mean value estimates corresponding to X
+                - the default is None
+                    - will be ignored
+            - sigmas
+                - np.ndarray, optional
+                - contains the standard deviation estimates corresponding to X
+                - the default is None
+                    - will be ignored
+            - corrmat
+                - np.ndarray, optional
+                - correlation matrix for X
+                - has to have shape (X.shape[1],X.shape[1])
+                - the default is None
+                    - will infer the correlation coefficients
+            - bins
+                - int, optional
+                - number of bins to use in plt.histogram
+                - also the resolution for the estimation of the normal distribution
+                - the default is 100
+            - equal_range
+                - bool, optional
+                - whether to plot the data with equal x- and y-limits
+                - the default is False
+            - asstandardnormal
+                - bool, optional
+                - whether to plot the data rescaled to zero mean and unit variance
+                - the default is False
+            - fig
+                - Figure, optional
+                - figure to plot into
+                - the default is None
+                    - will create a new figure
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - fig
+                - Figure
+                - the created matplotlib figure
+            - axs
+                - plt.Axes
+                - axes corresponding to 'fig'
+
+        Dependencies
+        ------------
+            - scipy
+            - matplotlib
+            - numpy
+            - typing
+
+        Comments
+        --------
+
+    """
+
+
+    #initialize correctly
+    if y is None:
+        y = 'tab:blue'
+    if featurenames is None: featurenames = [f"Feature {i}" for i in np.arange(X.shape[1])]
+
+    if mus is None:
+        mus = [None]*len(X)
+    if sigmas is None:
+        sigmas = [None]*len(X)
+    if corrmat is None:
+        corrmat = np.corrcoef(X)
+    if sctr_kwargs is None:
+        sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
+
+
+    #plot
+    if fig is None: fig = plt.figure()
+    nrowscols = X.shape[1]
+
+
+    idx = 0
+    for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(X.T, featurenames, mus, sigmas)):
+        for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(X.T, featurenames, mus, sigmas)):
+            idx += 1
+
+            if asstandardnormal and mu1 is not None and sigma1 is not None:
+                d1 = (d1-mu1)/sigma1
+                d2 = (d2-mu2)/sigma2
+                mu1, mu2 = 0, 0
+                sigma1, sigma2 = 1, 1
+            
+            #plotting 2D distributions
+            if idx1 > idx2:
+
+                ax1 = fig.add_subplot(nrowscols, nrowscols, idx)
+                
+                if mu1 is not None: ax1.axhline(mu1, color="tab:orange", linestyle="--")
+                if mu2 is not None: ax1.axvline(mu2, color="tab:orange", linestyle="--")
+
+                #data
+                sctr = ax1.scatter(
+                    d2, d1,
+                    c=y,               
+                    **sctr_kwargs,
+                )
+
+
+                
+                #normal distribution estimate
+                if mu1 is not None and sigma1 is not None:
+                    
+                    covmat = np.cov(np.array([d1,d2]))
+
+                    xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+                    yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+                    xx, yy = np.meshgrid(xvals, yvals)
+                    mesh = np.dstack((xx, yy))
+                    
+                    norm = stats.multivariate_normal(
+                        mean=np.array([mu1, mu2]),
+                        cov=covmat,
+                        allow_singular=True
+                    )
+                    cont = ax1.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
+                
+
+                #labelling
+                if idx1 == nrowscols-1:
+                    ax1.set_xlabel(l2)
+                else:
+                    ax1.set_xticklabels([])
+                if idx2 == 0:
+                    ax1.set_ylabel(l1)
+                else:
+                    ax1.set_yticklabels([])
+                ax1.tick_params()
+
+                if not equal_range:
+                    ax1.set_xlim(np.nanmin(d2), np.nanmax(d2))
+                    ax1.set_ylim(np.nanmin(d1), np.nanmax(d1))
+
+                #add corrcoeff in legend
+                ax1.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
+                ax1.legend()
+
+            #plotting 1d histograms
+            elif idx1 == idx2:
+                if idx != 1:
+                    orientation = "horizontal"
+                else:
+                    orientation = "vertical"
+
+
+                axhist = fig.add_subplot(nrowscols, nrowscols, idx)
+
+                axhist.hist(d1, bins=bins, orientation=orientation, density=True)
+
+                #normal distribution estimate
+                if mu1 is not None and sigma1 is not None:
+                    xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
+                    normal = stats.norm.pdf(xvals, mu1, sigma1)
+                    
+                    if orientation == "horizontal":
+                        axhist.axhline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+                        axhist.plot(normal, xvals)
+                        if not equal_range:
+                            axhist.set_ylim(np.nanmin(d1), np.nanmax(d1))
+                        
+                        axhist.xaxis.set_ticks_position("top")
+                        axhist.set_yticklabels([])
+                    
+                    elif orientation == "vertical":
+                        axhist.plot(xvals, normal)
+                        axhist.axvline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+                        if not equal_range:
+                            axhist.set_xlim(np.nanmin(d1), np.nanmax(d1))
+                        
+                        axhist.yaxis.set_ticks_position("right")
+                        axhist.set_xticklabels([])
+                
+                    axhist.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
+                    axhist.legend()
+                
+
+                axhist.tick_params()
+    
+    #make x and y limits equal if requested
+    if equal_range and not asstandardnormal:
+        for idx, ax in enumerate(fig.axes):
+            
+            #first 1D histogram
+            if idx == 0:
+                xymin = np.nanmin([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
+                xymax = np.nanmax([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
+                ax.set_xlim(xymin, xymax)
+
+            #all other 1D histograms
+            elif idx > 0 and (idx+1)%nrowscols == 0:
+                xymin = np.nanmin([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
+                xymax = np.nanmax([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
+                ax.set_ylim(xymin, xymax)
+
+            #2D histograms
+            else:
+                xymin = np.nanmin([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
+                xymax = np.nanmax([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
+
+                ax.set_xlim(xymin, xymax)
+                ax.set_ylim(xymin, xymax)
+    
+    axs = fig.axes
+
+    return fig, axs

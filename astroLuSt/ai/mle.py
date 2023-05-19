@@ -10,19 +10,10 @@ from typing import Union, Tuple
 class MLE:
     """
     
-        - Class to execute a simple Maximum Likelihood Estimat on data following a Gaussian distibution
+        - Class to execute a simple Maximum Likelihood Estimate on some data following a Gaussian distibution
 
         Attributes
         ----------
-            - dataseries
-                - np.ndarray of np.ndarrays
-                - contains the different datasets to compare
-                - rows are different samples
-                - columns are different features
-            - series_labels
-                - np.ndarray, optional
-                - contains labels corresponding to the dataseries in 'data'
-                - the default is None
         
         Infered Attributes
         ------------------
@@ -71,90 +62,92 @@ class MLE:
 
     def get_mu(self,
         X:np.ndarray
-        ):
+        ) -> np.ndarray:
         """
             - method to estimate the mean of the gaussian via MLE
 
             Parameters
             ----------
+                - X
+                    - np.ndarray
+                    - input dataset
+                    - contains samples as rows and features as columns
 
             Raises
             ------
 
             Returns
             -------
+                - mus
+                    - np.ndarray
+                    - estimated means
 
             Comments
             --------
         """
         
-        self.mus = np.nanmean(X, axis=0)
+        mus = np.nanmean(X, axis=0)
 
-        return
+        return mus
     
     def get_sigma(self,
         X:np.ndarray
-        ):
+        ) -> np.ndarray:
         """
             - method to estimate the standard deviation of the gaussian via MLE
             - estimate for 1d-case (i.e. 1D histogram)
             
             Parameters
             ----------
-
+                - X
+                    - np.ndarray
+                    - input dataset
+                    - contains samples as rows and features as columns
             Raises
             ------
 
             Returns
             -------
+                - sigmas
+                    - np.ndarray
+                    - standard deviation for every feature
 
             Comments
             --------
         """
 
-        self.sigmas = np.nanstd(X, axis=0)
+        sigmas = np.nanstd(X, axis=0)
 
-        return
+        return sigmas
     
-    def get_covmat(self, X:np.ndarray=None):
+    def get_covmat(self,
+        X:np.ndarray=None
+        ) -> np.ndarray:
         """
             - method to estimate the N-D covariance matrix
 
             Parameters
             ----------
-                - data
-                    - np.array, optional
-                    - 2D array
-                        - 0th axis contains the samples
-                        - 1st axis contains the measurements for each sample
-                    - the default is None
-                        - will use 'self.dataseries' as fallback
-                        
-                - mus
-                    - np.array, optional
-                    - contains the mean values (mu) corresponding to 'data'
-                        - has to have a lenght equal to the second dimension of 'data'
-                    - the default is None
-                        - will use 'self.mus' as fallback
+                - X
+                    - np.ndarray
+                    - input dataset
+                    - contains samples as rows and features as columns
                 
-                Raises
-                ------
+            Raises
+            ------
 
-                Returns
-                -------
-                    - covmat
-                        - np.array
-                        - covariance matrix for a given set of datasets ('data')
+            Returns
+            -------
+                - self.covmat
+                    - np.ndarray
+                    - covariance matrix for a given set of datasets ('data')
                 
-                Dependencies
-                ------------
-                    - numpy
+            Comments
+            --------
 
         """
 
         #N-D data
-        if X is None:
-            X = self.X
         self.covmat = np.cov(X.T)
 
         return self.covmat
@@ -168,6 +161,16 @@ class MLE:
 
             Parameters
             ----------
+                - X
+                    - np.ndarray
+                    - input dataset
+                    - contains samples as rows and features as columns
+                - y
+                    - np.ndarray, optional
+                    - labels corresponding to X
+                    - not needed for actual calculation
+                        - only used for plotting
+                    - the default is None
 
             Raises
             ------
@@ -184,8 +187,8 @@ class MLE:
         self.y = y
 
         #fit estimator
-        self.get_mu(X)
-        self.get_sigma(X)
+        self.mus = self.get_mu(X)
+        self.sigmas = self.get_sigma(X)
         self.covmat = self.get_covmat(X)
         self.corrcoeff = np.corrcoef(X.T)
 
@@ -199,6 +202,18 @@ class MLE:
 
             Parameters
             ----------
+                - X
+                    - np.ndarray, optional
+                    - input dataset
+                    - contains samples as rows and features as columns
+                    - not needed for prediction
+                    - the default is None
+                - y
+                    - np.ndarray, optional
+                    - labels corresponding to X
+                    - not needed for prediction
+                        - only used for plotting
+                    - the default is None
 
             Raises
             ------
@@ -206,8 +221,14 @@ class MLE:
             Returns
             -------
                 - self.mus
+                    - np.ndarray
+                    - array containing the mean of the gaussians
                 - self.sigmas
-                - self.convmat
+                    - np.ndarray
+                    - array containing the standard-deviations of the gaussians
+                - self.covmat
+                    - np.ndarray
+                    - covariance matrix of the input data
 
             Comments
             --------
@@ -222,11 +243,37 @@ class MLE:
         """
             - method to fit the estimator and predict the result afterwards
             
+            Parameters
+            ----------
+                - X
+                    - np.ndarray
+                    - input dataset
+                    - contains samples as rows and features as columns
+                - y
+                    - np.ndarray, optional
+                    - labels corresponding to X
+                    - not needed for actual calculation
+                        - only used for plotting
+                    - the default is None
+
+            Raises
+            ------
+
             Returns
             -------
-                - self.mus
-                - self.sigmas
-                - self.convmat        
+                - mus
+                    - np.ndarray
+                    - array containing the mean of the gaussians
+                - sigmas
+                    - np.ndarray
+                    - array containing the standard-deviations of the gaussians
+                - covmat
+                    - np.ndarray
+                    - covariance matrix of the input data
+
+            Comments
+            --------
+   
         """
 
         self.fit(X=X, y=y)
@@ -234,70 +281,11 @@ class MLE:
 
         return mus, sigmas, covmat
 
-    def corner_plot(self,
-        X:np.ndarray=None, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
-        mus:np.ndarray=None, sigmas:np.ndarray=None,
+    def plot_result(self,
+        featurenames:np.ndarray=None,
         bins:int=100, equal_range:bool=False, asstandardnormal:bool=False,
-        save:str=False,
-        sctr_kwargs:dict=None
+        sctr_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
-        """
-            - method to create a corner plot of a given set of input distributions
-        
-            Parameters
-            ----------
-                - data
-                    - list of np.arrays, optional
-                    - contains the different datasets to compare
-                    - the default is None
-                        - will use the class attribute 'dataseries'
-                - labels
-                    - list, optional
-                    - contains labels corresponding to the dataseries in 'data'
-                    - the default is None
-                        - will use the class attribute 'series_labels'
-                - mus
-                    - list, optional
-                    - contains the mean value estimates corresponding to 'data'
-                    - the default is None
-                        - will use the class attribute 'mus'
-                - sigmas
-                    - list, optional
-                    - contains the standard deviation estimates corresponding to 'data'
-                    - the default is None
-                        - will use the class attribute 'sigmas'
-                - bins
-                    - int, optional
-                    - number of bins to use in plt.histogram
-                    - also the resolution for the estiation of the normal distribution
-                    - the default is 100
-                - equal_range
-                    - bool, optional
-                    - whether to plot the data with equal x- and y-limits
-                    - the default is False
-                - asstandardnormal
-                    - bool, optional
-                    - whether to plot the data rescaled to zero mean and unit variance
-                    - the default is False
-                - save
-                    - str, optional
-                    - location of where to save the created figure
-                    - the default is None
-                        - will not save the figure
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - fig
-                    - matplotlib figure object
-                - axs
-                    - matplotlib axes object
-                    - corresponding to 'fig'
-
-        """
-
 
         #initialize correctly
         if X is None: X = self.X
@@ -462,3 +450,4 @@ class MLE:
         axs = fig.axes
 
         return fig, axs
+
