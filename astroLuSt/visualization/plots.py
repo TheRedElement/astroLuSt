@@ -16,6 +16,8 @@ import time
 from typing import Union, Tuple, List, Callable
 import warnings
 
+from astroLuSt.visualization.plotting import generate_colors
+
 
 
 #%%classes
@@ -643,7 +645,7 @@ class ParallelCoordinates:
         bins = np.linspace(score_col_map.min().item(), score_col_map.max().item(), int(1//nanfrac))
 
         #get colors for bins
-        if isinstance(cmap, str): cmap = plt.get_cmpa(cmap)
+        if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
         colors = cmap(bins)
         
         #get histogram
@@ -2033,6 +2035,275 @@ def plot_dbe(
 
     return
 
+
+class CornerPlot:
+
+    def __init__(self) -> None:
+        pass
+
+    def __2standardnormal(self,
+        d1:np.ndarray, mu1:float, sigma1:float,
+        d2:np.ndarray, mu2:float, sigma2:float,
+        ):
+
+        d1 = (d1-mu1)/sigma1
+        d2 = (d2-mu2)/sigma2
+        mu1, mu2 = 0, 0
+        sigma1, sigma2 = 1, 1
+
+        return (
+            d1, mu1, sigma1,
+            d2, mu2, sigma2,       
+        )
+    
+    def __2d_distributions(self,
+        idx1:int, idx2:int, idx:int,
+        d1:np.ndarray, mu1:float, sigma1:float, l1:str,
+        d2:np.ndarray, mu2:float, sigma2:float, l2:str,
+        corrmat:np.ndarray,
+        y:np.ndarray,
+        cmap:Union[str,mcolors.Colormap],
+        bins:int,
+        fig:Figure, nrowscols:int,
+        equal_range:bool,
+        sctr_kwargs:dict,
+        ) -> plt.Axes:
+
+        #add new panel
+        ax1 = fig.add_subplot(nrowscols, nrowscols, idx)
+        
+        #lines for means
+        if mu1 is not None: ax1.axhline(mu1, color="tab:orange", linestyle="--")
+        if mu2 is not None: ax1.axvline(mu2, color="tab:orange", linestyle="--")
+
+        #data
+        sctr = ax1.scatter(
+            d2, d1,
+            c=y,
+            cmap=cmap,
+            **sctr_kwargs,
+        )
+
+
+        
+        #normal distribution estimate
+        if mu1 is not None and sigma1 is not None:
+            
+            covmat = np.cov(np.array([d1,d2]))
+
+            xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+            yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+            xx, yy = np.meshgrid(xvals, yvals)
+            mesh = np.dstack((xx, yy))
+            
+            norm = stats.multivariate_normal(
+                mean=np.array([mu1, mu2]),
+                cov=covmat,
+                allow_singular=True
+            )
+            cont = ax1.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
+        
+
+        #labelling
+        if idx1 == nrowscols-1:
+            ax1.set_xlabel(l2)
+        else:
+            ax1.set_xticklabels([])
+        if idx2 == 0:
+            ax1.set_ylabel(l1)
+        else:
+            ax1.set_yticklabels([])
+        ax1.tick_params()
+
+        if not equal_range:
+            ax1.set_xlim(np.nanmin(d2), np.nanmax(d2))
+            ax1.set_ylim(np.nanmin(d1), np.nanmax(d1))
+
+        #add corrcoeff in legend
+        ax1.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
+        ax1.legend()
+
+
+        return ax1
+
+    def __1d_distributions(self,
+        idx:int,
+        d1:np.ndarray, mu1:float, sigma1:float,
+        y:np.ndarray,
+        bins:int,
+        cmap:Union[str,mcolors.Colormap],
+        fig:Figure, nrowscols:int,
+        equal_range:bool,
+        hist_kwargs:dict,
+        ) -> plt.Axes:
+
+        #get colors for distributions
+        if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
+        colors = cmap(np.unique(y/np.nanmax(y)).astype(np.float64))
+
+        #add panel
+        axhist = fig.add_subplot(nrowscols, nrowscols, idx)
+
+        #plot histograms
+        if idx != 1:
+            orientation = "horizontal"
+        else:
+            orientation = "vertical"
+
+        #plot histograms (color each class in y)
+        for yu, c in zip(np.unique(y), colors):
+            axhist.hist(
+                d1[(y==yu)], bins=bins//len(np.unique(y)),
+                orientation=orientation,
+                density=True, color=c,
+                **hist_kwargs
+            )
+
+
+        #normal distribution estimate
+        if mu1 is not None and sigma1 is not None:
+            xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
+            normal = stats.norm.pdf(xvals, mu1, sigma1)
+            
+            if orientation == "horizontal":
+                axhist.axhline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+                axhist.plot(normal, xvals)
+                if not equal_range:
+                    axhist.set_ylim(np.nanmin(d1), np.nanmax(d1))
+                
+                axhist.xaxis.set_ticks_position("top")
+                axhist.set_yticklabels([])
+            
+            elif orientation == "vertical":
+                axhist.plot(xvals, normal)
+                axhist.axvline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+                if not equal_range:
+                    axhist.set_xlim(np.nanmin(d1), np.nanmax(d1))
+                
+                axhist.yaxis.set_ticks_position("right")
+                axhist.set_xticklabels([])
+        
+            axhist.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
+            axhist.legend()
+        
+
+        axhist.tick_params()
+
+        return axhist
+    
+    def __make_equalrange(self,
+        fig:Figure, nrowscols:int,
+        ) -> None:
+        for idx, ax in enumerate(fig.axes):
+            
+            #first 1D histogram
+            if idx == 0:
+                xymin = np.nanmin([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
+                xymax = np.nanmax([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
+                ax.set_xlim(xymin, xymax)
+
+            #all other 1D histograms
+            elif idx > 0 and (idx+1)%nrowscols == 0:
+                xymin = np.nanmin([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
+                xymax = np.nanmax([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
+                ax.set_ylim(xymin, xymax)
+
+            #2D histograms
+            else:
+                xymin = np.nanmin([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
+                xymax = np.nanmax([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
+
+                ax.set_xlim(xymin, xymax)
+                ax.set_ylim(xymin, xymax)   
+
+            return     
+
+    def plot(self,
+        X:np.ndarray, y:Union[np.ndarray,str], featurenames:np.ndarray=None,
+        mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
+        bins:int=100,
+        cmap:str='viridis',
+        equal_range:bool=False, asstandardnormal:bool=False,
+        fig:Figure=None,
+        sctr_kwargs:dict=None,
+        hist_kwargs:dict=None,
+        ):
+
+        #initialize correctly
+        if y is None:
+            y = 'tab:blue'
+        if featurenames is None: featurenames = [f"Feature {i}" for i in np.arange(X.shape[1])]
+
+        if mus is None:
+            mus = [None]*len(X)
+        if sigmas is None:
+            sigmas = [None]*len(X)
+        if corrmat is None:
+            corrmat = np.corrcoef(X)
+        if sctr_kwargs is None:
+            sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
+        if hist_kwargs is None:
+            hist_kwargs = {'alpha':0.5, 'zorder':2}
+
+        if fig is None: fig = plt.figure()
+        nrowscols = X.shape[1]
+
+
+        idx = 0
+        for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(X.T, featurenames, mus, sigmas)):
+            for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(X.T, featurenames, mus, sigmas)):
+                idx += 1
+
+                if asstandardnormal and mu1 is not None and sigma1 is not None:
+                    d1, mu1, sigma1, \
+                    d2, mu2, sigma2, =\
+                        self.__2standardnormal(
+                            d1, mu1, sigma1,
+                            d2, mu2, sigma2,
+                        )
+
+                #plotting 2D distributions
+                if idx1 > idx2:
+                    
+                    ax1 = self.__2d_distributions(
+                        idx1, idx2, idx,
+                        d1, mu1, sigma1, l1,
+                        d2, mu2, sigma2, l2,
+                        corrmat,
+                        y,
+                        cmap,
+                        bins,
+                        fig, nrowscols,
+                        equal_range,
+                        sctr_kwargs,                        
+                    )
+
+                #plotting 1d histograms
+                elif idx1 == idx2:
+
+                    axhist = self.__1d_distributions(
+                        idx,
+                        d1, mu1, sigma1,
+                        y,
+                        bins,
+                        cmap,
+                        fig, nrowscols,
+                        equal_range,
+                        hist_kwargs,
+                    )            
+        
+        #make x and y limits equal if requested
+        if equal_range and not asstandardnormal:        
+            self.__make_equalrange(
+                fig, nrowscols
+            )
+
+
+        #get axes
+        axs = fig.axes
+
+        return fig, axs
+    
 def corner_plot(
     X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
     mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
@@ -2211,15 +2482,25 @@ def corner_plot(
 
             #plotting 1d histograms
             elif idx1 == idx2:
-                if idx != 1:
-                    orientation = "horizontal"
-                else:
-                    orientation = "vertical"
-
-
+                
+                #get colors for bins
+                cmap = 'plasma'
+                if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
+                colors = cmap(bins)                
+                hist, bin_edges = np.histogram(d1, bins=bins)
+                
                 axhist = fig.add_subplot(nrowscols, nrowscols, idx)
 
-                axhist.hist(d1, bins=bins, orientation=orientation, density=True)
+                if idx != 1:
+                    orientation = "horizontal"
+                    axhist.barh(bin_edges[:-1], hist, color=colors)
+                    
+                else:
+                    orientation = "vertical"
+                    axhist.bar(bin_edges[:-1], hist)
+
+                # axhist.hist(d1, bins=bins, orientation=orientation, density=True)
+
 
                 #normal distribution estimate
                 if mu1 is not None and sigma1 is not None:
