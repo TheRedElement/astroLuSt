@@ -1942,100 +1942,6 @@ class LatentSpaceExplorer:
 
         return fig, axs
 
-
-#%%functions
-def plot_dbe(
-    X:np.ndarray, y:np.ndarray,
-    res:int=100, k:int=1,
-    ax:plt.Axes=None,
-    contourf_kwargs:dict=None,
-    ) -> None:        
-    """
-        - function to plot estimated desicion-boundaries of data
-        - uses voronoi diagrams to to do so
-            - estimates the decision boundaries using KNN with k=1
-            - Source: https://stackoverflow.com/questions/37718347/plotting-decision-boundary-for-high-dimension-data
-                - last access: 17.05.2023
-        
-        Parameters
-        ----------
-            - X
-                - np.ndarray
-                - 2d array containing the features of the data
-                    - i.e. 2 features
-            - y
-                - np.ndarray
-                - 1d array of shape X.shape[0]
-                - labels corresponding to X
-            - res
-                - int, optional
-                - resolution of the estimated boundary
-                - the default is 100
-            - k
-                - int, optional
-                - number of neighbours to use in the KNN estimator
-                - the default is 1
-            - ax
-                - plt.Axes
-                - axes to add the density estimate to
-                - the default is None
-                    - will call plt.contourf() instead of ax.contourf()
-            - contourf_kwargs
-                - dict, optional
-                - kwargs to pass to .contourf() function
-                - the default is None
-                    - will be initialized with {'alpha':0.5, 'zorder':-1}
-
-
-        Raises
-        ------
-            - ValueError
-                - if either 'X' or 'y' are not passed in coorect shapes
-
-        Returns
-        -------
-
-        Dependencies
-        ------------
-            - matplotlib
-            - numpy
-            - sklearn
-
-        Comments
-        --------
-
-    """
-    
-    #initialize parameters
-    if contourf_kwargs is None: contourf_kwargs = {'alpha':0.5, 'zorder':-1}
-
-    y = y.flatten()
-
-    #check shapes
-    if X.shape[1] != 2:
-        raise ValueError(f'"X" has to contain 2 features. I.e. it has to be of shape (n_samples,2) and not {X.shape}')
-    if y.shape[0] != X.shape[0]:
-        raise ValueError(f'"y" has to be a 1d version of "X" containing the labels corresponding to the samples. I.e. it has to be of shape (n_samples,) and not {y.shape}')
-
-    #get background model
-    background_model = KNeighborsClassifier(n_neighbors=k)
-    background_model.fit(X, y)
-    xx, yy = np.meshgrid(
-        np.linspace(X[:,0].min(), X[:,0].max(), res),
-        np.linspace(X[:,1].min(), X[:,1].max(), res),
-    )
-
-    voronoiBackground = background_model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape((res, res))
-
-    #(add) plot
-    if ax is not None:
-        ax.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
-    else:
-        plt.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
-
-    return
-
-
 class CornerPlot:
     """
         - class to generate a corner plot given some data and potentially labels
@@ -2596,6 +2502,99 @@ class CornerPlot:
 
         return fig, axs
     
+#%%functions
+def plot_dbe(
+    X:np.ndarray, y:np.ndarray,
+    res:int=100, k:int=1,
+    ax:plt.Axes=None,
+    contourf_kwargs:dict=None,
+    ) -> None:        
+    """
+        - function to plot estimated desicion-boundaries of data
+        - uses voronoi diagrams to to do so
+            - estimates the decision boundaries using KNN with k=1
+            - Source: https://stackoverflow.com/questions/37718347/plotting-decision-boundary-for-high-dimension-data
+                - last access: 17.05.2023
+        
+        Parameters
+        ----------
+            - X
+                - np.ndarray
+                - 2d array containing the features of the data
+                    - i.e. 2 features
+            - y
+                - np.ndarray
+                - 1d array of shape X.shape[0]
+                - labels corresponding to X
+            - res
+                - int, optional
+                - resolution of the estimated boundary
+                - the default is 100
+            - k
+                - int, optional
+                - number of neighbours to use in the KNN estimator
+                - the default is 1
+            - ax
+                - plt.Axes
+                - axes to add the density estimate to
+                - the default is None
+                    - will call plt.contourf() instead of ax.contourf()
+            - contourf_kwargs
+                - dict, optional
+                - kwargs to pass to .contourf() function
+                - the default is None
+                    - will be initialized with {'alpha':0.5, 'zorder':-1}
+
+
+        Raises
+        ------
+            - ValueError
+                - if either 'X' or 'y' are not passed in coorect shapes
+
+        Returns
+        -------
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - sklearn
+
+        Comments
+        --------
+
+    """
+    
+    #initialize parameters
+    if contourf_kwargs is None: contourf_kwargs = {'alpha':0.5, 'zorder':-1}
+
+    y = y.flatten()
+
+    #check shapes
+    if X.shape[1] != 2:
+        raise ValueError(f'"X" has to contain 2 features. I.e. it has to be of shape (n_samples,2) and not {X.shape}')
+    if y.shape[0] != X.shape[0]:
+        raise ValueError(f'"y" has to be a 1d version of "X" containing the labels corresponding to the samples. I.e. it has to be of shape (n_samples,) and not {y.shape}')
+
+    #get background model
+    background_model = KNeighborsClassifier(n_neighbors=k)
+    background_model.fit(X, y)
+    xx, yy = np.meshgrid(
+        np.linspace(X[:,0].min(), X[:,0].max(), res),
+        np.linspace(X[:,1].min(), X[:,1].max(), res),
+    )
+
+    voronoiBackground = background_model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape((res, res))
+
+    #(add) plot
+    if ax is not None:
+        ax.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
+    else:
+        plt.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
+
+    return
+
+
 
 
 # def corner_plot(

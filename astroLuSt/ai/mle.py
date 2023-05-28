@@ -6,7 +6,7 @@ import numpy as np
 import scipy.stats as stats
 from typing import Union, Tuple
 
-from astroLuSt.visualization.plots import corner_plot
+from astroLuSt.visualization.plots import CornerPlot
 
 #%%definitions
 class MLE:
@@ -298,7 +298,7 @@ class MLE:
                     - the deafault is None
                 - corner_kwargs
                     - dict, optional
-                    - kwargs to pass to astroLuSt.visualization.plots.corner_plot()
+                    - kwargs to pass to astroLuSt.visualization.plots.CornerPlot().plot()
                     - the default is None
                         - will initialize with {}
 
@@ -320,7 +320,8 @@ class MLE:
 
         if corner_kwargs is None: corner_kwargs = {}
 
-        fig, axs = corner_plot(
+        CP = CornerPlot()
+        fig, axs = CP.plot(
             self.X, self.y, featurenames=featurenames,
             mus=self.mus, sigmas=self.sigmas, corrmat=self.corrcoeff,
             **corner_kwargs,
