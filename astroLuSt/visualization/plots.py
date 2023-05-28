@@ -16,8 +16,6 @@ import time
 from typing import Union, Tuple, List, Callable
 import warnings
 
-from astroLuSt.visualization.plotting import generate_colors
-
 
 
 #%%classes
@@ -1552,7 +1550,8 @@ class LatentSpaceExplorer:
         if y is None: y = 'tab:blue'
         if corner_kwargs is None: corner_kwargs = {}
 
-        fig, axs = corner_plot(
+        CP = CornerPlot()
+        fig, axs = CP.plot(
             X=X, y=y, featurenames=featurenames,
             **corner_kwargs,
         )
