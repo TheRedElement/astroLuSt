@@ -2037,6 +2037,30 @@ def plot_dbe(
 
 
 class CornerPlot:
+    """
+        - class to generate a corner plot given some data and potentially labels
+
+        Attributes
+        ----------
+
+        Methods
+        -------
+            - __2standardnormal()
+            - __2d_distributions()
+            - __1d_distributions()
+            - __make_equalrange()
+            - plot()
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - scipy
+            - typing
+
+        Comments
+        --------
+    """
 
     def __init__(self) -> None:
         pass
@@ -2045,6 +2069,41 @@ class CornerPlot:
         d1:np.ndarray, mu1:float, sigma1:float,
         d2:np.ndarray, mu2:float, sigma2:float,
         ):
+        """
+            - method to convert the input to a standard normal distibution
+                - zero mean
+                - unit variance
+            
+            Parameters
+            ----------
+                - d1
+                    - np.ndarray
+                    - data of the first coordinate to plot
+                - mu1
+                    - np.ndarray
+                    - mean of the first coordinate
+                - sigma1
+                    - np.ndarray
+                    - standard deviation of the first coordinate
+                - d2
+                    - np.ndarray
+                    - data of the second coordinate to plot
+                - mu2
+                    - np.ndarray
+                    - mean of the second coordinate
+                - sigma2
+                    - np.ndarray
+                    - standard deviation of the second coordinate
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
 
         d1 = (d1-mu1)/sigma1
         d2 = (d2-mu2)/sigma2
@@ -2068,23 +2127,96 @@ class CornerPlot:
         equal_range:bool,
         sctr_kwargs:dict,
         ) -> plt.Axes:
+        """
+            - method to generate the (off-diagonal) 2d distributions
+
+            Parameters
+            ----------
+                - idx1
+                    - int
+                    - index of y coordinate in use
+                - idx2
+                    - int
+                    - index of x coordinate in use
+                - idx
+                    - int
+                    - current subplot index
+                - d1
+                    - np.ndarray
+                    - data of the first coordinate to plot
+                - mu1
+                    - np.ndarray
+                    - mean of the first coordinate
+                - sigma1
+                    - np.ndarray
+                    - standard deviation of the first coordinate
+                - l1
+                    - str
+                    - label to apply to y coordinate in use
+                - d2
+                    - np.ndarray
+                    - data of the second coordinate to plot
+                - mu2
+                    - np.ndarray
+                    - mean of the second coordinate
+                - sigma2
+                    - np.ndarray
+                    - standard deviation of the second coordinate
+                - l2
+                    - str
+                    - label to apply to x coordinate in use
+                - corrmat
+                    - np.ndarray
+                    - correlation matrix for all passed coordinates
+                - y
+                    - np.ndarray
+                    - labels for each sample
+                - cmap
+                    - str, Colormap
+                    - name of colormap or Colormap instance to color the datapoints
+                - bins
+                    - int
+                    - number of bins to use for the estimation of the estimated normal distribution
+                - fig
+                    - Figure
+                    - figure to plot into
+                - nrowscols
+                    - int
+                    - number of rows and columns of the corner-plot
+                - equal_range
+                    - bool
+                    - whether to display equal ranges in all subplots
+                - sctr_kwargs
+                    - dict, optional
+                    - kwargs to pass to ax.scatter()
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - ax
+                    - plt.Axes
+                    - created axis
+
+            Comments
+            --------
+        """
 
         #add new panel
-        ax1 = fig.add_subplot(nrowscols, nrowscols, idx)
+        ax = fig.add_subplot(nrowscols, nrowscols, idx)
         
         #lines for means
-        if mu1 is not None: ax1.axhline(mu1, color="tab:orange", linestyle="--")
-        if mu2 is not None: ax1.axvline(mu2, color="tab:orange", linestyle="--")
+        if mu1 is not None: ax.axhline(mu1, color="tab:orange", linestyle="--")
+        if mu2 is not None: ax.axvline(mu2, color="tab:orange", linestyle="--")
 
         #data
-        sctr = ax1.scatter(
+        sctr = ax.scatter(
             d2, d1,
             c=y,
             cmap=cmap,
             **sctr_kwargs,
         )
-
-
         
         #normal distribution estimate
         if mu1 is not None and sigma1 is not None:
@@ -2101,48 +2233,106 @@ class CornerPlot:
                 cov=covmat,
                 allow_singular=True
             )
-            cont = ax1.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
+            cont = ax.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
         
 
         #labelling
         if idx1 == nrowscols-1:
-            ax1.set_xlabel(l2)
+            ax.set_xlabel(l2)
         else:
-            ax1.set_xticklabels([])
+            ax.set_xticklabels([])
         if idx2 == 0:
-            ax1.set_ylabel(l1)
+            ax.set_ylabel(l1)
         else:
-            ax1.set_yticklabels([])
-        ax1.tick_params()
+            ax.set_yticklabels([])
+        ax.tick_params()
 
         if not equal_range:
-            ax1.set_xlim(np.nanmin(d2), np.nanmax(d2))
-            ax1.set_ylim(np.nanmin(d1), np.nanmax(d1))
+            ax.set_xlim(np.nanmin(d2), np.nanmax(d2))
+            ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
 
         #add corrcoeff in legend
-        ax1.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
-        ax1.legend()
+        ax.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
+        ax.legend()
 
 
-        return ax1
+        return ax
 
     def __1d_distributions(self,
         idx:int,
         d1:np.ndarray, mu1:float, sigma1:float,
         y:np.ndarray,
-        bins:int,
         cmap:Union[str,mcolors.Colormap],
+        bins:int,
         fig:Figure, nrowscols:int,
         equal_range:bool,
         hist_kwargs:dict,
         ) -> plt.Axes:
+        """
+            - method to generate (on-diagonal) 1d distributions (i.e. histograms)
+
+            Parameters
+            ----------
+                - idx
+                    - int
+                    - current subplot index
+                - d1
+                    - np.ndarray
+                    - data of the first coordinate to plot
+                - mu1
+                    - np.ndarray
+                    - mean of the first coordinate
+                - sigma1
+                    - np.ndarray
+                    - standard deviation of the first coordinate
+                - y
+                    - np.ndarray
+                    - labels for each sample
+                - cmap
+                    - str, Colormap
+                    - name of colormap or Colormap instance to color the datapoints
+                - bins
+                    - int
+                    - number of bins to use for the histograms
+                - fig
+                    - Figure
+                    - figure to plot into
+                - nrowscols
+                    - int
+                    - number of rows and columns of the corner-plot
+                - equal_range
+                    - bool
+                    - whether to display equal ranges in all subplots
+                - hist_kwargs
+                    - dict, optional
+                    - kwargs to pass to ax.hist()
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - ax
+                    - plt.Axes
+                    - created axis
+
+            Comments
+            --------
+
+        """
+
 
         #get colors for distributions
         if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
-        colors = cmap(np.unique(y/np.nanmax(y)).astype(np.float64))
+        if isinstance(y, str):
+            ##if no classes got passed
+            colors = [y]
+        else:
+            ##generate colormap if classes are passed
+            colors = cmap(mcolors.Normalize()(np.unique(y).astype(np.float64)))
 
         #add panel
-        axhist = fig.add_subplot(nrowscols, nrowscols, idx)
+        ax = fig.add_subplot(nrowscols, nrowscols, idx)
 
         #plot histograms
         if idx != 1:
@@ -2152,8 +2342,8 @@ class CornerPlot:
 
         #plot histograms (color each class in y)
         for yu, c in zip(np.unique(y), colors):
-            axhist.hist(
-                d1[(y==yu)], bins=bins//len(np.unique(y)),
+            ax.hist(
+                d1[(y==yu)].flatten(), bins=bins//len(np.unique(y)),
                 orientation=orientation,
                 density=True, color=c,
                 **hist_kwargs
@@ -2166,34 +2356,58 @@ class CornerPlot:
             normal = stats.norm.pdf(xvals, mu1, sigma1)
             
             if orientation == "horizontal":
-                axhist.axhline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
-                axhist.plot(normal, xvals)
+                ax.axhline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+                ax.plot(normal, xvals)
                 if not equal_range:
-                    axhist.set_ylim(np.nanmin(d1), np.nanmax(d1))
+                    ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
                 
-                axhist.xaxis.set_ticks_position("top")
-                axhist.set_yticklabels([])
+                ax.xaxis.set_ticks_position("top")
+                ax.set_yticklabels([])
             
             elif orientation == "vertical":
-                axhist.plot(xvals, normal)
-                axhist.axvline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+                ax.plot(xvals, normal)
+                ax.axvline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
                 if not equal_range:
-                    axhist.set_xlim(np.nanmin(d1), np.nanmax(d1))
+                    ax.set_xlim(np.nanmin(d1), np.nanmax(d1))
                 
-                axhist.yaxis.set_ticks_position("right")
-                axhist.set_xticklabels([])
+                ax.yaxis.set_ticks_position("right")
+                ax.set_xticklabels([])
         
-            axhist.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
-            axhist.legend()
+            ax.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
+            ax.legend()
         
 
-        axhist.tick_params()
+        ax.tick_params()
 
-        return axhist
+        return ax
     
     def __make_equalrange(self,
         fig:Figure, nrowscols:int,
         ) -> None:
+        """
+            - method to redefine the x- and y-limits to display an equal range in both directions
+
+            Parameters
+            ----------
+                - fig
+                    - Figure
+                    -  figure to modify the axes-ranges of
+                - nrowscols
+                    - int
+                    - number of rows and columns in the figure
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+
+        """
+
+
         for idx, ax in enumerate(fig.axes):
             
             #first 1D histogram
@@ -2222,12 +2436,90 @@ class CornerPlot:
         X:np.ndarray, y:Union[np.ndarray,str], featurenames:np.ndarray=None,
         mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
         bins:int=100,
-        cmap:str='viridis',
+        cmap:Union[str,mcolors.Colormap]='viridis',
         equal_range:bool=False, asstandardnormal:bool=False,
         fig:Figure=None,
         sctr_kwargs:dict=None,
         hist_kwargs:dict=None,
         ):
+        """
+            - method to create the corner-plot
+
+            Parameters
+            ----------
+                - X
+                    - np.ndarray
+                    - contains samples as rows
+                    - contains features as columns
+                - y
+                    - np.ndarray, str, optional
+                    - contains labels corresponding to X
+                    - if a np.ndarray is passed
+                        - will be used as the colormap
+                    - if a string is passed
+                        - will be interpreted as the actual color
+                    - the default is None
+                        - will default to 'tab:blue'
+                - featurenames
+                    - np.ndarray, optional
+                    - names to give to the features present in X
+                    - the default is None
+                        - will initialize with 'Feature i', where i is the index the feature appears in X
+                - mus
+                    - np.ndarray, optional
+                    - contains the mean value estimates corresponding to X
+                    - the default is None
+                        - will be ignored
+                - sigmas
+                    - np.ndarray, optional
+                    - contains the standard deviation estimates corresponding to X
+                    - the default is None
+                        - will be ignored
+                - corrmat
+                    - np.ndarray, optional
+                    - correlation matrix for X
+                    - has to have shape (X.shape[1],X.shape[1])
+                    - the default is None
+                        - will infer the correlation coefficients
+                - bins
+                    - int, optional
+                    - number of bins to use in plt.histogram
+                    - also the resolution for the estimation of the normal distribution
+                    - the default is 100
+                - cmap
+                    - str, mcolors.Colormap
+                    - name of the colormap to use or Colormap instance
+                    - used to color the 1d and 2d distributions according to y
+                    - the default is 'viridis'
+                - equal_range
+                    - bool, optional
+                    - whether to plot the data with equal x- and y-limits
+                    - the default is False
+                - asstandardnormal
+                    - bool, optional
+                    - whether to plot the data rescaled to zero mean and unit variance
+                    - the default is False
+                - fig
+                    - Figure, optional
+                    - figure to plot into
+                    - the default is None
+                        - will create a new figure
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - Figure
+                    - the created matplotlib figure
+                - axs
+                    - plt.Axes
+                    - axes corresponding to 'fig'
+
+            Comments
+            --------
+        """
 
         #initialize correctly
         if y is None:
@@ -2285,8 +2577,8 @@ class CornerPlot:
                         idx,
                         d1, mu1, sigma1,
                         y,
-                        bins,
                         cmap,
+                        bins,
                         fig, nrowscols,
                         equal_range,
                         hist_kwargs,
@@ -2304,257 +2596,259 @@ class CornerPlot:
 
         return fig, axs
     
-def corner_plot(
-    X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
-    mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
-    bins:int=100,
-    equal_range:bool=False, asstandardnormal:bool=False,
-    fig:Figure=None,
-    sctr_kwargs:dict=None
-    ) -> Tuple[Figure,plt.Axes]:
-    """
-        - function to create a corner plot of a given set of input data X
+
+
+# def corner_plot(
+#     X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
+#     mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
+#     bins:int=100,
+#     equal_range:bool=False, asstandardnormal:bool=False,
+#     fig:Figure=None,
+#     sctr_kwargs:dict=None
+#     ) -> Tuple[Figure,plt.Axes]:
+#     """
+#         - function to create a corner plot of a given set of input data X
     
-        Parameters
-        ----------
-            - X
-                - np.ndarray
-                - contains samples as rows
-                - contains features as columns
-            - y
-                - np.ndarray, str, optional
-                - contains labels corresponding to X
-                - if a np.ndarray is passed
-                    - will be used as the colormap
-                - if a string is passed
-                    - will be interpreted as the actual color
-                - the default is None
-                    - will default to 'tab:blue'
-            - featurenames
-                - np.ndarray, optional
-                - names to give to the features present in X
-                - the default is None
-                    - will initialize with 'Feature i', where i is the index the feature appears in X
-            - mus
-                - np.ndarray, optional
-                - contains the mean value estimates corresponding to X
-                - the default is None
-                    - will be ignored
-            - sigmas
-                - np.ndarray, optional
-                - contains the standard deviation estimates corresponding to X
-                - the default is None
-                    - will be ignored
-            - corrmat
-                - np.ndarray, optional
-                - correlation matrix for X
-                - has to have shape (X.shape[1],X.shape[1])
-                - the default is None
-                    - will infer the correlation coefficients
-            - bins
-                - int, optional
-                - number of bins to use in plt.histogram
-                - also the resolution for the estimation of the normal distribution
-                - the default is 100
-            - equal_range
-                - bool, optional
-                - whether to plot the data with equal x- and y-limits
-                - the default is False
-            - asstandardnormal
-                - bool, optional
-                - whether to plot the data rescaled to zero mean and unit variance
-                - the default is False
-            - fig
-                - Figure, optional
-                - figure to plot into
-                - the default is None
-                    - will create a new figure
+#         Parameters
+#         ----------
+#             - X
+#                 - np.ndarray
+#                 - contains samples as rows
+#                 - contains features as columns
+#             - y
+#                 - np.ndarray, str, optional
+#                 - contains labels corresponding to X
+#                 - if a np.ndarray is passed
+#                     - will be used as the colormap
+#                 - if a string is passed
+#                     - will be interpreted as the actual color
+#                 - the default is None
+#                     - will default to 'tab:blue'
+#             - featurenames
+#                 - np.ndarray, optional
+#                 - names to give to the features present in X
+#                 - the default is None
+#                     - will initialize with 'Feature i', where i is the index the feature appears in X
+#             - mus
+#                 - np.ndarray, optional
+#                 - contains the mean value estimates corresponding to X
+#                 - the default is None
+#                     - will be ignored
+#             - sigmas
+#                 - np.ndarray, optional
+#                 - contains the standard deviation estimates corresponding to X
+#                 - the default is None
+#                     - will be ignored
+#             - corrmat
+#                 - np.ndarray, optional
+#                 - correlation matrix for X
+#                 - has to have shape (X.shape[1],X.shape[1])
+#                 - the default is None
+#                     - will infer the correlation coefficients
+#             - bins
+#                 - int, optional
+#                 - number of bins to use in plt.histogram
+#                 - also the resolution for the estimation of the normal distribution
+#                 - the default is 100
+#             - equal_range
+#                 - bool, optional
+#                 - whether to plot the data with equal x- and y-limits
+#                 - the default is False
+#             - asstandardnormal
+#                 - bool, optional
+#                 - whether to plot the data rescaled to zero mean and unit variance
+#                 - the default is False
+#             - fig
+#                 - Figure, optional
+#                 - figure to plot into
+#                 - the default is None
+#                     - will create a new figure
 
-        Raises
-        ------
+#         Raises
+#         ------
 
-        Returns
-        -------
-            - fig
-                - Figure
-                - the created matplotlib figure
-            - axs
-                - plt.Axes
-                - axes corresponding to 'fig'
+#         Returns
+#         -------
+#             - fig
+#                 - Figure
+#                 - the created matplotlib figure
+#             - axs
+#                 - plt.Axes
+#                 - axes corresponding to 'fig'
 
-        Dependencies
-        ------------
-            - scipy
-            - matplotlib
-            - numpy
-            - typing
+#         Dependencies
+#         ------------
+#             - scipy
+#             - matplotlib
+#             - numpy
+#             - typing
 
-        Comments
-        --------
+#         Comments
+#         --------
 
-    """
-
-
-    #initialize correctly
-    if y is None:
-        y = 'tab:blue'
-    if featurenames is None: featurenames = [f"Feature {i}" for i in np.arange(X.shape[1])]
-
-    if mus is None:
-        mus = [None]*len(X)
-    if sigmas is None:
-        sigmas = [None]*len(X)
-    if corrmat is None:
-        corrmat = np.corrcoef(X)
-    if sctr_kwargs is None:
-        sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
+#     """
 
 
-    #plot
-    if fig is None: fig = plt.figure()
-    nrowscols = X.shape[1]
+#     #initialize correctly
+#     if y is None:
+#         y = 'tab:blue'
+#     if featurenames is None: featurenames = [f"Feature {i}" for i in np.arange(X.shape[1])]
+
+#     if mus is None:
+#         mus = [None]*len(X)
+#     if sigmas is None:
+#         sigmas = [None]*len(X)
+#     if corrmat is None:
+#         corrmat = np.corrcoef(X)
+#     if sctr_kwargs is None:
+#         sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
 
 
-    idx = 0
-    for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(X.T, featurenames, mus, sigmas)):
-        for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(X.T, featurenames, mus, sigmas)):
-            idx += 1
+#     #plot
+#     if fig is None: fig = plt.figure()
+#     nrowscols = X.shape[1]
 
-            if asstandardnormal and mu1 is not None and sigma1 is not None:
-                d1 = (d1-mu1)/sigma1
-                d2 = (d2-mu2)/sigma2
-                mu1, mu2 = 0, 0
-                sigma1, sigma2 = 1, 1
+
+#     idx = 0
+#     for idx1, (d1, l1, mu1, sigma1) in enumerate(zip(X.T, featurenames, mus, sigmas)):
+#         for idx2, (d2, l2, mu2, sigma2) in enumerate(zip(X.T, featurenames, mus, sigmas)):
+#             idx += 1
+
+#             if asstandardnormal and mu1 is not None and sigma1 is not None:
+#                 d1 = (d1-mu1)/sigma1
+#                 d2 = (d2-mu2)/sigma2
+#                 mu1, mu2 = 0, 0
+#                 sigma1, sigma2 = 1, 1
             
-            #plotting 2D distributions
-            if idx1 > idx2:
+#             #plotting 2D distributions
+#             if idx1 > idx2:
 
-                ax1 = fig.add_subplot(nrowscols, nrowscols, idx)
+#                 ax1 = fig.add_subplot(nrowscols, nrowscols, idx)
                 
-                if mu1 is not None: ax1.axhline(mu1, color="tab:orange", linestyle="--")
-                if mu2 is not None: ax1.axvline(mu2, color="tab:orange", linestyle="--")
+#                 if mu1 is not None: ax1.axhline(mu1, color="tab:orange", linestyle="--")
+#                 if mu2 is not None: ax1.axvline(mu2, color="tab:orange", linestyle="--")
 
-                #data
-                sctr = ax1.scatter(
-                    d2, d1,
-                    c=y,               
-                    **sctr_kwargs,
-                )
+#                 #data
+#                 sctr = ax1.scatter(
+#                     d2, d1,
+#                     c=y,               
+#                     **sctr_kwargs,
+#                 )
 
 
                 
-                #normal distribution estimate
-                if mu1 is not None and sigma1 is not None:
+#                 #normal distribution estimate
+#                 if mu1 is not None and sigma1 is not None:
                     
-                    covmat = np.cov(np.array([d1,d2]))
+#                     covmat = np.cov(np.array([d1,d2]))
 
-                    xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
-                    yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
-                    xx, yy = np.meshgrid(xvals, yvals)
-                    mesh = np.dstack((xx, yy))
+#                     xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+#                     yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+#                     xx, yy = np.meshgrid(xvals, yvals)
+#                     mesh = np.dstack((xx, yy))
                     
-                    norm = stats.multivariate_normal(
-                        mean=np.array([mu1, mu2]),
-                        cov=covmat,
-                        allow_singular=True
-                    )
-                    cont = ax1.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
+#                     norm = stats.multivariate_normal(
+#                         mean=np.array([mu1, mu2]),
+#                         cov=covmat,
+#                         allow_singular=True
+#                     )
+#                     cont = ax1.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
                 
 
-                #labelling
-                if idx1 == nrowscols-1:
-                    ax1.set_xlabel(l2)
-                else:
-                    ax1.set_xticklabels([])
-                if idx2 == 0:
-                    ax1.set_ylabel(l1)
-                else:
-                    ax1.set_yticklabels([])
-                ax1.tick_params()
+#                 #labelling
+#                 if idx1 == nrowscols-1:
+#                     ax1.set_xlabel(l2)
+#                 else:
+#                     ax1.set_xticklabels([])
+#                 if idx2 == 0:
+#                     ax1.set_ylabel(l1)
+#                 else:
+#                     ax1.set_yticklabels([])
+#                 ax1.tick_params()
 
-                if not equal_range:
-                    ax1.set_xlim(np.nanmin(d2), np.nanmax(d2))
-                    ax1.set_ylim(np.nanmin(d1), np.nanmax(d1))
+#                 if not equal_range:
+#                     ax1.set_xlim(np.nanmin(d2), np.nanmax(d2))
+#                     ax1.set_ylim(np.nanmin(d1), np.nanmax(d1))
 
-                #add corrcoeff in legend
-                ax1.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
-                ax1.legend()
+#                 #add corrcoeff in legend
+#                 ax1.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
+#                 ax1.legend()
 
-            #plotting 1d histograms
-            elif idx1 == idx2:
+#             #plotting 1d histograms
+#             elif idx1 == idx2:
                 
-                #get colors for bins
-                cmap = 'plasma'
-                if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
-                colors = cmap(bins)                
-                hist, bin_edges = np.histogram(d1, bins=bins)
+#                 #get colors for bins
+#                 cmap = 'plasma'
+#                 if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
+#                 colors = cmap(bins)                
+#                 hist, bin_edges = np.histogram(d1, bins=bins)
                 
-                axhist = fig.add_subplot(nrowscols, nrowscols, idx)
+#                 axhist = fig.add_subplot(nrowscols, nrowscols, idx)
 
-                if idx != 1:
-                    orientation = "horizontal"
-                    axhist.barh(bin_edges[:-1], hist, color=colors)
+#                 if idx != 1:
+#                     orientation = "horizontal"
+#                     axhist.barh(bin_edges[:-1], hist, color=colors)
                     
-                else:
-                    orientation = "vertical"
-                    axhist.bar(bin_edges[:-1], hist)
+#                 else:
+#                     orientation = "vertical"
+#                     axhist.bar(bin_edges[:-1], hist)
 
-                # axhist.hist(d1, bins=bins, orientation=orientation, density=True)
+#                 # axhist.hist(d1, bins=bins, orientation=orientation, density=True)
 
 
-                #normal distribution estimate
-                if mu1 is not None and sigma1 is not None:
-                    xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
-                    normal = stats.norm.pdf(xvals, mu1, sigma1)
+#                 #normal distribution estimate
+#                 if mu1 is not None and sigma1 is not None:
+#                     xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
+#                     normal = stats.norm.pdf(xvals, mu1, sigma1)
                     
-                    if orientation == "horizontal":
-                        axhist.axhline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
-                        axhist.plot(normal, xvals)
-                        if not equal_range:
-                            axhist.set_ylim(np.nanmin(d1), np.nanmax(d1))
+#                     if orientation == "horizontal":
+#                         axhist.axhline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+#                         axhist.plot(normal, xvals)
+#                         if not equal_range:
+#                             axhist.set_ylim(np.nanmin(d1), np.nanmax(d1))
                         
-                        axhist.xaxis.set_ticks_position("top")
-                        axhist.set_yticklabels([])
+#                         axhist.xaxis.set_ticks_position("top")
+#                         axhist.set_yticklabels([])
                     
-                    elif orientation == "vertical":
-                        axhist.plot(xvals, normal)
-                        axhist.axvline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
-                        if not equal_range:
-                            axhist.set_xlim(np.nanmin(d1), np.nanmax(d1))
+#                     elif orientation == "vertical":
+#                         axhist.plot(xvals, normal)
+#                         axhist.axvline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+#                         if not equal_range:
+#                             axhist.set_xlim(np.nanmin(d1), np.nanmax(d1))
                         
-                        axhist.yaxis.set_ticks_position("right")
-                        axhist.set_xticklabels([])
+#                         axhist.yaxis.set_ticks_position("right")
+#                         axhist.set_xticklabels([])
                 
-                    axhist.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
-                    axhist.legend()
+#                     axhist.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
+#                     axhist.legend()
                 
 
-                axhist.tick_params()
+#                 axhist.tick_params()
     
-    #make x and y limits equal if requested
-    if equal_range and not asstandardnormal:
-        for idx, ax in enumerate(fig.axes):
+#     #make x and y limits equal if requested
+#     if equal_range and not asstandardnormal:
+#         for idx, ax in enumerate(fig.axes):
             
-            #first 1D histogram
-            if idx == 0:
-                xymin = np.nanmin([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
-                xymax = np.nanmax([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
-                ax.set_xlim(xymin, xymax)
+#             #first 1D histogram
+#             if idx == 0:
+#                 xymin = np.nanmin([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
+#                 xymax = np.nanmax([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
+#                 ax.set_xlim(xymin, xymax)
 
-            #all other 1D histograms
-            elif idx > 0 and (idx+1)%nrowscols == 0:
-                xymin = np.nanmin([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
-                xymax = np.nanmax([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
-                ax.set_ylim(xymin, xymax)
+#             #all other 1D histograms
+#             elif idx > 0 and (idx+1)%nrowscols == 0:
+#                 xymin = np.nanmin([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
+#                 xymax = np.nanmax([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
+#                 ax.set_ylim(xymin, xymax)
 
-            #2D histograms
-            else:
-                xymin = np.nanmin([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
-                xymax = np.nanmax([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
+#             #2D histograms
+#             else:
+#                 xymin = np.nanmin([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
+#                 xymax = np.nanmax([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
 
-                ax.set_xlim(xymin, xymax)
-                ax.set_ylim(xymin, xymax)
+#                 ax.set_xlim(xymin, xymax)
+#                 ax.set_ylim(xymin, xymax)
     
-    axs = fig.axes
+#     axs = fig.axes
 
-    return fig, axs
+#     return fig, axs
