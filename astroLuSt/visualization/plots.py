@@ -2250,7 +2250,7 @@ class CornerPlot:
             ax.hist(
                 d1[(y==yu)].flatten(), bins=bins//len(np.unique(y)),
                 orientation=orientation,
-                density=True, color=c,
+                color=c,
                 **hist_kwargs
             )
 
@@ -2440,7 +2440,7 @@ class CornerPlot:
         if sctr_kwargs is None:
             sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
         if hist_kwargs is None:
-            hist_kwargs = {'alpha':0.5, 'zorder':2}
+            hist_kwargs = {'density':True, 'alpha':0.5, 'zorder':2}
 
         if fig is None: fig = plt.figure()
         nrowscols = X.shape[1]
