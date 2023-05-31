@@ -716,6 +716,9 @@ class PDM:
         return best_period, errestimate, best_theta
 
     def plot_result(self,
+        x:np.ndarray=None, y:np.ndarray=None,
+        fig_kwargs:dict=None,
+        sctr_kwargs:dict=None,                    
         ) -> Tuple[Figure, plt.Axes]:
         """
             - method to plot the result of the pdm
@@ -725,7 +728,28 @@ class PDM:
 
             Parameters
             ----------
-
+                - x
+                    - np.ndarray, optional
+                    - x-values of a dataseries to plot folded with the determined period
+                    - usually the dataseries the analysis was done one
+                    - the default is None
+                        - will not plot a dataseries
+                - y
+                    - np.ndarray, optional
+                    - y-values of a dataseries to plot folded with the determined period
+                    - usually the dataseries the analysis was done one
+                    - the default is None
+                        - will not plot a dataseries            
+                - fig_kwargs
+                    - dict, optional
+                    - kwargs for matplotlib plt.figure() method
+                    - the default is None
+                        - will initialize with an empty dict
+                - sctr_kwargs
+                    - dict, optional
+                    - kwargs for matplotlib ax.scatter() method used to plot theta(period)
+                    - the default is None
+                        - will initialize with an empty dict
             Raises
             ------
 
@@ -741,10 +765,21 @@ class PDM:
             --------
         
         """
-        fig = plt.figure()
-        ax1 = fig.add_subplot(211)
-        ax1.set_title("PDM-result", fontsize=18)
-        ax1.scatter(self.trial_periods, self.thetas, color="tab:blue", s=1, marker=".", zorder=1)
+
+        if fig_kwargs  is None: fig_kwargs = {}
+        if sctr_kwargs is None: sctr_kwargs = {}
+        
+
+        fig = plt.figure(**fig_kwargs)
+        #check if folded dataseries shall be plotted as well
+        if x is not None and y is not None:
+            ax1 = fig.add_subplot(211)
+            ax2 = fig.add_subplot(212)
+        else:
+            ax1 = fig.add_subplot(111)
+
+        ax1.set_title("PDM-result")
+        ax1.scatter(self.trial_periods, self.thetas, color="tab:blue", s=1, zorder=1, **sctr_kwargs)
         ax1.axvline(self.best_period, color="tab:orange", linestyle="-", label=r"$P_{\mathrm{PDM}} =$" + f"{self.best_period:.3f}", zorder=2)
         ax1.fill_between([np.nanmin(self.trial_periods), np.nanmax(self.trial_periods)], y1=[self.best_theta]*2, y2=[max(self.theta_tolerance, self.best_theta)]*2, color='tab:grey', alpha=0.2, label='Tolerated as improvement')
         ax1.axhline(self.best_theta, color="tab:orange", linestyle="-", zorder=2)
@@ -752,13 +787,15 @@ class PDM:
         ax1.set_xlabel("Period")
         ax1.set_ylabel(r"$\theta$")
         ax1.legend()
-        ax2 = fig.add_subplot(212)
-        ax2.set_title("Folded Input")
-        ax2.plot(self.best_fold_x, self.best_fold_y, color="tab:blue", marker=".", linestyle="", label="Folded Input-Dataseries")
-        ax2.tick_params("both")
-        ax2.set_xlabel("x")
-        ax2.set_ylabel("y")
-        ax2.legend()
+        
+        #plot folded dataseries if requested
+        if x is not None and y is not None:
+                        
+            ax2.set_title("Folded Input")
+            ax2.scatter(fold(x, self.best_period, 0), y, color="tab:blue", marker=".", linestyle="", label="Folded Input-Dataseries")
+            ax2.tick_params("both")
+            ax2.set_xlabel("x")
+            ax2.set_ylabel("y")
 
         plt.tight_layout()
                 

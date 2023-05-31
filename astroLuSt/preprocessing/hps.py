@@ -23,6 +23,7 @@ import warnings
 
 
 from astroLuSt.preprocessing.pdm import PDM
+from astroLuSt.preprocessing.dataseries_manipulation import fold
 
 
 #%%definitions
@@ -658,8 +659,9 @@ class HPS:
         return best_period, best_psi
     
     def plot_result(self,
-        fig_kwargs:dict={},
-        plot_kwargs:dict={},
+        x:np.ndarray=None, y:np.ndarray=None,
+        fig_kwargs:dict=None,
+        plot_kwargs:dict=None,
         ) -> Tuple[Figure, plt.Axes]:
         """
             - method to plot the result of the pdm
@@ -691,16 +693,27 @@ class HPS:
             --------
 
         """
+
+        if fig_kwargs  is None: fig_kwargs = {}
+        if plot_kwargs is None: plot_kwargs = {}
         
         c_ls = 'tab:olive'
         c_pdm = 'tab:green'
         c_hps = 'tab:orange'
         
         fig = plt.figure(**fig_kwargs)
-        ax1 = fig.add_subplot(111)
+        #check if folded dataseries shall be plotted as well
+        if x is not None and y is not None:
+            ax1 = fig.add_subplot(211)
+            ax4 = fig.add_subplot(212)
+        else:
+            ax1 = fig.add_subplot(111)
         ax2 = ax1.twinx()
         ax3 = ax1.twinx()
         ax3.spines["right"].set_position(("axes", 1.2))
+
+        ax1.set_title("HPS-result")
+
 
         #sort axis
         ax1.set_zorder(3)
@@ -733,6 +746,14 @@ class HPS:
         ax2.tick_params(axis='y', colors=c_pdm)
         ax3.tick_params(axis='y', colors=c_ls)
         
+        #plot folded dataseries if requested
+        if x is not None and y is not None:
+            
+            ax4.set_title("Folded Input")
+            ax4.scatter(fold(x, self.best_period, 0)[0], y, color='tab:blue', s=1, label="Folded Input-Dataseries")
+            ax4.set_xlabel("x")
+            ax4.set_ylabel("y")
+
         plt.tight_layout()
 
         axs = fig.axes
