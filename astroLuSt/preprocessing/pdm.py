@@ -792,7 +792,7 @@ class PDM:
         if x is not None and y is not None:
                         
             ax2.set_title("Folded Input")
-            ax2.scatter(fold(x, self.best_period, 0), y, color="tab:blue", marker=".", linestyle="", label="Folded Input-Dataseries")
+            ax2.scatter(fold(x, self.best_period, 0)[0], y, color="tab:blue", marker=".", linestyle="", label="Folded Input-Dataseries")
             ax2.tick_params("both")
             ax2.set_xlabel("x")
             ax2.set_ylabel("y")
