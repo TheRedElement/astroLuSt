@@ -671,12 +671,28 @@ class HPS:
 
             Parameters
             ----------
+                - x
+                    - np.ndarray, optional
+                    - x-values of a dataseries to plot folded with the determined period
+                    - usually the dataseries the analysis was done one
+                    - the default is None
+                        - will not plot a dataseries
+                - y
+                    - np.ndarray, optional
+                    - y-values of a dataseries to plot folded with the determined period
+                    - usually the dataseries the analysis was done one
+                    - the default is None
+                        - will not plot a dataseries
                 - fig_kwargs
                     - dict, optional
                     - kwargs for matplotlib plt.figure() method
+                    - the default is None
+                        - will initialize with an empty dict
                 - plot_kwargs
                     - dict, optional
                     - kwargs for matplotlib ax.plot() method
+                    - the default is None
+                        - will initialize with an empty dict
             
             Raises
             ------
