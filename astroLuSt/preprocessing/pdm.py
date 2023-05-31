@@ -780,7 +780,7 @@ class PDM:
 
         ax1.set_title("PDM-result")
         ax1.scatter(self.trial_periods, self.thetas, color='tab:blue', s=1, zorder=1, **sctr_kwargs)
-        ax1.axvline(self.best_period, color='tab:grey', linestyle="--", label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period), zorder=2)
+        ax1.axvline(self.best_period, color='tab:grey', linestyle="--", label=r'$\mathrm{P_{PDM}}$ = %.3f'%(self.best_period), zorder=2)
         ax1.fill_between([np.nanmin(self.trial_periods), np.nanmax(self.trial_periods)], y1=[self.best_theta]*2, y2=[max(self.theta_tolerance, self.best_theta)]*2, color='tab:grey', alpha=0.2, label='Tolerated as improvement')
         # ax1.axhline(self.best_theta, color="tab:grey", linestyle="--", zorder=2)
         ax1.set_xlabel(r'Period')
