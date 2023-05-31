@@ -732,7 +732,6 @@ class SigmaClipping:
         ax1.set_ylabel("y")
 
         ax1.legend()
-        plt.show()
 
         axs = fig.axes
 
@@ -1107,7 +1106,6 @@ class StringOfPearls:
         ax1.legend(patches, [s.get_label() for s in patches])
 
         plt.tight_layout()
-        plt.show()
 
 
         axs = fig.axes
@@ -1397,7 +1395,6 @@ class PercentileClipping:
         ax1.legend(patches, [s.get_label() for s in patches])
 
         plt.tight_layout()
-        plt.show()
 
         axs = fig.axes
 

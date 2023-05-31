@@ -489,7 +489,6 @@ class Binning:
         ax1.legend()
 
         fig.tight_layout()
-        plt.show()
 
         axs = fig.axes
 

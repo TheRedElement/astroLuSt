@@ -734,7 +734,6 @@ class HPS:
         ax3.tick_params(axis='y', colors=c_ls)
         
         plt.tight_layout()
-        plt.show()
 
         axs = fig.axes
 

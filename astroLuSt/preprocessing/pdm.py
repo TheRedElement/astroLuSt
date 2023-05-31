@@ -762,7 +762,6 @@ class PDM:
 
         plt.tight_layout()
                 
-        plt.show()
 
         axs = fig.axes
 
