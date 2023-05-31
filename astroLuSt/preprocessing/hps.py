@@ -742,14 +742,14 @@ class HPS:
         l_pdm,  = ax2.plot(self.trial_periods, self.thetas_hps, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM')
         l_ls,   = ax3.plot(1/self.trial_frequencies,  self.powers_hps, color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle')
         
-        ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period))
+        vline   = ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period))
 
         ax1.set_xlabel('Period')
         ax1.set_ylabel(r'$\Psi$',   color=c_hps)
         ax2.set_ylabel(r'$(1-\theta)\left|_0^1\right.$', color=c_pdm)
         ax3.set_ylabel(r'$\Pi\left|_0^1\right.$',    color=c_ls)
 
-        lines = [l_hps, l_pdm, l_ls]
+        lines = [l_hps, l_pdm, l_ls, vline]
         ax1.legend(lines, [l.get_label() for l in lines])
 
         
@@ -765,10 +765,10 @@ class HPS:
         #plot folded dataseries if requested
         if x is not None and y is not None:
             
-            ax4.set_title("Folded Input")
-            ax4.scatter(fold(x, self.best_period, 0)[0], y, color='tab:blue', s=1, label="Folded Input-Dataseries")
-            ax4.set_xlabel("x")
-            ax4.set_ylabel("y")
+            ax4.set_title('Folded Input')
+            ax4.scatter(fold(x, self.best_period, 0)[0], y, color='tab:blue', s=1, label='Folded Input-Dataseries')
+            ax4.set_xlabel('x')
+            ax4.set_ylabel('y')
 
         plt.tight_layout()
 

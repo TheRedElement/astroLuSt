@@ -779,23 +779,21 @@ class PDM:
             ax1 = fig.add_subplot(111)
 
         ax1.set_title("PDM-result")
-        ax1.scatter(self.trial_periods, self.thetas, color="tab:blue", s=1, zorder=1, **sctr_kwargs)
-        ax1.axvline(self.best_period, color="tab:orange", linestyle="-", label=r"$P_{\mathrm{PDM}} =$" + f"{self.best_period:.3f}", zorder=2)
+        ax1.scatter(self.trial_periods, self.thetas, color='tab:blue', s=1, zorder=1, **sctr_kwargs)
+        ax1.axvline(self.best_period, color='tab:grey', linestyle="--", label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period), zorder=2)
         ax1.fill_between([np.nanmin(self.trial_periods), np.nanmax(self.trial_periods)], y1=[self.best_theta]*2, y2=[max(self.theta_tolerance, self.best_theta)]*2, color='tab:grey', alpha=0.2, label='Tolerated as improvement')
-        ax1.axhline(self.best_theta, color="tab:orange", linestyle="-", zorder=2)
-        ax1.tick_params("both")
-        ax1.set_xlabel("Period")
-        ax1.set_ylabel(r"$\theta$")
+        # ax1.axhline(self.best_theta, color="tab:grey", linestyle="--", zorder=2)
+        ax1.set_xlabel(r'Period')
+        ax1.set_ylabel(r'$\theta$')
         ax1.legend()
         
         #plot folded dataseries if requested
         if x is not None and y is not None:
                         
             ax2.set_title("Folded Input")
-            ax2.scatter(fold(x, self.best_period, 0)[0], y, color="tab:blue", s=1, label="Folded Input-Dataseries")
-            ax2.tick_params("both")
-            ax2.set_xlabel("x")
-            ax2.set_ylabel("y")
+            ax2.scatter(fold(x, self.best_period, 0)[0], y, color='tab:blue', s=1, label='Folded Input-Dataseries')
+            ax2.set_xlabel('x')
+            ax2.set_ylabel('y')
 
         plt.tight_layout()
                 
