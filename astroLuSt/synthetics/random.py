@@ -1,9 +1,11 @@
 #%%imports
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 import random
+from scipy.stats import norm
 import string
-from typing import Union, Callable
+from typing import Union, Callable, Tuple, List
 
 from astroLuSt.preprocessing.dataseries_manipulation import periodize
 
@@ -84,7 +86,7 @@ class GenUniqueStrings:
         """
             - method similar to the scipy.stats rvs() method
             - rvs ... random variates
-            - will generate an array of size 'size' containing randomly generated samples
+            - will generate an array of size 'shape' containing randomly generated samples
             
             Parameters
             ----------
@@ -138,14 +140,43 @@ class GenUniqueStrings:
     
 
 class GeneratePeriodicSignals:
+    """
+        - class to generate a unique series of random periodic signals
+
+        Attributes
+        ----------
+
+        Methods
+        -------
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - scipy
+            - typing
+    """
 
     def __init__(self,
         npoints:np.ndarray=None,
-        periods:np.ndarray=None
+        periods:np.ndarray=None,
+        choices:np.ndarray=None,
     ) -> None:
       
         self.npoints = npoints
         self.periods = periods
+        
+        #initialize choices
+        if choices is None:
+            self.choices = np.array([
+                self.sine,
+                self.cosine,
+                self.tangent,
+                self.polynomial,
+                self.gaussian,
+                self.random,
+            ], dtype=object)
+        
 
         pass
 
@@ -154,69 +185,411 @@ class GeneratePeriodicSignals:
             f'GeneratePeriodicSignals(\n'
             f'    npoints={repr(self.npoints)},\n'
             f'    periods={repr(self.periods)},\n'
+            f'    choices={repr(self.choices)},\n'
             f')'
         )
 
+    def sine(self,
+        x:np.ndarray,
+        **kwargs,
+        ) -> np.ndarray:
+        """
+            - method to calculate a sine function in phase space
 
-    def compositesin(self,
-      phase:np.ndarray, periods, amplitudes
-      ):
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - input values to evaluate on
+                - kwargs
+                    - kwargs to pass to the function
+                    - used for consistency across methods
+            
+            Raises
+            ------
 
-      y = 0
-      for n in range(periods.shape[1]):
-        shift = np.random.randint(0, self.npoints)
-        y_ = amplitudes[:,n].reshape(-1,1)*np.roll(np.sin(phase*2*np.pi*periods[:,n].reshape(-1,1)), shift=shift)
-        y += y_
+            Returns
+            -------
+                - sin
+                    - np.ndarray
+                    - evaluation of x
+            Comments
+            --------
 
-      return y
+        """
+        sin = np.sin(x*2*np.pi)
+        return sin
+    
+    def cosine(self,
+        x:np.ndarray,
+        **kwargs,
+        ) -> np.ndarray:
+        """
+            - method to calculate a cosine function in phase space
 
-    def generate(self,
-      func:Callable=None,
-      noise:float=0.05,
-      ):
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - input values to evaluate on
+                - kwargs
+                    - kwargs to pass to the function
+                    - used for consistency across methods
+            
+            Raises
+            ------
 
-      if func is None:
-        # func = self.simplesin
-        func = self.compositesin
+            Returns
+            -------
+                - cos
+                    - np.ndarray
+                    - evaluation of x
+            Comments
+            --------
 
-      periods = np.random.rand(self.nsamples,2)*4
-      amplitudes = np.random.rand(self.nsamples,2)*1
+        """
+        cos = np.cos(x*2*np.pi)
+        return cos
+    
+    def tangent(self,
+        x:np.ndarray,
+        **kwargs,
+        ) -> np.ndarray:
+        """
+            - method to calculate a tangent function in phase space
 
-      x_out = np.array([np.linspace(0, 1, self.npoints) for i in range(self.nsamples)])
-      y_out = func(x_out, periods, amplitudes)
-      y_out += np.random.randn(self.npoints)*noise #add noise
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - input values to evaluate on
+                - kwargs
+                    - kwargs to pass to the function
+                    - used for consistency across methods
+            
+            Raises
+            ------
 
-      return x_out, y_out, periods
+            Returns
+            -------
+                - tan
+                    - np.ndarray
+                    - evaluation of x
+            Comments
+            --------
+
+        """        
+        tan = np.tan(x*2*np.pi)
+        return tan 
+
+    def polynomial(self,
+        x:np.ndarray,
+        **kwargs,
+        ) -> np.ndarray:
+        """
+            - method to evaluate a polynomial function
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - input values to evaluate on
+                - kwargs
+                    - kwargs to pass to the function
+                        - will use kwargs['p']
+                            - polynomial coefficients
+                    - used for consistency across methods
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - poly
+                    - np.ndarray
+                    - evaluation of x
+            Comments
+            --------
+
+        """
+        poly = np.polyval(x=x, p=kwargs['p'])
+        return poly
+
+    def gaussian(self,
+        x:np.ndarray,
+        **kwargs
+        ) -> np.ndarray:
+        """
+            - method to evaluate a gaussian function
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - input values to evaluate on
+                - kwargs
+                    - kwargs to pass to the function
+                        - will use kwargs['loc']
+                            - mean of the gaussian
+                        - will use kwargs['scale']
+                            - standard deviation of the gaussian
+                        - will use kwargs['amp']
+                            - amplitude of the gaussian
+                            - i.e. mixing coefficient
+                    - used for consistency across methods
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - gauss
+                    - np.ndarray
+                    - evaluation of x
+            Comments
+            --------
+
+        """        
+        gauss = norm.pdf(x, loc=kwargs['loc'], scale=kwargs['scale']) * kwargs['amp']
+        return gauss
+
+    def random(self,
+        x:np.ndarray,
+        **kwargs
+        ) -> np.ndarray:
+        """
+            - method to generate a random array of the same shape as x
+
+            Parameters
+            ----------
+                - x
+                    - np.ndarray
+                    - input values to evaluate on
+                - kwargs
+                    - kwargs to pass to the function
+                        - will use kwargs['amp']
+                            - amplitude of the noise
+                    - used for consistency across methods
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - randarray
+                    - np.ndarray
+                    - evaluation of x
+            Comments
+            --------
+
+        """        
+        randarray = np.random.randn(x.shape[0])*kwargs['amp']
+        return randarray
+
+    def select_choice(self,
+        choices:np.ndarray, x:np.ndarray,
+        func_kwargs:dict=None
+        ) -> np.ndarray:
+        """
+            - method to randomly select from choices and evaluate on x or return directly
+                - will evaluate if a callable is chosen
+                - will return directly if an array is chosen
+
+            Parameters
+            ----------
+                - choices
+                    - np.ndarray
+                    - has to be of dtype object
+                    - available options for the generation of the base-signal
+                        -  base-signal will be generated
+                            - by evaluating on x
+                                - i.e. by calling choice(x, **kwargs)
+                            - by returning choice directly
+                                - if choice happens to be a np.ndarray
+                    - this signal will then be periodized
+                - x
+                    - np.ndarray
+                    - input values to evaluate 'choice' on
+                - func_kwargs
+                    - dict, optional
+                    - function kwargs passed to choice
+                        - i.e. chioce(x, **kwargs) will be called
+                    - the default is None
+                        - will be initilized with dict
+                            
+                            >>> func_kwargs = {
+                            >>>     'p':[np.random.randint(1,5)],
+                            >>>     'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.randn(),
+                            >>> }
+                    
+                        - 'p' will be used by self.polynomial()
+                        - 'amp' will be used by self.normal() and self.random()
+                        - 'loc' will be used by self.normal()
+                        - 'scale' will be used by self.normal()
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - choice
+                    - np.ndarray
+                    - the random choice evaluated on 'x'
+                        if choice is a callable
+                        - i.e. choice(x, **kwargs)
+                    - the choice directly
+                        - if choice is a np.ndarray
+
+            Comments
+            --------
+        """
+
+        if func_kwargs is None:
+            func_kwargs = {
+                'p':[np.random.randint(1,5)],
+                'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.randn(),
+            }
+
+        choice = np.random.choice(choices, size=None)
+
+        if callable(choice):
+            choice = choice(x, **func_kwargs)
+
+        return choice
 
     def generate_one(self,
+        y:np.ndarray,
         npoints:int,
         period:float,
-        ):
-        xy = []
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to generate one random periodic signal of lenght npoints with period 'period'
 
-        x = np.linspace(0, 1, 10)
-        y = x.copy()**2
+            Parameters
+            ----------
+                - y
+                    - np.ndarray
+                    - y-values of the signal to periodize
+                - npoints
+                    - int
+                    - number of datapoints the periodic data-series shall have
+                - period
+                    - float
+                    - period the generated periodic signal shall have
+            
+            Raises
+            ------
 
-        repetitions = npoints//x.shape[0]
-        # print(repetitions)
+            Returns
+            -------
+                - xp
+                    - np.ndarray
+                    - x-values of the periodic data-series
+                - yp
+                    - np.ndarray
+                    - y-values of the periodic data-series
 
-        xp, yp = periodize(y=y, period=period, repetitions=repetitions, x=x, testplot=False)
+            Comments
+            -------- 
+        """
 
-        # print(xp, yp)
+        #calculate how often the signal has to repeat to get the desired amount of datapoints
+        repetitions = npoints/y.shape[0]
 
-        # xy = np.array([xp, yp]).T
+        #periodize the input signal
+        xp, yp = periodize(y=y, period=period, repetitions=repetitions, testplot=False)
 
         return xp, yp
 
     def rvs(self,
         shape:tuple=None,
-        random_state:int=None,    
-        ):
+        choices:np.ndarray=None,
+        x:np.ndarray=None,
+        noise_level_y:float=0.1,
+        noise_level_x:float=0.1,
+        random_state:int=None,
+        func_kwargs:dict=None 
+        ) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+        """
+            - method similar to the scipy.stats rvs() method
+            - rvs ... random variates
+            - will generate an array of the same length as 'self.periods' containing randomly generated samples
+                - each generated dataseries can have a different length encoded in self.npoints
+            
+            Parameters
+            ----------
+                - shape
+                    - int, tuple, optional
+                    - shape of the generated list of arrays
+                    - only used if one of self.periods and self.npoints is None
+                        - in the case that self.periods is None will
+                            - generate shape[0] dataseries with period of 1
+                        - in the case that self.npoints is None will
+                            - generate all timeseries with shape[1] points
+                    - the default is None
+                        - will use self.periods and self.npoints to infer the shapes
+                - choices
+                    - np.ndarray, optional
+                    - has to be of dtype object
+                    - contains either callables (functions) or np.ndarrays
+                        - callables will be evaluated on x
+                        - np.ndarrays will be returned and periodized as they are
+                    - these choices will be used to randomly generate dataseries
+                    - the default is None
+                        - will fallback to self.choices
+                - x
+                    - np.ndarray, optional
+                    - x-values of the timeseries in phase-space
+                    - i.e. before generating the periodic timeseries the chosen choice out of choices will be evaluated on x
+                        - choices(x) will be called
+                    - the default is None
+                        - will use  np.linspace(0,1,10,endpoint=False)
+                - noise_level_x
+                    - float, optional
+                    - scale of the noise added to the periodized signal in x-direction
+                    - the default is 0.1
+                - noise_level_y
+                    - float, optional
+                    - scale of the noise added to the periodized signal in y-direction
+                    - the default is 0.1
+                - random_state
+                    - int, optional
+                    - seed of the random number generator
+                    - provide any integer for reproducible results
+                    - the default is None
+                        - non-reproducible results
+                - func_kwargs
+                    - dict, optional
+                    - kwargs passed to self.select_choice()
+                    - contains kwargs for all choices in choices
+                    - the default is None
+                        - will autogenerate kwargs needed to use the default self.choices
 
-        #initilaize shape if not passed
+            Raises
+            ------
+
+            Returns
+            -------
+                - x_gen
+                    - list
+                        - contains np.ndarrays
+                    - each entry contains the x-values of one generated periodic signal (entry in y_gen)
+                - y_gen
+                    - list
+                        - contains np.ndarrays
+                    - each entry contains the y-values of one generated periodic signal
+                        - the entry of x_gen contains the corresponding x-values
+            
+            Comments
+            --------
+                - make sure that whichever callable you pass within choices has **kwargs
+        """
+
+        #initilaize
+
         if shape is None: shape = (1,10)
-        
-        
+        if choices is None:
+            choices = self.choices
         if self.periods is None:
             periods = np.ones(shape[0])
         elif isinstance(self.periods, (int, float)):
@@ -230,18 +603,64 @@ class GeneratePeriodicSignals:
         else:
             npoints = self.npoints
 
-        print(periods, npoints)
+        if x is None:
+            x = np.linspace(0,1,10,endpoint=False)
 
-        x_out = []
-        y_out = []
+
+        #initialize output lists
+        x_gen = []
+        y_gen = []
+
+        #generate random periodic signals
         for n, p in zip(npoints, periods):
-            xp, yp = self.generate_one(npoints=n, period=p)
-            x_out.append(xp)
-            y_out.append(yp)
+            
+            y = self.select_choice(choices=choices, x=x, func_kwargs=func_kwargs)
+
+            xp, yp = self.generate_one(y=y, npoints=n, period=p)
+            yp += np.random.randn(*yp.shape)*noise_level_y
+            xp += np.random.randn(*xp.shape)*noise_level_x
+            x_gen.append(xp.flatten())
+            y_gen.append(yp.flatten())
+
+        self.x_gen = x_gen
+        self.y_gen = y_gen
         
+
+        return x_gen, y_gen
+
+    def plot_result(self,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to create a testplot visualizing the generated dataseries
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - Figure
+                    - created matplotlib figure
+                - axs
+                    - plt.Axs
+                    - axes corresponding to fig
+
+            Comments
+            --------
+        """
+
         fig = plt.figure()
-        for xi, yi in zip(x_out, y_out):
-            print(xi.shape, yi.shape)
-            plt.scatter(xi, yi)
-        plt.show()
-        return
+        ax1 = fig.add_subplot(111)
+        for xi, yi in zip(self.x_gen, self.y_gen):
+            ax1.scatter(xi, yi)
+        
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+
+        axs = fig.axes   
+
+        return fig, axs
+
