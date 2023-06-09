@@ -1,10 +1,13 @@
-#generating
+#%%imports
 import matplotlib.pyplot as plt
 import numpy as np
 import random
 import string
 from typing import Union, Callable
 
+from astroLuSt.preprocessing.dataseries_manipulation import periodize
+
+#%%definitions
 class GenUniqueStrings:
     """
         - class to generate unique strings from a given set of characters to choose from
@@ -134,28 +137,30 @@ class GenUniqueStrings:
             return output
     
 
-class Generate_Signal:
+class GeneratePeriodicSignals:
 
     def __init__(self,
-      nsamples:int, npoints:int=50,
+        npoints:np.ndarray=None,
+        periods:np.ndarray=None
     ) -> None:
       
-      self.nsamples = nsamples
-      self.npoints = npoints
+        self.npoints = npoints
+        self.periods = periods
 
-      pass
+        pass
 
-    def simplesin(self, phase, period):
-      
-      y = np.sin(phase*2*np.pi*period)
-      
-      return y
+    def __repr__(self) -> str:
+        return (
+            f'GeneratePeriodicSignals(\n'
+            f'    npoints={repr(self.npoints)},\n'
+            f'    periods={repr(self.periods)},\n'
+            f')'
+        )
+
 
     def compositesin(self,
       phase:np.ndarray, periods, amplitudes
       ):
-
-      # periods = np.random.rand(2)*4
 
       y = 0
       for n in range(periods.shape[1]):
@@ -163,8 +168,7 @@ class Generate_Signal:
         y_ = amplitudes[:,n].reshape(-1,1)*np.roll(np.sin(phase*2*np.pi*periods[:,n].reshape(-1,1)), shift=shift)
         y += y_
 
-
-      return y#, periods
+      return y
 
     def generate(self,
       func:Callable=None,
@@ -184,14 +188,60 @@ class Generate_Signal:
 
       return x_out, y_out, periods
 
-    def testplot(self,
-      x:np.ndarray, y:np.ndarray             
-      ):
+    def generate_one(self,
+        npoints:int,
+        period:float,
+        ):
+        xy = []
 
-      fig = plt.figure()
-      ax1 = fig.add_subplot(111)
-      for idx, (xi, yi) in enumerate(zip(x,y)):
-        ax1.plot(xi, yi)
+        x = np.linspace(0, 1, 10)
+        y = x.copy()**2
 
-      plt.show()
-      return
+        repetitions = npoints//x.shape[0]
+        # print(repetitions)
+
+        xp, yp = periodize(y=y, period=period, repetitions=repetitions, x=x, testplot=False)
+
+        # print(xp, yp)
+
+        # xy = np.array([xp, yp]).T
+
+        return xp, yp
+
+    def rvs(self,
+        shape:tuple=None,
+        random_state:int=None,    
+        ):
+
+        #initilaize shape if not passed
+        if shape is None: shape = (1,10)
+        
+        
+        if self.periods is None:
+            periods = np.ones(shape[0])
+        elif isinstance(self.periods, (int, float)):
+            periods = np.zeros(shape[0]) + self.periods
+        else:
+            periods = self.periods
+        if self.npoints is None:
+            npoints = np.zeros(shape[0]) + shape[1]
+        elif isinstance(self.npoints, int):
+            npoints = np.zeros(shape[1]) + self.npoints
+        else:
+            npoints = self.npoints
+
+        print(periods, npoints)
+
+        x_out = []
+        y_out = []
+        for n, p in zip(npoints, periods):
+            xp, yp = self.generate_one(npoints=n, period=p)
+            x_out.append(xp)
+            y_out.append(yp)
+        
+        fig = plt.figure()
+        for xi, yi in zip(x_out, y_out):
+            print(xi.shape, yi.shape)
+            plt.scatter(xi, yi)
+        plt.show()
+        return

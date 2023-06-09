@@ -327,13 +327,11 @@ def periodic_shift(
 
 def periodize(
     y:np.ndarray, period:Tuple[float,np.ndarray],
-    repetitions:int=2,
-    x:np.ndarray=None, 
+    repetitions:float=2,
     testplot:bool=False,
     ) -> Tuple[np.ndarray,np.ndarray]:
     """
-        - function to create a periodic signal out of a time-series given in phase space
-        - works for phases given in the interval [0, 1]
+        - function to create a periodic signal out of the y values of a time-series given in phase space and a period
 
         Parameters
         ----------
@@ -346,17 +344,10 @@ def periodize(
                 - if np.ndarray, has to be of same length as y
                 - period to use for the repetition
             - repetitions
-                - int, optional
+                - float, optional
                 - number of times the signal (y) shall be repeated
+                - if a repetitions < 1 gets passed, the signal will be cut off at that point
                 - the default is 2
-            - x
-                - np.ndarray, optional
-                - x-values to be periodized
-                - has to be of same shape as y
-                - usually phases
-                    - i.e. an array from 0 to 1
-                - the default is None
-                    - will generate phases for every samples in y
             - testplot
                 - bool, optional
                 - whether to show a test-plot
@@ -386,43 +377,57 @@ def periodize(
     
     """
 
-    #initializie x if not passed
-    if x is None:
-        if len(y.shape) == 1:
-            nsamples = 1
-            npoints  = y.shape[0]
-        else:
-            nsamples = y.shape[0]
-            npoints  = y.shape[1]
+    #initialize x accordingly
+    if len(y.shape) == 1:
+        nsamples = 1
+        npoints  = y.shape[0]
+    else:
+        nsamples = y.shape[0]
+        npoints  = y.shape[1]
 
-        x = np.array([np.linspace(0, 1, npoints) for i in range(nsamples)])
+    x = np.array([np.linspace(0, 1, npoints, endpoint=False) for i in range(nsamples)])
 
     #reshape if 1d array was passed
     if len(x.shape) == 1: x = x.reshape(1,x.shape[0])
     if len(y.shape) == 1: y = y.reshape(1,y.shape[0])
 
+    #generate times given passed period
     x_times = phase2time(x, period)
 
-    x_periodized = np.empty((x_times.shape[0], x_times.shape[1]*repetitions))
-    y_periodized = np.empty((x_times.shape[0], x_times.shape[1]*repetitions))
+    #initialize output arrays
+    x_periodized = np.zeros((x_times.shape[0], int(x_times.shape[1]*repetitions)))
+    y_periodized = np.zeros((x_times.shape[0], int(x_times.shape[1]*repetitions)))
 
-    for r in range(repetitions):
+
+    endidx = 0
+    for r in np.arange(0, repetitions//1, 1, dtype=int):
+        #temporal offset
         times_add = x_times + (r*period)
 
+        #indices to replace in template arrays
         startidx = r*x_times.shape[1]
         endidx   = startidx+times_add.shape[1]
 
-        x_periodized[:,startidx:endidx] = times_add
-        y_periodized[:,startidx:endidx] = y
+        #update template arrays
+        x_periodized[:,startidx:endidx] += times_add
+        y_periodized[:,startidx:endidx] += y
+
+
+    #add fraction of repetition that is left
+    x_periodized[:,endidx:] = (x_times + (repetitions//1*period))[:,:(x_periodized.shape[1]-endidx)]
+    y_periodized[:,endidx:] = y[:,:(x_periodized.shape[1]-endidx)]
 
 
     if testplot:
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        for xp, yp in zip(x_periodized, y_periodized):
-            ax1.scatter(xp, yp, label="Periodized Signal")
-        ax1.set_xlabel("x")
-        ax1.set_ylabel("y")
+        for idx, (xp, yp, xi, yi) in enumerate(zip(x_periodized, y_periodized, x_times, y)):
+            lab_per = 'Periodized Signal'*(idx==0)
+            lab_in  = 'Input Signal'*(idx==0)
+            ax1.scatter(xi, yi, label=lab_in)
+            ax1.plot(xp, yp, label=lab_per)
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
         plt.legend()
         plt.tight_layout()
         plt.show()
