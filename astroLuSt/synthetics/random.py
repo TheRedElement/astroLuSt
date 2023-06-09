@@ -1,8 +1,9 @@
 #generating
+import matplotlib.pyplot as plt
 import numpy as np
 import random
 import string
-from typing import Union
+from typing import Union, Callable
 
 class GenUniqueStrings:
     """
@@ -132,3 +133,65 @@ class GenUniqueStrings:
         else:
             return output
     
+
+class Generate_Signal:
+
+    def __init__(self,
+      nsamples:int, npoints:int=50,
+    ) -> None:
+      
+      self.nsamples = nsamples
+      self.npoints = npoints
+
+      pass
+
+    def simplesin(self, phase, period):
+      
+      y = np.sin(phase*2*np.pi*period)
+      
+      return y
+
+    def compositesin(self,
+      phase:np.ndarray, periods, amplitudes
+      ):
+
+      # periods = np.random.rand(2)*4
+
+      y = 0
+      for n in range(periods.shape[1]):
+        shift = np.random.randint(0, self.npoints)
+        y_ = amplitudes[:,n].reshape(-1,1)*np.roll(np.sin(phase*2*np.pi*periods[:,n].reshape(-1,1)), shift=shift)
+        y += y_
+
+
+      return y#, periods
+
+    def generate(self,
+      func:Callable=None,
+      noise:float=0.05,
+      ):
+
+      if func is None:
+        # func = self.simplesin
+        func = self.compositesin
+
+      periods = np.random.rand(self.nsamples,2)*4
+      amplitudes = np.random.rand(self.nsamples,2)*1
+
+      x_out = np.array([np.linspace(0, 1, self.npoints) for i in range(self.nsamples)])
+      y_out = func(x_out, periods, amplitudes)
+      y_out += np.random.randn(self.npoints)*noise #add noise
+
+      return x_out, y_out, periods
+
+    def testplot(self,
+      x:np.ndarray, y:np.ndarray             
+      ):
+
+      fig = plt.figure()
+      ax1 = fig.add_subplot(111)
+      for idx, (xi, yi) in enumerate(zip(x,y)):
+        ax1.plot(xi, yi)
+
+      plt.show()
+      return

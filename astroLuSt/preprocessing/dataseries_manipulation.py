@@ -326,33 +326,41 @@ def periodic_shift(
     return shifted
 
 def periodize(
-    x:np.ndarray, y:np.ndarray,
-    period:np.ndarray, repetitions:int,
-    testplot:bool=True,
-    ):
+    y:np.ndarray, period:Tuple[float,np.ndarray],
+    repetitions:int=2,
+    x:np.ndarray=None, 
+    testplot:bool=False,
+    ) -> Tuple[np.ndarray,np.ndarray]:
     """
         - function to create a periodic signal out of a time-series given in phase space
         - works for phases given in the interval [0, 1]
 
         Parameters
         ----------
-            - x
-                - np.ndarray
-                - x-values to be periodized
-                - usually phases
             - y
                 - np.ndarray
+                - has to be at least 2d
                 - y-values to be periodized
             - period
-                - float
+                - np.ndarray, float
+                - if np.ndarray, has to be of same length as y
                 - period to use for the repetition
             - repetitions
-                - int
-                - number of times the signal shall be repeated
+                - int, optional
+                - number of times the signal (y) shall be repeated
+                - the default is 2
+            - x
+                - np.ndarray, optional
+                - x-values to be periodized
+                - has to be of same shape as y
+                - usually phases
+                    - i.e. an array from 0 to 1
+                - the default is None
+                    - will generate phases for every samples in y
             - testplot
                 - bool, optional
                 - whether to show a test-plot
-                - the default is True
+                - the default is False
 
         Raises
         ------
@@ -360,9 +368,13 @@ def periodize(
         Returns
         -------
             - x_periodized
+                - np.ndarray
+                - same shape as y
                 - times of the periodized signal
             - y_periodized
-                - fluxes of the periodized signal
+                - np.ndarray
+                - same shape as y
+                - y-values of the periodized signal
 
         Dependencies
         ------------
@@ -374,23 +386,41 @@ def periodize(
     
     """
 
+    #initializie x if not passed
+    if x is None:
+        if len(y.shape) == 1:
+            nsamples = 1
+            npoints  = y.shape[0]
+        else:
+            nsamples = y.shape[0]
+            npoints  = y.shape[1]
+
+        x = np.array([np.linspace(0, 1, npoints) for i in range(nsamples)])
+
+    #reshape if 1d array was passed
+    if len(x.shape) == 1: x = x.reshape(1,x.shape[0])
+    if len(y.shape) == 1: y = y.reshape(1,y.shape[0])
+
     x_times = phase2time(x, period)
-    x_periodized = np.array([])
-    y_periodized = np.array([])
+
+    x_periodized = np.empty((x_times.shape[0], x_times.shape[1]*repetitions))
+    y_periodized = np.empty((x_times.shape[0], x_times.shape[1]*repetitions))
 
     for r in range(repetitions):
         times_add = x_times + (r*period)
-        x_periodized = np.append(x_periodized, times_add)
-        y_periodized = np.append(y_periodized, y)
-    
-    sortidx = np.argsort(x_periodized)
-    x_periodized = x_periodized[sortidx]
-    y_periodized = y_periodized[sortidx]
+
+        startidx = r*x_times.shape[1]
+        endidx   = startidx+times_add.shape[1]
+
+        x_periodized[:,startidx:endidx] = times_add
+        y_periodized[:,startidx:endidx] = y
+
 
     if testplot:
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1.scatter(x_periodized, y_periodized, color="tab:blue", label="Periodized signal")
+        for xp, yp in zip(x_periodized, y_periodized):
+            ax1.scatter(xp, yp, label="Periodized Signal")
         ax1.set_xlabel("x")
         ax1.set_ylabel("y")
         plt.legend()
