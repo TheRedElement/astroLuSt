@@ -167,6 +167,7 @@ class GeneratePeriodicSignals:
         self.periods = periods
         
         #initialize choices
+        self.passed_choices = choices
         if choices is None:
             self.choices = np.array([
                 self.sine,
@@ -181,11 +182,12 @@ class GeneratePeriodicSignals:
         pass
 
     def __repr__(self) -> str:
+
         return (
             f'GeneratePeriodicSignals(\n'
             f'    npoints={repr(self.npoints)},\n'
             f'    periods={repr(self.periods)},\n'
-            f'    choices={repr(self.choices)},\n'
+            f'    choices={self.passed_choices},\n'
             f')'
         )
 
