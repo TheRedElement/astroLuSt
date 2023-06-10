@@ -632,10 +632,12 @@ class GeneratePeriodicSignals:
                 - x_gen
                     - np.ndarray
                         - contains np.ndarrays
+                            - can have different lengths
                     - each entry contains the x-values of one generated periodic signal (entry in y_gen)
                 - y_gen
                     - np.ndarray
                         - contains np.ndarrays
+                            - can have different lengths
                     - each entry contains the y-values of one generated periodic signal
                         - the entry of x_gen contains the corresponding x-values
             
@@ -645,52 +647,85 @@ class GeneratePeriodicSignals:
         """
 
         #initilaize
+
+        ##shape if nothing is passed to __init__()
         if shape is None: shape = (1,10)
+
+
         if choices is None:
             choices = self.choices
+        
+        ##periods adopted to shape
         if self.periods is None:
             periods = np.ones(shape[0])
+        ##same period accross samples
         elif isinstance(self.periods, (int, float)):
             periods = np.zeros(shape[0]) + self.periods
+        ##varying period accross samples
         else:
             periods = self.periods
+            shape = (periods.shape[0],shape[1])
+        
+        ##npoints adopted to shape
         if self.npoints is None:
             npoints = np.zeros(shape[0]) + shape[1]
+        ##same number of points accross samples
         elif isinstance(self.npoints, int):
-            npoints = np.zeros(shape[1]) + self.npoints
+            npoints = np.zeros(shape[0]) + self.npoints
+            shape = (shape[0],self.npoints)
+        ##varying number of points accross samples
         else:
             npoints = self.npoints
+            if len(np.unique(npoints)) > 1: shape = (shape[0],None)         #shape not inferable (variable npoints per dataseries)
+            else:                           shape = (shape[0],npoints[0])   #shape inferable (npoints the same accross dataseries)
+        
+        ##no offset
         if self.x_offsets is None:
             x_offsets = np.zeros(shape[0])
+        ##same offset accross samples
         elif isinstance(self.x_offsets, (int, float)):
             x_offsets = np.zeros(shape[0]) + self.x_offsets
+        ##varying offset accross samples
         else:
             x_offsets = self.x_offsets
 
+        ##default x-values (phases) to generate on
         if x is None:
             x = np.linspace(0,1,10,endpoint=False)
 
+        #reshape offset to work with inhomogeneous arrays
+        if shape[1] is None:
+            x_offsets = x_offsets.flatten()
+        else:
+            x_offsets = x_offsets.reshape(-1,1)
 
-        #initialize output lists
+        #initialize output lists/arrays
         x_gen = []
         y_gen = []
 
         #generate random periodic signals
         for n, p in zip(npoints, periods):
             
+            #choose function/array to generate from
             y = self.select_choice(choices=choices, x=x, func_kwargs=func_kwargs)
 
+            #generate one periodized signal
             xp, yp = self.generate_one(y=y, npoints=n, period=p)
+            
+            #add noise
             yp += np.random.randn(*yp.shape)*noise_level_y
             xp += np.random.randn(*xp.shape)*noise_level_x
+            
+            #append to output
             x_gen.append(xp.flatten())
             y_gen.append(yp.flatten())
 
-        self.x_gen = np.array(x_gen, dtype=object) + x_offsets
-        self.y_gen = np.array(y_gen, dtype=object)
-
+        #add offset, transform to array
+        x_gen = np.array(x_gen, dtype=object) + x_offsets
+        y_gen = np.array(y_gen, dtype=object)
+        self.x_gen = x_gen
+        self.y_gen = y_gen
         
-
         return x_gen, y_gen
 
     def plot_result(self,
