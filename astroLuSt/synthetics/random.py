@@ -138,7 +138,6 @@ class GenUniqueStrings:
         else:
             return output
     
-
 class GeneratePeriodicSignals:
     """
         - class to generate a unique series of random periodic signals
