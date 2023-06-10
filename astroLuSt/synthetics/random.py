@@ -145,9 +145,59 @@ class GeneratePeriodicSignals:
 
         Attributes
         ----------
+            - npoints
+                - np.ndarray, int, optional
+                - number of points per dataseries
+                - if None
+                    - will default to shape[1] of the parameter 'shape' of self.rvs()
+                - if int
+                    - will use this many datapoints for all dataseries
+                - the default is None
+            - periods
+                - np.ndarray, int, float, optional
+                - periods of the individual generated dataseries
+                    - will generate as many unique periodized dataseries as elements in 'periods'
+                - if None
+                    - will default to shape[0] of the parameter 'shape' of self.rvs()
+                - if int or float
+                    - will use this period for all dataseries
+                - the default is None
+            - x_offsets
+                - np.ndarray, int, optional
+                - has to be of same length as periods
+                - offsets to add to the x-values of the generated periodic dataseries
+                - if an np.ndarray
+                    - will be interpreted as the offset per generated dataseries
+                - if an int
+                    - will use that offset for all generated dataseries
+            - choices
+                - np.ndarray, int, optional
+                - has to be of dtype object
+                - contains either callables (functions) or np.ndarrays
+                    - callables will be evaluated on the parameter 'x' of self.rvs()
+                    - np.ndarrays will be returned and periodized as they are
+                - these choices will be used to randomly generate dataseries
+                - the default is None
+                    - will use an array containing the following methods
+                        - sine()
+                        - cosin()
+                        - tangent()
+                        - polynomial()
+                        - gaussian()
+                        - random()
 
         Methods
         -------
+            - sine()
+            - cosin()
+            - tangent()
+            - polynomial()
+            - gaussian()
+            - random()
+            - select_choice()
+            - generate_one()
+            - rvs()
+            - plot_result()
 
         Dependencies
         ------------
@@ -158,13 +208,15 @@ class GeneratePeriodicSignals:
     """
 
     def __init__(self,
-        npoints:np.ndarray=None,
-        periods:np.ndarray=None,
+        npoints:Union[np.ndarray,int]=None,
+        periods:Union[np.ndarray,float,int]=None,
+        x_offsets:Union[np.ndarray,int]=None,
         choices:np.ndarray=None,
     ) -> None:
       
         self.npoints = npoints
         self.periods = periods
+        self.x_offsets = x_offsets
         
         #initialize choices
         self.passed_choices = choices
@@ -187,6 +239,7 @@ class GeneratePeriodicSignals:
             f'GeneratePeriodicSignals(\n'
             f'    npoints={repr(self.npoints)},\n'
             f'    periods={repr(self.periods)},\n'
+            f'    x_offsets={repr(self.x_offsets)},\n'
             f'    choices={self.passed_choices},\n'
             f')'
         )
@@ -511,7 +564,7 @@ class GeneratePeriodicSignals:
         noise_level_x:float=0.1,
         random_state:int=None,
         func_kwargs:dict=None 
-        ) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+        ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[np.ndarray]]:
         """
             - method similar to the scipy.stats rvs() method
             - rvs ... random variates
@@ -530,6 +583,11 @@ class GeneratePeriodicSignals:
                             - generate all timeseries with shape[1] points
                     - the default is None
                         - will use self.periods and self.npoints to infer the shapes
+                        - if self.period and self.npoints is None as well
+                            - will default to (1,10)
+                                - periods = 1
+                                - npoints = 10
+                                - i.e. 1 sample with 10 datapoints
                 - choices
                     - np.ndarray, optional
                     - has to be of dtype object
@@ -573,11 +631,11 @@ class GeneratePeriodicSignals:
             Returns
             -------
                 - x_gen
-                    - list
+                    - np.ndarray
                         - contains np.ndarrays
                     - each entry contains the x-values of one generated periodic signal (entry in y_gen)
                 - y_gen
-                    - list
+                    - np.ndarray
                         - contains np.ndarrays
                     - each entry contains the y-values of one generated periodic signal
                         - the entry of x_gen contains the corresponding x-values
@@ -588,7 +646,6 @@ class GeneratePeriodicSignals:
         """
 
         #initilaize
-
         if shape is None: shape = (1,10)
         if choices is None:
             choices = self.choices
@@ -604,6 +661,12 @@ class GeneratePeriodicSignals:
             npoints = np.zeros(shape[1]) + self.npoints
         else:
             npoints = self.npoints
+        if self.x_offsets is None:
+            x_offsets = np.zeros(shape[0])
+        elif isinstance(self.x_offsets, (int, float)):
+            x_offsets = np.zeros(shape[0]) + self.x_offsets
+        else:
+            x_offsets = self.x_offsets
 
         if x is None:
             x = np.linspace(0,1,10,endpoint=False)
@@ -624,8 +687,9 @@ class GeneratePeriodicSignals:
             x_gen.append(xp.flatten())
             y_gen.append(yp.flatten())
 
-        self.x_gen = x_gen
-        self.y_gen = y_gen
+        self.x_gen = np.array(x_gen, dtype=object) + x_offsets
+        self.y_gen = np.array(y_gen, dtype=object)
+
         
 
         return x_gen, y_gen
