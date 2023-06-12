@@ -2593,3 +2593,82 @@ def plot_dbe(
 
     return
 
+def plot_predictioneval(
+    y_true:np.ndarray, y_pred:np.ndarray,
+    fig_kwargs:dict=None,
+    sctr_kwargs:dict=None,
+    plot_kwargs:dict=None,
+    ) -> Tuple[Figure,plt.Axes]:
+    """
+        - function to produce a plot of the true and lables vs the model prediction
+
+        Parameters
+        ----------
+            - y_true
+                - np.ndarray
+                - ground-truth labels
+                - will be plotted on the x-axis
+            - y_pred
+                - np.ndarray
+                - labels predicted by the model
+                - will be plotted on the y-axis
+            - fig_kwargs
+                - dict, optional
+                - kwargs to pass to plt.figure()
+                - the default is None
+                    - will be initialized with {}
+            - sctr_kwargs
+                - dict, optional
+                - kwargs to pass to ax.scatter()
+                - the default is None
+                    - will be initialized with {'color':'tab:blue', 's':1}
+            - plot_kwargs
+                - dict, optional
+                - kwargs to pass to ax.plot()
+                - the default is None
+                    - will be initialized with {'color':'tab:orange'}
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - fig
+                    - Figure
+                    - created figure
+                - axs
+                    - plt.Axes
+                    - axes corresponding to fig
+            
+            Dependencies
+            ------------
+                - matplotlib
+                - numpy
+            
+            Comments
+            --------
+
+    """
+    
+    #initialize parameters
+    if fig_kwargs is None: fig_kwargs = {}
+    if sctr_kwargs is None: sctr_kwargs = {'color':'tab:blue', 's':1}
+    if plot_kwargs is None: plot_kwargs = {'color':'tab:orange'}
+
+
+    x_ideal = np.linspace(np.nanmin(y_true),np.nanmax(y_true),3)
+
+    fig = plt.figure(**fig_kwargs)
+    ax1 = fig.add_subplot(111)
+
+    ax1.scatter(y_true, y_pred, **sctr_kwargs, label='Samples')
+    ax1.plot(x_ideal, x_ideal,  **plot_kwargs, label='1:1 line')
+
+    ax1.set_xlabel(r'$y_\mathrm{True}$')
+    ax1.set_ylabel(r'$y_\mathrm{Pred}$')
+
+    ax1.legend()
+
+    axs = fig.axes
+
+    return fig, axs

@@ -19,14 +19,14 @@ class Binning:
         Attributes
         ----------
             - nintervals
-                - float, optional
+                - float, int optional
                 - nuber of intervals/bins to generate
                 - if a value between 0 and 1 is passed
                     - will be interpreted as fraction of input dataseries length
                 - if a value greater than 1 is passed
                     - will be converted to integer
                     - will be interpreted as the number of intervals to use
-                - the default is 100
+                - the default is 0.5
             - npoints_per_interval
                 - int, optional
                 - generate intervals/bins automatically such that each bin contains 'npoints_per_interval' datapoints
@@ -111,7 +111,7 @@ class Binning:
     """
 
     def __init__(self,
-        nintervals:int=100, npoints_per_interval:int=None,
+        nintervals:Union[float,int]=0.2, npoints_per_interval:int=None,
         xmin:float=None, xmax:float=None,
         ddof:int=0,
         meanfunc_x:Callable=None,

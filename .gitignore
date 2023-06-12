@@ -5,3 +5,4 @@ demos/data
 demos/wandb
 maxsector.py
 mastDownload/
+training/data

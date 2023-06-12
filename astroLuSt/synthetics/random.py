@@ -233,12 +233,13 @@ class GeneratePeriodicSignals:
         pass
 
     def __repr__(self) -> str:
-
+        choices2print = np.array([c.__name__ for c in self.choices])
         return (
             f'GeneratePeriodicSignals(\n'
             f'    npoints={repr(self.npoints)},\n'
             f'    periods={repr(self.periods)},\n'
             f'    x_offsets={repr(self.x_offsets)},\n'
+            # f'    choices={choices2print},\n'
             f'    choices={self.passed_choices},\n'
             f')'
         )
@@ -501,7 +502,7 @@ class GeneratePeriodicSignals:
         if func_kwargs is None:
             func_kwargs = {
                 'p':[np.random.randint(1,5)],
-                'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.randn(),
+                'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.uniform(0.1,1),
             }
 
         choice = np.random.choice(choices, size=None)
@@ -729,12 +730,23 @@ class GeneratePeriodicSignals:
         return x_gen, y_gen
 
     def plot_result(self,
+        fig_kwargs:dict=None, plot_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
             - method to create a testplot visualizing the generated dataseries
 
             Parameters
             ----------
+                - fig_kwargs
+                    - dict, optional
+                    - kwargs to pass to plt.fig()
+                    - the default is None
+                        - will initialize with empty dict (fig_kwargs = {})
+                - plot_kwargs
+                    - dict, optional
+                    - kwargs to pass to ax.plot()
+                    - the default is None
+                        - will initialize with {'marker':'o'}
 
             Raises
             ------
@@ -752,10 +764,15 @@ class GeneratePeriodicSignals:
             --------
         """
 
-        fig = plt.figure()
+        if fig_kwargs is None:
+            fig_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {'marker':'o'}
+
+        fig = plt.figure(**fig_kwargs)
         ax1 = fig.add_subplot(111)
         for xi, yi in zip(self.x_gen, self.y_gen):
-            ax1.scatter(xi, yi)
+            ax1.plot(xi, yi, **plot_kwargs)
         
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')

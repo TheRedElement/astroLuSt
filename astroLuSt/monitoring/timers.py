@@ -1,7 +1,9 @@
 
 #%%imports
-import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from typing import Callable, Any
 
 
 #%%definitions
@@ -27,8 +29,9 @@ class ExecTimer:
 
         Dependencies
         ------------
-            - pandas
             - numpy
+            - pandas
+            - typing
 
         Comments
         --------
@@ -49,6 +52,44 @@ class ExecTimer:
         self.df_protocoll["Duration"] = pd.to_timedelta(self.df_protocoll["Duration"])
         
         return
+
+    def check_taskname(self,
+        taskname:str,
+        ):
+        """
+            - method to check if a passed taskname is already existing in df_protocoll
+            - if that is the case the taskname will be modified by appending an index to it
+
+            Parameters
+            ----------
+                - taskname
+                    - str
+                    - unique name given to the task
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - taskname
+                    - str
+                    - modified input 'taskname'
+                    - if the input was unique, it will be returned as is
+                    - otherwise an index will be appended to it
+                        - i.e. 'tasknamen' will be returned for the n-th repetition of 'taskname'
+
+            Comments
+            --------
+        """
+
+        #make sure to only have unique tasknames
+        addon = 1
+        while taskname in self.df_protocoll["Task"].values:
+            taskname = taskname.replace(str(addon-1),'')
+            taskname += str(addon)
+            addon += 1
+        
+        return taskname
 
     def checkpoint_start(self,
         taskname:str, comment:str=""
@@ -78,11 +119,7 @@ class ExecTimer:
 
         start_time = np.datetime64('now')
 
-        #make sure to only have unique tasknames
-        addon = 1
-        while taskname in self.df_protocoll["Task"].values:
-            taskname += str(addon)
-            addon += 1
+        taskname = self.check_taskname(taskname)
 
         self.df_protocoll.loc[self.df_protocoll.shape[0]] = [
             taskname,
@@ -197,3 +234,131 @@ class ExecTimer:
 
 
         return
+
+    def time_exec(self,
+        taskname:str='Decorator Task',
+        start_kwargs:dict=None,
+        end_kwargs:dict=None
+        ) -> Any:
+        """
+            - decorator method to always time a function at execution
+
+            Parameters
+            ----------
+                - taskname
+                    - str, optional
+                    - unique name given to the task
+                    - the default is 'Decorator Task'            
+                - start_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.checkpoint_start()
+                    - the default is None
+                        - will default to {'taskname':'Decorator Task'}
+                - end_kwargs
+                    - dict, optional
+                    - kwargs to pass to self.checkpoint_end()
+                    - the default is None
+                        - will default to {'taskname':'Decorator Task'}
+            Raises
+            ------
+
+            Returns
+            -------
+                - wrap
+                    - Any
+                    - output of wrapped function
+
+            Comments
+            --------
+                - use like decorator, i.e. as follows
+
+                    >>> @ExecTimer().time_exec(*args)
+                    >>> def func(...):
+                    >>>     ...
+                    >>>     return ...
+                
+
+        """
+
+        #initialize accordingly
+        if start_kwargs is None:
+            start_kwargs = {}
+        if end_kwargs is None:
+            end_kwargs = {}
+        
+        #function to wrap decorated function (func)
+        def wrap(func:Callable):
+
+            #function to execute wrapped function
+            def wrapped_func(*args, **kwargs):
+                
+                # #check if a unique taskname was passed and modify accordingly
+                taskname_use = self.check_taskname(taskname)
+                
+                self.checkpoint_start(taskname=taskname_use, **start_kwargs)
+                func_res = func(*args, **kwargs)
+                self.checkpoint_end(taskname=taskname_use, **end_kwargs)
+                
+                #return function result
+                return func_res
+            
+            #return wrapped function (ultimately returns func_res)
+            return wrapped_func
+        
+        #return wrap (ultimately returns wrapped_func and thus func_res)
+        return wrap
+    
+    # def get_execstats(self,
+    #     n:int=10,
+    #     drop_from_df_protocoll:bool=True,
+    #     ):
+    #     def wrap(func:Callable):
+
+    #         def wrapped_func(*args, **kwargs):
+    #             for ni in range(n):
+    #                 taskname_use = self.check_taskname('get_execstats()')
+    #                 comment_use = f'__get_execstats()__'
+    #                 self.checkpoint_start(taskname=taskname_use, comment=comment_use)
+    #                 func_res = func(*args, **kwargs)
+    #                 self.checkpoint_end(taskname=taskname_use, comment=comment_use)
+
+    #             execstats_bool = '((Comment_Start == @comment_use)&(Comment_End == @comment_use))'
+    #             df_execstats = self.df_protocoll.query(execstats_bool)
+
+    #             #visualize statistics
+    #             td = pd.to_timedelta(df_execstats['Duration']).to_numpy()
+    #             diff = np.zeros(td.shape[0], dtype='datetime64[s]') #initialize datetime array (at date == 0)
+    #             diff += td
+                
+    #             print(df_execstats['Duration'].describe())
+    #             print(np.nanmin(df_execstats['Duration']))
+    #             print(np.nanmax(df_execstats['Duration']))
+    #             print(np.nanmean(df_execstats['Duration']))
+    #             print(np.nanmedian(df_execstats['Duration']))
+    #             # print(np.nanstd(df_execstats['Duration']))
+
+    #             fig = plt.figure()
+    #             ax1 = fig.add_subplot(111)
+
+    #             ax1.hist(diff, bins='sqrt')
+
+    #             ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha='right')
+
+    #             ax1.set_xlabel('Elapsed Time')
+    #             ax1.set_ylabel('Counts')
+
+    #             plt.show()
+
+    #             #drop get_execstats() executions from df_protocoll
+    #             if drop_from_df_protocoll:
+    #                 self.df_protocoll = self.df_protocoll.query('~'+execstats_bool)
+
+
+    #             #return (last) function result
+    #             return func_res
+            
+    #         #return wrapped function (ultimately returns func_res)
+    #         return wrapped_func
+        
+    #     #return wrap (ultimately returns wrapped_func and thus func_res)
+    #     return wrap

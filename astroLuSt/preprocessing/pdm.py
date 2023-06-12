@@ -232,7 +232,7 @@ class PDM:
         self.n_jobs = n_jobs
         self.verbose = verbose
         if binning_kwargs is None:
-            self.binning_kwargs = {'nintervals':100}
+            self.binning_kwargs = {}
         else:
             self.binning_kwargs = binning_kwargs
 
