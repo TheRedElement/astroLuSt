@@ -3,9 +3,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from typing import Callable, Any
-
 import time
+from typing import Callable, Any, List
+
+from astroLuSt.visualization.plotting import generate_colors
 
 #%%definitions
 class ExecTimer:
@@ -24,9 +25,11 @@ class ExecTimer:
 
         Methods
         -------
+            - check_taskname()
             - checkpoint_start()
             - checkpoint_end()
             - estimate_runtime()
+            - get_execstats()
 
         Dependencies
         ------------
@@ -121,7 +124,6 @@ class ExecTimer:
         
         start_time = time.time()
         start_timestamp = np.datetime64('now')
-        print(start_time)
         taskname = self.check_taskname(taskname)
 
         self.df_protocoll.loc[self.df_protocoll.shape[0]] = [
@@ -319,57 +321,102 @@ class ExecTimer:
         #return wrap (ultimately returns wrapped_func and thus func_res)
         return wrap
     
-    # def get_execstats(self,
-    #     n:int=10,
-    #     drop_from_df_protocoll:bool=True,
-    #     ):
-    #     def wrap(func:Callable):
+    def get_execstats(self,
+        n:int=500,
+        metrics:List[Callable]=None,
+        drop_from_df_protocoll:bool=True,
+        ) -> Any:
+        """
+            - decorator method to execute a function n times and return a plot of requested statistics
 
-    #         def wrapped_func(*args, **kwargs):
-    #             for ni in range(n):
-    #                 taskname_use = self.check_taskname('get_execstats()')
-    #                 comment_use = f'__get_execstats()__'
-    #                 self.checkpoint_start(taskname=taskname_use, comment=comment_use)
-    #                 func_res = func(*args, **kwargs)
-    #                 self.checkpoint_end(taskname=taskname_use, comment=comment_use)
-
-    #             execstats_bool = '((Comment_Start == @comment_use)&(Comment_End == @comment_use))'
-    #             df_execstats = self.df_protocoll.query(execstats_bool)
-
-    #             #visualize statistics
-    #             td = pd.to_timedelta(df_execstats['Duration']).to_numpy()
-    #             diff = np.zeros(td.shape[0], dtype='datetime64[s]') #initialize datetime array (at date == 0)
-    #             diff += td
-                
-    #             print(df_execstats['Duration'].describe())
-    #             print(np.nanmin(df_execstats['Duration']))
-    #             print(np.nanmax(df_execstats['Duration']))
-    #             print(np.nanmean(df_execstats['Duration']))
-    #             print(np.nanmedian(df_execstats['Duration']))
-    #             # print(np.nanstd(df_execstats['Duration']))
-
-    #             fig = plt.figure()
-    #             ax1 = fig.add_subplot(111)
-
-    #             ax1.hist(diff, bins='sqrt')
-
-    #             ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha='right')
-
-    #             ax1.set_xlabel('Elapsed Time')
-    #             ax1.set_ylabel('Counts')
-
-    #             plt.show()
-
-    #             #drop get_execstats() executions from df_protocoll
-    #             if drop_from_df_protocoll:
-    #                 self.df_protocoll = self.df_protocoll.query('~'+execstats_bool)
-
-
-    #             #return (last) function result
-    #             return func_res
+            Parameters
+            ----------
+                - n
+                    - int, optional
+                    - number of times the function shall be executed in order to get a statistics
+                    - the default is 500
+                - metrics
+                    - list, optional
+                    - contains callables
+                    - callables calculating the requested statistics
+                    - the default is None
+                        - defaults to [np.nanmean, np.nanmedian, np.nanmin, np.nanmax]
+                - drop_from_df_protocoll
+                    - bool, optional
+                    - whether to drop the related entries from self.df_protocoll
+                    - the default is True
             
-    #         #return wrapped function (ultimately returns func_res)
-    #         return wrapped_func
+            Raises
+            ------
+
+            Returns
+            -------
+                - df_execstats
+                    - pd.DataFrame
+                    - dataframe entries of the executions within self.get_execstats()
+
+            Comments
+            --------
+                - use like decorator, i.e. as follows
+
+                    >>> @ExecTimer().get_execstats(*args)
+                    >>> def func(...):
+                    >>>     ...
+                    >>>     return ...
+                            
+        """
+
+        #initialize
+        if metrics is None:
+            metrics = [np.nanmean, np.nanmedian, np.nanmin, np.nanmax]
+
+        #actual calculation
+        def wrap(func:Callable):
+
+            def wrapped_func(*args, **kwargs):
+                #execute func n times
+                for ni in range(n):
+                    taskname_use = self.check_taskname('get_execstats()')
+                    comment_use = f'__get_execstats()__'
+                    self.checkpoint_start(taskname=taskname_use, comment=comment_use)
+                    func_res = func(*args, **kwargs)
+                    self.checkpoint_end(taskname=taskname_use, comment=comment_use)
+
+                execstats_bool = '((Comment_Start == @comment_use)&(Comment_End == @comment_use))'
+                df_execstats = self.df_protocoll.query(execstats_bool)
+
+                #visualize statistics
+                fig = plt.figure()
+                ax1 = fig.add_subplot(111)
+
+                ax1.hist(df_execstats['Duration_Seconds'], bins='sqrt', alpha=0.5)
+                colors = generate_colors(len(metrics))
+                for m, c in zip(metrics, colors):
+                    val = m(df_execstats['Duration_Seconds'])
+                    ax1.axvline(val, color=c, label=f'{m.__name__} = {val:.3f} s')
+
+                #std
+                ax1.scatter(np.nan, np.nan, color='none', label=f'nanstd = {np.nanstd(df_execstats["Duration_Seconds"]):.3f} s')
+
+                ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha='right')
+
+                ax1.legend()
+
+                ax1.set_xlabel('Elapsed Time [s]')
+                ax1.set_ylabel('Counts')
+
+                plt.show()
+
+                #drop get_execstats() executions from df_protocoll if requested
+                if drop_from_df_protocoll:
+                    self.df_protocoll = self.df_protocoll.query('~'+execstats_bool)
+
+
+                #return dataframe of statistics
+                return df_execstats
+            
+            #return wrapped function (ultimately returns func_res)
+            return wrapped_func
         
-    #     #return wrap (ultimately returns wrapped_func and thus func_res)
-    #     return wrap
+        #return wrap (ultimately returns wrapped_func and thus func_res)
+        return wrap
