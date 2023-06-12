@@ -2662,7 +2662,7 @@ def plot_predictioneval(
     ax1 = fig.add_subplot(111)
 
     ax1.scatter(y_true, y_pred, **sctr_kwargs, label='Samples')
-    ax1.plot(x_ideal, x_ideal,  **plot_kwargs, label='1:1 line')
+    ax1.plot(x_ideal, x_ideal,  **plot_kwargs, label=r'$y_\mathrm{True}=y_\mathrm{Pred}$')
 
     ax1.set_xlabel(r'$y_\mathrm{True}$')
     ax1.set_ylabel(r'$y_\mathrm{Pred}$')
