@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from typing import Callable, Any
 
+import time
 
 #%%definitions
 class ExecTimer:
@@ -31,6 +32,7 @@ class ExecTimer:
         ------------
             - numpy
             - pandas
+            - time
             - typing
 
         Comments
@@ -44,7 +46,7 @@ class ExecTimer:
 
         self.verbose = verbose
         self.df_protocoll = pd.DataFrame(
-            columns=["Task", "Start", "End", "Duration", "Comment_Start", 'Comment_End'],
+            columns=["Task", "Start", "End", "Duration", 'Start_Seconds', 'End_Seconds', 'Duration_Seconds', "Comment_Start", 'Comment_End'],
         )
         
         self.df_protocoll["Start"] = pd.to_datetime(self.df_protocoll["Start"])
@@ -92,7 +94,7 @@ class ExecTimer:
         return taskname
 
     def checkpoint_start(self,
-        taskname:str, comment:str=""
+        taskname:str, comment:str=''
         ) -> None:
         """
             - method to start a new task
@@ -116,16 +118,20 @@ class ExecTimer:
             Comments
             --------
         """
-
-        start_time = np.datetime64('now')
-
+        
+        start_time = time.time()
+        start_timestamp = np.datetime64('now')
+        print(start_time)
         taskname = self.check_taskname(taskname)
 
         self.df_protocoll.loc[self.df_protocoll.shape[0]] = [
             taskname,
-            start_time,
+            start_timestamp,
             np.empty(1, dtype='datetime64[s]')[0],
             np.empty(1, dtype='timedelta64[s]')[0],
+            start_time,
+            np.nan,
+            np.nan,
             comment,
             ''
         ]
@@ -162,9 +168,12 @@ class ExecTimer:
             --------
         """
 
-        end_time = np.datetime64('now')
+        end_time = time.time()
+        end_timestamp = np.datetime64('now')
+
         try:
-            start_time = self.df_protocoll[(self.df_protocoll["Task"]==taskname)]["Start"].values[0]
+            start_time      = self.df_protocoll[(self.df_protocoll["Task"]==taskname)]["Start_Seconds"].values[0]
+            start_timestamp = self.df_protocoll[(self.df_protocoll["Task"]==taskname)]["Start"].values[0]
         except IndexError as ie:
             msg = (
                 f"IndexError occured. Probably your provided 'taskname' has never been initialized."
@@ -173,14 +182,16 @@ class ExecTimer:
             )
             raise LookupError(msg)
 
-        duration = pd.to_timedelta(end_time-start_time)
-
+        duration = end_time-start_time
+        duration_timedelta = pd.to_timedelta(end_timestamp-start_timestamp)
 
         cur_task = np.where(self.df_protocoll["Task"]==taskname)[0][0]
 
 
-        self.df_protocoll.at[cur_task, "End"] = end_time
-        self.df_protocoll.at[cur_task, "Duration"] = duration
+        self.df_protocoll.at[cur_task, "End"] = pd.to_datetime(end_timestamp)
+        self.df_protocoll.at[cur_task, "Duration"] = duration_timedelta
+        self.df_protocoll.at[cur_task, "Duration_Seconds"] = duration
+        self.df_protocoll.at[cur_task, "End_Seconds"] = end_time
         self.df_protocoll.at[cur_task, "Comment_End"] = comment
 
 
