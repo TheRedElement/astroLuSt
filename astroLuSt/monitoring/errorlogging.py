@@ -53,7 +53,7 @@ class LogErrors:
             f'ExecptionFormatting()'
         )
     
-    def log_exc(self,
+    def print_exc(self,
         e:Exception,
         prefix:str='', suffix:str='',
         verbose:int=None,
