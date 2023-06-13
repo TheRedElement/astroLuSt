@@ -109,7 +109,7 @@ class LogErrors:
     def exc2df(self,
         e:Exception,
         prefix:str='', suffix:str='',
-        ) -> None:
+        ) -> pd.DataFrame:
         """
             - method to store a caught exception e to a pandas DataFrame
 
@@ -132,6 +132,9 @@ class LogErrors:
             
             Returns
             -------
+                - df_temp
+                    - pd.DataFrame
+                    - temporary dataframe containing information for last exception
 
             Comments
             --------
@@ -156,7 +159,7 @@ class LogErrors:
 
         self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
 
-        return
+        return df_temp
 
     def save_log(self,
         filename:str,
