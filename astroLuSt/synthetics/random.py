@@ -564,7 +564,8 @@ class GeneratePeriodicSignals:
         noise_level_x:float=0.1,
         random_state:int=None,
         func_kwargs:dict=None 
-        ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[np.ndarray]]:
+        # ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[np.ndarray]]: #works for python >= 3.9
+        ) -> Tuple[np.ndarray, np.ndarray]:
         """
             - method similar to the scipy.stats rvs() method
             - rvs ... random variates

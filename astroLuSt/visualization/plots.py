@@ -2338,7 +2338,7 @@ class CornerPlot:
             return     
 
     def plot(self,
-        X:np.ndarray, y:Union[np.ndarray,str], featurenames:np.ndarray=None,
+        X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
         mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
         bins:int=100,
         cmap:Union[str,mcolors.Colormap]='viridis',
