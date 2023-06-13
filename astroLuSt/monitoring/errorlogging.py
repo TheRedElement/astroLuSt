@@ -144,14 +144,14 @@ class LogErrors:
         error_msgs = re.findall(r'\w+Error: [\w ]+', format_exc)
 
         df_temp = pd.DataFrame({
-            'exception':format_exc*len(files),
-            'prefix':prefix*len(files),
-            'suffix':suffix*len(files),
+            'exception':[format_exc]*len(files),
+            'prefix':[prefix]*len(files),
+            'suffix':[suffix]*len(files),
             'file':files,
             'line':lines,
-            'problem line':problem_lines,
+            'problem line':[problem_lines]*len(files),
             'error msg':error_msgs*len(files),
-            'time':[pd.Timestamp.now()]*len(files)
+            'time':[pd.Timestamp.now()]*len(files),
         })        
 
         self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
