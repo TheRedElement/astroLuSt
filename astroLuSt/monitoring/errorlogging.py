@@ -11,6 +11,10 @@ class LogErrors:
 
         Attributes
         ----------
+            - verbose
+                - int, optional
+                - verbosity level
+                - the default is 0
 
         Infered Attributes
         ------------------
@@ -33,7 +37,11 @@ class LogErrors:
         --------
     """
 
-    def __init__(self) -> None:
+    def __init__(self,
+        verbose:int=1,
+        ) -> None:
+        self.verbose = verbose
+
         self.df_errorlog = pd.DataFrame(
             columns=['exception', 'prefix', 'suffix', 'file', 'line', 'problem line', 'error msg', 'time']
         )
@@ -45,12 +53,14 @@ class LogErrors:
             f'ExecptionFormatting()'
         )
     
-    def print_exc(self,
+    def log_exc(self,
         e:Exception,
-        prefix:str='', suffix:str=''
+        prefix:str='', suffix:str='',
+        verbose:int=None,
         ) -> None:
         """
-            - method to print a formatted version of the caught exception e
+            - method to log a formatted version of the caught exception e
+            - will print the formatted version if requested
 
             Parameters
             ----------
@@ -65,6 +75,12 @@ class LogErrors:
                     - str, optional
                     - something to print after the caught exception
                     - the default is ''
+                - verbose
+                    - int, optional
+                    - verbosity level
+                    - will override self.verbose if passed
+                    - the default is None
+                        - falls back to self.verbose
             
             Raises
             ------
@@ -76,11 +92,16 @@ class LogErrors:
             --------
         """
         
+        #initialize
+        if verbose is None:
+            verbose = self.verbose
+
         format_exc = traceback.format_exc()
 
-        print(prefix)
-        print(format_exc)
-        print(suffix)
+        if verbose > 0:
+            print(prefix)
+            print(format_exc)
+            print(suffix)
 
 
         return

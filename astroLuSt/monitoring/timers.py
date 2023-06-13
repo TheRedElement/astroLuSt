@@ -140,7 +140,7 @@ class ExecTimer:
 
         if self.verbose > 0:
             print("\n"+"#"*70)
-            print(f"INFO: Started {taskname} at {start_time}")
+            print(f"INFO: Started {taskname} at {start_timestamp}")
 
 
         return
@@ -199,9 +199,9 @@ class ExecTimer:
 
         if self.verbose > 0:
             print(
-                f"\n"
-                f"INFO: Finished {taskname} at {end_time}\n"
-                f"Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, 'Duration'])}"
+                f'\n'
+                f'INFO: Finished {taskname} at {end_timestamp}\n'
+                f'Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, "Duration"])}'
             )
             print("#"*70)
         return
