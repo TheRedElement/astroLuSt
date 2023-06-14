@@ -2,13 +2,12 @@
 
 #%%imports
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 from typing import Callable, Union
 
 #%%definitions
-class SamplewiseScaler:
+class AxesScaler:
     """
-        - class to scale some data not feature-wise but sample wise
+        - class to scale some data not feature-wise but along given axes
 
         Attributes
         ----------
@@ -25,7 +24,7 @@ class SamplewiseScaler:
                     - returning one value `X_new`
                 - if a string is passed one of the class methods will be used
                     - currently the following strings are allowed
-                        - 'minmax'
+                        - 'rangescaler'
                 - the default is `None`
                     - will fallback to `self.range_scale()`
                         - scales featurewise into the interval [0,1]
@@ -65,7 +64,7 @@ class SamplewiseScaler:
         Dependencies
         ------------
             - numpy
-            - sklearn
+            - typing
 
         Comments
         --------
@@ -80,12 +79,12 @@ class SamplewiseScaler:
         
 
         #list of internally available scalers
-        self.internal_scalers = ['minmax']
+        self.internal_scalers = ['rangescaler']
 
         if isinstance(scaler,str):
             if scaler not in self.internal_scalers:
                 raise ValueError(f'`{scaler}` is not internally available. Try one of {self.internal_scalers}')
-            elif scaler == 'minmax':
+            elif scaler == 'rangescaler':
                 self.scaler = self.range_scale
         elif scaler is None:
                 self.scaler = self.range_scale
@@ -107,7 +106,7 @@ class SamplewiseScaler:
     def __repr__(self) -> str:
         
         return (
-            f'SamplewiseScaler(\n'
+            f'AxesScaler(\n'
             f'    scaler={self.scaler.__name__},\n'
             f'    scaler_kwargs={self.scaler_kwargs},\n'
             f')'
