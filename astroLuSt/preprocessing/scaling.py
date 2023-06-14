@@ -85,9 +85,9 @@ class AxisScaler:
             if scaler not in self.internal_scalers:
                 raise ValueError(f'`{scaler}` is not internally available. Try one of {self.internal_scalers}')
             elif scaler == 'range_scaler':
-                self.scaler = self.range_scale
+                self.scaler = self.range_scaler
         elif scaler is None:
-                self.scaler = self.range_scale
+                self.scaler = self.range_scaler
         else:
             self.scaler = scaler
         
