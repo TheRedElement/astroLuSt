@@ -5,7 +5,7 @@ import numpy as np
 from typing import Callable, Union
 
 #%%definitions
-class AxesScaler:
+class AxisScaler:
     """
         - class to scale some data not feature-wise but along given axes
 
