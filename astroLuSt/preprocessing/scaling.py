@@ -24,7 +24,7 @@ class AxesScaler:
                     - returning one value `X_new`
                 - if a string is passed one of the class methods will be used
                     - currently the following strings are allowed
-                        - 'rangescaler'
+                        - 'range_scaler'
                 - the default is `None`
                     - will fallback to `self.range_scale()`
                         - scales featurewise into the interval [0,1]
@@ -79,12 +79,12 @@ class AxesScaler:
         
 
         #list of internally available scalers
-        self.internal_scalers = ['rangescaler']
+        self.internal_scalers = ['range_scaler']
 
         if isinstance(scaler,str):
             if scaler not in self.internal_scalers:
                 raise ValueError(f'`{scaler}` is not internally available. Try one of {self.internal_scalers}')
-            elif scaler == 'rangescaler':
+            elif scaler == 'range_scaler':
                 self.scaler = self.range_scale
         elif scaler is None:
                 self.scaler = self.range_scale
@@ -112,7 +112,7 @@ class AxesScaler:
             f')'
         )
     
-    def range_scale(self,
+    def range_scaler(self,
         X:np.ndarray, axis:Union[tuple,int]=None,
         feature_range:tuple=(0,1), 
         ) -> np.ndarray:
