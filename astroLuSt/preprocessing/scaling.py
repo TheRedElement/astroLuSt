@@ -3,7 +3,7 @@
 #%%imports
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from typing import Callable
+from typing import Callable, Union
 
 #%%definitions
 class SamplewiseScaler:
@@ -12,17 +12,55 @@ class SamplewiseScaler:
 
         Attributes
         ----------
-            - scaler
-                - class
-                - some instance implementing a fit and transform method
-                - the default is sklearn.preprocessing.MinMaxScaler()
-                    - will scale each sample to have its fatures exactly between 0 and 1
+            - `scaler`
+                - callable
+                - some function
+                    - has to have least the following (positional) parameter
+                        - `X`
+                            - np.ndarray
+                            - input array
+                        - `axis`
+                            - tuple, int
+                            - denoting the axis to operate on
+                    - returning one value `X_new`
+                - if a string is passed one of the class methods will be used
+                    - currently the following strings are allowed
+                        - 'minmax'
+                - the default is `None`
+                    - will fallback to `self.range_scale()`
+                        - scales featurewise into the interval [0,1]
+            - `axis`
+                - tuple, int
+                - axis along which to apply the scaling
+                - the default is `None`
+                    - defaults to `0`
+                    - will scale feature-wise
+            - `scaler_kwargs`
+                - dict, optional
+                - any kwargs that will be passed to `scaler`
+                - the default is `None`
+                    - will be set to `{}`
+
+        Infered Attributes
+        ------------------
+            - `internal_scalers`
+                - list
+                - contains all scalers that are internally implemented
+            - `X_new`
+                - np.ndarray
+                - the scaled version of the input data `X`
 
         Methods
         -------
-            - fit()
-            - transform()
-            - fit_transform()
+            - `range_scale()`
+            - `fit()`
+            - `transform()`
+            - `fit_transform()`
+
+        Raises
+        ------
+            - ValueError
+                - if the string passed to `scaler` is not valid
 
         Dependencies
         ------------
@@ -35,15 +73,97 @@ class SamplewiseScaler:
     """
 
     def __init__(self,
-        scaler:Callable=MinMaxScaler()
+        scaler:Union[str,Callable]=None,
+        axis:Union[tuple,int]=None,
+        scaler_kwargs:dict=None,
         ) -> None:
         
-        self.scaler = scaler
+
+        #list of internally available scalers
+        self.internal_scalers = ['minmax']
+
+        if isinstance(scaler,str):
+            if scaler not in self.internal_scalers:
+                raise ValueError(f'`{scaler}` is not internally available. Try one of {self.internal_scalers}')
+            elif scaler == 'minmax':
+                self.scaler = self.range_scale
+        elif scaler is None:
+                self.scaler = self.range_scale
+        else:
+            self.scaler = scaler
+        
+        if axis is None:
+            self.axis = 0
+        else:
+            self.axis = axis
+
+        if scaler_kwargs is None:
+            self.scaler_kwargs = {}
+        else:
+            self.scaler_kwargs = scaler_kwargs
 
         return
     
+    def __repr__(self) -> str:
+        
+        return (
+            f'SamplewiseScaler(\n'
+            f'    scaler={self.scaler.__name__},\n'
+            f'    scaler_kwargs={self.scaler_kwargs},\n'
+            f')'
+        )
+    
+    def range_scale(self,
+        X:np.ndarray, axis:Union[tuple,int]=None,
+        feature_range:tuple=(0,1), 
+        ) -> np.ndarray:
+        """
+            - method that scales the input X along axis into feature-range
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - input data that shall be scaled
+                - `feature_range`
+                    - tuple, optional
+                    - feature range into which to scale `X`
+                    - the maximum and minimum of `X` w.r.t. `axis` will lye in that range 
+                    - the default is `(0,1)`
+                - `axis`
+                    - tuple, int
+                    - axis along which to apply the scaling
+                    - will override `self.axis`
+                    - the default is `None`
+                        - will fallback to `self.axis`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `X_new`
+                    - np.ndarray
+                    - scaled version of `X`
+
+            Comments
+            --------
+        """
+        if axis is None:
+            axis = self.axis
+
+        X_min = np.nanmin(X, axis=axis, keepdims=True)
+        X_max = np.nanmax(X, axis=axis, keepdims=True)
+        fmin = np.nanmin(feature_range)
+        fmax = np.nanmax(feature_range)
+
+        X_new = (X-X_min)/(X_max - X_min) * (fmax-fmin) + fmin
+
+        return X_new    
+    
     def fit(self,
         X:np.ndarray, y:np.ndarray=None,
+        scaler_kwargs:dict=None,
         ) -> None:
         """
             - fit method for the scaler
@@ -51,14 +171,21 @@ class SamplewiseScaler:
             
             Parameters
             ----------
-                - X
-                    - np.ndarray, pd.DataFrame
+                - `X`
+                    - np.ndarray
                     - input data that shall be transformed
                     - contains samples as the rows and features as the columns
-                - y
-                    - np.ndarray
+                - `y`
+                    - np.ndarray, optional
                     - does not affect the transformation
                     - included for compatibility
+                    - the default is `None`
+                - `scaler_kwargs`
+                    - dict, optional
+                    - any kwargs that will be passed to `scaler`
+                    - will override `self.scaler_kwargs`
+                    - the default is `None`
+                        - will fallback to `self.scaler_kwargs`         
 
             Raises
             ------
@@ -66,13 +193,19 @@ class SamplewiseScaler:
             Returns
             -------
 
-        """
+            Comments
+            --------
 
-        self.X_scaled = self.scaler.fit_transform(X.T).T
+        """
+        if scaler_kwargs is None:
+            scaler_kwargs = self.scaler_kwargs
+        
+        self.X_new = self.scaler(X, **scaler_kwargs)
 
         return
     
-    def transform(self,    
+    def transform(self,
+        X:np.ndarray=None,
         ) -> np.ndarray:
         """
             - transform method for the scaler
@@ -80,21 +213,33 @@ class SamplewiseScaler:
             
             Parameters
             ----------
+                - `X`
+                    - np.ndarray, optional
+                    - input data that shall be transformed
+                    - contains samples as the rows and features as the columns
+                    - the default is `None`
 
             Raises
             ------
 
             Returns
             -------
-                - self.X_scaled
+                - `X_new`
                     - np.ndarray
-                    - the scaled version of the input data X
+                    - the scaled version of the input data `X`
+
+            Comments
+            --------
             
         """
-        return self.X_scaled
+
+        X_new = self.X_new
+        
+        return X_new
     
     def fit_transform(self,
         X:np.ndarray, y:np.ndarray=None,
+        scaler_kwargs:dict=None
         ) -> np.ndarray:
         """
             - method for the scaler that first fits and consecutively transforms the input data
@@ -102,27 +247,42 @@ class SamplewiseScaler:
             
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray, pd.DataFrame
                     - input data that shall be transformed
                     - contains samples as the rows and features as the columns
-                - y
+                - `y`
                     - np.ndarray
                     - does not affect the transformation
                     - included for compatibility
+                    - the default is `None`
+                - `scaler_kwargs`
+                    - dict, optional
+                    - any kwargs that will be passed to `scaler`
+                    - will override `self.scaler_kwargs`
+                    - the default is `None`
+                        - will fallback to `self.scaler_kwargs`
+
             Raises
             ------
 
             Returns
             -------
-                - self.X_scaled
+                - `X_new`
                     - np.ndarray
-                    - the scaled version of the input data X
+                    - the scaled version of the input data `X`
+            
+            Comments
+            --------
             
         """
+        if scaler_kwargs is None:
+            scaler_kwargs = self.scaler_kwargs
 
-        self.fit(X, y)
+        self.fit(X, y, scaler_kwargs=scaler_kwargs)
         self.transform()
 
-        return self.X_scaled
+        X_new = self.X_new
+
+        return X_new
 
