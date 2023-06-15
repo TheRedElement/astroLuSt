@@ -495,7 +495,7 @@ class AugmentAxis:
         if isinstance(axis,int):
             axis = (axis,)
         if not isinstance(npoints,int):
-            npoints = np.random.randint(low=np.random.randint(np.nanmin(npoints), np.nanmax(npoints)))
+            npoints = np.random.randint(low=np.nanmin(npoints), high=np.nanmax(npoints))
 
         #obscure entries
         x_new = x.copy()
