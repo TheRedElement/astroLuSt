@@ -50,7 +50,7 @@ class AugmentAxis:
                 - if False
                     - will randomly choose `npoints` elements along `axis`
                 - the default is False
-            - `fill_value`
+            - `fill_value_obscure`
                 - int, str, optional
                 - value to use inplace of the obscured entries
                 - if an int is passed, this value gets inserted for all elements
@@ -171,7 +171,7 @@ class AugmentAxis:
         nsamples:int=1, sample_weights:list=None,
         shift:Union[tuple,int]=None,
         npoints:Union[int,tuple]=None, neighbors:bool=False,
-        fill_value:Union[float,str]=None, fill_value_range:tuple=None,
+        fill_value_obscure:Union[float,str]=None, fill_value_range:tuple=None,
         cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
 
@@ -193,10 +193,10 @@ class AugmentAxis:
         else:
             self.npoints = npoints
         self.neighbors = neighbors
-        if fill_value is None:
-            self.fill_value = 0
+        if fill_value_obscure is None:
+            self.fill_value_obscure = 0
         else:
-            self.fill_value = fill_value
+            self.fill_value_obscure = fill_value_obscure
         if fill_value_range is None:
             self.fill_value_range = (0,1)
         else:
@@ -542,7 +542,7 @@ class AugmentAxis:
         if neighbors is None:
             neighbors = self.neighbors
         if fill_value is None:
-            fill_value = self.fill_value
+            fill_value = self.fill_value_obscure
         if fill_value_range is None:
             fill_value_range = self.fill_value_range
         if axis is None:
