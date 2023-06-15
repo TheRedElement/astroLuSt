@@ -108,18 +108,35 @@ class AugmentAxis:
                         - extrapolated to infer out-of-bounds values
                 - the default is `None`
                     - defaults to `'extrapolate'`   
-                - `noise_mag`
-                    - float, tuple
-                    - magnitude of the noise to apply
-                    - if float
-                        - will be interpreted as the magnitude
-                    - if tuple
-                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
-                        - will generate a random float to use as the noise_mag
-                    - the default is `None`
-                        - will default to 0
-                        - no noise applied                    
-                                
+            - `noise_mag`
+                - float, tuple
+                - magnitude of the noise to apply
+                - if float
+                    - will be interpreted as the magnitude
+                - if tuple
+                    - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                    - will generate a random float to use as the noise_mag
+                - the default is `None`
+                    - will default to 0
+                    - no noise applied                    
+            - `feature_range_min`
+                - int, tuple, optional
+                - the lower bound of the interval the rescaled axis shall have
+                - if an int
+                    - interpreted as the lower bound directly
+                - if a tuple
+                    - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                - the default is `None`
+                    - will default to 0                     
+            - `feature_range_max`
+                - int, tuple, optional
+                - the upper bound of the interval the rescaled axis shall have
+                - if an int
+                    - interpreted as the upper bound directly
+                - if a tuple
+                    - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                - the default is `None`
+                    - will default to 1                             
 
         
             - n_newsamples
@@ -195,9 +212,9 @@ class AugmentAxis:
         cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
         noise_mag:Union[float,tuple]=None,
+        feature_range_min:Union[int,tuple]=None,
+        feature_range_max:Union[int,tuple]=None,
 
-
-        min_scale:np.ndarray=None, max_scale:np.ndarray=None,
         n_transformations:int=0,
         axis:tuple=None
         ):
@@ -229,6 +246,11 @@ class AugmentAxis:
         
         if noise_mag is None:           self.noise_mag = 0
         else:                           self.noise_mag = noise_mag
+
+        if feature_range_min is None:   self.feature_range_min = 0
+        else:                           self.feature_range_min = feature_range_min
+        if feature_range_max is None:   self.feature_range_max = 1
+        else:                           self.feature_range_max = feature_range_min
 
         if axis is None:                self.axis = 0
         else:                           self.axis = axis
@@ -363,8 +385,8 @@ class AugmentAxis:
                     - the array to be flipped
                 - `axis`
                     - int, tuple, optional
-                    - axis onto which to apply `shift`
-                    - will be passed to `np.roll`
+                    - axis onto which to apply `flip_axis`
+                    - will be passed to `np.flip`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
@@ -445,8 +467,7 @@ class AugmentAxis:
                         - will fall back to `self.fill_value_range`
                 - `axis`
                     - int, tuple, optional
-                    - axis onto which to apply `shift`
-                    - will be passed to `np.roll`
+                    - axis onto which to apply `obscure_observations`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
@@ -584,8 +605,7 @@ class AugmentAxis:
                         - falls back to `self.fill_value_crop`
                 - `axis`
                     - int, tuple, optional
-                    - axis onto which to apply `shift`
-                    - will be passed to `np.roll`
+                    - axis onto which to apply `crop`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
@@ -671,8 +691,7 @@ class AugmentAxis:
                         - will fall back to `self.noise_mag`
                 - `axis`
                     - int, tuple, optional
-                    - axis onto which to apply `shift`
-                    - will be passed to `np.roll`
+                    - axis onto which to apply `add_noise`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`    
@@ -720,12 +739,82 @@ class AugmentAxis:
 
     def rescale(self,
         x:np.ndarray,
+        feature_range_min:Union[int,tuple]=None, feature_range_max:Union[int,tuple]=None,
         axis:Union[int,tuple]=None,
         ) -> np.ndarray:
+        """
+            - method to rescale the input into a specified interval along specified axis
 
-        AS = AxisScaler
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - the array to be obscured
+                - `feature_range_min`
+                    - int, tuple, optional
+                    - the lower bound of the interval the rescaled axis shall have
+                    - if an int
+                        - interpreted as the lower bound directly
+                    - if a tuple
+                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                    - overrides `self.feature_range_min`
+                    - the default is `None`
+                        - falls back to `self.feature_range_min`
+                - `feature_range_max`
+                    - int, tuple, optional
+                    - the upper bound of the interval the rescaled axis shall have
+                    - if an int
+                        - interpreted as the upper bound directly
+                    - if a tuple
+                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                    - overrides `self.feature_range_max`
+                    - the default is `None`
+                        - falls back to `self.feature_range_max`
+                - `axis`
+                    - int, tuple, optional
+                    - axis onto which to apply `rescale`
+                    - will be passed to `astroLuSt.preprossesing.scaling.AxisScaler()`
+                    - overrides `self.axis`
+                    - the default is `None`
+                        - will fall back to `self.axis`    
+            Raises
+            ------
 
-        return
+            Returns
+            -------
+                - `x_new`
+                    - np.ndarray
+                    - the input `x` with the requested axis rescaled to the requested feature range
+
+            Comments
+            --------
+        
+        
+        """
+
+        #default parameteres
+        if feature_range_min is None: feature_range_min = self.feature_range_min
+        if feature_range_max is None: feature_range_max = self.feature_range_max
+        if axis is None: axis = self.axis
+
+        #initialize correctly
+        if isinstance(feature_range_min, int):
+            fr_min = feature_range_min
+        else:
+            fr_min = np.random.uniform(np.nanmin(feature_range_min), np.nanmax(feature_range_min))
+        if isinstance(feature_range_max, int):
+            fr_max = feature_range_max
+        else:
+            fr_max = np.random.uniform(np.nanmin(feature_range_max), np.nanmax(feature_range_max))
+
+        AS = AxisScaler(
+            scaler='range_scaler',
+            axis=axis,
+            scaler_kwargs={'feature_range':(fr_min, fr_max)}
+        )
+        x_new = AS.fit_transform(x)
+
+        return x_new
 
     def apply_transform(self,
         X:np.ndarray,

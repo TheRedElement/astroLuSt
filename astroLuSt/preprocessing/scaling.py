@@ -14,7 +14,7 @@ class AxisScaler:
             - `scaler`
                 - callable
                 - some function
-                    - has to have least the following (positional) parameter
+                    - has to have least at the following (positional) parameter
                         - `X`
                             - np.ndarray
                             - input array
