@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 
 import matplotlib.pyplot as plt
+import warnings
 
 
 
@@ -80,6 +81,7 @@ class Augment1D:
         noise_mag:np.ndarray=None,
         ):
         
+        warnings.warn('This class is deprecated. Use `astrLuSt.synthetics.dataaugmentation.AugmentAxis()` instead')
         self.n_newsamples = n_newsamples
         self.feature_shift = feature_shift
         self.min_scale = min_scale
