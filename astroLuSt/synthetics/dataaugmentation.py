@@ -466,7 +466,7 @@ class AugmentAxis:
         x:np.ndarray,
         npoints:Union[int,tuple]=None,
         neighbors:bool=None,
-        fill_value:Union[int,str]=None,
+        fill_value_obscure:Union[int,str]=None,
         fill_value_range:tuple=None,
         axis:Union[tuple,int]=None,
         ) -> np.ndarray:
@@ -497,16 +497,16 @@ class AugmentAxis:
                     - overrides `self.neighbors`
                     - the default is `None`
                         - will fall back to `self.neighbors`
-                - `fill_value`
+                - `fill_value_obscure`
                     - int, str, optional
                     - value to use inplace of the obscured entries
                     - if an int is passed, this value gets inserted for all elements
                     - the following strings are currently allowed
                         - `'random'`
                             - generate `npoints` random datapoints within `fill_value_range`
-                    - overrides `self.fill_value`
+                    - overrides `self.fill_value_obscure`
                     - the default is `None`
-                        - will fall back to `self.fill_value`
+                        - will fall back to `self.fill_value_obscure`
                 - `fill_value_range`
                     - tuple, optional
                     - boundaries to define from which range to uniformly sample fill-values
@@ -541,8 +541,8 @@ class AugmentAxis:
             npoints = self.npoints
         if neighbors is None:
             neighbors = self.neighbors
-        if fill_value is None:
-            fill_value = self.fill_value_obscure
+        if fill_value_obscure is None:
+            fill_value_obscure = self.fill_value_obscure
         if fill_value_range is None:
             fill_value_range = self.fill_value_range
         if axis is None:
@@ -563,7 +563,7 @@ class AugmentAxis:
             size[ax] = npoints  #5 indices at ax
 
             #generate random fill_values if requested
-            if fill_value == 'random':
+            if fill_value_obscure == 'random':
                 #generate size for randomly generated fill-values (f_value)
                 f_value_size = np.array(x_new.shape)
                 f_value_size[ax] = npoints
@@ -571,7 +571,7 @@ class AugmentAxis:
                 #generate random fill-values
                 f_value = np.random.uniform(low=np.nanmin(fill_value_range), high=np.nanmax(fill_value_range), size=f_value_size)
             else:
-                f_value = fill_value
+                f_value = fill_value_obscure
             
             #generate random indices to replace
             ##npoints consecutive indices
