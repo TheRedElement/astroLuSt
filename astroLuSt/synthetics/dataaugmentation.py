@@ -152,13 +152,17 @@ class AugmentAxis:
 
         Methods
         -------
-            - `shift_features()`
-            - `flip_axis()`
-            - `obscure_observations()`
-            - `crop()`
-            - `rescale()`
             - `add_noise()`
+            - `apply_transform()`
+            - `crop()`
+            - `flip_axis()`
+            - `get_transformations()`
+            - `obscure_observations()`
+            - `rescale()`
+            - `shift_features()`
+            
 
+            
             - generate_random_parameters()
             - shift_indices()
             - add_noise()
@@ -301,6 +305,7 @@ class AugmentAxis:
             scale_max = np.nanmin(orig)
         
         return shift, scale_min, scale_max
+
 
     def get_transformations(self,
         ) -> list[str]:
@@ -990,8 +995,41 @@ class AugmentAxis:
     def fit(self,
         X:np.ndarray,
         augment:bool=False,
-        seed:int=None
-        ):
+        random_seed:int=None
+        ) -> None:
+        """
+            - method to fit the generator to some sample data `X`
+            - calculates relevant statistics based on the sample data
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - has to be 4d array
+                    - input data containing n samples on its first axis
+                - `augment`
+                    - bool, optional
+                    - whether to fit to randomly augmented data
+                    - the default is False
+                - `random_seed`
+                    - int, optional
+                    - random seed
+                    - overrides `self.random_seed`
+                    - the default is `None`
+                        - will fall back to `self.random_seed`
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+                - not necessary as of now
+                    - included to follow the tf.keras structure of `tf.keras.preprocessing.image.ImageDataGenerator`
+        """
+
 
         return
     

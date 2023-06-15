@@ -106,7 +106,7 @@ class AxisScaler:
     def __repr__(self) -> str:
         
         return (
-            f'AxesScaler(\n'
+            f'AxisScaler(\n'
             f'    scaler={self.scaler.__name__},\n'
             f'    scaler_kwargs={self.scaler_kwargs},\n'
             f')'
