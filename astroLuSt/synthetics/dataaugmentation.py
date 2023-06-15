@@ -7,6 +7,7 @@
 #%%
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 from typing import Union
 
 
@@ -65,7 +66,47 @@ class AugmentAxis:
                 - only relevant is `fill_value == 'random'`
                 - the default is None
                     - will be set to `(0,1)`
-        
+            - `cutout_start`
+                - int, tuple, optional
+                - index of where to start the cutout region along `axis`
+                - if an int
+                    - interpreted as the starting index
+                -  if a tuple
+                    - interpreted as `low` and `high` parameters in `np.random.randint()`
+                    - will generate a random integer used as the starting point
+                - the default is `None`
+                    - defaults to 0
+            - `cutout_size`
+                - int, tuple, optional
+                - length of the cutout region along `axis`
+                - if an int
+                    - interpreted as the length
+                -  if a tuple
+                    - interpreted as `low` and `high` parameters in `np.random.randint()`
+                    - will generate a random integer used as the length of the cutout
+                - the default is `None`
+                    - defaults to 0
+                        - no transformation applied
+            - `interpkind`
+                - int, str, optional
+                - interpolation method to use
+                - parameter of `scipy.interpolate.interp1d()`
+                - the default is `None`
+                    - defaults to `'linear'`
+            - `fill_value_crop`
+                - int, tuple, str, optional
+                - value used to fill regions where extrapolation is necessary
+                - parameter of `scipy.interpolate.interp1d()`
+                - if an int
+                    - this value will be used for datapoints out of interpolation range
+                - if a tuple
+                    - the first element will be used for datapoints out of the lower bound of the interpolation range
+                    - the second element will be used for datapoints out of the upper bound of the interpolation range
+                - supported strings
+                    - `'extrapolate'`
+                        - extrapolated to infer out-of-bounds values
+                - the default is `None`
+                    - defaults to `'extrapolate'`   
                     
                                 
 
@@ -129,10 +170,10 @@ class AugmentAxis:
     def __init__(self,
         nsamples:int=1, sample_weights:list=None,
         shift:Union[tuple,int]=None,
-        npoints:Union[int,tuple]=None,
-        neighbors:bool=False,
-        fill_value:Union[float,str]=None,
-        fill_value_range:tuple=None,
+        npoints:Union[int,tuple]=None, neighbors:bool=False,
+        fill_value:Union[float,str]=None, fill_value_range:tuple=None,
+        cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
+        interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
 
         min_scale:np.ndarray=None, max_scale:np.ndarray=None,
         noise_mag:np.ndarray=None,
@@ -160,7 +201,23 @@ class AugmentAxis:
             self.fill_value_range = (0,1)
         else:
             self.fill_value_range = fill_value_range
-
+        if cutout_start is None:
+            self.cutout_start = 0
+        else:
+            self.cutout_start = cutout_start
+        if cutout_size is None:
+            self.cutout_size = 0
+        else:
+            self.cutout_size = cutout_size
+        if interpkind is None:
+            self.interpkind = 'linear'
+        else:
+            self.interpkind = interpkind
+        if fill_value_crop is None:
+            self.fill_value_crop = 'extrapolate'
+        else:
+            self.fill_value_crop = fill_value_crop
+        
 
         if axis is None:
             self.axis = 0
@@ -412,7 +469,7 @@ class AugmentAxis:
         fill_value:Union[int,str]=None,
         fill_value_range:tuple=None,
         axis:Union[tuple,int]=None,
-        ):
+        ) -> np.ndarray:
         """
             - method to obscure random datapoints in `x` along a given axis
 
@@ -540,10 +597,125 @@ class AugmentAxis:
         return x_new
     
     def crop(self,
-        idx_range:tuple=None
-        ):
+        x:np.ndarray,
+        cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
+        interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
+        axis:Union[int,tuple] = None,
+        ) -> np.ndarray:
+        """
+            - method to crop out a random subset of `x` along a given axis
 
-        return
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - the array to be obscured
+                - `cutout_start`
+                    - int, tuple, optional
+                    - index of where to start the cutout region along `axis`
+                    - if an int
+                        - interpreted as the starting index
+                    -  if a tuple
+                        - interpreted as `low` and `high` parameters in `np.random.randint()`
+                        - will generate a random integer used as the starting point
+                    - overrides `self.cutout_start`
+                    - the default is `None`
+                        - falls back to `self.cutout_start`
+                - `cutout_size`
+                    - int, tuple, optional
+                    - length of the cutout region along `axis`
+                    - if an int
+                        - interpreted as the length
+                    -  if a tuple
+                        - interpreted as `low` and `high` parameters in `np.random.randint()`
+                        - will generate a random integer used as the length of the cutout
+                    - overrides `self.cutout_size`
+                    - the default is `None`
+                        - falls back to `self.cutout_size`
+                - `interpkind`
+                    - int, str, optional
+                    - interpolation method to use
+                    - parameter of `scipy.interpolate.interp1d()`
+                    - overrides `self.interpkind`
+                    - the default is `None`
+                        - falls back to `self.interpkind`
+                - `fill_value_crop`
+                    - int, tuple, str, optional
+                    - value used to fill regions where extrapolation is necessary
+                    - parameter of `scipy.interpolate.interp1d()`
+                    - if an int
+                        - this value will be used for datapoints out of interpolation range
+                    - if a tuple
+                        - the first element will be used for datapoints out of the lower bound of the interpolation range
+                        - the second element will be used for datapoints out of the upper bound of the interpolation range
+                    - supported strings
+                        - `'extrapolate'`
+                            - extrapolated to infer out-of-bounds values
+                    - overrides `self.fill_value_crop`
+                    - the default is `None`
+                        - falls back to `self.fill_value_crop`
+                - `axis`
+                    - int, tuple, optional
+                    - axis onto which to apply `shift`
+                    - will be passed to `np.roll`
+                    - overrides `self.axis`
+                    - the default is `None`
+                        - will fall back to `self.axis`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_new`
+                    - np.ndarray
+                    - the input `x` with regions cutout from the whole array
+
+            Comments
+            --------                    
+        """
+
+        #default parameters
+        if cutout_start is None:
+            cutout_start = self.cutout_start
+        if cutout_size is None:
+            cutout_size = self.cutout_size
+        if fill_value_crop is None:
+            fill_value_crop = self.fill_value_crop
+        if interpkind is None:
+            interpkind = self.interpkind
+        if axis is None:
+            axis = self.axis
+        
+
+        #initialize correctly
+        if isinstance(axis,int):
+            axis = (axis,) 
+
+        #initialize x_new
+        x_new = x.copy()
+        for ax in axis:
+            #get correct co_size
+            if isinstance(cutout_size, int):
+                co_size = cutout_size
+            else:
+                co_size = np.random.randint(np.nanmin(cutout_size), np.nanmax(cutout_size))
+            
+            #get correct co_start
+            if isinstance(cutout_start, int) and cutout_start != -1:
+                co_start = cutout_start
+            elif cutout_start == -1:
+                    co_start = np.random.randint(0, x.shape[ax]-co_size)
+            else:
+                co_start = np.random.randint(np.nanmin(cutout_start), np.nanmax(cutout_start))
+
+            #apply cut_out (only if the cutout_size is greater than 1, otherwise just return the input-array)
+            if co_size > 0:
+                xp = np.arange(0,x.shape[ax],1)
+                x_interp = interp1d(xp, x_new, kind=interpkind, axis=ax, bounds_error=False, fill_value=fill_value_crop)
+                x_new = x_interp(np.linspace(co_start, co_start+co_size ,x_new.shape[ax]))
+
+        return x_new
     
 
 
