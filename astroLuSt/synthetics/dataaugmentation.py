@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from typing import Union
 
-
+from astroLuSt.preprocessing.scaling import AxisScaler
 
 #%% definitions
 
@@ -108,7 +108,17 @@ class AugmentAxis:
                         - extrapolated to infer out-of-bounds values
                 - the default is `None`
                     - defaults to `'extrapolate'`   
-                    
+                - `noise_mag`
+                    - float, tuple
+                    - magnitude of the noise to apply
+                    - if float
+                        - will be interpreted as the magnitude
+                    - if tuple
+                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                        - will generate a random float to use as the noise_mag
+                    - the default is `None`
+                        - will default to 0
+                        - no noise applied                    
                                 
 
         
@@ -153,6 +163,13 @@ class AugmentAxis:
 
         Methods
         -------
+            - `shift_features()`
+            - `flip_axis()`
+            - `obscure_observations()`
+            - `crop()`
+            - `add_noise()`
+            - `rescale()`
+
             - generate_random_parameters()
             - shift_indices()
             - add_noise()
@@ -634,14 +651,24 @@ class AugmentAxis:
         axis:Union[int,tuple]=None,
         ) -> np.ndarray:
         """
-            - function to add gaussian noise to an array
+            - method to add gaussian noise to along specified axis
 
             Parameters
             ----------
                 - `x`
                     - np.ndarray
                     - the array to be obscured
-
+                - `noise_mag`
+                    - float, tuple
+                    - magnitude of the noise to apply
+                    - if float
+                        - will be interpreted as the magnitude
+                    - if tuple
+                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                        - will generate a random float to use as the noise_mag
+                    - overrides `self.noise_mag`
+                    - the default is `None`
+                        - will fall back to `self.noise_mag`
                 - `axis`
                     - int, tuple, optional
                     - axis onto which to apply `shift`
@@ -691,6 +718,14 @@ class AugmentAxis:
 
         return x_new
 
+    def rescale(self,
+        x:np.ndarray,
+        axis:Union[int,tuple]=None,
+        ) -> np.ndarray:
+
+        AS = AxisScaler
+
+        return
 
     def apply_transform(self,
         X:np.ndarray,
