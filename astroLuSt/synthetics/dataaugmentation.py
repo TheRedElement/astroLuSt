@@ -8,7 +8,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-from typing import Union
+from typing import Union, List, Callable
 
 from astroLuSt.preprocessing.scaling import AxisScaler
 
@@ -21,7 +21,9 @@ class AugmentAxis:
         
         Attributes
         ----------
-
+            - `nsamples` TODO
+            - `sample_weights` TODO
+            - `ntransformations` TODO
             - `shift`
                 - tuple, int, optional
                 - shift to apply to the input `x` along `axis`
@@ -137,45 +139,15 @@ class AugmentAxis:
                     - interpreted as `low` and `high` parameters in `np.random.uniform()`
                 - the default is `None`
                     - will default to 1                             
-
-        
-            - n_newsamples
-                - int, optinal
-                - how many new (modified) samples to generate
-            - feature_shift
-                - np.ndarray, optional
-                - defines the range the features will be randomly shifted by
-                    - i.e. for feature_shift=[1,6] the features will be shifted by some integer in 1 to 6 indeces
-                - contains 2 entries
-                    - minimum offset
-                    - maximum offset
-                - the default is [np.nan, np.nan]
-                    - will automatically set the bounds to 0, and number of fetures in the input matrix
-            - min_scale
-                - np.array, optional
-                 - contains 2 entries
-                    - lower bound
-                    - upper bound
-               - defines the range of what the minimum will be scaled to
-                    - i.e. for min_scale=[0.9,1] the minimum of the features will be scaled to some float in the range 0.9 to 1
-                - the default is [0.9, 1]
-            - max_scale
-                - np.array, optional
-                - contains 2 entries
-                    - lower bound
-                    - upper bound
-               - defines the range of what the maximum will be scaled to
-                    - i.e. for min_scale=[1,1.1] the maximum of the features will be scaled to some float in the range 1 to 1.1
-                - the default is [1, 1.1]
-            - noise_mag
-                - np.ndarray, None, optional
-                - contains 2 entries
-                    - lower bound
-                    - upper bound
-                - defines the range in which a random number is chose to control the magnitude with which noise gets added
-                    - i.e. for noise_mag=[0.001,0.01] a random float will be chosen and the zero-mean unit variance gaussian noise added to the input data will be multiplied by this generated value
-                - the default is None
-                    - will not apply the noise at all (i.e. multiply the generated noise with 0)
+            - `axis`
+                - int, tuple, optional
+                - axis onto which to apply the transformations
+                - the default is `None`
+                    - will be set to 0
+            - verbose
+                - int, optional
+                - verbosity level
+                - the default is 0
                 
 
         Methods
@@ -184,8 +156,8 @@ class AugmentAxis:
             - `flip_axis()`
             - `obscure_observations()`
             - `crop()`
-            - `add_noise()`
             - `rescale()`
+            - `add_noise()`
 
             - generate_random_parameters()
             - shift_indices()
@@ -205,6 +177,7 @@ class AugmentAxis:
 
     def __init__(self,
         nsamples:int=1, sample_weights:list=None,
+        ntransformations:int=-1, methods:list=None,
         shift:Union[tuple,int]=None,
         flip:bool=False,
         npoints:Union[int,tuple]=None, neighbors:bool=False,
@@ -212,15 +185,16 @@ class AugmentAxis:
         cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
         noise_mag:Union[float,tuple]=None,
-        feature_range_min:Union[int,tuple]=None,
-        feature_range_max:Union[int,tuple]=None,
-
-        n_transformations:int=0,
-        axis:tuple=None
+        feature_range_min:Union[int,tuple]=None, feature_range_max:Union[int,tuple]=None,
+        axis:tuple=None,
+        verbose:int=0,
         ):
         
         self.nsamples = nsamples
         self.sample_weights = sample_weights
+        self.ntransformations = ntransformations
+        if methods is None:             self.methods = self.get_transformations()
+        else:                           self.methods = methods
 
         if shift is None:               self.shift = 0
         else:                           self.shift = shift
@@ -250,17 +224,34 @@ class AugmentAxis:
         if feature_range_min is None:   self.feature_range_min = 0
         else:                           self.feature_range_min = feature_range_min
         if feature_range_max is None:   self.feature_range_max = 1
-        else:                           self.feature_range_max = feature_range_min
+        else:                           self.feature_range_max = feature_range_max
 
         if axis is None:                self.axis = 0
         else:                           self.axis = axis
-        # self.min_scale = min_scale
-        # self.max_scale = max_scale
-        # self.noise_mag = noise_mag
+
+        self.verbose = verbose
 
 
         return
 
+    def __repr__(self) -> str:
+        return (
+            f'AugmentAxis(\n'
+            f'    nsamples={repr(self.nsamples)}, sample_weights={repr(self.sample_weights)},\n'
+            f'    ntransformations={repr(self.ntransformations)}, methods={repr(self.methods)},\n'
+            f'    shift={repr(self.shift)},\n'
+            f'    flip={repr(self.flip)},\n'
+            f'    npoints={repr(self.npoints)}, neighbors={repr(self.neighbors)},\n'
+            f'    fill_value_obscure={repr(self.fill_value_obscure)}, fill_value_range={repr(self.fill_value_range)},\n'
+            f'    cutout_start={repr(self.cutout_start)}, cutout_size={repr(self.cutout_size)},\n'
+            f'    interpkind={repr(self.interpkind)}, fill_value_crop={repr(self.fill_value_crop)},\n'
+            f'    noise_mag={repr(self.noise_mag)},\n'
+            f'    feature_range_min={repr(self.feature_range_min)}, feature_range_max={repr(self.feature_range_max)},\n'
+            f')'
+        )
+    
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     #helper methods
     def generate_random_parameters(self,
@@ -311,12 +302,53 @@ class AugmentAxis:
         
         return shift, scale_min, scale_max
 
+    def get_transformations(self,
+        ) -> list[str]:
+        """
+            - method to obtain all available transformation methods
 
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - transformations
+                    - list
+                    - contains the names of the methods used for applying transformations
+
+            Comments
+            --------
+        """
+
+        transformations = []
+        for d in dir(AugmentAxis):
+            if d[:2] != '__':
+                if callable(eval(f'self.{d}')):
+                    transformations.append(eval(f'self.{d}').__name__)
+
+        #methods not used for transformations
+        non_transformations = [
+            'apply_transform', 'fit',
+            'flow', 'generate_random_parameters',
+            'get_random_transform', 'get_transformations',
+            'random_transform'
+        ]
+        for ntf in non_transformations:
+            try: 
+                transformations.remove(ntf)
+            except:
+                pass
+
+        return transformations
 
     def shift_features(self,
         x:np.ndarray,
         shift:Union[tuple,int]=None,
         axis:Union[int,tuple]=None,
+        **kwargs,
         ) -> np.ndarray:
         """
             - method to apply a shift along `axis` to one sample `x` in `X`
@@ -340,6 +372,9 @@ class AugmentAxis:
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
+                - `**kwargs`
+                    - dict, optional
+                    - keyword arguments to pass to the function
 
             Raises
             ------
@@ -374,6 +409,7 @@ class AugmentAxis:
     def flip_axis(self,
         x:np.ndarray,
         axis:Union[int,tuple]=None,
+        **kwargs,
         ) -> np.ndarray:
         """
             - method to flip `x` along a given axis
@@ -390,6 +426,9 @@ class AugmentAxis:
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
+                - `**kwargs`
+                    - dict, optional
+                    - keyword arguments to pass to the function
 
             Raises
             ------
@@ -419,6 +458,7 @@ class AugmentAxis:
         fill_value_obscure:Union[int,str]=None,
         fill_value_range:tuple=None,
         axis:Union[tuple,int]=None,
+        **kwargs,
         ) -> np.ndarray:
         """
             - method to obscure random datapoints in `x` along a given axis
@@ -471,7 +511,10 @@ class AugmentAxis:
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
-
+                - `**kwargs`
+                    - dict, optional
+                    - keyword arguments to pass to the function
+                        
             Raises
             ------
 
@@ -509,7 +552,7 @@ class AugmentAxis:
             
             #get correct size for indices and fill_values to generate
             size = np.ones(len(x_new.shape), dtype=int)
-            size[ax] = npoints  #5 indices at ax
+            size[ax] = npoints  #npoints indices at ax
 
             #generate random fill_values if requested
             if fill_value_obscure == 'random':
@@ -550,6 +593,7 @@ class AugmentAxis:
         cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
         axis:Union[int,tuple]=None,
+        **kwargs,
         ) -> np.ndarray:
         """
             - method to crop out a random subset of `x` along a given axis
@@ -609,7 +653,10 @@ class AugmentAxis:
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
-
+                - `**kwargs`
+                    - dict, optional
+                    - keyword arguments to pass to the function
+                        
             Raises
             ------
 
@@ -665,10 +712,95 @@ class AugmentAxis:
 
         return x_new
 
+    def rescale(self,
+        x:np.ndarray,
+        feature_range_min:Union[int,tuple]=None, feature_range_max:Union[int,tuple]=None,
+        axis:Union[int,tuple]=None,
+        **kwargs,
+        ) -> np.ndarray:
+        """
+            - method to rescale the input into a specified interval along specified axis
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - the array to be obscured
+                - `feature_range_min`
+                    - int, tuple, optional
+                    - the lower bound of the interval the rescaled axis shall have
+                    - if an int
+                        - interpreted as the lower bound directly
+                    - if a tuple
+                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                    - overrides `self.feature_range_min`
+                    - the default is `None`
+                        - falls back to `self.feature_range_min`
+                - `feature_range_max`
+                    - int, tuple, optional
+                    - the upper bound of the interval the rescaled axis shall have
+                    - if an int
+                        - interpreted as the upper bound directly
+                    - if a tuple
+                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
+                    - overrides `self.feature_range_max`
+                    - the default is `None`
+                        - falls back to `self.feature_range_max`
+                - `axis`
+                    - int, tuple, optional
+                    - axis onto which to apply `rescale`
+                    - will be passed to `astroLuSt.preprossesing.scaling.AxisScaler()`
+                    - overrides `self.axis`
+                    - the default is `None`
+                        - will fall back to `self.axis`    
+                - `**kwargs`
+                    - dict, optional
+                    - keyword arguments to pass to the function
+                        
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_new`
+                    - np.ndarray
+                    - the input `x` with the requested axis rescaled to the requested feature range
+
+            Comments
+            --------
+        
+        
+        """
+
+        #default parameteres
+        if feature_range_min is None: feature_range_min = self.feature_range_min
+        if feature_range_max is None: feature_range_max = self.feature_range_max
+        if axis is None: axis = self.axis
+
+        #initialize correctly
+        if isinstance(feature_range_min, int):
+            fr_min = feature_range_min
+        else:
+            fr_min = np.random.uniform(np.nanmin(feature_range_min), np.nanmax(feature_range_min))
+        if isinstance(feature_range_max, int):
+            fr_max = feature_range_max
+        else:
+            fr_max = np.random.uniform(np.nanmin(feature_range_max), np.nanmax(feature_range_max))
+
+        AS = AxisScaler(
+            scaler='range_scaler',
+            axis=axis,
+            scaler_kwargs={'feature_range':(fr_min, fr_max)}
+        )
+        x_new = AS.fit_transform(x)
+
+        return x_new
+
     def add_noise(self,
         x:np.ndarray,
         noise_mag:Union[float,tuple]=None,
         axis:Union[int,tuple]=None,
+        **kwargs,
         ) -> np.ndarray:
         """
             - method to add gaussian noise to along specified axis
@@ -695,6 +827,10 @@ class AugmentAxis:
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`    
+                - `**kwargs`
+                    - dict, optional
+                    - keyword arguments to pass to the function
+                        
             Raises
             ------
 
@@ -737,46 +873,54 @@ class AugmentAxis:
 
         return x_new
 
-    def rescale(self,
+    def apply_transform(self,
         x:np.ndarray,
-        feature_range_min:Union[int,tuple]=None, feature_range_max:Union[int,tuple]=None,
-        axis:Union[int,tuple]=None,
+        transform_parameters:dict=None,
+        ntransformations:int=None,
+        methods:List[str]=None,
+        verbose:int=None,
+        **kwargs,
         ) -> np.ndarray:
         """
-            - method to rescale the input into a specified interval along specified axis
+            - method to apply tranformations to one sample (3d array)
 
             Parameters
             ----------
                 - `x`
                     - np.ndarray
-                    - the array to be obscured
-                - `feature_range_min`
-                    - int, tuple, optional
-                    - the lower bound of the interval the rescaled axis shall have
-                    - if an int
-                        - interpreted as the lower bound directly
-                    - if a tuple
-                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
-                    - overrides `self.feature_range_min`
+                    - the array to be transformed
+                - `transform_parameters`
+                    - dict, optional
+                    - parameters passed to all methods applied for the transformation
+                        - i.e. entries contained within `methods`
                     - the default is `None`
-                        - falls back to `self.feature_range_min`
-                - `feature_range_max`
-                    - int, tuple, optional
-                    - the upper bound of the interval the rescaled axis shall have
-                    - if an int
-                        - interpreted as the upper bound directly
-                    - if a tuple
-                        - interpreted as `low` and `high` parameters in `np.random.uniform()`
-                    - overrides `self.feature_range_max`
+                        - will be set to `{}`
+                        - i.e. uses class attributes
+                - `ntransformations`
+                    - int, optional
+                    - how many transformations to apply to the input `x`
+                    - overrides `self.ntransformations`
                     - the default is `None`
-                        - falls back to `self.feature_range_max`
-                - `axis`
-                    - int, tuple, optional
-                    - axis onto which to apply `rescale`
-                    - will be passed to `astroLuSt.preprossesing.scaling.AxisScaler()`
-                    - overrides `self.axis`
+                        - will fall back onto `self.ntransformations`
+                - `methods`
+                    - list, optional
+                    - methods to use on the input `x`
+                    - contains names of the methods to use as strings
+                    - to get a list of all allowed methods call `self.get_transformations()`
+                    - during the transformation `eval('self.'+method)(x)` will be called
+                        - `method` if hereby an entry of `methods`
+                    - overrides `self.methods`
                     - the default is `None`
-                        - will fall back to `self.axis`    
+                        - will fall back to `self.methods`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `**kwargs`
+                    - keyword arguments of the method
+
             Raises
             ------
 
@@ -784,44 +928,64 @@ class AugmentAxis:
             -------
                 - `x_new`
                     - np.ndarray
-                    - the input `x` with the requested axis rescaled to the requested feature range
+                    - transformed version of the input `x`
 
             Comments
             --------
-        
-        
+                - will apply `methods` in the order that is present in the `to_apply`
+                    - `to_apply` is a resampled list `ntransformations >= 0` and `methods` otherwise
+                    - in case `methods` none, the alphabetically sorted list obtained with `self.get_transformations()` is used
         """
 
-        #default parameteres
-        if feature_range_min is None: feature_range_min = self.feature_range_min
-        if feature_range_max is None: feature_range_max = self.feature_range_max
-        if axis is None: axis = self.axis
-
+        #default values
+        if ntransformations is None:
+            ntransformations = self.ntransformations
+        if transform_parameters is None:
+            transform_parameters = {}
+        if methods is None:
+            methods = self.methods
+        if verbose is None:
+            verbose = self.verbose
+        
+        methods = np.array(methods)
+            
         #initialize correctly
-        if isinstance(feature_range_min, int):
-            fr_min = feature_range_min
-        else:
-            fr_min = np.random.uniform(np.nanmin(feature_range_min), np.nanmax(feature_range_min))
-        if isinstance(feature_range_max, int):
-            fr_max = feature_range_max
-        else:
-            fr_max = np.random.uniform(np.nanmin(feature_range_max), np.nanmax(feature_range_max))
+        ##use passed methods
+        if isinstance(methods, np.ndarray):
+            methods_bool = np.isin(methods, self.get_transformations())
+            if np.any(~methods_bool):
+                not_allowed = methods[~methods_bool]
+                methods = methods[methods_bool]
 
-        AS = AxisScaler(
-            scaler='range_scaler',
-            axis=axis,
-            scaler_kwargs={'feature_range':(fr_min, fr_max)}
-        )
-        x_new = AS.fit_transform(x)
+                if verbose > 0:
+                    print(
+                        f'WARNING(AugmentAxis.apply_transform):\n'
+                        f'    {not_allowed} are invalid methods, will therefore be ignored.\n'
+                        f'    Allowed are {self.get_transformations()}.'
+                    )
+
+        ##use all methods
+        if ntransformations < 0:
+            to_apply = methods
+        ##use a random selection of passed methods
+        else:
+            to_apply = np.random.choice(methods, size=ntransformations, replace=False)
+        
+        #initilaize augmented sample
+        x_new = x.copy()
+
+        #apply augmentations
+        for tf in to_apply:
+            x_new = eval('self.'+tf)(x_new, **transform_parameters)
+
+        #summary
+        if verbose > 1:
+            print(
+                f'INFO(AugmentAxis.apply_transform):\n'
+                f'    Applied the following transformations: {to_apply}'
+            )
 
         return x_new
-
-    def apply_transform(self,
-        X:np.ndarray,
-        transform_parameters,
-        ):
-        
-        return
     
     def fit(self,
         X:np.ndarray,
