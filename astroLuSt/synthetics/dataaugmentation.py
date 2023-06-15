@@ -29,9 +29,10 @@ class AugmentAxis:
                 - the default is `None`
                     - will fall be set to 0
                     - no shift
-            - `flip` TODO
+            - `flip`
                 - bool, optional
-
+                - whether to apply flipping to the curve or not
+                - the default is True
             - `npoints`
                 - int, tuple, str, optional
                 - number of datapoints to obscure for the chosen axis
@@ -161,6 +162,7 @@ class AugmentAxis:
         ------------
             - numpy
             - matplotlib
+            - scipy
             - typing
 
         Comments
@@ -170,59 +172,49 @@ class AugmentAxis:
     def __init__(self,
         nsamples:int=1, sample_weights:list=None,
         shift:Union[tuple,int]=None,
+        flip:bool=False,
         npoints:Union[int,tuple]=None, neighbors:bool=False,
         fill_value_obscure:Union[float,str]=None, fill_value_range:tuple=None,
         cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
+        noise_mag:Union[float,tuple]=None,
+
 
         min_scale:np.ndarray=None, max_scale:np.ndarray=None,
-        noise_mag:np.ndarray=None,
         n_transformations:int=0,
         axis:tuple=None
         ):
         
         self.nsamples = nsamples
         self.sample_weights = sample_weights
-        if shift is None:
-            self.shift = 0
-        else:
-            self.shift = shift
 
-        if npoints is None:
-            self.npoints = 0
-        else:
-            self.npoints = npoints
-        self.neighbors = neighbors
-        if fill_value_obscure is None:
-            self.fill_value_obscure = 0
-        else:
-            self.fill_value_obscure = fill_value_obscure
-        if fill_value_range is None:
-            self.fill_value_range = (0,1)
-        else:
-            self.fill_value_range = fill_value_range
-        if cutout_start is None:
-            self.cutout_start = 0
-        else:
-            self.cutout_start = cutout_start
-        if cutout_size is None:
-            self.cutout_size = 0
-        else:
-            self.cutout_size = cutout_size
-        if interpkind is None:
-            self.interpkind = 'linear'
-        else:
-            self.interpkind = interpkind
-        if fill_value_crop is None:
-            self.fill_value_crop = 'extrapolate'
-        else:
-            self.fill_value_crop = fill_value_crop
+        if shift is None:               self.shift = 0
+        else:                           self.shift = shift
+
+        self.flip = flip
         
+        if npoints is None: self.npoints = 0
+        else:               self.npoints = npoints
+        self.neighbors = neighbors
+        if fill_value_obscure is None:  self.fill_value_obscure = 0
+        else:                           self.fill_value_obscure = fill_value_obscure
+        if fill_value_range is None:    self.fill_value_range = (0,1)
+        else:                           self.fill_value_range = fill_value_range
+        
+        if cutout_start is None:        self.cutout_start = 0
+        else:                           self.cutout_start = cutout_start
+        if cutout_size is None:         self.cutout_size = 0
+        else:                           self.cutout_size = cutout_size
+        if interpkind is None:          self.interpkind = 'linear'
+        else:                           self.interpkind = interpkind
+        if fill_value_crop is None:     self.fill_value_crop = 'extrapolate'
+        else:                           self.fill_value_crop = fill_value_crop
+        
+        if noise_mag is None:           self.noise_mag = 0
+        else:                           self.noise_mag = noise_mag
 
-        if axis is None:
-            self.axis = 0
-        else:
-            self.axis = axis
+        if axis is None:                self.axis = 0
+        else:                           self.axis = axis
         # self.min_scale = min_scale
         # self.max_scale = max_scale
         # self.noise_mag = noise_mag
@@ -279,87 +271,6 @@ class AugmentAxis:
             scale_max = np.nanmin(orig)
         
         return shift, scale_min, scale_max
-
-
-    def shift_indices(self,
-        x:np.ndarray, shift:int, testplot=False
-        ) -> np.ndarray:
-        '''
-            - method to shift array entris by 'shift' indices
-
-            Parameters
-            ----------
-                - x
-                    - np.ndarray
-                    - input array to be shifted
-                - shift
-                    - int
-                    - amount of indices to shift the array by
-                - testplot
-                    - bool, optional
-                    - whether to produce a plot showing the transformation
-
-            Raises
-            ------
-            
-            Returns
-            -------
-                - new_x
-                    - np.ndarray
-                    - array with the shifted entries
-            
-            Comments
-            --------
-
-        '''
-
-        shifted_idxs = np.arange(0, x.shape[0], 1) + shift
-        shifted_idxs[(shifted_idxs>x.shape[0]-1)] = np.mod(shifted_idxs[(shifted_idxs>x.shape[0]-1)], x.shape[0])
-        # print(shifted_idxs)
-        
-        new_x = x[shifted_idxs]
-
-        #plotting
-        if testplot:
-            fig = plt.figure()
-            ax1 = fig.add_subplot(111)
-
-            ax1.plot(x, '.', label='original')
-            ax1.plot(new_x, '.', label=f'shifted by {shift}')
-
-            ax1.legend()
-
-            plt.show()
-
-        return new_x
-
-    def add_noise(self,
-        x:np.ndarray
-        ):
-        '''
-            - function to add gaussian noise to an array
-
-            Parameters
-            ----------
-                - x
-                    - np.ndarray
-                    - input array
-            
-            Returns
-            -------
-                - x_noisy
-                    - np.ndarray
-                    - the noisy version of x
-        '''
-
-        if self.noise_mag is None:
-            x_noisy = x
-        else:
-            mag = np.random.uniform(low=np.nanmin(self.noise_mag), high=np.nanmax(self.noise_mag))
-            noise = np.random.normal(size=x.shape)
-            x_noisy = x + noise*mag
-
-        return x_noisy   
 
 
 
@@ -600,7 +511,7 @@ class AugmentAxis:
         x:np.ndarray,
         cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
-        axis:Union[int,tuple] = None,
+        axis:Union[int,tuple]=None,
         ) -> np.ndarray:
         """
             - method to crop out a random subset of `x` along a given axis
@@ -716,7 +627,69 @@ class AugmentAxis:
                 x_new = x_interp(np.linspace(co_start, co_start+co_size ,x_new.shape[ax]))
 
         return x_new
-    
+
+    def add_noise(self,
+        x:np.ndarray,
+        noise_mag:Union[float,tuple]=None,
+        axis:Union[int,tuple]=None,
+        ) -> np.ndarray:
+        """
+            - function to add gaussian noise to an array
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - the array to be obscured
+
+                - `axis`
+                    - int, tuple, optional
+                    - axis onto which to apply `shift`
+                    - will be passed to `np.roll`
+                    - overrides `self.axis`
+                    - the default is `None`
+                        - will fall back to `self.axis`    
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_new`
+                    - np.ndarray
+                    - the input `x` with regions cutout from the whole array
+
+            Comments
+            --------
+
+        """
+
+        #default parameters
+        if axis is None:
+            axis = self.axis
+        if noise_mag is None:
+            noise_mag = self.noise_mag
+
+        #initialize correctly
+        if isinstance(noise_mag, float):
+            mag = noise_mag
+        else:
+            mag = np.random.uniform(low=np.nanmin(noise_mag), high=np.nanmax(noise_mag))
+        if isinstance(axis, int):
+            axis = (axis,)
+
+        #mask for modifying only entries in x.shape not present in axis
+        mask = np.ones(len(x.shape), dtype=bool)
+        mask[list(axis)] = False
+        
+        #set all axis not present in axis to 1 (i.e. no noise on those axes)
+        noise_size = np.array(x.shape)
+        noise_size[mask] = 1
+
+        #apply noise
+        noise = np.random.normal(size=noise_size)
+        x_new = x + noise*mag
+
+        return x_new
 
 
     def apply_transform(self,
