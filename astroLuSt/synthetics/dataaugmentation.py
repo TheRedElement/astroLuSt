@@ -1163,7 +1163,7 @@ class AugmentAxis:
                 f'    Generating {nsamples} new samples...'
             )
         for n in range(nsamples):
-            sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=False, p=sample_weights)
+            sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=True, p=sample_weights)
             X_new[n] = self.apply_transform(X[sample_idx], **apply_transform_kwargs)
             y_new[n] = y[sample_idx]
             for idx in range(len(X_misc_new)):
