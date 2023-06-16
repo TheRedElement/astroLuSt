@@ -1,8 +1,3 @@
-#TODO: - Add obscuring of datapoints (i.e. setting them to some value - min, max, ...)
-#TODO: - cropping lc (i.e. only showing part if it, add interpolation_order)
-#TODO: - Add flip along x
-#TODO: - Add flip along y
-#TODO: - Add apply_n (how many transformations to maximally apply to generate any new sample)
 
 #%%
 import numpy as np
