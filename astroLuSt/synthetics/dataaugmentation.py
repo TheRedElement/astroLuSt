@@ -24,6 +24,8 @@ class AugmentAxis:
             - `nsamples` TODO
             - `sample_weights` TODO
             - `ntransformations` TODO
+            - `methods` TODO
+            - `transform_order` TODO
             - `shift`
                 - tuple, int, optional
                 - shift to apply to the input `x` along `axis`
@@ -181,7 +183,7 @@ class AugmentAxis:
 
     def __init__(self,
         nsamples:int=1, sample_weights:list=None,
-        ntransformations:int=-1, methods:list=None,
+        ntransformations:int=-1, methods:list=None, transform_order:Union[str,List[int]]=None,
         shift:Union[tuple,int]=None,
         flip:bool=False,
         npoints:Union[int,tuple]=None, neighbors:bool=False,
@@ -199,6 +201,8 @@ class AugmentAxis:
         self.ntransformations = ntransformations
         if methods is None:             self.methods = self.get_transformations()
         else:                           self.methods = methods
+        if transform_order is None:     self.transform_order = 'unchanged'
+        else:                           self.transform_order = transform_order
 
         if shift is None:               self.shift = 0
         else:                           self.shift = shift
@@ -308,7 +312,7 @@ class AugmentAxis:
 
 
     def get_transformations(self,
-        ) -> list[str]:
+        ) -> List[str]:
         """
             - method to obtain all available transformation methods
 
@@ -883,6 +887,7 @@ class AugmentAxis:
         transform_parameters:dict=None,
         ntransformations:int=None,
         methods:List[str]=None,
+        transform_order:Union[str,List[int]]='random',
         verbose:int=None,
         **kwargs,
         ) -> np.ndarray:
@@ -904,6 +909,12 @@ class AugmentAxis:
                 - `ntransformations`
                     - int, optional
                     - how many transformations to apply to the input `x`
+                    - if negative
+                        - will use `len(methods) + 1 + ntransformations` transformations
+                        - i.e.
+                            - will use all available transformations for `ntransformations == -1`
+                            - will use all available transformations but one for `ntransformations == -2`
+                            - ect.
                     - overrides `self.ntransformations`
                     - the default is `None`
                         - will fall back onto `self.ntransformations`
@@ -917,6 +928,19 @@ class AugmentAxis:
                     - overrides `self.methods`
                     - the default is `None`
                         - will fall back to `self.methods`
+                - `transform_order`
+                    - str, list, optional
+                    - order to use for applying transformations
+                    - the following strings are allowed
+                        - `random`
+                            - will randomly sample `ntransformations` transformations from `methods`
+                        - `unchanged`
+                            - will use the unchanged input for `methods` in that order
+                    - if list
+                        - will use the list as array indices to select the respective elements in `methods` as it was passed
+                    - overrides `self.transform_order`
+                    - the default is `None`
+                        - will fall back to `self.transform_order`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -928,6 +952,8 @@ class AugmentAxis:
 
             Raises
             ------
+                - ValueError
+                    - if `transform_order` is not valid
 
             Returns
             -------
@@ -949,6 +975,8 @@ class AugmentAxis:
             transform_parameters = {}
         if methods is None:
             methods = self.methods
+        if transform_order is None:
+            transform_order = self.transform_order
         if verbose is None:
             verbose = self.verbose
         
@@ -969,13 +997,27 @@ class AugmentAxis:
                         f'    Allowed are {self.get_transformations()}.'
                     )
 
-        ##use all methods
-        if ntransformations < 0:
-            to_apply = methods
-        ##use a random selection of passed methods
-        else:
-            to_apply = np.random.choice(methods, size=ntransformations, replace=False)
+        # if ntransformations < 0:
         
+        
+        ##use a random selection of passed methods
+        if transform_order == 'random':
+            #if negative value for ntransformations is passed use that many less transformations
+            if ntransformations < 0:
+                ntransformations = len(methods) + 1 + ntransformations 
+            to_apply = np.random.choice(methods, size=ntransformations, replace=False)
+        elif transform_order == 'unchanged':
+            if ntransformations < 0:
+                ntransformations = len(methods) + 1 + ntransformations
+            to_apply = methods[:ntransformations]
+        ##use specified order
+        elif isinstance(transform_order, (list,np.ndarray)):
+            to_apply = methods[transform_order]
+        else:
+            raise ValueError(
+                f'`transform_order` has to be either a list of int or one of {["unchanged", "random"]} but is {transform_order}!'
+            )
+
         #initilaize augmented sample
         x_new = x.copy()
 
