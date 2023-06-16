@@ -8,7 +8,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-from typing import Union, List, Callable
+from typing import Union, List, Tuple, Callable
 
 from astroLuSt.preprocessing.scaling import AxisScaler
 
@@ -146,6 +146,10 @@ class AugmentAxis:
                 - axis onto which to apply the transformations
                 - the default is `None`
                     - will be set to 0
+            - `seed`
+                - int, optional
+                - seed of the random number generator
+                - the default is `None`
             - verbose
                 - int, optional
                 - verbosity level
@@ -193,6 +197,7 @@ class AugmentAxis:
         noise_mag:Union[float,tuple]=None,
         feature_range_min:Union[int,tuple]=None, feature_range_max:Union[int,tuple]=None,
         axis:tuple=None,
+        seed:int=None,
         verbose:int=0,
         ):
         
@@ -237,6 +242,7 @@ class AugmentAxis:
         if axis is None:                self.axis = 0
         else:                           self.axis = axis
 
+        self.seed = seed
         self.verbose = verbose
 
 
@@ -997,9 +1003,6 @@ class AugmentAxis:
                         f'    Allowed are {self.get_transformations()}.'
                     )
 
-        # if ntransformations < 0:
-        
-        
         ##use a random selection of passed methods
         if transform_order == 'random':
             #if negative value for ntransformations is passed use that many less transformations
@@ -1076,14 +1079,130 @@ class AugmentAxis:
         return
     
     def flow(self,
-        X:np.ndarray, y:np.ndarray=None,
-        batch_size:int=32,
-        shuffle:bool=True,
-        sample_weight:list=None,
+        X:np.ndarray, y:np.ndarray=None, X_misc:List[np.ndarray]=None,
+        sample_weights:list=None,
+        nsamples:int=None,
         seed:int=None,
-        ):
+        verbose:int=None,
+        apply_transform_kwargs:dict=None,
+        ) -> Tuple[np.ndarray,...]:
+        """
+            - method to generate `nsamples` new samples by augmenting an input `X`
 
-        return
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - input dataset serving as template for augmentation
+                - `y`
+                    - np.ndarray
+                    - labels corresponding to `X`
+                    - the default is `None`
+                    - will be ignored and returned as array of `np.nan`
+                - `X_misc`
+                    - list, optional
+                    - list of np.ndarrays of same first dimension as `X`
+                    - miscallaneous datasets that get passed to the output without any modifications
+                    - will return as many additional entries in the output as entries in `X_misc`
+                    - the default is `None`
+                        - will be ignored
+                - `sample_weights`
+                    - list, optional
+                    - has to have same lenght as `X`
+                    - probabilities for each sample to be drawn for augmentation
+                    - overrides `self.sample_weights`
+                    - the default is `None`
+                        - will fall back to `self.sample_weights`
+                - `nsamples`
+                    - int, optional
+                    - number of new samples to generate
+                    - overrides `self.nsamples`
+                    - the deafult is `None`
+                        - will fall back to `self.nsamples`
+                - `seed`
+                    - int, optional
+                    - seed of the random number generator
+                    - will override `self.seed`
+                    - the default is `None`
+                        - will fall back to `self.seed`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `apply_transform_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.apply_transform()`
+                    - the default is `None`
+                        -  will be initialized with `{}`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `X_new`
+                    - np.ndarray
+                    - augmented samples generated based on `X`
+                - `y_new`
+                    - np.ndarray
+                    - labels corresponding to `X_new`
+                - `*X_misc_new`
+                    - np.ndarray
+                    - any miscallaneous dataset with entries corresponding to `X_new`
+
+            Comments
+            --------
+        """
+        #default parameters
+        if sample_weights is None:
+            sample_weights = self.sample_weights
+        if nsamples is None:
+            nsamples = self.nsamples
+        if verbose is None:
+            verbose = self.verbose
+        if seed is None:
+            seed = self.seed
+        if apply_transform_kwargs is None:
+            apply_transform_kwargs = {}
+
+        #instantiate random number generator
+        rng = np.random.default_rng(seed=seed)
+
+        #no misc data passed
+        if X_misc is None:
+            X_misc = []
+
+        #if no y was provided create one filled with nan
+        if y is None:
+            y = np.ones(X.shape[0])
+            y[:] = np.nan
+
+        #if not sample_weights have been passed assume uniform distribution
+        if sample_weights is None:
+            sample_weights = np.ones(X.shape[0])/len(X)
+
+        #generate new arrays
+        ##initialize
+        X_new = np.empty((nsamples, *X.shape[1:]))
+        y_new = np.empty((nsamples, *y.shape[1:]))
+        X_misc_new = [np.empty((nsamples, *X_m.shape[1:])) for X_m in X_misc]
+
+        ##generate nsamples new samples
+        if verbose > 2:
+            print(
+                f'INFO(AugmentAxis.flow):\n'
+                f'    Generating {nsamples} new samples...'
+            )
+        for n in range(nsamples):
+            sample_idx = rng.choice(np.arange(0, len(X),1), size=None, replace=False, p=sample_weights)
+            X_new[n] = self.apply_transform(X[sample_idx], **apply_transform_kwargs)
+            y_new[n] = y[sample_idx]
+            for idx in range(len(X_misc_new)):
+                X_misc_new[idx][n] = X_misc[idx][sample_idx]
+
+        return X_new, y_new, *X_misc_new
     
     def get_random_transform(self,
         
