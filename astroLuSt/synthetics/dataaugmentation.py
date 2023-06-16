@@ -21,11 +21,41 @@ class AugmentAxis:
         
         Attributes
         ----------
-            - `nsamples` TODO
-            - `sample_weights` TODO
-            - `ntransformations` TODO
-            - `methods` TODO
-            - `transform_order` TODO
+            - `nsamples`
+                - int, optional
+                - number of new samples to generate
+                - the deafult is 1
+            - `ntransformations`
+                - int, optional
+                - how many transformations to apply to get an augmented sample
+                - if negative
+                    - will use `len(methods) + 1 + ntransformations` transformations
+                    - i.e.
+                        - will use all available transformations for `ntransformations == -1`
+                        - will use all available transformations but one for `ntransformations == -2`
+                        - ect.
+                - the default is -1
+            - `methods`
+                - list, optional
+                - transformation methods to use for generation of an augmented sample
+                - contains names of the methods to use as strings
+                - to get a list of all allowed methods call `self.get_transformations()`
+                - during the transformation `eval('self.'+method)(x)` will be called
+                    - `method` if hereby an entry of `methods`
+                - the default is `None`
+                    - will use all internally stored methods
+            - `transform_order`
+                - str, list, optional
+                - order to use for applying transformations
+                - the following strings are allowed
+                    - `random`
+                        - will randomly sample `ntransformations` transformations from `methods`
+                    - `unchanged`
+                        - will use the unchanged input for `methods` in that order
+                - if list
+                    - will use the list as array indices to select the respective elements in `methods` as it was passed
+                - the default is `None`
+                    - will be set to `'unchanged'`
             - `shift`
                 - tuple, int, optional
                 - shift to apply to the input `x` along `axis`
@@ -186,7 +216,7 @@ class AugmentAxis:
     """
 
     def __init__(self,
-        nsamples:int=1, sample_weights:list=None,
+        nsamples:int=1,
         ntransformations:int=-1, methods:list=None, transform_order:Union[str,List[int]]=None,
         shift:Union[tuple,int]=None,
         flip:bool=False,
@@ -202,7 +232,6 @@ class AugmentAxis:
         ):
         
         self.nsamples = nsamples
-        self.sample_weights = sample_weights
         self.ntransformations = ntransformations
         if methods is None:             self.methods = self.get_transformations()
         else:                           self.methods = methods
@@ -254,8 +283,8 @@ class AugmentAxis:
     def __repr__(self) -> str:
         return (
             f'AugmentAxis(\n'
-            f'    nsamples={repr(self.nsamples)}, sample_weights={repr(self.sample_weights)},\n'
-            f'    ntransformations={repr(self.ntransformations)}, methods={repr(self.methods)},\n'
+            f'    nsamples={repr(self.nsamples)},\n'
+            f'    ntransformations={repr(self.ntransformations)}, methods={repr(self.methods)}, transform_order={repr(self.transform_order)},\n'
             f'    shift={repr(self.shift)},\n'
             f'    flip={repr(self.flip)},\n'
             f'    npoints={repr(self.npoints)}, neighbors={repr(self.neighbors)},\n'
@@ -264,6 +293,9 @@ class AugmentAxis:
             f'    interpkind={repr(self.interpkind)}, fill_value_crop={repr(self.fill_value_crop)},\n'
             f'    noise_mag={repr(self.noise_mag)},\n'
             f'    feature_range_min={repr(self.feature_range_min)}, feature_range_max={repr(self.feature_range_max)},\n'
+            f'    axis={repr(self.axis)},\n'
+            f'    seed={repr(self.seed)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
     
@@ -1112,9 +1144,8 @@ class AugmentAxis:
                     - list, optional
                     - has to have same lenght as `X`
                     - probabilities for each sample to be drawn for augmentation
-                    - overrides `self.sample_weights`
                     - the default is `None`
-                        - will fall back to `self.sample_weights`
+                        - will assume uniform distribution over the input `X`
                 - `nsamples`
                     - int, optional
                     - number of new samples to generate
@@ -1152,8 +1183,6 @@ class AugmentAxis:
             --------
         """
         #default parameters
-        if sample_weights is None:
-            sample_weights = self.sample_weights
         if nsamples is None:
             nsamples = self.nsamples
         if verbose is None:
