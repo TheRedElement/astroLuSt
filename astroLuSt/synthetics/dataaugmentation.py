@@ -106,7 +106,7 @@ class AugmentAxis:
                 - index of where to start the cutout region along `axis`
                 - if an int
                     - interpreted as the starting index
-                -  if a tuple
+                - if a tuple
                     - interpreted as `low` and `high` parameters in `np.random.randint()`
                     - will generate a random integer used as the starting point
                 - the default is `None`
@@ -301,55 +301,6 @@ class AugmentAxis:
     
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
-
-    #helper methods
-    def generate_random_parameters(self,
-        orig,
-        ):
-        '''
-            - function to generate random-variables needed in fit_transform
-
-            Parameters
-            ----------
-                - orig
-                    - np.array
-                    - original, unperturbed input array
-            
-            Returns
-            -------
-                - shift
-                    - int
-                    - random offset in indices
-                - scale_min
-                    - float
-                    - minimum to scale the input to
-                - scale_max
-                    - float
-                    - maximum to scale the input to
-
-        '''
-        #generate random shift
-        if np.isnan(self.feature_shift[0]):
-            min_shift = 1
-        else: 
-            min_shift = self.feature_shift[0]
-        if np.isnan(self.feature_shift[1]):
-            max_shift = orig.shape[0]
-        else:
-            max_shift = self.feature_shift[1]
-        shift = self.rng.integers(min_shift, max_shift)
-        
-        #generate scale
-        if self.min_scale is not None:
-            scale_min = self.rng.uniform(self.min_scale[0], self.min_scale[1])
-        else:
-            scale_min = np.nanmin(orig)
-        if self.max_scale is not None:
-            scale_max = self.rng.uniform(self.max_scale[0], self.max_scale[1])
-        else:
-            scale_max = np.nanmin(orig)
-        
-        return shift, scale_min, scale_max
 
 
     def get_transformations(self,
@@ -1226,9 +1177,24 @@ class AugmentAxis:
         return X_new, y_new, *X_misc_new
     
     def get_random_transform(self,
-        
+        shape:tuple,
+        axis:tuple=None,
         ) -> dict:
-        
+
+        shape = np.array(shape)
+        print(shape[list(axis)])
+        transformations = {
+            'flip':self.rng.choice([False,True],None),
+            'npoints':np.sort(self.rng.choice(np.nanmin(shape[list(axis)]), size=2, replace=False)),
+            # 'fill_value_obscure':0, 'fill_value_range':(0, 1),
+            'cutout_start':np.sort(self.rng.choice(np.nanmin(shape[list(axis)]), size=2, replace=False)),
+            'cutout_size':self.rng.choice(np.nanmin(shape[list(axis)]), size=2, replace=False),
+            'interpkind':'linear', 'fill_value_crop':'extrapolate',
+            'noise_mag':0,
+            'feature_range_min':0, 'feature_range_max':(3, 9),        
+        }
+        print(transformations)
+
         return
 
     def random_transform(self,
@@ -1237,6 +1203,58 @@ class AugmentAxis:
         ):
         
         return
+
+
+
+    #helper methods
+    def generate_random_parameters(self,
+        orig,
+        ):
+        '''
+            - function to generate random-variables needed in fit_transform
+
+            Parameters
+            ----------
+                - orig
+                    - np.array
+                    - original, unperturbed input array
+            
+            Returns
+            -------
+                - shift
+                    - int
+                    - random offset in indices
+                - scale_min
+                    - float
+                    - minimum to scale the input to
+                - scale_max
+                    - float
+                    - maximum to scale the input to
+
+        '''
+        #generate random shift
+        if np.isnan(self.feature_shift[0]):
+            min_shift = 1
+        else: 
+            min_shift = self.feature_shift[0]
+        if np.isnan(self.feature_shift[1]):
+            max_shift = orig.shape[0]
+        else:
+            max_shift = self.feature_shift[1]
+        shift = self.rng.integers(min_shift, max_shift)
+        
+        #generate scale
+        if self.min_scale is not None:
+            scale_min = self.rng.uniform(self.min_scale[0], self.min_scale[1])
+        else:
+            scale_min = np.nanmin(orig)
+        if self.max_scale is not None:
+            scale_max = self.rng.uniform(self.max_scale[0], self.max_scale[1])
+        else:
+            scale_max = np.nanmin(orig)
+        
+        return shift, scale_min, scale_max
+
 
     '''
     def fit_transform(self,
