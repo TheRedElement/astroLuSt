@@ -226,7 +226,7 @@ class AugmentAxis:
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
         noise_mag:Union[float,tuple]=None,
         feature_range_min:Union[int,tuple]=None, feature_range_max:Union[int,tuple]=None,
-        axis:tuple=None,
+        axis:Union[int,tuple]=None,
         seed:int=None,
         verbose:int=0,
         ):
@@ -571,7 +571,7 @@ class AugmentAxis:
             if neighbors:
                 if x.shape[ax] <= npoints:
                     raise ValueError(
-                        f'`npoints` has to be greater than `x.shape` at the requested axis! '
+                        f'`npoints` has to be smaller than `x.shape` at the requested axis! '
                         f'For your parameters I got `x.shape[{ax}]={x.shape[ax]}` <= `npoints={npoints}`!'
                     )
 
@@ -1178,209 +1178,95 @@ class AugmentAxis:
     
     def get_random_transform(self,
         shape:tuple,
-        axis:tuple=None,
+        axis:Union[int,tuple]=None,
         ) -> dict:
-
-        shape = np.array(shape)
-        print(shape[list(axis)])
-        transformations = {
-            'flip':self.rng.choice([False,True],None),
-            'npoints':np.sort(self.rng.choice(np.nanmin(shape[list(axis)]), size=2, replace=False)),
-            # 'fill_value_obscure':0, 'fill_value_range':(0, 1),
-            'cutout_start':np.sort(self.rng.choice(np.nanmin(shape[list(axis)]), size=2, replace=False)),
-            'cutout_size':self.rng.choice(np.nanmin(shape[list(axis)]), size=2, replace=False),
-            'interpkind':'linear', 'fill_value_crop':'extrapolate',
-            'noise_mag':0,
-            'feature_range_min':0, 'feature_range_max':(3, 9),        
-        }
-        print(transformations)
-
-        return
-
-    def random_transform(self,
-        X:np.ndarray, 
-        seed:int=None,
-        ):
-        
-        return
-
-
-
-    #helper methods
-    def generate_random_parameters(self,
-        orig,
-        ):
-        '''
-            - function to generate random-variables needed in fit_transform
+        """
+            - method to generate parameters for a random transformation
 
             Parameters
             ----------
-                - orig
-                    - np.array
-                    - original, unperturbed input array
-            
-            Returns
-            -------
-                - shift
-                    - int
-                    - random offset in indices
-                - scale_min
-                    - float
-                    - minimum to scale the input to
-                - scale_max
-                    - float
-                    - maximum to scale the input to
-
-        '''
-        #generate random shift
-        if np.isnan(self.feature_shift[0]):
-            min_shift = 1
-        else: 
-            min_shift = self.feature_shift[0]
-        if np.isnan(self.feature_shift[1]):
-            max_shift = orig.shape[0]
-        else:
-            max_shift = self.feature_shift[1]
-        shift = self.rng.integers(min_shift, max_shift)
-        
-        #generate scale
-        if self.min_scale is not None:
-            scale_min = self.rng.uniform(self.min_scale[0], self.min_scale[1])
-        else:
-            scale_min = np.nanmin(orig)
-        if self.max_scale is not None:
-            scale_max = self.rng.uniform(self.max_scale[0], self.max_scale[1])
-        else:
-            scale_max = np.nanmin(orig)
-        
-        return shift, scale_min, scale_max
-
-
-    '''
-    def fit_transform(self,
-        X:pd.DataFrame, 
-        cols2modify:list,
-        y:pd.DataFrame=None,
-        return_only_new:bool=False,
-        testplot:bool=True,
-        ):
-        """
-           - method to apply the specified augmentation to the input matrix X
-
-           Parameters
-           ----------
-                - X
-                    - pd.DataFrame
-                    - input dataframe to be augmented
-                - cols2modify
-                    - list, optional
-                    - list of columnnames in X to be modified
-                    - useful if not all features shall be considered for augmentation
-                    - the default is None
-                        - will augment all features
-                - y
-                    - pd.DataFrame, optional
-                    - labels (or any other DataFrame of similar length as y) corresponding to X
-                    - the rows corresponding to the augmented samples of X will be added to y
-                    - the default is None
-                        - will not be considered
-                - return_only_new
-                    - bool, optional
-                    - if True, will only return the newly generated samples
-                    - if False, will return a DataFrame containing the input data with appended the newly generated samples
-                    - the default is False
-                - testplot
-                    - bool, optional
-                    - whethere to produce testplots of the augmented samples
-                    - will produce one plot for every sample!
-                    - the default is False
+                - `shape`
+                    - tuple
+                    - shape of the array (sample) to transform
+                - `axis`
+                    - int, tuple, optional
+                    - axis onto which to apply `add_noise`
+                    - overrides `self.axis`
+                    - the default is `None`
+                        - will fall back to `self.axis`
 
             Raises
             ------
 
             Returns
             -------
-                - df_X_augmented
-                    - pd.DataFrame
-                    - X with the augmented samples as additional rows
-                - df_y_augmented
-                    - pd.DataFrame, None
-                    - y with labels for the augmented rows in X as additional rows
-                    - None if y is not specified
-                - if return_only_new == True
-                    - df_new_X
-                        - pd.DataFrame
-                        - newly generated samples
-                    - df_new_y
-                        - pd.DataFrame, None
-                        - labels corresponding to df_new_X
-                        - None if y is not specified
+                - transformations
+                    - dict
+                    - dictionary containing parameter-value pairs
+                    - the values are random transformation values
+                    - can be passed to `apply_transform()` as `transform_parameters`
 
-            
             Comments
             --------
 
         """
 
-        #apply to all features if not specified otherwise
-        if cols2modify is None: cols2modify = X.columns
+        if axis is None:
+            axis = self.axis
+        if isinstance(axis,int):
+            axis = (axis,)
 
+        shape = np.array(shape)
+        transformations = {
+            'flip':self.rng.choice([False,True],None),
+            'npoints':int(self.rng.choice(np.nanmin(shape[list(axis)]))),
+            'cutout_start':int(self.rng.integers(np.nanmin(shape[list(axis)]))),
+            'cutout_size':int(self.rng.integers(-np.nanmin(shape[list(axis)]), np.nanmin(shape[list(axis)]))),
+            'noise_mag':self.rng.uniform(0,5),
+            'feature_range_min':self.rng.uniform(0,0.5), 'feature_range_max':self.rng.uniform(0.5,1),
+            'axis':axis,
+        }
 
-        #sample columns to modify
-        df_new_X = X.sample(n=self.n_newsamples, replace=True)
-        if y is not None: df_new_y = y.loc[df_new_X.index]
-        else: df_new_y = None
+        return transformations
 
-        for (idx, df_xi) in df_new_X.iterrows():
+    def random_transform(self,
+        x:np.ndarray, 
+        axis:Union[int,tuple]=None
+        ) -> np.ndarray:
+        """
+            - method to execute a random transformation of `x`
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - the array to be transformed
+                - `axis`
+                    - int, tuple, optional
+                    - axis onto which to apply the random transformation
+                    - overrides `self.axis`
+                    - the default is `None`
+                        - will fall back to `self.axis` 
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_new`
+                    - np.ndarray
+                    - transformed version of the input `x`                
             
-            #original, unperturbed sample
-            orig = df_xi[cols2modify]
-
-            #generate parameters for perturbation
-            shift, scale_min, scale_max = self.generate_random_parameters(orig)
-            
-
-            #shift indices of chosen cols2modify
-            shifted = self.shift_indices(orig, shift=shift, testplot=False)
-            
-            #rescale to chosen interval
-            scaled = np.interp(shifted, (np.nanmin(shifted), np.nanmax(shifted)), (scale_min, scale_max))
-
-            #add noise
-            noisy = self.add_noise(scaled)
-
-            #assign to dataframe at correct location
-            df_new_X.loc[idx, cols2modify] = noisy
-
-
-            #plotting
-            if testplot:
-                fig = plt.figure()
-                ax1 = fig.add_subplot(111)
-
-                ax1.plot(orig.values, '+', label='Original')
-                ax1.plot(shifted.values, '^', label=f'shifted by {shift}')
-                ax1.plot(scaled,  '.', label=f'scaled to the interval [{np.nanmin(scaled):.2f}, {np.nanmax(scaled):.2f}]')
-                ax1.plot(noisy,  'x', label=f'noisy')
-                ax1.plot(df_new_X.loc[idx][cols2modify].values)
-
-                ax1.legend()
-
-                plt.show()
-
-        # print(df_new_X)
-        # print(df_new_y)
+            Comments
+            --------
+        """
+        if axis is None:
+            axis = self.axis
         
-        #return only newly generated samples
-        if return_only_new:
-            return df_new_X, df_new_y
+        transform_parameters = self.get_random_transform(x.shape, axis=axis)
+        x_new = self.apply_transform(
+            x, transform_parameters=transform_parameters
+        )
 
-        #return input data with appended newly generated samples
-        else:
-            df_X_augmented = pd.concat((X, df_new_X))
-            if df_new_y is not None: df_y_augmented = pd.concat((y, df_new_y))
-            else: df_y_augmented = None
+        return x_new
 
-            return df_X_augmented, df_y_augmented
-
-        '''
