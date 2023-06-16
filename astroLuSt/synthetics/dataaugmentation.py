@@ -246,6 +246,9 @@ class AugmentAxis:
         self.verbose = verbose
 
 
+        #instantiate random number generator
+        self.rng = np.random.default_rng(seed=seed)
+
         return
 
     def __repr__(self) -> str:
@@ -302,15 +305,15 @@ class AugmentAxis:
             max_shift = orig.shape[0]
         else:
             max_shift = self.feature_shift[1]
-        shift = np.random.randint(min_shift, max_shift)
+        shift = self.rng.integers(min_shift, max_shift)
         
         #generate scale
         if self.min_scale is not None:
-            scale_min = np.random.uniform(self.min_scale[0], self.min_scale[1])
+            scale_min = self.rng.uniform(self.min_scale[0], self.min_scale[1])
         else:
             scale_min = np.nanmin(orig)
         if self.max_scale is not None:
-            scale_max = np.random.uniform(self.max_scale[0], self.max_scale[1])
+            scale_max = self.rng.uniform(self.max_scale[0], self.max_scale[1])
         else:
             scale_max = np.nanmin(orig)
         
@@ -414,7 +417,7 @@ class AugmentAxis:
         if isinstance(shift, int):
             shift = shift
         else:
-            shift = np.random.randint(np.nanmin(shift), np.nanmax(shift))
+            shift = self.rng.integers(np.nanmin(shift), np.nanmax(shift))
 
         #apply shift        
         x_new = np.roll(x, shift=shift, axis=axis)
@@ -559,7 +562,7 @@ class AugmentAxis:
         if isinstance(axis,int):
             axis = (axis,)
         if not isinstance(npoints,int):
-            npoints = np.random.randint(low=np.nanmin(npoints), high=np.nanmax(npoints))
+            npoints = self.rng.integers(low=np.nanmin(npoints), high=np.nanmax(npoints))
 
         #obscure entries
         x_new = x.copy()
@@ -576,7 +579,7 @@ class AugmentAxis:
                 f_value_size[ax] = npoints
 
                 #generate random fill-values
-                f_value = np.random.uniform(low=np.nanmin(fill_value_range), high=np.nanmax(fill_value_range), size=f_value_size)
+                f_value = self.rng.uniform(low=np.nanmin(fill_value_range), high=np.nanmax(fill_value_range), size=f_value_size)
             else:
                 f_value = fill_value_obscure
             
@@ -589,13 +592,13 @@ class AugmentAxis:
                         f'For your parameters I got `x.shape[{ax}]={x.shape[ax]}` <= `npoints={npoints}`!'
                     )
 
-                startidx = np.random.randint(low=0, high=x.shape[ax]-npoints, size=None)
+                startidx = self.rng.integers(low=0, high=x.shape[ax]-npoints, size=None)
                 ls = np.arange(startidx,startidx+npoints,1, dtype=int).reshape(size)
                 idxs = np.zeros(size, dtype=int) + ls
 
             ##completely random indices
             else:
-                idxs = np.random.randint(low=0, high=x.shape[ax], size=size)
+                idxs = self.rng.integers(low=0, high=x.shape[ax], size=size)
             
             #replace values in x_new with f_value (inplace operation)
             np.put_along_axis(x_new, indices=idxs, values=f_value, axis=ax)
@@ -709,15 +712,15 @@ class AugmentAxis:
             if isinstance(cutout_size, int):
                 co_size = cutout_size
             else:
-                co_size = np.random.randint(np.nanmin(cutout_size), np.nanmax(cutout_size))
+                co_size = self.rng.integers(np.nanmin(cutout_size), np.nanmax(cutout_size))
             
             #get correct co_start
             if isinstance(cutout_start, int) and cutout_start != -1:
                 co_start = cutout_start
             elif cutout_start == -1:
-                    co_start = np.random.randint(0, x.shape[ax]-co_size)
+                    co_start = self.rng.integers(0, x.shape[ax]-co_size)
             else:
-                co_start = np.random.randint(np.nanmin(cutout_start), np.nanmax(cutout_start))
+                co_start = self.rng.integers(np.nanmin(cutout_start), np.nanmax(cutout_start))
 
             #apply cut_out (only if the cutout_size is greater than 1, otherwise just return the input-array)
             if co_size > 0:
@@ -796,11 +799,11 @@ class AugmentAxis:
         if isinstance(feature_range_min, int):
             fr_min = feature_range_min
         else:
-            fr_min = np.random.uniform(np.nanmin(feature_range_min), np.nanmax(feature_range_min))
+            fr_min = self.rng.uniform(np.nanmin(feature_range_min), np.nanmax(feature_range_min))
         if isinstance(feature_range_max, int):
             fr_max = feature_range_max
         else:
-            fr_max = np.random.uniform(np.nanmin(feature_range_max), np.nanmax(feature_range_max))
+            fr_max = self.rng.uniform(np.nanmin(feature_range_max), np.nanmax(feature_range_max))
 
         AS = AxisScaler(
             scaler='range_scaler',
@@ -870,7 +873,7 @@ class AugmentAxis:
         if isinstance(noise_mag, float):
             mag = noise_mag
         else:
-            mag = np.random.uniform(low=np.nanmin(noise_mag), high=np.nanmax(noise_mag))
+            mag = self.rng.uniform(low=np.nanmin(noise_mag), high=np.nanmax(noise_mag))
         if isinstance(axis, int):
             axis = (axis,)
 
@@ -883,7 +886,7 @@ class AugmentAxis:
         noise_size[mask] = 1
 
         #apply noise
-        noise = np.random.normal(size=noise_size)
+        noise = self.rng.normal(size=noise_size)
         x_new = x + noise*mag
 
         return x_new
@@ -985,7 +988,7 @@ class AugmentAxis:
             transform_order = self.transform_order
         if verbose is None:
             verbose = self.verbose
-        
+
         methods = np.array(methods)
             
         #initialize correctly
@@ -1082,7 +1085,6 @@ class AugmentAxis:
         X:np.ndarray, y:np.ndarray=None, X_misc:List[np.ndarray]=None,
         sample_weights:list=None,
         nsamples:int=None,
-        seed:int=None,
         verbose:int=None,
         apply_transform_kwargs:dict=None,
         ) -> Tuple[np.ndarray,...]:
@@ -1119,12 +1121,6 @@ class AugmentAxis:
                     - overrides `self.nsamples`
                     - the deafult is `None`
                         - will fall back to `self.nsamples`
-                - `seed`
-                    - int, optional
-                    - seed of the random number generator
-                    - will override `self.seed`
-                    - the default is `None`
-                        - will fall back to `self.seed`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -1162,13 +1158,9 @@ class AugmentAxis:
             nsamples = self.nsamples
         if verbose is None:
             verbose = self.verbose
-        if seed is None:
-            seed = self.seed
         if apply_transform_kwargs is None:
             apply_transform_kwargs = {}
 
-        #instantiate random number generator
-        rng = np.random.default_rng(seed=seed)
 
         #no misc data passed
         if X_misc is None:
@@ -1196,7 +1188,7 @@ class AugmentAxis:
                 f'    Generating {nsamples} new samples...'
             )
         for n in range(nsamples):
-            sample_idx = rng.choice(np.arange(0, len(X),1), size=None, replace=False, p=sample_weights)
+            sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=False, p=sample_weights)
             X_new[n] = self.apply_transform(X[sample_idx], **apply_transform_kwargs)
             y_new[n] = y[sample_idx]
             for idx in range(len(X_misc_new)):
