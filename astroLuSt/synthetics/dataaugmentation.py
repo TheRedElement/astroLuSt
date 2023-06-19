@@ -208,6 +208,7 @@ class AugmentAxis:
 
         Comments
         --------
+            - methods that define transformations are denoted by `methodname_t()`
     """
 
     def __init__(self,
@@ -297,7 +298,7 @@ class AugmentAxis:
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
-
+    #helpers
     def get_transformations(self,
         ) -> List[str]:
         """
@@ -321,26 +322,53 @@ class AugmentAxis:
 
         transformations = []
         for d in dir(AugmentAxis):
-            if d[:2] != '__':
+            if d[-2:] == '_t':
                 if callable(eval(f'self.{d}')):
                     transformations.append(eval(f'self.{d}').__name__)
 
-        #methods not used for transformations
-        non_transformations = [
-            'apply_transform', 'fit',
-            'flow', 'generate_random_parameters',
-            'get_random_transform', 'get_transformations',
-            'random_transform'
-        ]
-        for ntf in non_transformations:
-            try: 
-                transformations.remove(ntf)
-            except:
-                pass
-
         return transformations
 
-    def shift_features(self,
+    def class_weights2sample_weights(self,
+        class_weights:np.ndarray, y:np.ndarray,
+        ) -> np.ndarray:
+        """
+            - method to convert class weights to sample weights given an array of labels
+
+            Parameters
+            ----------
+                - `class_weights`
+                    - np.ndarray
+                    - weights per class
+                    - has to have same shape as `np.unique(y)`
+                - `y`
+                    - np.ndarray
+                    - array of class labels
+                    - has to have `len(class_weights)` unique labels
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `sample_weights`
+                    - np.ndarray
+                    - same shape as `y`
+                    - `class_weights` converted to weights per sample
+                        - all samples of the same class will have the same weight
+
+            Comments
+            --------
+        """
+        sample_weights = y.copy().astype(np.float64)
+        uniques, counts = np.unique(sample_weights, return_counts=True)
+        for u, c, cw in zip(uniques, counts, class_weights):
+            sample_weights[(sample_weights==u)] = cw/c
+        sample_weights /= np.nansum(sample_weights)
+        
+        return sample_weights
+
+    #transformations
+    def shift_features_t(self,
         x:np.ndarray,
         shift:Union[tuple,int]=None,
         axis:Union[int,tuple]=None,
@@ -402,7 +430,7 @@ class AugmentAxis:
 
         return x_new
 
-    def flip_axis(self,
+    def flip_axis_t(self,
         x:np.ndarray,
         axis:Union[int,tuple]=None,
         **kwargs,
@@ -447,7 +475,7 @@ class AugmentAxis:
 
         return x_new
 
-    def obscure_observations(self,
+    def obscure_observations_t(self,
         x:np.ndarray,
         npoints:Union[int,tuple]=None,
         neighbors:bool=None,
@@ -584,7 +612,7 @@ class AugmentAxis:
 
         return x_new
     
-    def crop(self,
+    def crop_t(self,
         x:np.ndarray,
         cutout_start:Union[int,tuple]=None, cutout_size:Union[int,tuple]=None,
         interpkind:Union[str,int]=None, fill_value_crop:Union[int,tuple,str]=None,
@@ -708,7 +736,7 @@ class AugmentAxis:
 
         return x_new
 
-    def rescale(self,
+    def rescale_t(self,
         x:np.ndarray,
         feature_range_min:Union[int,tuple]=None, feature_range_max:Union[int,tuple]=None,
         axis:Union[int,tuple]=None,
@@ -792,7 +820,7 @@ class AugmentAxis:
 
         return x_new
 
-    def add_noise(self,
+    def add_noise_t(self,
         x:np.ndarray,
         noise_mag:Union[float,tuple]=None,
         axis:Union[int,tuple]=None,
@@ -869,6 +897,7 @@ class AugmentAxis:
 
         return x_new
 
+    #transform
     def apply_transform(self,
         x:np.ndarray,
         transform_parameters:dict=None,
@@ -1061,7 +1090,7 @@ class AugmentAxis:
     
     def flow(self,
         X:np.ndarray, y:np.ndarray=None, X_misc:List[np.ndarray]=None,
-        sample_weights:list=None,
+        sample_weights:list=None, class_weights:list=None,
         nsamples:int=None,
         verbose:int=None,
         apply_transform_kwargs:dict=None,
@@ -1141,14 +1170,24 @@ class AugmentAxis:
         if X_misc is None:
             X_misc = []
 
+        #get sample weights
+        ##default to uniform distribution
+        if class_weights is None and sample_weights is None:
+            sample_weights_use = np.ones(X.shape[0])/len(X)
+        ##convert class_weights to sample_weights if no sample_weights provided
+        elif class_weights is not None and sample_weights is None and y is not None:
+            sample_weights_use = self.class_weights2sample_weights(class_weights, y[:,0])
+        ##use sample_weights
+        elif class_weights is None and sample_weights is not None:
+            sample_weights_use = sample_weights
+        ##use sample_weights
+        else:
+            sample_weights_use = sample_weights
+        
         #if no y was provided create one filled with nan
         if y is None:
-            y = np.ones(X.shape[0])
+            y = np.ones(X.shape[0]).reshape(-1,1)
             y[:] = np.nan
-
-        #if not sample_weights have been passed assume uniform distribution
-        if sample_weights is None:
-            sample_weights = np.ones(X.shape[0])/len(X)
 
         #generate new arrays
         ##initialize
@@ -1163,7 +1202,8 @@ class AugmentAxis:
                 f'    Generating {nsamples} new samples...'
             )
         for n in range(nsamples):
-            sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=True, p=sample_weights)
+            sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=True, p=sample_weights_use)
+            # sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=True, p=sample_weights)
             X_new[n] = self.apply_transform(X[sample_idx], **apply_transform_kwargs)
             y_new[n] = y[sample_idx]
             for idx in range(len(X_misc_new)):
