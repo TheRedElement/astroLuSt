@@ -13,12 +13,12 @@ class Binning:
     """
         - class to execute data-binning on a given input series
         - essentially calculates a mean representative curve
-        - the scatter of the original data and thus certainty of the representation is captured by the standard deviation of 'y' in an interval
+        - the scatter of the original data and thus certainty of the representation is captured by the standard deviation of `y` in an interval
 
 
         Attributes
         ----------
-            - nintervals
+            - `nintervals`
                 - float, int optional
                 - nuber of intervals/bins to generate
                 - if a value between 0 and 1 is passed
@@ -27,84 +27,90 @@ class Binning:
                     - will be converted to integer
                     - will be interpreted as the number of intervals to use
                 - the default is 0.5
-            - npoints_per_interval
+            - `npoints_per_interval`
                 - int, optional
                 - generate intervals/bins automatically such that each bin contains 'npoints_per_interval' datapoints
                     - the last interval will contain all datapoints until the end of the dataseries
                 - if set will overwrite nintervals
                 - the default is None
                     - will use 'nintervals' to generate the bins
-            - xmin
+            - `xmin`
                 - float, optional
                 - the minimum value to consider for the interval/bin creation
-                - the default is None
-                    - will use the minimum of the input-series x-values
-            - xmax
+                - the default is `None`
+                    - will use the minimum of the input-series `x`-values
+            - `xmax`
                 - float, optional
                 - the maximum value to consider for the interval/bin creation
-                - the default is None
-                    - will use the maximum of the input-series x-values
-            - ddof
+                - the default is `None`
+                    - will use the maximum of the input-series `x`-values
+            - `ddof`
                 - int, optional
-                - Delta Degrees of Freedom used in np.nanstd()
+                - Delta Degrees of Freedom used in `np.nanstd()`
                 - the default is 0
-            - meanfunc_x
+            - `meanfunc_x`
                 - callable, optional
-                - function to use to calculate the mean of each interval in 'x'
+                - function to use to calculate the mean of each interval in `x`
                 - the function shall take one argument
+                    - the input dataseries `x`-values
                 - the function shall return a single floating point value
-                - the default is None
-                    - will use np.nanmean
-            - meanfunc_y
+                - the default is `None`
+                    - will use `np.nanmean`
+            - `meanfunc_y`
                 - callable, optional
-                - function to use to calculate the mean of each interval in 'y'
+                - function to use to calculate the mean of each interval in `y`
                 - the function shall take one argument
+                    - the input dataseries `y`-values
                 - the function shall return a single floating point value
-                - the default is None
-                    - will use np.nanmean
-            - verbose
+                - the default is `None`
+                    - will use `np.nanmean`
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
         
         Infered Attributes
         ------------------
-            - bins
+            - `bins`
                 - np.ndarray
                 - array containing the boundaries of the intervals/bins used for binning the curve
-            - n_per_bin
+            - `n_per_bin`
                 - np.ndarray
                 - contains the number of samples contained within each bin
-            - x
+            - `x`
                 - np.ndarray
                 - x-values of the input data series
-            - x_binned
+            - `x_binned`
                 - np.ndarray
-                - binned values for input 'x'
-                - has shape (1, nintervals)
-            - y
+                - binned values for input `x`
+                - has shape `(1, nintervals)`
+            - `y`
                 - np.ndarray
                 - y-values of the input data series
-            - y_binned
+            - `y_binned`
                 - np.ndarray
-                - binned values for input 'y'
-                - has shape (1, nintervals)
-            - y_std
+                - binned values for input `y`
+                - has shape `(1, nintervals)`
+            - `y_std`
                 - np.ndarray
-                - standard deviation of 'y' for each interval
+                - standard deviation of `y` for each interval
                 - characterizes the scattering of the input curve
-                - has shape (1, nintervals)     
+                - has shape `(1, nintervals)`
 
         Methods
         -------
-            - generate_bins()
-            - bin_curve()
-            - plot_result()
+            - `generate_bins()`
+            - `bin_curve()`
+            - `fit()`
+            - `transform()`
+            - `fit_transform()`
+            - `plot_result()`
 
         Dependencies
         ------------
             - matplotlib
             - numpy
+            - typing
 
         Comments
         --------
@@ -114,8 +120,7 @@ class Binning:
         nintervals:Union[float,int]=0.2, npoints_per_interval:int=None,
         xmin:float=None, xmax:float=None,
         ddof:int=0,
-        meanfunc_x:Callable=None,
-        meanfunc_y:Callable=None,
+        meanfunc_x:Callable=None, meanfunc_y:Callable=None,
         verbose:int=0,     
         ):
     
@@ -140,10 +145,11 @@ class Binning:
 
         return (
             f'Binning(\n'
-            f'    nintervals={self.nintervals}, npoints_per_interval={self.npoints_per_interval},\n'
-            f'    xmin={self.xmin}, xmax={self.xmax},\n'
-            f'    ddof={self.ddof},\n'
-            f'    verbose={self.verbose},\n'
+            f'    nintervals={repr(self.nintervals)}, npoints_per_interval={repr(self.npoints_per_interval)},\n'
+            f'    xmin={repr(self.xmin)}, xmax={repr(self.xmax)},\n'
+            f'    ddof={repr(self.ddof)},\n'
+            f'    meanfunc_x={repr(self.meanfunc_x)}, meanfunc_y={repr(self.meanfunc_y)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
 
@@ -157,38 +163,38 @@ class Binning:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - x-values w.r.t. which the binning shall be executed
-                - y
+                - `y`
                     - np.ndarray
                     - y-values to be binned
-                - nintervals
+                - `nintervals`
                     - int, optional
                     - nuber of intervals/bins to generate
-                    - overwrites self.nintervals
-                    - the default is None
-                        - uses self.nintervals
-                - npoints_per_interval
+                    - overwrites `self.nintervals`
+                    - the default is `None`
+                        - uses `self.nintervals`
+                - `npoints_per_interval`
                     - int, optional
-                    - generate intervals/bins automatically such that each bin contains 'npoints_per_interval' datapoints
+                    - generate intervals/bins automatically such that each bin contains `npoints_per_interval` datapoints
                         - the last interval will contain all datapoints until the end of the dataseries
-                    - overwrites self.npoints_per_interval
-                    - if set will overwrite nintervals
-                    - the default is None
-                        - will use 'nintervals' to generate the bins
-                - verbose
+                    - overwrites `self.npoints_per_interval`
+                    - if set will overwrite `nintervals`
+                    - the default is `None`
+                        - will use `nintervals` to generate the bins
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - overwrites self.verbose if set
-                    - the default is None                
+                    - overwrites `self.verbose` if set
+                    - the default is `None`           
             
             Raises
             ------
 
             Returns
             -------
-                - self.bins
+                - `self.bins`
                     - np.ndarray
                     - boundaries of the generated bins
             
@@ -268,49 +274,54 @@ class Binning:
         generate_bins_kwargs:dict={},
         ) -> None:
         """
-            - method to execute the binning of y w.r.t. x
+            - method to execute the binning of `y` w.r.t. `x`
             - similar to scikit-learn scalers
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - x-values w.r.t. which the binning shall be executed
-                - y
+                - `y`
                     - np.ndarray
                     - y-values to be binned
-                - bins
+                - `bins`
                     - np.ndarray, optional
                     - array containing the boundaries of the intervals/bins to use for binning the curve
                     - will overwrite the autogeneration-process
-                    - the default is None
-                - ddof
+                    - the default is `None`
+                - `ddof`
                     - int, optional
-                    - Delta Degrees of Freedom used in np.nanstd()
-                    - overwrites self.ddof if set
-                    - the default is None
-                - meanfunc_x
+                    - Delta Degrees of Freedom used in `np.nanstd()`
+                    - overwrites `self.ddof` if set
+                    - the default is `None`
+                        - will fall back to `self.ddof`
+                - `meanfunc_x`
                     - callable, optional
-                    - function to use to calculate the mean of each interval in 'x'
+                    - function to use to calculate the mean of each interval in `x`
                     - the function shall take one argument
+                        - the input dataseries `x`-values
                     - the function shall return a single floating point value
-                    - will overwrite self.meanfunc_x if passed
-                    - the default is None
-                - meanfunc_y
+                    - will overwrite `self.meanfunc_x` if passed
+                    - the default is `None`
+                        - will use `self.meanfunc_x`
+                - `meanfunc_y`
                     - callable, optional
-                    - function to use to calculate the mean of each interval in 'y'
+                    - function to use to calculate the mean of each interval in `y`
                     - the function shall take one argument
+                        - the input dataseries `y`-values
                     - the function shall return a single floating point value
-                    - will overwrite self.meanfunc_y if passed
-                    - the default is None
-                - verbose
+                    - will overwrite `self.meanfunc_y` if passed
+                    - the default is `None`
+                        - will use `self.meanfunc_y`
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - overwrites self.verbosity if set
-                    - the default is None
-                - generate_bins_kwargs
+                    - overwrites `self.verbosity` if set
+                    - the default is `None`
+                - `generate_bins_kwargs`
                     - dict, optional
-                    - kwargs to pass to self.generate_bins()
+                    - kwargs to pass to `self.generate_bins()`
                     
             Raises
             ------
@@ -361,34 +372,35 @@ class Binning:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray, optional
                     - x-values w.r.t. which the binning shall be executed
                     - only here for consistency, will not be considered in the method
-                    - the default is None
-                - y
+                    - the default is `None`
+                - `y`
                     - np.ndarray
                     - y-values to be binned  
                     - only here for consistency, will not be considered in the method
-                    - the default is None
+                    - the default is `None`
             Raises
             ------
 
             Returns
             -------
-                - x_binned
+                - `x_binned`
                     - np.ndarray
-                    - binned values for input 'x'
-                    - has shape (1, nintervals)
-                - y_binned
+                    - binned values for input `x`
+                    - has shape `(1, nintervals)`
+                - `y_binned`
                     - np.ndarray
-                    - binned values for input 'y'
-                    - has shape (1, nintervals)
-                - y_std
+                    - binned values for input `y`
+                    - has shape `(1, nintervals)`
+                - `y_std`
                     - np.ndarray
-                    - standard deviation of 'y' for each interval
+                    - standard deviation of `y` for each interval
                     - characterizes the scattering of the input curve
-                    - has shape (1, nintervals)
+                    - has shape `(1, nintervals)`
+            
             Comments
             --------
         """
@@ -409,34 +421,34 @@ class Binning:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - x-values w.r.t. which the binning shall be executed
-                - y
+                - `y`
                     - np.ndarray
                     - y-values to be binned            
-                - fit_kwargs
+                - `fit_kwargs`
                     - dict, optional
-                    - kwargs to pass to self.fit()
+                    - kwargs to pass to `self.fit()`
 
             Raises
             ------
 
             Returns
             -------
-                - x_binned
+                - `x_binned`
                     - np.ndarray
-                    - binned values for input 'x'
-                    - has shape (1, nintervals)
-                - y_binned
+                    - binned values for input `x`
+                    - has shape `(1, nintervals)`
+                - `y_binned`
                     - np.ndarray
-                    - binned values for input 'y'
-                    - has shape (1, nintervals)
-                - y_std
+                    - binned values for input `y`
+                    - has shape `(1, nintervals)`
+                - `y_std`
                     - np.ndarray
-                    - standard deviation of 'y' for each interval
+                    - standard deviation of `y` for each interval
                     - characterizes the scattering of the input curve
-                    - has shape (1, nintervals)
+                    - has shape `(1, nintervals)`
 
              Comments
              --------            
@@ -451,9 +463,9 @@ class Binning:
         return  x_binned, y_binned, y_std
 
     def plot_result(self,
-        ) -> Tuple[Figure, plt.Axes]:
+        ) -> Tuple[Figure,plt.Axes]:
         """
-            - function to plot the result of the binning in phase
+            - method to plot the result of the binning in phase
 
             Parameters
             ----------
@@ -463,12 +475,12 @@ class Binning:
 
             Returns
             -------
-                - fig
-                    - matplotlib figure
+                - `fig`
+                    - matplotlib Figure
                     - figure created if verbosity level specified accordingly
-                - axs
-                    - matplotlib axes
-                    - axes corresponding to 'fig'              
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
 
             Comments
             --------
