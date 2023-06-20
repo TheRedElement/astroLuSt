@@ -1,13 +1,13 @@
 
 #%%imports
 import itertools
+from joblib import Parallel, delayed
 import numpy as np
 import os
 from typing import Union, Tuple, Dict, Callable
 import wandb
 import warnings
 
-from joblib import Parallel, delayed
 
 from astroLuSt.monitoring.timers import ExecTimer
 
@@ -18,12 +18,16 @@ class WandB_parallel_sweep:
 
         Attributes
         ----------
-            - sweep_id
+            - `sweep_id`
                 - str
                 - unique id each sweep gets assigned
                 - either directly pass the string or use the following command to generate a sweep id and initialize a new sweep
-                    >>> sweep_id = wandb.sweep(sweep_config, entity="<youruser>", project="<yourproject>")
-            - function
+                
+                ```python
+                >>> sweep_id = wandb.sweep(sweep_config, entity="<youruser>", project="<yourproject>")
+                ```
+
+            - `function`
                 - callable
                 - function to be executed during the sweep for each combination of hyperparameters
                 - i.e. the training loop
@@ -32,47 +36,52 @@ class WandB_parallel_sweep:
                     - compilation of your model
                     - fitting of your model
                     - monitoring and logging of metrics ect.
-            - n_jobs
+            - `n_jobs`
                 - int, optional
                 - how many jobs to use in parallel when running the sweep
-                - argument of joblib.Parallel
+                - argument of `joblib.Parallel`
                 - the default is -1
                     - will use all available workers
-            - n_agents
+            - `n_agents`
                 - int, optional
                 - how many agents to use for the sweep
                 - this is the amount of training loops for different parameters executed in parallel
-                - if n_agents < 0
-                    - n_jobs - n_agents agents
-                - the default is None
-                    - will use as many agents as jobs (i.e. self.n_agents = self.n_jobs)
-                        - a maximum of 20 agents will be used since 20 is the maximum allowed number of wokring agents)
-            - wandb_mode
+                - if `n_agents < 0`
+                    - will be set to `n_jobs - n_agents` agents
+                - the default is `None`
+                    - will use as many agents as jobs (i.e. `self.n_agents = self.n_jobs`)
+                        - a maximum of 20 agents will be used since 20 is the maximum allowed number of wokring agents
+            - `wandb_mode`
                 - str, optional
-                - will set the environment variable 'WANDB_MODE' accordingly
-                    - 'offline'
+                - will set the environment variable `'WANDB_MODE'` accordingly
+                    - `'offline'`
                         - i.e. no synching to the web-api will take place
-                        - useful for i.e. SLURM execution when there is no internet connection
+                        - useful for i.e. execution when there is no internet connection
                         - you can always synch your results later with the following command
-                            >>> wand sync <path to run directory>
-                        - usually the path to the run directory is ./wandb/offline...
+                            
+                        ```bash
+                        >>> wand sync <path to run directory>
+                        ```
+
+                        - usually the path to the run directory is `'./wandb/offline...'`
                         - use wildcards to sync multiple runs at once
-                    - online
+                    - `'online'`
                         - synching during sweep enabled
-                - the default is 'online'
+                - the default is `'online'`
                     - will sync during sweep
-            - verbose
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0 
 
         Methods
         -------
-            - sweep_one()
-            - sweep_parallel()
+            - `sweep_one()`
+            - `sweep_parallel()`
 
         Dependencies
         -------------
+            - itertools
             - joblib
             - os
             - typing
@@ -119,7 +128,7 @@ class WandB_parallel_sweep:
         )
 
     def get_upper_bound_agents(self,
-        sweep_config:dict
+        sweep_config:Dict[str,dict]
         ) -> int:
         """
             - method to estimate an upper bound of the number of agents needed
@@ -127,20 +136,20 @@ class WandB_parallel_sweep:
             
             Parameters
             ----------
-                - sweep_config
+                - `sweep_config`
                     - dict
                     - nested dict
-                    - sweep configuration that gets passed to wandb.sweep()
+                    - sweep configuration that gets passed to `wandb.sweep()`
 
             Raises
             ------
 
             Returns
             -------
-                - n_comb
+                - `n_comb`
                     - int
                     - number of hyperparameter combinations that will be computed
-                    - equivalent to the upper bound estimate of n_agents
+                    - equivalent to the upper bound estimate of `n_agents`
                     
             Comments
             --------
@@ -178,7 +187,7 @@ class WandB_parallel_sweep:
         return n_combs
 
     def sweep_one(self,
-        sweep_id:str=None, function:callable=None,
+        sweep_id:str=None, function:Callable=None,
         idx:int=0, n_agents:int=1,
         verbose:int=None,
         ) -> None:
@@ -187,14 +196,18 @@ class WandB_parallel_sweep:
 
             Parameters
             ----------
-                - sweep_id
+                - `sweep_id`
                     - str, optional
                     - unique id each sweep gets assigned
                     - either directly pass the string or use the following command to generate a sweep id and initialize a new sweep
+                        
+                        ```python
                         >>> sweep_id = wandb.sweep(sweep_config, entity="<youruser>", project="<yourproject>")
-                    - overwrites self.sweep_id if passed
-                    - the default is None
-                - function
+                        ```
+
+                    - overwrites `self.sweep_id` if passed
+                    - the default is `None`
+                - `function`
                     - callable, optional
                     - function to be executed during the sweep for each combination of hyperparameters
                     - i.e. the training loop
@@ -203,24 +216,24 @@ class WandB_parallel_sweep:
                         - compilation of your model
                         - fitting of your model
                         - monitoring and logging of metrics ect.
-                    - overwrites self.function if passed
-                    - the default is None
-                - idx
+                    - overwrites `self.function` if passed
+                    - the default is `None`
+                - `idx`
                     - int, optional
                     - index of the sweep currently executed
                     - only needed for verbosity
                     - the default is 0
-                - n_agents
+                - `n_agents`
                     - int, optional
                     - how many agents to use for the sweep
                     - this is the amount of training loops for different parameters executed in parallel
                     - in this method only needed for verbosity
                     - the default is 1
-                - verbose
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - overwrites self.verbose if passed
-                    - the default is None 
+                    - overwrites `self.verbose` if passed
+                    - the default is `None `
                     
             Raises
             ------
@@ -230,8 +243,8 @@ class WandB_parallel_sweep:
 
             Comments
             --------
-                - self.ET will only show its output when the script is NOT executed from an interactive window
-                - self.ET will only be able to store the timings in self.ET.df_execprotocoll if n_jobs == 1
+                - `self.ET` will only show its output when the script is NOT executed from an interactive window
+                - `self.ET` will only be able to store the timings in `self.ET.df_execprotocoll` if `n_jobs == 1`
         """
 
         self.ET.checkpoint_start(f'sweep_one, agent {idx+1}')
@@ -261,14 +274,18 @@ class WandB_parallel_sweep:
 
             Parameters
             ----------
-                - sweep_id
+                - `sweep_id`
                     - str, optional
                     - unique id each sweep gets assigned
                     - either directly pass the string or use the following command to generate a sweep id and initialize a new sweep
+                        
+                        ```python
                         >>> sweep_id = wandb.sweep(sweep_config, entity="<youruser>", project="<yourproject>")
-                    - overwrites self.sweep_id if passed
-                    - the default is None
-                - function
+                        ```
+
+                    - overwrites `self.sweep_id` if passed
+                    - the default is `None`
+                - `function`
                     - callable, optional
                     - function to be executed during the sweep for each combination of hyperparameters
                     - i.e. the training loop
@@ -277,25 +294,25 @@ class WandB_parallel_sweep:
                         - compilation of your model
                         - fitting of your model
                         - monitoring and logging of metrics ect.
-                    - overwrites self.function if passed
-                    - the default is None
-                - n_jobs
+                    - overwrites `self.function` if passed
+                    - the default is `None`
+                - `n_jobs`
                     - int, optional
                     - how many jobs to use in parallel when running the sweep
-                    - argument of joblib.Parallel
-                    - overwrites self.n_jobs if passed
-                    - the default is None
-                - n_agents
+                    - argument of `joblib.Parallel`
+                    - overwrites `self.n_jobs` if passed
+                    - the default is `None`
+                - `n_agents`
                     - int, optional
                     - how many agents to use for the sweep
                     - this is the amount of training loops for different parameters executed in parallel
-                    - overwrites self.n_agents if passed
-                    - the default is None
-                - verbose
+                    - overwrites `self.n_agents` if passed
+                    - the default is `None`
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - overwrites self.verbose if passed
-                    - the default is None                     
+                    - overwrites `self.verbose` if passed
+                    - the default is `None`                     
                 
 
             Raises
@@ -361,10 +378,10 @@ def sweep_config2grid(
 
         Parameters
         ----------
-            - sweep_config
+            - `sweep_config`
                 - dict
                 - nested dictionary as used by wand hyperparameter sweeps
-                - the entry for 'parameters' will be converted into a sklearn.model_selection.ParameterGrid
+                - the entry for `'parameters'` will be converted into a `sklearn.model_selection.ParameterGrid`
                 - all other entries will be stored in a separate dictionary
 
         Raises
@@ -372,18 +389,19 @@ def sweep_config2grid(
 
         Returns
         -------
-            - grid
+            - `grid`
                 - dict
-                - grid corresponding to sweep_config
-                - the grid is formatted such that it can be transformed into a sklearn.model_selection.ParameterGrid by simply passing it to the corresponding constructor
-            - config_dict
+                - grid corresponding to `sweep_config`
+                - the grid is formatted such that it can be transformed into a `sklearn.model_selection.ParameterGrid` by simply passing it to the corresponding constructor
+            - `config_dict`
                 - dict
-                - dictionary containing the rest of the parameters stored in sweep_config
+                - dictionary containing the rest of the parameters stored in `sweep_config`
 
         Dependencies
         ------------
             - numpy
             - typing
+            - warnings
 
         Comments
         --------
