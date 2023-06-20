@@ -4,10 +4,12 @@ from alerce.core import Alerce
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from matplotlib.figure import Figure
 import numpy as np
 import os
 import pandas as pd
 import time
+from typing import Tuple
 
 from astroLuSt.monitoring.timers import ExecTimer
 
@@ -22,31 +24,40 @@ class AlerceDatabaseInterface:
 
         Methods
         -------
-            - download_one()
-            - crossmatch_by_coordinates()
-            - download_lightcurves()
-            - plot_result()
+            - `download_one()`
+            - `crossmatch_by_coordinates()`
+            - `download_lightcurves()`
+            - `plot_result()`
 
         Dependencies
         ------------
-            - Alerce
+            - alerce
             - joblib
             - matplotlib
             - numpy
             - os
             - pandas
+            - time
+            - typing
+
         Comments
         --------
     """
 
 
     def __init__(self,
-        ):
+        ) -> None:
         self.alerce = Alerce()
         
         self.ET = ExecTimer()
 
         return
+    
+    def __repr__(self) -> str:
+        return (
+            f'(AlerceDatabaseInterface\n'
+            f')'
+        )
 
     def download_one(self,
         ztf_id:str,
@@ -60,75 +71,78 @@ class AlerceDatabaseInterface:
         idx:int=0,
         total_targets:int=1,
         verbose:int=0,
-        ):
+        ) -> Tuple[pd.DataFrame,str,bool,str]:
         """
             - method to download the lightcurve on one particular ztf_id
             - will be called during self.download_lightcurves() in parallel
             
             Parameters
             ----------
-                - ztf_id
+                - `ztf_id`
                     - str
                     - id of the desired target
-                - redownload
+                - `redownload`
                     - bool, optional
                     - whether to redownload lightcurves that already have been donwloaded at some point in the past
                         - i.e. are found in the save-directory
                     - the default is False
-                - save
+                - `save`
                     - str, bool, optional
                     - directory of where to store the downloaded lightcurves to
-                    - if set to False, will not save the data
-                    - save has to end with a slash ('/')
-                    - the default is './'
-                - plot_result
+                    - if set to `False`, will not save the data
+                    - `save` has to end with a slash (`'/'`)
+                    - the default is `'./'`
+                - `plot_result`
                     - bool, optional
                     - whether to plot the lightcurve of the downloaded data
                         - will create one plot for each target
-                    - the default is True
-                - save_plot
+                    - the default is `True`
+                - `save_plot`
                     - str, optional   
                     - directory of where to store the created plots
-                    - save_plot has to end with a slash ('/')
-                    - the default is False
+                    - `save_plot` has to end with a slash (`'/'`)
+                    - the default is `False`
                         - will not save the plots
-                - close_plots
+                - `close_plots`
                     - bool, optional
                     - whether to close the plots immediately after creation
                     - useful if one wants to save the plots, but not view at them right away
-                    - the default is True
-                - sleep
+                    - the default is `True`
+                - `sleep`
                     - float, optional
                     - number of seconds to sleep after downloading each target
                     - the default is 0
                         - no sleep at all
-                - idx
+                - `idx`
                     - int, optional
                     - index of the currently downloaded target
-                    - only necessary to print in the protocoll when called in self.download_lightcurves()
+                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
                     - the default is 0
-                - total_targets
+                - `total_targets`
                     - int, optional
                     - total number of targets that get extracted
-                    - only necessary to print in the protocoll when called in self.download_lightcurves()
+                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
                     - the default is 1
-                -  verbose
+                -  `verbose`
                     - int, optional
                     - verbosity level
                     - the default is 0 
 
+            Raises
+            ------
+
             Returns
             -------
-                - df
+                - `df`
                     - pd.DataFrame
                     - containing the downloaded lightcurve data
-                - ztf_id
+                - `ztf_id`
                     - str
                     - id of the extracted object
-                - sucess
+                - `sucess`
                     - bool
                     - whether the download was successful
-                - error_msg
+                - `error_msg`
                     - str
                     - potential error-messages that occured during the download
 
@@ -208,57 +222,53 @@ class AlerceDatabaseInterface:
         timeit:bool=False,
         ) -> pd.DataFrame:
         """
-            - method to crossmerge 'df_left' with the ZTF catalog by coordinates (cone search)
-                - will take each row in 'df_left' and find the corresponding target in the ZTF catalog via coordinates
-                - will then proceed to append to each matched entry in the ZTF catalog the input row from 'df_left'
+            - method to crossmerge `df_left` with the ZTF catalog by coordinates (cone search)
+                - will take each row in `df_left` and find the corresponding target in the ZTF catalog via coordinates
+                - will then proceed to append to each matched entry in the ZTF catalog the input row from `df_left`
                 - will combine everything into one huge table
 
             Parameters
             ----------
-                - df_left
+                - `df_left`
                     - pd.DataFrame
                     - table to be crossmerged with ZTF
                     - must contain ra and dec as columns
-                - ra_colname
+                - `ra_colname`
                     - str
                     - name of the column to be considered as Right Ascension
-                - dec_colname
+                - `dec_colname`
                     - str
                     - name of the column to be considered as Declination
-                - radius
+                - `radius`
                     - float
                     - radius to use for the cone search
-                - sleep
+                - `sleep`
                     - float, optional
                     - number of seconds to sleep after downloading each target
                     - the default is 0
                         - no sleep at all                    
-                - n_jobs
+                - `n_jobs`
                     - int, optional
-                    - number of jobs to be used by joblib.Parallel()
+                    - number of jobs to be used by `joblib.Parallel()`
                     - the default is -1
                         - will use all available resources
-                -  verbose
+                -  `verbose`
                     - int, optional
                     - verbosity level
                     - the default is 0
-                - timeit
+                - `timeit`
                     - bool, optional
                     - whether to time the execution
-                    - the default is False
+                    - the default is `False`
 
             Raises
             ------
 
             Returns
             -------
-
-            Dependencies
-            ------------
-                - Alerce
-                - joblib
-                - pandas
-                - numpy
+                - `df`
+                    - pd.DataFrame
+                    - ZTF catalog crossmerged with `df_left` via coordinates
 
             Comments
             --------
@@ -347,55 +357,55 @@ class AlerceDatabaseInterface:
         timeit:bool=False,
         ) -> None:
         """
-            - function to download all lightcurves corresponding to the ZTF ids in 'ztf_ids'
+            - function to download all lightcurves corresponding to the ZTF ids in `ztf_ids`
 
             Parameters
             ----------
-                - save
+                - `save`
                     - str, bool, optional
                     - directory of where to store the downloaded lightcurves to
                     - if set to False, will not save the data
-                    - save has to end with a slash ('/')
-                    - the default is './'
-                - redownload
+                    - save has to end with a slash (`'/'`)
+                    - the default is `'./'`
+                - `redownload`
                     - bool, optional
                     - whether to redownload lightcurves that already have been donwloaded at some point in the past
                         - i.e. are found in the save-directory
-                    - the default is False                    
-                - plot_result
+                    - the default is `False`                   
+                - `plot_result`
                     - bool, optional
                     - whether to plot the lightcurve of the downloaded data
                         - will create one plot for each target
-                    - the default is True
-                - save_plot
+                    - the default is `True`
+                - `save_plot`
                     - str, optional   
                     - directory of where to store the created plots
-                    - save_plot has to end with a slash ('/')
-                    - the default is False
+                    - `save_plot` has to end with a slash (`'/'`)
+                    - the default is `False`
                         - will not save the plots
-                - close_plots
+                - `close_plots`
                     - bool, optional
                     - whether to close the plots immediately after creation
                     - useful if one wants to save the plots, but not view at them right away
-                    - the default is True
-                - sleep
+                    - the default is `True`
+                - `sleep`
                     - float, optional
                     - number of seconds to sleep after downloading each target
                     - the default is 0
                         - no sleep at all
-                - n_jobs
+                - `n_jobs`
                     - int, optional
-                    - number of jobs to be used by joblib.Parallel()
+                    - number of jobs to be used by `joblib.Parallel()`
                     - the default is -1
                         - will use all available resources
-                -  verbose
+                -  `verbose`
                     - int, optional
                     - verbosity level
                     - the default is 0
-                - timeit
+                - `timeit`
                     - bool, optional
                     - whether to time the execution
-                    - the default is False                    
+                    - the default is `False`
 
             Raises
             ------
@@ -404,14 +414,6 @@ class AlerceDatabaseInterface:
                 
             Returns
             -------
-
-            Dependencies
-            ------------
-                - Alerce
-                - joblib
-                - matplotlib
-                - pandas
-                - time
 
             Comments
             --------
@@ -459,31 +461,33 @@ class AlerceDatabaseInterface:
         df:pd.DataFrame,
         ztf_id:str,
         save:str=False,
-        ):
+        ) -> Tuple[Figure, plt.Axes]:
         """
             - method to plot the result of the extraction
 
             Parameters
             ----------
-                - df
+                - `df`
                     - pd.DataFrame
                     - dataframe containing the downloaded data
-                - ztf_id
+                - `ztf_id`
                     - str
                     - id of the current target
-                - save
+                - `save`
                     - str, optional   
                     - directory of where to store the created plots
-                    - save has to end with a slash ('/')
-                    - the default is False
+                    - save has to end with a slash (`'/'`)
+                    - the default is `False`
                         - will not save the plots
             
             Returns
             -------
-                - fig
-                    - matplotlib figure object
-                - axs
-                    - axis corresponding to fig
+                - `fig`
+                    - Figure
+                    - created figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
             
             Comments
             --------
