@@ -9,17 +9,26 @@ import pandas as pd
 import time
 
 
-
+#%%definitions
 #lightcurve package
 class LightkurveInterface:
 
-    def __init__(self, tics):
+    def __init__(self,
+        tics:pd.DataFrame
+        ) -> None:
         
         if tics.dtype == object:
             raise TypeError(f'"tics" has to have dtype of np.float64 or np.int64 and not {tics.dtype}!')
         self.tics = tics
 
         return
+
+    def __repr__(self) -> str:
+        return (
+            f'LightkurveInterface(\n'
+            f'    tics={repr(self.tics)},\n'
+            f')'
+        )
 
     def get_target_lc(self,
         tpf,
