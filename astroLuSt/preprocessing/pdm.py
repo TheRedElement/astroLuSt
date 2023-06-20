@@ -19,166 +19,169 @@ class PDM:
 
         Attributes
         ----------
-            - period_start
+            - `period_start`
                 - float, optional
                 - the period to consider as starting point for the analysis
-                - the default is None
+                - the default is `None`
                     - will try to consider timeseries and estimate nyquist frequency from that
                     - if that fails defaults to 1
-            - period_stop
+            - `period_stop`
                 - float, optional
                 - the period to consider as stopping point for the analysis
-                - if n_retries is > 0 will be increased by n_retries*nperiods_retry
-                - the default is None
+                - if `n_retries` is > 0 will be increased by `n_retries*nperiods_retry`
+                - the default is `None`
                     - will try to consider the length of the timeseries to analyze (i.e. maximum determinable period = length of dataseries)
                     - if that fails will be set to 100
-            - nperiods
+            - `nperiods`
                 - int, optional
                 - how many trial periods to consider during the analysis
                 - the default is 100
-            - n_nyq
+            - `n_nyq`
                 - float, optional
                 - nyquist factor
-                - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
-                - the default is None
+                - the average nyquist frequency corresponding to `x` will be multiplied by this value to get the minimum period
+                - the default is `None`
                     - will default to 1
-            - n0
+            - `n0`
                 - int, optional
                 - oversampling factor
                 - i.e. number of datapoints to use on each peak in the periodogram
-                - the default is None
+                - the default is `None`
                     - will default to 5
-            - trial_periods
+            - `trial_periods`
                 - np.ndarray, optional
                 - if passed will use the values in that array and ignore
-                    - period_start
-                    - period_stop
-                    - nperiods
-            - n_retries
+                    - `period_start`
+                    - `period_stop`
+                    - `nperiods`
+            - `n_retries`
                 - int, optional
                 - number of integers the initially found period shall be divided with
-                    - will divide initial period by the values contained in range(1, n_retries+1)
+                    - will divide initial period by the values contained in `range(1, n_retries+1)`
                 - goal is to mitigate period-multiplicities
                 - the first retry is just a higher resolution of the initially found best period
                 - the default is 1
-            - nperiods_retry
+            - `nperiods_retry`
                 - int, optional
                 - number of periods to resolve the region around the retry-periods with
-                - i.e. number of periods to resolve the 'retry_range' with
+                - i.e. number of periods to resolve the `retry_range` with
                 - the default is 20
-            - retry_range
+            - `retry_range`
                 - float, optional
                 - size of the interval around the retry-period
-                - i.e. a value of 0.1 will scan the interval (retry-period*(1-0.1/2), retry-period*(1+0.1/2))
-                - the retry range will be resolved with 'nperiods_retry' periods
+                - i.e. a value of 0.1 will scan the interval `(retry-period*(1-0.1/2), retry-period*(1+0.1/2))`
+                - the retry range will be resolved with `nperiods_retry` periods
                 - the default is 0.1
-            - tolerance_expression
+            - `tolerance_expression`
                 - str, optional
-                - expression to define the tolerance (w.r.t. the best period) up to which theta a new period is considered an improvement
+                - expression to define the tolerance (w.r.t. the best period) up to which `theta` a new period is considered an improvement
                 - will get evaluated to define the tolerance
-                    - i.e. eval(f'{best_theta}{tolerance_expression}*{tolerance_decay}**(retry-1)') will be called
-                - the default is '*1.1'
-                    - results in tolerance = best_period*1.1
-            - tolerance_decay
+                    - i.e. `eval(f'{best_theta}{tolerance_expression}*{tolerance_decay}**(retry-1)')` will be called
+                - the default is `'*1.1'`
+                    - results in `tolerance = best_period*1.1`
+            - `tolerance_decay`
                 - float, optional
                 - factor specifiying the decay of the tolerance as the amount of retries increases
-                - i.e. tolerance_expression will be multiplied by 'tolerance_decay**retry'
-                    - retry specifies the n-th retry
+                - i.e. tolerance_expression will be multiplied by `tolerance_decay**retry`
+                    - `retry` specifies the n-th retry
                 - the default is
                     - 1
                     - i.e. no decay
-            - breakloop
+            - `breakloop`
                 - bool, optional
                 - whether to quit retrying once no improvement of the variance is achieved anymore
-                - the default is True
-            - variance_mode
+                - the default is `True`
+            - `variance_mode`
                 - str, optional
                 - how to estimate the curve variance
                 - options
-                    - 'interval'
+                    - `'interval'`
                         - will use the variance of each bin of the binned, phased dataseries
-                    - 'interp'
+                    - `'interp'`
                         - will use the variance of a hose around the binned, phased curve evaluated at each input point
                         - will smaller variation in the periodogram
-            - sort_output_by
+            - `sort_output_by`
                 - str, optional
-                - w.r.t. which parameter tosort the output arrays
+                - w.r.t. which parameter to sort the output arrays
                 - options are
-                    - 'periods'
+                    - `'periods'`
                         - sorts thetas and variances w.r.t. trial periods
-                    - 'variances'
+                    - `'variances'`
                         - sorts periods and thetas w.r.t. variances
-                    - 'thetas'
+                    - `'thetas'`
                         - sorts periods and variances w.r.t. thetas
-            - normalize
+            - `normalize`
                 - bool, optional
                 - whether to normalize the calculated variances
-                - the default is False
-            - n_jobs
+                - the default is `False`
+            - `n_jobs`
                 - int, optional
-                - number of jobs to use in the joblib.Parallel() function
+                - number of jobs to use in the `joblib.Parallel()` function
                 - the default is -1
                     - will use all available workers
-            - verbose
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
-            - binning_kwargs
+            - `binning_kwargs`
                 - dict, optional
                 - kwargs for the Binning class
-                - used to bin the folded curves and estimate the variance w.r.t. a mean curve            
+                - used to bin the folded curves and estimate the variance w.r.t. a mean curve
+                - the default is `None`
+                    - will be set to `{}`    
         
         Infered Attributes
         ------------------
-            - theta_tolerance
+            - `theta_tolerance`
                 - float
                 - tolerance value up to which a period is considered an improvement over previously found best periods
-            - best_theta
+            - `best_theta`
                 - float
                 - theta statistics corresponding to the best period
-            - trial_periods
+            - `trial_periods`
                 - np.ndarray
                 - all tested periods
-            - thetas
+            - `thetas`
                 - np.ndarray
-                - theta statistics corresponding to 'trial_periods'
-            - var_norms
+                - theta statistics corresponding to `trial_periods`
+            - `var_norms`
                 - np.ndarray
-                - normalized variances corresponding to 'trial_periods'
-            - best_period
+                - normalized variances corresponding to `trial_periods`
+            - `best_period`
                 - float
                 - predicted best period
                     - period of minimum dispersion
-            - errestimate
+            - `errestimate`
                 - float
-                - error estimation of 'best_period'
-            - best_theta
+                - error estimation of `best_period`
+            - `best_theta`
                 - float
-                - theta statistics corresponding to 'best_period'
-            - best_var
+                - theta statistics corresponding to `best_period`
+            - `best_var`
                 - float
-                - normalized variance corresponding to 'best_period'
-            - best_fold_x
+                - normalized variance corresponding to `best_period`
+            - `best_fold_x`
                 - np.ndarray
-                - folded array of the input (x) onto 'best_period'
-            - best_fold_y
+                - folded array of the input (`x`) onto `best_period`
+            - `best_fold_y`
                 - np.ndarray
-                - y values corresponding to 'best_fold_x'
+                - `y` values corresponding to `best_fold_x`
 
         Methods
         -------
-            - generate_period_grid()
-            - plot_result()
-            - test_one_p()
-            - fit()
-            - predict()
-            - fit_predict()
+            - `generate_period_grid()`
+            - `plot_result()`
+            - `test_one_p()`
+            - `fit()`
+            - `predict()`
+            - `fit_predict()`
 
         Dependencies
         ------------
-            - numpy
-            - matplotlib
             - joblib
+            - matplotlib
+            - numpy
+            - typing
 
         Comments
         --------
@@ -241,29 +244,30 @@ class PDM:
             self.period_start = np.nanmin(self.trial_periods)
             self.period_stop  = np.nanmax(self.trial_periods)
         
-        pass
+        return
 
     def __repr__(self) -> str:
 
         return (
             f'PDM(\n'
-            f'    period_start={self.period_start},\n'
-            f'    period_stop={self.period_stop},\n'
-            f'    nperiods={self.nperiods},\n'
-            f'    trial_periods={self.trial_periods},\n'
-            f'    n_retries={self.n_retries},\n'
-            f'    nperiods_retry={self.nperiods_retry},\n'
-            f'    retry_range={self.retry_range},\n'
-            f'    tolerance_expression={self.tolerance_expression},\n'
-            f'    tolerance_decay={self.tolerance_decay},\n'
-            f'    breakloop={self.breakloop},\n'
-            f'    variance_mode={self.variance_mode},\n'
-            f'    sort_output_by={self.sort_output_by},\n'
-            f'    normalize={self.normalize},\n'
-            f'    n_jobs={self.n_jobs},\n'
-            f'    verbose={self.verbose},\n'
-            f'    binning_kwargs={self.binning_kwargs},\n'
-            f')'       
+            f'    period_start={repr(self.period_start)}, period_stop={repr(self.period_stop)}, nperiods={repr(self.nperiods)},\n'
+            f'    n_nyq={repr(self.n_nyq)},\n'
+            f'    n0={repr(self.n0)},\n'
+            f'    trial_periods={repr(self.trial_periods)},\n'
+            f'    npoints_per_interval={repr(self.npoints_per_interval)},\n'
+            f'    n_retries={repr(self.n_retries)},\n'
+            f'    nperiods_retry={repr(self.nperiods_retry)},\n'
+            f'    retry_range={repr(self.retry_range)},\n'
+            f'    tolerance_expression={repr(self.tolerance_expression)},\n'
+            f'    tolerance_decay={repr(self.tolerance_decay)},\n'
+            f'    breakloop={repr(self.breakloop)},\n'
+            f'    variance_mode={repr(self.variance_mode)},\n'
+            f'    sort_output_by={repr(self.sort_output_by)},\n'
+            f'    normalize={repr(self.normalize)},\n'
+            f'    n_jobs={repr(self.n_jobs)},\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f'    binning_kwargs={repr(self.binning_kwargs)},\n'
+            f')'
         )
 
     def generate_period_grid(self,
@@ -274,57 +278,57 @@ class PDM:
         ) -> np.ndarray:
         """
             - method to generate a period grid
-            - inspired by astropy.timeseries.LombScargle().autofrequency() and VanderPlas (2018)
+            - inspired by `astropy.timeseries.LombScargle().autofrequency()` and VanderPlas (2018)
                 - https://docs.astropy.org/en/stable/api/astropy.timeseries.LombScargle.html
                 - https://ui.adsabs.harvard.edu/abs/2018ApJS..236...16V/abstract
 
             Parameters
             ----------
-                - period_start
+                - `period_start`
                     - float, optional
                     - the period to consider as starting point for the analysis
-                    - the default is None
-                        - will default to self.period_start
-                - period_stop
+                    - the default is `None`
+                        - will default to `self.period_start`
+                - `period_stop`
                     - float, optional
                     - the period to consider as stopping point for the analysis
-                    - the default is None
-                        - will default to 100 if "x" is also None
-                        - otherwise will consider x to generate period_stop
-                - nperiods
+                    - the default is `None`
+                        - will default to 100 if `x` is also `None`
+                        - otherwise will consider `x` to generate `period_stop`
+                - `nperiods`
                     - int, optional
                     - how many trial periods to consider during the analysis
-                    - the default is None
-                        - will default to self.nperiods
-                - x
+                    - the default is `None`
+                        - will default to `self.nperiods`
+                - `x`
                     - np.ndarray, optional
                     - input array
                     - x-values of the data-series
-                    - the default is None
-                        - if set and period_stop is None, will use max(x)-min(x) as 'period_stop'
-                - n_nyq
+                    - the default is `None`
+                        - if set and `period_stop` is `None`, will use `max(x)-min(x)` as `period_stop`
+                - `n_nyq`
                     - float, optional
                     - nyquist factor
-                    - the average nyquist frequency corresponding to 'x' will be multiplied by this value to get the minimum period
-                    - the default is None
-                        - will default to self.n_nyq
-                        - if self.n_nyq is also None will default to 1
-                - n0
+                    - the average nyquist frequency corresponding to `x` will be multiplied by this value to get the minimum period
+                    - the default is `None`
+                        - will default to `self.n_nyq`
+                        - if `self.n_nyq` is also `None` will default to 1
+                - `n0`
                     - int, optional
                     - oversampling factor
                     - i.e. number of datapoints to use on each peak in the periodogram
-                    - the default is None
-                        - will default to self.n0
-                        - if self.n0 is also None will default to 5
+                    - the default is `None`
+                        - will default to `self.n0`
+                        - if `self.n0` is also `None` will default to 5
             
             Raises
             ------
 
             Returns
             -------
-                - trial_periods
+                - `trial_periods`
                     - np.ndarray
-                    - final trial periods used for the execution of PDM
+                    - final trial periods used for the execution of `PDM`
 
             Comments
             --------
@@ -382,35 +386,37 @@ class PDM:
 
     def get_theta_for_p(self,
         x:np.ndarray, y:np.ndarray, p:float,
-        ) -> Tuple[float, float]:
+        ) -> Tuple[float,float]:
         """
-            - function to get the theta-statistics for one particular period (p) w.r.t. x and y
+            - function to get the theta-statistics for one particular period (`p`) w.r.t. `x` and `y`
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - x values of the dataseries to run phase dispersion minimization on
-                - y
+                - `y`
                     - np.ndarray
                     - y values of the dataseries to run phase dispersion minimization on
-                - p
+                - `p`
                     - float
                     - test period to calculate the theta-statistics for
             
             Raises
             ------
+                - `ValueError`
+                    - if wrong `self.variance_mode` has an invalid value
 
             Returns
             -------
-                - theta
+                - `theta`
                     - float
-                    - theta-statistics for 'p' w.r.t. x and y
-                - var_norm
+                    - theta-statistics for `p` w.r.t. `x` and `y`
+                - `var_norm`
                     - float
                     - normalized variance w.r.t. the mean input curve
                     - calculated via estimating the variance in bins
-                    - normalized w.r.t. the number of datapoint per bin
+                    - normalized w.r.t. the number of datapoints per bin
 
 
             Comments
@@ -420,10 +426,7 @@ class PDM:
                     - calculate the variance as a measure of scatter within each bin
                     - (interpolate the variances to create a variance curve)
                     - (evaluate interpolated result ar each x value of the timeseries)
-                    - normalize variance by weighting it w.r.t to the number of datapoints per bin
-                - Will determine the best period in 2 steps
-                    - find an initial period
-                    - try mutiplicities of the initial period and return the period of lowest variance as the best period        
+                    - normalize variance by weighting it w.r.t to the number of datapoints per bin      
         
         """
         #fold curve on test period
@@ -465,80 +468,63 @@ class PDM:
         verbose:int=None
         ) -> None:
         """
-            - method to fit the pdm-estimator
+            - method to fit the `PDM`-estimator
             - will execute the calculation and assign results as attributes
             - similar to fit-method in scikit-learn
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - x values of the dataseries to run phase dispersion minimization on
-                - y
+                - `y`
                     - np.ndarray
                     - y values of the dataseries to run phase dispersion minimization on
-                - tolerance_expression
+                - `tolerance_expression`
                     - str, optional
                     - expression to define the tolerance (w.r.t. the best period) up to which theta a new period is considered an improvement
                     - will get evaluated to define the tolerance
-                        - i.e. eval(f'{best_theta}{tolerance_expression}*{tolerance_decay}**(retry-1)') will be called
-                    - will overwrite the tolerance_expression attribute
-                    - the default is '*1.1'
-                        - results in tolerance = best_period*1.1
-                - tolerance_decay
+                        - i.e. `eval(f'{best_theta}{tolerance_expression}*{tolerance_decay}**(retry-1)')` will be called
+                    - will overwrite the `self.tolerance_expression`
+                    - the default is `'*1.1'`
+                        - results in `tolerance = best_period*1.1`
+                - `tolerance_decay`
                     - float, optional
                     - factor specifiying the decay of the tolerance as the amount of retries increases
-                    - will overwrite the tolerance_decay attribute
-                    - i.e. tolerance_expression will be multiplied by 'tolerance_decay**retry'
+                    - will overwrite the `self.tolerance_decay`
+                    - i.e. `tolerance_expression` will be multiplied by `tolerance_decay**retry`
                         - retry specifies the n-th retry
                     - the default is
                         - 1
                         - i.e. no decay
-                - breakloop
+                - `breakloop`
                     - bool, optional
-                    - will overwrite the breakloop attribute
+                    - will overwrite the `self.breakloop`
                     - whether to quit retrying once no improvement of the variance is achieved anymore
-                    - the default is True
-                - n_jobs
+                    - the default is `True`
+                - `n_jobs`
                     - int, optional
-                    - will overwrite the n_jobs attribute
-                    - number of jobs to use in the joblib.Parallel() function
+                    - will overwrite the `n_jobs` attribute
+                    - number of jobs to use in the `joblib.Parallel()` function
                     - the default is -1
                         - will use all available workers
-                - verbose
+                - `verbose`
                     - int, optional
-                    - will overwrite the verbose attribute
+                    - will overwrite the `self.verbose`
                     - verbosity level
                     - the default is 0
                                         
             Raises
             ------
 
-            Returns as Attributes
-            ---------------------
-                - best_period
-                    - float
-                    - the period yielding the lowest variance in the whole curve
-                - best_var
-                    - float
-                    - the lowest variance calculated
-                    - variance corresponding to 'best_period'
-                - periods_sorted
-                    - np.ndarray
-                    - the periods sorted after the the variance they yielded in the curve
-                - vars_sorted
-                    - np.ndarray
-                    - the variances sorted from low to high
-                    - corresponding to periods_sorted
-                - best_fold
-                    - np.ndarray
-                    - the resulting phases of the times folded with best_period
-                - errestimate
-                    - float
-                    - an estiamte of the uncertainty of the result
-                    - estimated to be 2* the maximum distance between two trial periods
-                        - because the best period is certain to lie within the trial interval but where exactly is not sure
+            Returns
+            -------
 
+            Comments
+            --------
+                - Will determine the best period in 2 steps
+                    - find an initial period
+                    - try mutiplicities of the initial period and return the period of lowest variance as the best period            
 
         """
 
@@ -635,34 +621,35 @@ class PDM:
         x:np.ndarray=None, y:np.ndarray=None, 
         ) -> Tuple[float, float, float]:
         """
-            - method to predict with the fitted pdm-estimator
+            - method to predict with the fitted `PDM`-estimator
             - will return relevant results
             - similar to predict-method in scikit-learn
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray, optional
-                    - x values of the dataseries to run PDM on
+                    - x values of the dataseries to run `PDM` on
                     - only here for consistency, will not be considered in the method
-                    - the default is None
-                - y
+                    - the default is `None`
+                - `y`
                     - np.ndarray
-                    - y values of the dataseries to run PDM on
+                    - y values of the dataseries to run `PDM` on
                     - only here for consistency, will not be considered in the method
-                    - the default is None
+                    - the default is `None`
+            
             Raises
             ------
 
             Returns
             -------
-                - best_period
+                - `best_period`
                     - float
                     - best period estimate
-                - errestimate
+                - `errestimate`
                     - float
                     - error estimation of the best period
-                - best_theta
+                - `best_theta`
                     - float
                     - theta-statistics of best period
 
@@ -674,21 +661,23 @@ class PDM:
     
     def fit_predict(self,
         x:np.ndarray, y:np.ndarray,
-        fit_kwargs:dict={}
-        ) -> Tuple[float, float, float]:
+        fit_kwargs:dict=None,
+        ) -> Tuple[float,float,float]:
         """
             - method to fit classifier and predict the results
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - x values of the dataseries to run phase dispersion minimization on
-                - y
+                - `y`
                     - np.ndarray
                     - y values of the dataseries to run phase dispersion minimization on
-                - fit_kwargs
-                    - keyword arguments passed to fit()
+                - `fit_kwargs`
+                    - keyword arguments passed to `fit()`
+                    - the default is `None`
+                        - will be set to `{}`
 
             Raises
             ------
@@ -710,6 +699,9 @@ class PDM:
 
         """
         
+        if fit_kwargs is None:
+            fit_kwargs = {}
+
         self.fit(x, y, **fit_kwargs)
         best_period, errestimate, best_theta = self.predict()
 
@@ -728,39 +720,41 @@ class PDM:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray, optional
                     - x-values of a dataseries to plot folded with the determined period
                     - usually the dataseries the analysis was done one
-                    - the default is None
+                    - the default is `None`
                         - will not plot a dataseries
-                - y
+                - `y`
                     - np.ndarray, optional
                     - y-values of a dataseries to plot folded with the determined period
-                    - usually the dataseries the analysis was done one
-                    - the default is None
+                    - usually the dataseries the analysis was done on
+                    - the default is `None`
                         - will not plot a dataseries            
-                - fig_kwargs
+                - `fig_kwargs`
                     - dict, optional
-                    - kwargs for matplotlib plt.figure() method
-                    - the default is None
-                        - will initialize with an empty dict
-                - sctr_kwargs
+                    - kwargs for matplotlib `plt.figure()` method
+                    - the default is `None`
+                        - will initialize with an empty dict (`{}`)
+                - `sctr_kwargs`
                     - dict, optional
-                    - kwargs for matplotlib ax.scatter() method used to plot theta(period)
-                    - the default is None
-                        - will initialize with an empty dict
+                    - kwargs for matplotlib `ax.scatter()` method used to plot `theta(period)`
+                    - the default is `None`
+                        - will initialize with an empty dict (`{}`)
+
             Raises
             ------
 
             Returns
             -------
-                - fig
-                    - matplotlib figure
+                - `fig`
+                    - matplotlib Figure
                     - figure created if verbosity level specified accordingly
-                - axs
-                    - matplotlib axes
-                    - axes corresponding to 'fig'  
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+                    
             Comments
             --------
         
