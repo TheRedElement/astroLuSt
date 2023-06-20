@@ -163,62 +163,67 @@ class EleanorDatabaseInterface:
         do_psf:bool=False, do_pca:bool=False, 
         aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
         height:int=15, width:int=15, bkg_size:int=31,
-        verbose:int=2) -> tuple:
+        verbose:int=2
+        ) -> Tuple[list,list,list,str]:
         """
             - function to download data using eleonor
 
             Parameters
             ----------
-                - tic
+                - `tic`
                     - int
                     - TIC identifier number of the target
-                - sectors
+                - `sectors`
                     - list of int, str, optional
                     - sectors to search in
-                    - argument of eleanor.multi_sectors
-                    - the default is "all"
+                    - argument of `eleanor.multi_sectors()`
+                    - the default is `'all'`
                         - will consider all sectors
-                - do_psf
+                - `do_psf`
                     - bool, optional
                     - whether to execute a psf
-                    - argument of eleanor.multi_sectors
-                    - the default is False
-                - do_pca
+                    - argument of `eleanor.multi_sectors()`
+                    - the default is `False`
+                - `do_pca`
                     - bool, optional
                     - whether to execute a pca
-                    - argument of eleanor.multi_sectors
-                    - the default is False
-                - aperture_mode
+                    - argument of `eleanor.multi_sectors()`
+                    - the default is `False`
+                - `aperture_mode`
                     - str, optional
-                    - specify which aperture to use ('small', 'normal', 'large')
-                    - argument of eleanor.TargetData
-                    - the default is 'normal'
-                - regressors
+                    - specify which aperture to use
+                        - one of
+                            - `'small'`
+                            - `'normal'`
+                            - `'large'`
+                    - argument of `eleanor.TargetData()`
+                    - the default is `'normal'`
+                - `regressors`
                     - str, optional
                     - which methods to use to estimate the background
-                    - argument of eleanot.TargetData
-                    - the default is 'corners'
-                - try_load
+                    - argument of `eleanot.TargetData()`
+                    - the default is `'corners'`
+                - `try_load`
                     - bool, optional
-                    - whether to search hidden ~/.eleanor dictionary for alrady existing TPF
-                    - argument of eleanor.TargetData
-                    - the default is True
-                - height
+                    - whether to search hidden `~/.eleanor` dictionary for alrady existing TPF
+                    - argument of `eleanor.TargetData()`
+                    - the default is `True`
+                - `height`
                     - int, optional
                     - pixel height of the cutout
-                    - argument of eleanor.multi_sectors
+                    - argument of `eleanor.multi_sectors()`
                     - the default is 15
-                - width
+                - `width`
                     - int, optional
                     - pixel width of the cutout
-                    - argument of eleanor.multi_sectors
+                    - argument of `eleanor.multi_sectors()`
                     - the default is 15
-                - bkg_size
+                - `bkg_size`
                     - int, optional
-                    - argument of eleanor.multi_sectors
+                    - argument of `eleanor.multi_sectors()`
                         - see documentation for more info
                     - the default is 31
-                - verbose
+                - `verbose`
                     -int, optional
                     - verbosity level
                     - the higher the more information will be shown
@@ -229,23 +234,19 @@ class EleanorDatabaseInterface:
             
             Returns
             -------
-                - data
+                - `data`
                     - list
                     - list of the data extracted
                         - entries are the different sectors
-                - sectors
+                - `sectors`
                     - list
-                    - list of the sectors observed
-                - tess_mags
+                    - list of the observed sectors
+                - `tess_mags`
                     - list
                     - contains the tess-magnitudes for each sector
-                - error_msg
+                - `error_msg`
                     - str
                     - error message if the extraction fails
-
-            Dependencies
-            ------------
-                - eleanor
 
             Comments
             --------
@@ -323,85 +324,94 @@ class EleanorDatabaseInterface:
         verbose:int=0,
         save_kwargs:dict={},
         plot_kwargs:dict={},
-        ):
+        ) -> dict:
         """
             - method to download and store the data for one particular TIC
 
             Parameters
             ----------
-                - tic
+                - `tic`
                     - int, optional
                     - TIC number of the target to extract
-                - save
-                    - str|bool, optional
+                - `save`
+                    - str, bool, optional
                     - path to the directory of where to store the extracted files
-                    - the default is "./"
+                    - the default is `"./"`
                         - will save to the current working directory
-                - redownload
+                - `redownload`
                     - bool, optional
-                    - whether to download a target again, if a file with the same name already exists in 'save'
-                    - the default is True
-                - plot_result
+                    - whether to download a target again, if a file with the same name already exists in `save`
+                    - the default is `True`
+                - `plot_result`
                     - bool, optional
                     - whether to create a plot of the extracted file
-                    - the default is True
-                - save_plot
+                    - the default is `True`
+                - `save_plot`
                     - str, optional
                     - location of where to save the created plot
-                    - the default is False
+                    - the default is `False`
                         - will not save the plot
-                - sleep
+                - `sleep`
                     - float, optional
                     - number of seconds to sleep after downloading each target
                     - the default is 0
                         - no sleep at all                
-                - n_jobs
+                - `n_jobs`
                     - int, optional
                     - number of workers to use for parallel execution of tasks
-                        - '1' is essentially sequential computaion (useful for debugging)
-                        - '2' uses 2 CPUs
-                        - '-1' will use all available CPUs
-                        - '-2' will use all available CPUs-1
+                        - `1` is essentially sequential computaion (useful for debugging)
+                        - `2` uses 2 CPUs
+                        - `-1` will use all available CPUs
+                        - `-2` will use all available CPUs-1
                     - for more info see https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
-                    - the default is '-1'
-                - cidx
+                    - the default is `-1`
+                - `cidx`
                     - int, optional
                     - index of the chunk that currently gets extracted
-                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - only used for monitoring download process in `self.data_from_eleanor_alltics()`
                     - the default is 0
-                - idx
+                - `idx`
                     - int, optional
                     - index of the target within the current chunk
-                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - only used for monitoring download process in `self.data_from_eleanor_alltics()`
                     - the default is 0
-                - chunk_len
+                - `chunk_len`
                     - int, optional
                     - length of the current chunk
-                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - only used for monitoring download process in `self.data_from_eleanor_alltics()`
                     - the default is 1
-                - n_chunks
+                - `n_chunks`
                     - int, optional
-                    - total number of chunks to be extracted via self.data_from_eleanor_alltics()
-                    - only used for monitoring download process in self.data_from_eleanor_alltics()
+                    - total number of chunks to be extracted via `self.data_from_eleanor_alltics()`
+                    - only used for monitoring download process in `self.data_from_eleanor_alltics()`
                     - the default is 1
-                - verbose
+                - `verbose`
                     - int, optional
                     - verbosity level
-                        - also for joblib.Parallel()
+                        - also for `joblib.Parallel()`
                     - higher numbers will show more information
                     - the default is 2
-                - save_kwargs
+                - `save_kwargs`
                     - dict, optional
-                    - kwargs passed to self.result2pandas()
-                - plot_kwargs
+                    - kwargs passed to `self.result2pandas()`
+                - `plot_kwargs`
                     - dict, optional
-                    - kwargs passed to self.plot_result_eleanor()
+                    - kwargs passed to `self.plot_result_eleanor()`
             
             Raises
             ------
 
             Returns
             -------
+                - `extraction_summary`
+                    - dict
+                    - contains
+                        - tic
+                            - target id
+                        - success
+                            - whether the extraction was successful
+                        - original error message
+                            - the error that occured, if an error occured
 
             Comments
             --------
@@ -488,66 +498,66 @@ class EleanorDatabaseInterface:
         extraction_onetic_kwargs:dict={},
         ) -> pd.DataFrame:
         """
-            - method to extract data for all ids in 'self.tics'
+            - method to extract data for all ids in `self.tics`
 
             Parameters
             ----------
-                - save
-                    - str|bool, optional
+                - `save`
+                    - str, bool, optional
                     - path to the directory of where to store the extracted files
-                    - the default is "./"
+                    - the default is `"./"`
                         - will save to the current working directory
-                - redownload
+                - `redownload`
                     - bool, optional
-                    - whether to download a target again, if a file with the same name already exists in 'save'
-                    - the default is True
-                - plot_result
+                    - whether to download a target again, if a file with the same name already exists in `save`
+                    - the default is `True`
+                - `plot_result`
                     - bool, optional
                     - whether to create a plot of the extracted file
-                    - the default is True
-                - save_plot
+                    - the default is `True`
+                - `save_plot`
                     - str, optional
                     - location of where to save the created plot
-                    - the default is False
+                    - the default is `False`
                         - will not save the plot
-                - sleep
+                - `sleep`
                     - float, optional
                     - number of seconds to sleep after downloading each target
                     - the default is 0
                         - no sleep at all                
-                - n_jobs
+                - `n_jobs`
                     - int, optional
                     - number of workers to use for parallel execution of tasks
-                        - '1' is essentially sequential computaion (useful for debugging)
-                        - '2' uses 2 CPUs
-                        - '-1' will use all available CPUs
-                        - '-2' will use all available CPUs-1
+                        - `1` is essentially sequential computaion (useful for debugging)
+                        - `2` uses 2 CPUs
+                        - `-1` will use all available CPUs
+                        - `-2` will use all available CPUs-1
                     - for more info see https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
-                    - the default is '-1'
-                - n_chunks
+                    - the default is `-1`
+                - `n_chunks`
                     - int, optional
                     - number of chuncks to split the input data into
-                        - will take 'self.tics' and split it into n_chunks more or less equal subarrays
-                    - after processing of each chunk, the metadata will get deleted, if 'self.clear_metadata_after_extract' is set to true
-                    - it is advisable, though not necessary, to choose n_chunks such that each chunck contains an amount of elements that can be evenly distributed across n_jobs
+                        - will take `self.tics` and split it into `n_chunks` more or less equal subarrays
+                    - after processing of each chunk, the metadata will get deleted, if `self.clear_metadata_after_extract` is set to `True`
+                    - it is advisable, though not necessary, to choose `n_chunks` such that each chunck contains an amount of elements that can be evenly distributed across `n_jobs`
                     - the default is 1
                         - i.e. process all the data in one go
-                - verbose
+                - `verbose`
                     - int, optional
                     - verbosity level
-                        - also for joblib.Parallel()
+                        - also for `joblib.Parallel()`
                     - higher numbers will show more information
                     - the default is 2
-                - extraction_onetic_kwargs
+                - `extraction_onetic_kwargs`
                     - dict, optional
-                    - kwargs passed to self.extraction_onetic()
+                    - kwargs passed to `self.extraction_onetic()`
             
             Raises
             ------
 
             Returns
             -------
-                - df_extraction_summary
+                - `df_extraction_summary`
                     - pd.DataFrame
                     - dataframe containing a summary of the extraction success for each tic
 
@@ -627,59 +637,60 @@ class EleanorDatabaseInterface:
         
             Parameters
             ----------
-                - data
+                - `data`
                     - list
                     - contains the data for each sector
                         - extracted with eleanor
-                - tic
+                - `tic`
                     - str
                     - TIC identifier of the target
-                - sectors
+                - `sectors`
                     - list
                     - containing the sectors in which the target has been observed
-                - tess_mags
+                - `tess_mags`
                     - list
                     - contains the tess-magnitudes of the target for each sector           
-                - quality_expression
+                - `quality_expression`
                     - str, optional
-                    - string containing some boolean condition w.r.t. 'datum.quality'
-                    - eval() function will be applied to construct a boolean array
-                    - the default is "(datum.quality == 0)"
-                - aperture_detail
+                    - string containing some boolean condition w.r.t. `datum.quality`
+                    - `eval()` function will be applied to construct a boolean array
+                    - the default is `"(datum.quality == 0)"`
+                - `aperture_detail`
                     - int, optional
                     - how highly resolved the outline of the aperture should be depicted
                     - the default is 20
-                - ylims
+                - `ylims`
                     - list, optional
-                    - list of the same length as sectors
+                    - list of the same length as `sectors`
                         - contains list of ylims for the respective sector
-                    - the default is None
+                    - the default is `None`
                         - uses matplotlib default ylims
-                - fontsize
+                - `fontsize`
                     - int, optional
                     - a measure for the fontsize used in the plot
                         - fontsize of title, ticklabels etc. are scaled with respect to this value as well
                     - the default is 16
-                - figsize  
+                - `figsize`
                     - tuple, optional
                     - dimensions of the created figure
-                    - the default is (16,9)
-                - save
+                    - the default is `(16,9)`
+                - `save`
                     - str, bool, optional
                     - whether to save the created image
                     - when a location is given (i.e. a string), the image will be saved to that location
-                    - the default is False
+                    - the default is `False`
 
             Raises
             ------
 
             Returns
             -------
-
-            Dependencies
-            ------------
-                - matplotlib
-                - numpy
+                - `fig`
+                    - Figure
+                    - created figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
 
             Comments
             --------
@@ -785,44 +796,44 @@ class EleanorDatabaseInterface:
 
             Parameters
             ----------
-                - data
+                - `data`
                     - list
                     - contains the data for each sector
                         - extracted with eleanor
-                - sectors
+                - `sectors`
                     - list
                     - containing the sectors in which the target has been observed
-                - tess_mags
+                - `tess_mags`
                     - list
                     - contains the tess-magnitudes of the target for each sector           
-                - tic
+                - `tic`
                     - str
                     - TIC identifier of the target
-                - quality_expression
+                - `quality_expression`
                     - str, optional
-                    - string containing some boolean condition w.r.t. 'datum.quality'
-                    - eval() function will be applied to construct a boolean array
-                    - the default is "(datum.quality == 0)"
-                - sep
+                    - string containing some boolean condition w.r.t. `datum.quality`
+                    - `eval()` function will be applied to construct a boolean array
+                    - the default is `"(datum.quality == 0)"`
+                - `sep`
                     - str, optional
                     - separator to use when creating the .csv file
-                    - the default is ";"
-                        - reason for choosing ";" over "," is that aperture and tpf will be stored as nested list, which contain "," as separators
-                - include_aperture
+                    - the default is `";"`
+                        - reason for choosing `";"` over `","` is that aperture and tpf will be stored as nested list, which contain `","` as separators
+                - `include_aperture`
                     - bool, optional
                     - whether to include the used aperture in the extracted file
                     - will store the aperture for every single frame
                         - thus, can lead to quite large files
-                    - the default is False
-                - include_tpf
+                    - the default is `False`
+                - `include_tpf`
                     - bool, optional
                     - whether to include the target-pixel-files in the extracted file
                     - will store the tpf for every single frame
                         - thus, can lead to quite large files
-                - save
-                    - str|bool, optional
+                - `save`
+                    - str, bool, optional
                     - path to the directory of where to store the created csv-file
-                    - the default is False
+                    - the default is `False`
                         - will not save results to .csv file
                 
             Raises
@@ -830,7 +841,7 @@ class EleanorDatabaseInterface:
 
             Returns
             -------
-                - df_lc
+                - `df_lc`
                     - pd.DataFrame
                     - contains all the information extracted for the target
                     - i.e. various fluxes, times, sectors, tess magnitude, ...
@@ -901,11 +912,13 @@ class EleanorDatabaseInterface:
 
         return df_lc
 
+
+    #DEPRECATED
     def save_npy_eleanor(self,
         data:list, sectors:list, tess_mag:float, save:str,
         target:str, TIC:str=None, GCVS_class:str=None, GCVS_period:float=None, GCVS_RA:str=None, GCVS_DEC:str=None):
         """
-            - function to save the extracted data into an 0-dimensional np.array
+            - method to save the extracted data into an 0-dimensional np.array
 
             Parameters
             ----------
@@ -960,7 +973,7 @@ class EleanorDatabaseInterface:
         
         """
 
-        warnings.warn("WARNING: save_npy_eleanor is not being maintained anymore. It might not be compatible with newer versions of the other methods.")
+        warnings.warn("WARNING: save_npy_eleanor is deprecated. It might not be compatible with newer versions of the other methods.")
 
         savedict = {
             "target":target,
