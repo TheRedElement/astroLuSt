@@ -3,49 +3,53 @@
 #%%imports
 import pandas as pd
 import re
+from tensorflow.keras import Model
 
 
 #%%definitions
 def model_summary2pandas(
-    model, width:int=250,
+    model:Model, width:int=250,
     latex_to_file:str=False, write_mode:str="a",
     save:str=False,
     verbose:int=0,
-    ):
+    ) -> pd.DataFrame:
     """
-        - function to convert the keras model.summary() output into a pandas DataFrame
+        - function to convert the keras `model.summary()` output into a pandas DataFrame
 
         Parameters
         ----------
-            - model
-                - tf.keras model
+            - `model`
+                - `tf.keras.Model`
                 - model to extract the summary of
-            - width
+            - `width`
                 - int, optional
-                - width used in the model.summary() function
+                - width used in the `model.summary()` function
                 - the default is 250
-            - latex_to_file
+            - `latex_to_file`
                 - str, bool, optional
                 - filename of the file to export the latex-representation of the table to
-                - the default is False
+                - the default is `False`
                     - will not export the representation
-            - write_mode
+            - `write_mode`
                 - str, optional
-                - mode to use for writing to 'latex_to_file'
-                - the default is 'a'
+                - mode to use for writing to `latex_to_file`
+                - the default is `a`
                     - will append to the file
-            - save
+            - `save`
                 - str, optional
                 - path to location of where to save the model summary
-            - verbose
+                - the default is `False`
+                    - will not be saved
+            - `verbose`
                 - int, optional
                 - verbosity level
+                - the default is 0
         
         Returns
         -------
-            - df_summary
+            - `df_summary`
                 - pd.DataFrame
-                - contains the table created with model.summary()
+                - contains the table created with `model.summary()`
     """
 
     #rewrite info to list
