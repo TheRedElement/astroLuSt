@@ -19,28 +19,28 @@ class MLE:
         
         Infered Attributes
         ------------------
-            - self.mus
+            - `mus`
                 - np.ndarray
                 - array containing the mean of the gaussians
-            - self.sigmas
+            - `sigmas`
                 - np.ndarray
                 - array containing the standard-deviations of the gaussians
-            - self.covmat
+            - `covmat`
                 - np.ndarray
                 - covariance matrix of the input data
-            - self.corrcoeff
+            - `corrcoeff`
                 - np.ndarray
                 - correlation matrix containing pearson correlation coefficient
 
         Methods
         -------
-            - get_mu
-            - get_sigma
-            - get_covmat
-            - fit
-            - predict
-            - fit_predict
-            - corner_plot
+            - `get_mu()`
+            - `get_sigma()`
+            - `get_covmat()`
+            - `fit()`
+            - `predict()`
+            - `fit_predict()`
+            - `corner_plot()`
 
         Dependencies
         ------------
@@ -53,7 +53,7 @@ class MLE:
 
 
     def __init__(self,
-        ):
+        ) -> None:
 
         self.mus = np.array([])
         self.sigmas = np.array([])
@@ -61,6 +61,12 @@ class MLE:
         self.corrcoeff = np.array([])
 
         pass
+
+    def __repr__(self) -> str:
+        return (
+            f'MLE(\n'
+            f')'
+        )
 
     def get_mu(self,
         X:np.ndarray
@@ -70,7 +76,7 @@ class MLE:
 
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray
                     - input dataset
                     - contains samples as rows and features as columns
@@ -80,7 +86,7 @@ class MLE:
 
             Returns
             -------
-                - mus
+                - `mus`
                     - np.ndarray
                     - estimated means
 
@@ -101,7 +107,7 @@ class MLE:
             
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray
                     - input dataset
                     - contains samples as rows and features as columns
@@ -110,7 +116,7 @@ class MLE:
 
             Returns
             -------
-                - sigmas
+                - `sigmas`
                     - np.ndarray
                     - standard deviation for every feature
 
@@ -123,15 +129,15 @@ class MLE:
         return sigmas
     
     def get_covmat(self,
-        X:np.ndarray=None
+        X:np.ndarray
         ) -> np.ndarray:
         """
             - method to estimate the N-D covariance matrix
 
             Parameters
             ----------
-                - X
-                    - np.ndarray
+                - `X`
+                    - np.ndarray, optional
                     - input dataset
                     - contains samples as rows and features as columns
                 
@@ -140,9 +146,9 @@ class MLE:
 
             Returns
             -------
-                - self.covmat
+                - `covmat`
                     - np.ndarray
-                    - covariance matrix for a given set of datasets ('data')
+                    - covariance matrix for a given set of datasets (`X`)
                 
             Comments
             --------
@@ -156,23 +162,23 @@ class MLE:
 
     def fit(self,
         X:np.ndarray, y:np.ndarray=None
-        ):
+        ) -> None:
         """
             - method to fit the estimator
             - similar to scikit-learn framework
 
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray
                     - input dataset
                     - contains samples as rows and features as columns
-                - y
+                - `y`
                     - np.ndarray, optional
-                    - labels corresponding to X
+                    - labels corresponding to `X`
                     - not needed for actual calculation
                         - only used for plotting
-                    - the default is None
+                    - the default is `None`
 
             Raises
             ------
@@ -197,38 +203,39 @@ class MLE:
         return
 
     def predict(self,
-        X:np.ndarray=None, y:np.ndarray=None):
+        X:np.ndarray=None, y:np.ndarray=None
+        ) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         """
             - method to predict using the estimator
             - similar to scikit-learn framework
 
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray, optional
                     - input dataset
                     - contains samples as rows and features as columns
                     - not needed for prediction
-                    - the default is None
-                - y
+                    - the default is `None`
+                - `y`
                     - np.ndarray, optional
-                    - labels corresponding to X
+                    - labels corresponding to `X`
                     - not needed for prediction
                         - only used for plotting
-                    - the default is None
+                    - the default is `None`
 
             Raises
             ------
 
             Returns
             -------
-                - self.mus
+                - `mus`
                     - np.ndarray
                     - array containing the mean of the gaussians
-                - self.sigmas
+                - `sigmas`
                     - np.ndarray
                     - array containing the standard-deviations of the gaussians
-                - self.covmat
+                - `covmat`
                     - np.ndarray
                     - covariance matrix of the input data
 
@@ -241,35 +248,36 @@ class MLE:
         return self.mus, self.sigmas, self.covmat
 
     def fit_predict(self,
-        X:np.ndarray, y:np.ndarray=None):
+        X:np.ndarray, y:np.ndarray=None
+        ) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         """
             - method to fit the estimator and predict the result afterwards
             
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray
                     - input dataset
                     - contains samples as rows and features as columns
-                - y
+                - `y`
                     - np.ndarray, optional
-                    - labels corresponding to X
+                    - labels corresponding to `X`
                     - not needed for actual calculation
                         - only used for plotting
-                    - the default is None
+                    - the default is `None`
 
             Raises
             ------
 
             Returns
             -------
-                - mus
+                - `mus`
                     - np.ndarray
                     - array containing the mean of the gaussians
-                - sigmas
+                - `sigmas`
                     - np.ndarray
                     - array containing the standard-deviations of the gaussians
-                - covmat
+                - `covmat`
                     - np.ndarray
                     - covariance matrix of the input data
 
@@ -292,27 +300,27 @@ class MLE:
 
             Parameters
             ----------
-                - featurenames
+                - `featurenames`
                     - np.ndarray, optional
-                    - names to give to the features present in self.X
-                    - the deafault is None
-                - corner_kwargs
+                    - names to give to the features present in `self.X`
+                    - the deafault is `None`
+                - `corner_kwargs`
                     - dict, optional
-                    - kwargs to pass to astroLuSt.visualization.plots.CornerPlot().plot()
-                    - the default is None
-                        - will initialize with {}
+                    - kwargs to pass to `astroLuSt.visualization.plots.CornerPlot().plot()`
+                    - the default is `None`
+                        - will initialize with `{}`
 
             Raises
             ------
 
             Returns
             -------
-                - fig
+                - `fig`
                     - Figure
                     - the created matplotlib figure
-                - axs
+                - `axs`
                     - plt.Axes
-                    - axes corresponding to 'fig'
+                    - axes corresponding to `fig`
                     
             Comments
             --------
