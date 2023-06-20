@@ -51,6 +51,9 @@ def phase2time(
         --------
             - operates with phases in the interval [0,1]
     """
+    import warnings
+
+    warnings.warn('This function is deprecated. Use the new version in `astroLuSt.physics.timeseries`!')
 
     time = phase*period + tref
     
