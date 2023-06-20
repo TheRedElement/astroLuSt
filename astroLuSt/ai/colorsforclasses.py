@@ -8,7 +8,11 @@ from typing import Union
 #%%generate colors
 
 def generate_colors(
-    classes:Union[list,np.ndarray], vmin=None, vmax=None, vcenter=None, ncolors=None, cmap="viridis"):
+    classes:Union[list,np.ndarray],
+    vmin:int=None, vmax:int=None, vcenter:int=None,
+    ncolors:int=None,
+    cmap:str="viridis"
+    ) -> list:
     """
         - function to generate colors for a given set of unique classes
         - generates colors based on a matplotlib colormap
@@ -20,10 +24,6 @@ def generate_colors(
                 - the `classes` to consider
                 - does not have to consist of unique `classes`
                     - the function will pick out the unique `classes` by itself
-            - `cmap`
-                - str, optional
-                - name of the colormap to use for coloring the different `classes`
-                - the default is 'viridis'
             - `vmin`
                 - int, optional
                 - `vmin` value of the colormap
@@ -47,6 +47,10 @@ def generate_colors(
                 - number of different colors to generate
                 - the default is `None`
                     - will be set to the number of unique `classes` in `y_pred`
+            - `cmap`
+                - str, optional
+                - name of the colormap to use for coloring the different `classes`
+                - the default is 'viridis'
 
 
         Raises
@@ -55,7 +59,7 @@ def generate_colors(
         Returns
         -------
             - `colors`
-                - `list`
+                - list
                 - contains as many different colors as there are unique classes in `classes`
 
         Dependencies
