@@ -5,9 +5,10 @@ from astroquery.gaia import Gaia
 import numpy as np
 import os
 import pandas as pd
+from typing import List
 from urllib import request
 
-
+#%%definitions
 #GAIA
 class GaiaDatabaseInterface:
     """
@@ -15,7 +16,6 @@ class GaiaDatabaseInterface:
 
         Attributes
         ----------
-            -
         
         Methods
         -------
@@ -27,24 +27,36 @@ class GaiaDatabaseInterface:
             - numpy
             - os
             - pandas
+            - typing
             - urllib
 
+        Comments
+        --------
+
     """
+
     def __init__(self):
 
         self.gaia_crendetials = None
         self.df_LCs = pd.DataFrame()
         pass
 
+    def __repr__(self) -> str:
+        return (
+            f'GaiaDatabaseInterface(\n'
+            f')'
+        )
+
 
     def get_lc_gaia(self,
-        gaia_result:str):
+        gaia_result:str
+        ) -> List[Table]:
         """
-            - function to obtain the light-curve data from a gaia query
+            - method to obtain the light-curve data from a gaia query
 
             Parameters
             ----------
-                - gaia_result
+                - `gaia_result`
                     - str
                     - location of the saved query-result
                     - has to be a .vot file (votable)
@@ -56,16 +68,9 @@ class GaiaDatabaseInterface:
             -------
                 - results
                     - list
-                    - list of astropy.Table objects
+                    - list of `astropy.Table` objects
                         - each table contains the result for one of the rows in the input-votable
 
-            Dependencies
-            ------------
-                - os
-                - astropy
-                - urllib
-                - numpy
-            
             Comments
             --------
         """
@@ -100,71 +105,69 @@ class GaiaDatabaseInterface:
     def remove_all_jobs(self,
         pd_filter:str=None, gaia_credentials:str=None,
         login_before:bool=False, logout_after:bool=False,
-        verbose:int=0):
+        verbose:int=0
+        ) -> None:
         """
             - method to remove all jobs stored in the Gaia-Archive
 
             Parameters
             ----------
-                - pd_filter
+                - `pd_filter`
                     - str, optional
                     - string that will be evaluated as a boolean filter
                         - serves to filter all jobs for some specific ones
                     - must have the following structure
-                        - "(jobs['colname1'] == 'argument1')&(jobs['colname2'] != 'argument2')" ect.
-                        - colname1 and colname2 are hereby substituted by one of the following
-                            - jobid
-                            - failed
-                            - creationDate
-                            - creationTime
-                            - endDate
-                            - endTime
-                            - startDate
-                            - startTime
-                            - responseStatus
-                            - phase
-                        - argument1 and argument 2 are substituted by some value for the boolean expression
+                        - `"(jobs['colname1'] == 'argument1')&(jobs['colname2'] != 'argument2')"` ect.
+                        - `'colname1'` and `'colname2'` are hereby substituted by one of the following
+                            - `'jobid'`
+                            - `'failed'`
+                            - `'creationDate'`
+                            - `'creationTime'`
+                            - `'endDate'`
+                            - `'endTime'`
+                            - `'startDate'`
+                            - `'startTime'`
+                            - `'responseStatus'`
+                            - `'phase'`
+                        - `'argument1'` and `'argument2'` are substituted by some value for the boolean expression
                         - some useful examples
                             - removing all jobs created at the present day
-
+                                
+                                ```python
                                 >>> today = pd.to_datetime('today').date()
                                 >>> pd_filter = f"(jobs['creationDate'] == '{today}')"
                                 >>> DI.remove_all_jobs(pd_filter=pd_filter, verbose=0)
-
-                    - the default is None
+                                ```
+                                
+                    - the default is `None`
                         - will delete all jobs in the archive
-                - gaia_credentials
+                - `gaia_credentials`
                     - str, optional
                     - path to your gaia credentials file
-                    - required if login_before is True and no credentials file has been passed yet
-                    - the default is None
-                - login_before
+                    - required if `login_before` is `True` and no credentials file has been passed yet
+                    - the default is `None`
+                - `login_before`
                     - bool, optional
                     - whether to log into the gaia archive before deleting the jobs
-                    - not necessary if you login somwhere in your code before calling 'remove_all_jobs()'
-                    - the default is False
-                - logout_after
+                    - not necessary if you login somwhere in your code before calling `remove_all_jobs()`
+                    - the default is `False`
+                - `logout_after`
                     - bool, optional
                     - whether to log out of the gaia archive after deleting the jobs
-                    - the default is False
-                - verbose
+                    - the default is `False`
+                - `verbose`
                     - int, optional
                     - how much additional information to display
                     - the default is 0
 
             Raises
             ------
-                - ValueError
+                - `ValueError`
                     - if the user is not logged in correctly
 
             Returns
             -------
 
-            Dependencies
-            ------------
-                - astroquery
-                - pandas
-            
             Comments
             --------
         """
