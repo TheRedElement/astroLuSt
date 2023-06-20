@@ -1,5 +1,4 @@
 
-#TODO: Implement error estimations
 
 #%%imports
 import numpy as np
@@ -8,7 +7,6 @@ import pandas as pd
 
 #%%definitions
 class ScalingRelations:
-
     """
         - class to apply the asteroseismic scaling relations
             - i.e. Gaulme et al., (2016) and reference therein
@@ -16,98 +14,98 @@ class ScalingRelations:
 
         Attributes
         ----------
-            - nu_max
+            - `nu_max`
                 - np.ndarray
                 - frequency of maximum power
-                - use same units as nu_max
-            - delta_nu
+                - use same units as `delta_nu`
+            - `delta_nu`
                 - np.ndarray
                 - large frequency separation
-                - use same units as delta_nu
-            - t_eff
+                - use same units as `nu_max`
+            - `t_eff`
                 - np.ndarray
                 - effective temperature
-                - use same units as t_eff_sun
-            - e_nu_max
+                - use same units as `t_eff_sun`
+            - `e_nu_max`
                 - np.ndarray, optional
-                - error corresponding to nu_max
-                - the default is None
+                - error corresponding to `nu_max`
+                - the default is `None`
                     - no error considered
-            - e_delta_nu
+            - `e_delta_nu`
                 - np.ndarray, optional
-                - error to delta_nu
-                - the default is None
+                - error to `delta_nu`
+                - the default is `None`
                     - no error considered
-            - e_t_eff
+            - `e_t_eff`
                 - np.ndarray, optional
-                - error to t_eff
-                - the default is None
+                - error to `t_eff`
+                - the default is `None`
                     - no error considered
-            - nu_max_sun
+            - `nu_max_sun`
                 - float, optional
                 - solar value of the frequency at maximum power
                 - the default is 3100 microHz
-            - delta_nu_sun
+            - `delta_nu_sun`
                 - float, optional
                 - solar value of the large frequency separation
                 - the default is 135.2 microHz
-            - t_eff_sun
+            - `t_eff_sun`
                 - float
                 - solar effective temperature
                 - the default is 5777 K
-            - logg_sun
+            - `logg_sun`
                 - float, optional
                 - log solar surface gravity
-                - 4.44 cm/s^2 (cgs system)
-            - zeta_corr
+                - the default is 4.44 cm/s^2 (cgs system)
+            - `zeta_corr`
                 - bool, optional
                 - correction factor for the large frequency separation
-                - the default is False
+                - the default is `False`
         
         Inferred Attributes
         -------------------
-            - e_radius_seism
+            - `e_radius_seism`
                 - np.ndarray
-                - error estimate cor radius_seism
-            - e_logg_seism
+                - error estimate for `radius_seism`
+            - `e_logg_seism`
                 - np.ndarray
-                - error estimate cor logg_seism
-            - e_luminosity_seism
+                - error estimate for `logg_seism`
+            - `e_luminosity_seism`
                 - np.ndarray
-                - error estimate cor luminosity_seism
-            - e_mass_seism
+                - error estimate for `luminosity_seism`
+            - `e_mass_seism`
                 - np.ndarray
-                - error estimate cor mass_seism
-            - radius_seism
+                - error estimate for `mass_seism`
+            - `radius_seism`
                 - np.ndarray
                 - seismic solution for the radius
-            - logg_seism
+            - `logg_seism`
                 - np.ndarray
                 - seismic solution for the surface gravity
-            - luminosity_seism
+            - `luminosity_seism`
                 - np.ndarray
                 - seismic solution for the luminosity
-            - mass_seism
+            - `mass_seism`
                 - np.ndarray
                 - seismic solution for the seismic mass
-            - nu_max_hom
+            - `nu_max_hom`
                 - np.ndarray
                 - homologically scaled nu max
-            - delta_nu_hom
+            - `delta_nu_hom`
                 - np.ndarray
                 - homologically scaled delta nu
-            - t_eff_hom
+            - `t_eff_hom`
                 - np.ndarray
-                - homologically effective temperature
+                - homologically scaled effective temperature
         
         Methods
         -------
-            - homological_principle()
-            - get_radius()
-            - get_mass()
-            - get_logg()
-            - get_luminosity()
-            - results2pandas()
+            - `homological_principle()`
+            - `get_radius()`
+            - `get_mass()`
+            - `get_logg()`
+            - `get_luminosity()`
+            - `results2pandas()`
 
         Dependencies
         ------------
@@ -191,6 +189,18 @@ class ScalingRelations:
         """
             - method to execute the homological principle
                 - i.e. relate input values to solar values
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
         """
 
 
@@ -230,10 +240,10 @@ class ScalingRelations:
 
             Returns
             -------
-                - self.radius_seism
+                - `self.radius_seism`
                     - np.ndarray
                     - seismic radii of the input parameters
-                - self.e_radius_seism
+                - `self.e_radius_seism`
                     - error estimate corresponding to radius_seism
             Comments
             --------            
@@ -260,10 +270,10 @@ class ScalingRelations:
 
             Returns
             -------
-                - self.mass_seism
+                - `self.mass_seism`
                     - np.ndarray
                     - seismic masses of the input parameters
-                - self.e_mass_seism
+                - `self.e_mass_seism`
                     - error estimate corresponding to mass_seism
 
             Comments
@@ -292,10 +302,10 @@ class ScalingRelations:
 
             Returns
             -------
-                - self.logg_seism
+                - `self.logg_seism`
                     - np.ndarray
                     - seismic estimate for the surface gravity of the input parameters
-                - self.e_logg_seism
+                - `self.e_logg_seism`
                     - error estimate corresponding to logg_seism
 
             Comments
@@ -325,10 +335,10 @@ class ScalingRelations:
 
             Returns
             -------
-                - self.luminosity_seism
+                - `self.luminosity_seism`
                     - np.ndarray
                     - seismic estimate for the luminosity of the input parameters
-                - self.e_luminosity_seism
+                - `self.e_luminosity_seism`
                     - error estimate corresponding to luminosity_seism
 
             Comments
@@ -365,7 +375,7 @@ class ScalingRelations:
 
             Returns
             -------
-                - df
+                - `df`
                     - pd.DataFrame
                     - dataframe containing all the calculated results
 
