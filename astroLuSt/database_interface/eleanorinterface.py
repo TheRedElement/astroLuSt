@@ -23,80 +23,90 @@ warnings.filterwarnings("error", message=w2e1)
 #ELEANOR
 class EleanorDatabaseInterface:
     """
-        - class to interact with the eleanor code for downloading lightcurves
+        - class to interact with the eleanor code for downloading lightcurves from the MAST archive
 
         
         Attributes
         ----------
-            - tic
+            - `tic`
                 - list[int], optional
                 - list of TIC identifiers
-                - the default is []
-            - sectors
-                - list[int]|str, optional
-                - list of sectors to extract or "all" if all available sectors shall be considered
-                - the default is "all"
-            - do_psf
+                - the default is `None`
+                    - will be initialized with `[]`
+            - `sectors`
+                - list[int], str, optional
+                - list of sectors to extract
+                - allowed strings
+                    - `'all'`
+                        - if all available sectors shall be considered
+                - the default is `'all'`
+            - `do_psf`
                 - bool, optional
                 - whether to execute a psf
-                - argument of eleanor.multi_sectors
-                - the default is False
-            - do_pca
+                - argument of `eleanor.multi_sectors()`
+                - the default is `False`
+            - `do_pca`
                 - bool, optional
                 - whether to execute a pca
-                - argument of eleanor.multi_sectors
-                - the default is False
-            - aperture_mode
+                - argument of `eleanor.multi_sectors()`
+                - the default is `False`
+            - `aperture_mode`
                 - str, optional
-                - specify which aperture to use ('small', 'normal', 'large')
-                - argument of eleanor.TargetData
-                - the default is 'normal'
-            - regressors
+                - specify which aperture to use
+                    - one of
+                        - `'small'`
+                        - `'normal'`
+                        - `'large'`
+                - argument of `eleanor.TargetData()`
+                - the default is `'normal'`
+            - `regressors`
                 - str, optional
                 - which methods to use to estimate the background
-                - argument of eleanot.TargetData
-                - the default is 'corners'
-            - try_load
+                - argument of `eleanot.TargetData()`
+                - the default is `'corners'`
+            - `try_load`
                 - bool, optional
-                - whether to search hidden ~/.eleanor dictionary for alrady existing TPF
-                - argument of eleanor.TargetData
-                - the default is True
-            - height
+                - whether to search hidden `~/.eleanor` dictionary for alrady existing TPF
+                - argument of `eleanor.TargetData()`
+                - the default is `True`
+            - `height`
                 - int, optional
                 - pixel height of the cutout
-                - argument of eleanor.multi_sectors
+                - argument of `eleanor.multi_sectors()`
                 - the default is 15
-            - width
+            - `width`
                 - int, optional
                 - pixel width of the cutout
-                - argument of eleanor.multi_sectors
+                - argument of `eleanor.multi_sectors()`
                 - the default is 15
-            - bkg_size
+            - `bkg_size`
                 - int, optional
-                - argument of eleanor.multi_sectors
+                - argument of `eleanor.multi_sectors()`
                     - see documentation for more info
                 - the default is 31
-            - clear_metadata_after_extract
+            - `clear_metadata_after_extract`
                 - bool, optional
                 - whether to delete all downloaded metadata after the extraction of any target
-                - if set to False, this will result in faster download, if the target is downloaded again
-                - the default is False
+                - if `False`
+                    - will result in faster download, if the target is downloaded again
+                - the default is `False`
 
 
         
         Methods
         -------
-            - data_from_eleanor_alltics()
-            - data_from_eleanor()
-            - plot_result_eleanor()
-            - result2pandas()
-            - save_npy_eleanor()
+            - `data_from_eleanor_alltics()`
+            - `data_from_eleanor()`
+            - `plot_result_eleanor()`
+            - `result2pandas()`
+            - `save_npy_eleanor()`
                 - not maintained
                 - might have compatibility issues
 
         Dependencies
         ------------
             - eleanor
+            - joblib
             - matplotlib
             - numpy
             - os
@@ -108,15 +118,18 @@ class EleanorDatabaseInterface:
     """
 
     def __init__(self,
-        tics:List[int]=[], sectors:Union[List[int],str]="all",
+        tics:List[int]=None, sectors:Union[List[int],str]='all',
         do_psf:bool=False, do_pca:bool=False,
-        aperture_mode:str="normal", regressors:str="corner", try_load:bool=True,
+        aperture_mode:str='normal', regressors:str='corner', try_load:bool=True,
         height:int=15, width:int=15, bkg_size:int=31,
-        clear_metadata_after_extract:bool=False
-        ):
+        clear_metadata_after_extract:bool=False,
+        ) -> None:
 
 
-        self.tics = tics
+        if tics is None:
+            self.tics = []
+        else:
+            self.tics = tics
         self.sectors = sectors
         self.do_psf = do_psf
         self.do_pca = do_pca
@@ -132,8 +145,18 @@ class EleanorDatabaseInterface:
 
         self.ET = ExecTimer()
 
-        pass
+        return
 
+    def __repr__(self) -> str:
+        return (
+            f'EleanorDatabaseInterface(\n'
+            f'    tics={repr(self.tics)}, sectors={repr(self.sectors)},\n'
+            f'    do_psf={repr(self.do_psf)}, do_pca={repr(self.do_pca)},\n'
+            f'    aperture_mode={repr(self.aperture_mode)}, regressors={repr(self.regressors)}, try_load={repr(self.try_load)},\n'
+            f'    height={repr(self.height)}, width={repr(self.width)}, bkg_size={repr(self.bkg_size)},\n'
+            f'    clear_metadata_after_extract={repr(self.clear_metadata_after_extract)},\n'
+            f')'
+        )
 
     def data_from_eleanor(self,
         tic:int, sectors:Union[List[int],str]="all", 
