@@ -9,8 +9,8 @@ import tensorflow.keras.backend as K
 class Sampling(Layer):
     """
         - sampling layer
-        - uses (z_mu, z_log_var) to sample z
-        - z is the encoding vector
+        - uses (`z_mu`, `z_log_var`) to sample `z`
+        - `z` is the encoding vector
     """
     def __init__(self, **kwargs):
         super(Sampling, self).__init__(**kwargs) #necessary to save also custom layers
