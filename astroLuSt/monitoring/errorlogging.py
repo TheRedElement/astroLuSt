@@ -1,8 +1,8 @@
 
 #%%imports
-import traceback
-import re
 import pandas as pd
+import re
+import traceback
 
 #%%definitions
 class LogErrors:
@@ -11,21 +11,21 @@ class LogErrors:
 
         Attributes
         ----------
-            - verbose
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
 
         Infered Attributes
         ------------------
-            - df_errorlog
+            - `df_errorlog`
                 - pd.DataFrame
                 - dataframe to log all the caught errors
         
         Methods
         -------
-            - print_exc()
-            - save_log()
+            - `print_exc()`
+            - `save_log()`
         
         Dependencies
         ------------
@@ -50,12 +50,14 @@ class LogErrors:
     def __repr__(self) -> str:
         
         return (
-            f'ExecptionFormatting()'
+            f'LogErrors(\n'
+            f'    verbose={repr(self.verbose)},n'
+            f')'
         )
     
     def print_exc(self,
         e:Exception,
-        prefix:str='', suffix:str='',
+        prefix:str=None, suffix:str=None,
         verbose:int=None,
         ) -> None:
         """
@@ -64,23 +66,25 @@ class LogErrors:
 
             Parameters
             ----------
-                - e
+                - `e`
                     - Exception
-                    - exception that got caught via try - except
-                - prefix
+                    - exception that got caught via `try ... except`
+                - `prefix`
                     - str, optional
                     - something to print before the caught exception
-                    - the default is ''
-                - suffix
+                    - the default is `None`
+                        - will be set to `''`
+                - `suffix`
                     - str, optional
                     - something to print after the caught exception
-                    - the default is ''
-                - verbose
+                    - the default is `None`
+                        - will be set to `''`
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - will override self.verbose if passed
-                    - the default is None
-                        - falls back to self.verbose
+                    - will override `self.verbose` if passed
+                    - the default is `None`
+                        - falls back to `self.verbose`
             
             Raises
             ------
@@ -93,8 +97,9 @@ class LogErrors:
         """
         
         #initialize
-        if verbose is None:
-            verbose = self.verbose
+        if prefix is None:  prefix = ''
+        if suffix is None:  suffix = ''
+        if verbose is None: verbose = self.verbose
 
         format_exc = traceback.format_exc()
 
@@ -108,37 +113,44 @@ class LogErrors:
     
     def exc2df(self,
         e:Exception,
-        prefix:str='', suffix:str='',
+        prefix:str=None, suffix:str=None,
         ) -> pd.DataFrame:
         """
             - method to store a caught exception e to a pandas DataFrame
 
             Parameters
             ----------
-                - e
+                - `e`
                     - Exception
-                    - exception that got caught via try - except
-                - prefix
+                    - exception that got caught via `try ... except`
+                - `prefix`
                     - str, optional
                     - something to print before the caught exception
-                    - the default is ''
-                - suffix
+                    - the default is `None`
+                        - will be set to `''`
+                - `suffix`
                     - str, optional
                     - something to print after the caught exception
-                    - the default is ''
+                    - the default is `None`
+                        - will be set to `''`
             
             Raises
             ------
             
             Returns
             -------
-                - df_temp
+                - `df_temp`
                     - pd.DataFrame
                     - temporary dataframe containing information for last exception
 
             Comments
             --------
-        """        
+        """
+
+        #initilaize
+        if prefix is None:  prefix = ''
+        if suffix is None:  suffix = ''        
+
         format_exc = traceback.format_exc()
 
         files = re.findall(r'(?<=File ").+(?=")', format_exc)        
@@ -166,15 +178,15 @@ class LogErrors:
         **kwargs
         ) -> None:
         """
-            - method to save the current errorlog dataframe to a csv file
+            - method to save the current errorlog dataframe (`self.df_errorlog`) to a csv file
 
             Parameters
             ----------
-                - filename
+                - `filename`
                     - str, optional
-                    - path to the file to save the errorlog to
-                - **kwargs
-                    - kwargs passed to pd.DataFrame.to_csv()
+                    - path to the file to save `self.df_errorlog` to
+                - `**kwargs`
+                    - kwargs passed to `pd.DataFrame.to_csv()`
             
             Raises
             ------
