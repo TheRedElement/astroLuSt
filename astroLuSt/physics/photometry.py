@@ -16,33 +16,33 @@ def wesenheit_magnitude(
 
         Parameters
         ----------
-            - M
+            - `M`
                 - np.ndarray
                 - absolute magnitude in some passband
-            - CI
+            - `CI`
                 - np.ndarray
                 - color index
-            - R
+            - `R`
                 - np.ndarray, optional
                 - reddening factor
-                - the default is None
-            - A_M
+                - the default is `None`
+            - `A_M`
                 - np.ndarray, optional
-                - interstellar extinction in the same passband as passed to 'M'
-                - the default is None
-            - E_CI
+                - interstellar extinction in the same passband as passed to `M`
+                - the default is `None`
+            - `E_CI`
                 - np.ndarray, optional
-                - color excess in same color as passed to CI
-                - the default is None
+                - color excess in same color as passed to `CI`
+                - the default is `None`
 
         Raises
         ------
-            - ValueError
-                - if 'R' and at least one of 'A_M' and 'E_CI' are None 
+            - `ValueError`
+                - if `R` and at least one of `A_M` and `E_CI` are `None` 
 
         Returns
         -------
-            - w
+            - `w`
                 - np.ndarray
                 - wesenheit magnitude
 
@@ -76,17 +76,17 @@ def mags2fluxes(
         
         Parameters
         ----------
-            - mag
+            - `mag`
                 - float, np.ndarray
                 - magnitudes to be converted
-            - m_ref
+            - `m_ref`
                 - float, np.ndarray
                 - reference magnitude for the conversion
                     - this value is dependent on the passband in use
-            - f_ref
+            - `f_ref`
                 - float, np.ndarray
                 - reference flux for the conversion
-                    - corresponding to m_ref
+                    - corresponding to `m_ref`
                     - this value is dependent on the passband in use
 
         Raises
@@ -94,12 +94,14 @@ def mags2fluxes(
 
         Returns
         -------
-            - flux
+            - `flux`
                 - float, np.array
-                - flux corresponding to mag
+                - flux corresponding to `mag`
 
         Dependencies
         ------------
+            - numpy
+            - typing
 
         Comments
         --------
@@ -118,17 +120,17 @@ def fluxes2mags(
 
         Parameters
         ----------
-            - flux
+            - `flux`
                 - float, np.array
                 - fluxes to be converted
-            - m_ref
+            - `m_ref`
                 - float, np.ndarray
                 - reference magnitude for the conversion
                     - this value is dependent on the passband in use
-            - f_ref
+            - `f_ref`
                 - float, np.ndarray
                 - reference flux for the conversion
-                    - corresponding to m_ref
+                    - corresponding to `m_ref`
                     - this value is dependent on the passband in use
 
         Raises
@@ -136,13 +138,14 @@ def fluxes2mags(
 
         Returns
         -------
-            - mags
+            - `mags`
                 - float, np.array
-                - magnitudes corresponding to flux
+                - magnitudes corresponding to `flux`
 
         Dependencies
         ------------
             - numpy
+            - typing
 
         Comments
         --------
