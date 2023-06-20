@@ -14,32 +14,37 @@ def angular_distance(
 
         Parameters
         ----------
-            - ra
+            - `ra`
                 - np.ndarray
                     - 2d
                     - each row contains ra for target1 and target2, respectively
                 - right ascension of the object(s)
                 - has to be between 0 and 2*pi
-            - dec
+            - `dec`
                 - np.ndarray
                     - 2d
                     - each row contains dec for target1 and target2, respectively
                 - declination of the object(s)
                 - has to be between -pi/2 and pi/2
-            - approx
+            - `approx`
                 - str, optional
                 - which approximation to use
-                - the default is None
+                - the default is `None`
                     - will use the general case
+
         Raises
         ------
 
         Returns
         -------
-            - theta
+            - `theta`
                 - np.ndarray
-                - same shape as ra and dec along the first axis
-                - angular distance between each sample in ra and dec
+                - same shape as `ra` and `dec` along the first axis
+                - angular distance between each sample in `ra` and `dec`
+
+        Dependencies
+        ------------
+            - numpy
 
         Comments
         --------
