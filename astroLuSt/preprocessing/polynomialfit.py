@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
-from typing import Union, Tuple, Callable
+from typing import Tuple
 
 #%%definitions
 
@@ -18,20 +18,20 @@ def polyfit2d(
 
         Parameters
         ----------
-            - x
+            - `x`
                 - np.ndarray
                 - independent variable 1
-            - y
+            - `y`
                 - np.ndarray
                 - independent variable 2
-            - z
+            - `z`
                 - np.ndarray
                 - dependent variable 
-                    - z(x,y)
-            - deg
+                    - `z(x,y)`
+            - `deg`
                 - int, optional
                 - degree of the polynomial to fit
-            - verbose
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
@@ -41,16 +41,16 @@ def polyfit2d(
 
         Returns
         -------
-            - poly
+            - `poly`
                 - sklearn.preprocessing.PolynomialFeatures instance
                 - fitted model to generate all polynomial features of two inputs in dependence in deg
-            - poly_reg_model
+            - `poly_reg_model`
                 - sklearn.linear_model.LinearRegression instance
                 - the fitted model
-            - coeffs
+            - `coeffs`
                 - np.ndarray
                 - coefficients of the fitted model
-            - intercept
+            - `intercept`
                 - float
                 - intercept of the fitted model
         
@@ -59,6 +59,11 @@ def polyfit2d(
             - matplotlib
             - numpy
             - sklearn
+            - typing
+
+        Comments
+        --------
+
     """
 
     poly = PolynomialFeatures(degree=deg, include_bias=False)
