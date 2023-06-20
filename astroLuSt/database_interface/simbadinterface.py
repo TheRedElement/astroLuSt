@@ -14,9 +14,15 @@ class SimbadDatabaseInterface:
         Attributes
         ----------
 
+        Infered Attributes
+        ------------------
+            - `df_ids`
+                - pd.DataFrame
+                - contains all IDs listed in SIMBAD for the queried objects (`input_ids`)
+
         Methods
         -------
-            - get_ids()
+            - `get_ids()`
 
         Dependencies
         ------------
@@ -25,16 +31,25 @@ class SimbadDatabaseInterface:
             - re
             - astroquery
             - joblib
+
+        Comments
+        --------
     """
     
 
     
-    def __init__(self):
+    def __init__(self,
+        ) -> None:
 
         self.df_ids = pd.DataFrame()
 
-        pass
+        return
 
+    def __repr__(self) -> str:
+        return (
+            f'SimbadDatabaseInterface(\n'
+            f')'
+        )
         
 
     def get_ids(self,
@@ -43,34 +58,35 @@ class SimbadDatabaseInterface:
         show_scanned_strings_at:list=[],
         verbose:int=0) -> None:
         """
-            - function to query the SIMBAD database for additional identifiers
+            - method to query the SIMBAD database for additional identifiers
 
             Parameters
             ----------
-                - input_ids
+                - `input_ids`
                     - list
                     - list containing all the ids to query for
                     - each entry has to be of the same syntax as the SIMBAD query i.e.
-                        - 'tic 114886928'
-                        - 'gaia dr3 6681944303315818624'
-                - nparallelrequests
+                        - `'tic 114886928'`
+                        - `'gaia dr3 6681944303315818624'`
+                - `nparallelrequests`
                     - int, optional
                     - how many requests to run in parallel
-                        - i.e. if your DataFrame has N columns the query will be subdivided into n partitions such that 'nparallelrequest' queries will be executed in parallel
+                        - i.e. if your DataFrame has N columns the query will be subdivided into n partitions such that `nparallelrequest` queries will be executed in parallel
                     - useful for large queries
                     - the default is 1000
-                - simbad_timeout
+                - `simbad_timeout`
                     - int, optional
                     - the timeout to allow for the SIMBAD database before an error is raised
                     - the default is 120 (seconds)
-                - show_scanned_strings_at
+                - `show_scanned_strings_at`
                     - list
                     - list of indices to display the strings that get scanned with a regular expression to extract the different identifiers and catalogues
-                    - the default is []
-                - verbose
+                    - the default is `None`
+                        - will be set to `[]`
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - how much additional information to display while executing the function
+                    - how much additional information to display while executing the method
                     - the default is 0
             
             Raises
@@ -83,6 +99,8 @@ class SimbadDatabaseInterface:
             --------
 
         """
+
+        if show_scanned_strings_at is None: show_scanned_strings_at = []
 
         unique_ids = pd.unique(input_ids)
 
