@@ -12,24 +12,24 @@ def phase2time(
     period:Union[np.ndarray,float],
     tref:Union[np.ndarray,float]=0,
     verbose:int=0,
-    ):
+    ) -> Union[np.ndarray,float]:
     """
         - converts a given array of phases into its respective time equivalent
 
         Parameters
         ----------
-            - phases
+            - `phases`
                 - np.ndarray, float
                 - the phases to convert to times
-            - period
+            - `period`
                 - np.ndarray, float
                 - the given period(s) the phase describes
-            - tref
+            - `tref`
                 - np.ndarray, float, optional
                 - reference time
-                    - i.e. offset from time=0
+                    - i.e. offset from `time==0`
                 - the default is 0
-            - verbose
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
@@ -39,17 +39,17 @@ def phase2time(
 
         Returns
         -------
-            - time
+            - `time`
                 - np.array, float
                 - the resulting time array, when the phases are converted 
 
         Dependencies
         ------------
+            - typing
 
         Comments
         --------
-            - operates with phases in the interval [-0.5,0.5]
-            - if you wish to convert phases from the interval [0,1], simply pass phases-0.5 to the function
+            - operates with phases in the interval [0,1]
     """
 
     time = phase*period + tref
@@ -59,26 +59,27 @@ def phase2time(
 def fold(
     time:np.ndarray,
     period:float, tref:float=None,
-    verbose=0) -> Tuple[np.ndarray, np.ndarray]:
+    verbose=0,
+    ) -> Tuple[np.ndarray,np.ndarray]:
     """
         - takes an array of times
             - folds it onto a specified period into phase space
-            - returns folded array of phases (in interval 0 to 1)
+            - returns folded array of phases (in interval 0 to 1) and periods (0 to `period`)
 
         Parameters
         ----------
-            - time
-                - np.array
+            - `time`
+                - np.ndarray
                 - times to be folded with the specified period
-            - period 
+            - `period` 
                 - float
                 - period to fold the times onto
-            - tref
+            - `tref`
                 - float, optional
                 - reference time to consider when folding the lightcurve
-                - the default is None
-                    - will take min(time) as reference
-            - verbose
+                - the default is `None`
+                    - will take `np.nanmin(time)` as reference
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
@@ -88,23 +89,24 @@ def fold(
 
         Returns
         -------
-            - phases_folded
-                - np.array
-                - phases corresponding to the given time folded onto the period
-            - periods_folded
-                - np.array
-                - phases_folded in time domain
+            - `phases_folded`
+                - np.ndarray
+                - phases corresponding to the given `time` folded onto `period`
+            - `periods_folded`
+                - np.ndarray
+                - `phases_folded` in time domain
 
         Dependencies
         ------------
             - numpy
+            - typing
 
         Comments
         --------
     """
 
     if tref is None:
-        tref = time.min()
+        tref = np.nanmin(time)
 
     delta_t = time-tref
     phases = delta_t/period
@@ -124,28 +126,28 @@ def resample(
     ndatapoints:int=50,
     sort_before:bool=True,
     verbose:int=0
-    ) -> Tuple[np.ndarray, np.ndarray, Figure, plt.Axes]:
+    ) -> Tuple[np.ndarray,np.ndarray,Figure,plt.Axes]:
     """
-        - function to resample a dataseries y(x) to nfeatures new datapoints via interpolation
+        - function to resample a dataseries `y(x)` to nfeatures new datapoints via interpolation
 
         Parameters
         ----------
-            - x
+            - `x`
                 - np.ndarray
                 - independent input variable x
-            - y
+            - `y`
                 - np.ndarray
-                - dependent variable (y(x))
-            - ndatapoints
+                - dependent variable (`y(x)`)
+            - `ndatapoints`
                 - int, optional
                 - number of datapoints of the resampled dataseries
                 - the default is 50
-            - sort_before
+            - `sort_before`
                 - bool, optional
-                - whether to sort the input arrays x and y with regards to x before resampling
-                - the default is True
-            - verbose
-                -  int optional
+                - whether to sort the input arrays `x` and `y` with regards to `x` before resampling
+                - the default is `True`
+            - `verbose`
+                - int optional
                 - verbosity level
                 - the default is 0
             
@@ -154,17 +156,18 @@ def resample(
 
         Returns
         -------
-            - interp_x
+            - `interp_x`
                 - np.ndarray
-                - resamples array of x
-            - interp_y
+                - resamples array of `x`
+            - `interp_y`
                 - np.ndarray
-                - resamples array of y
+                - resamples array of `y`
 
         Dependencies
         ------------
-            - numpy
             - matplotlib
+            - numpy
+            - typing
         
         Comments
         --------
@@ -224,49 +227,46 @@ def periodic_shift(
 
         Parameters
         ----------
-            - input_array
+            - `input_array`
                 - np.ndarray
                 - array to be shifted along an interval with periodic boundaries
-            - shift
+            - `shift`
                 - float
                 - magnitude of the shift to apply to the array
-            - borders
-                - list/np.ndarray
+            - `borders`
+                - list, np.ndarray
                 - upper and lower boundary of the periodic interval
-            - testplot
+            - `testplot`
                 - bool, optional
                 - wether to show a testplot
-                - the default is False
-            - verbose
+                - the default is `False`
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
 
         Raises
         ------
-            - TypeError
+            - `TypeError`
                 - if the provided parameters are of the wrong type
 
         Returns
         -------
-            - shifted
-                - np.array
+            - `shifted`
+                - np.ndarray
                 - array shifted by shift along the periodic interval in borders
 
         Dependencies
         ------------
-            - numpy
             - matplotlib
+            - numpy
+            - typing
 
         Comments
         --------
 
     """        
     
-    import numpy as np
-    import matplotlib.pyplot as plt
-    
-
     ################################
     #check if all types are correct#
     ################################
@@ -331,46 +331,47 @@ def periodize(
     testplot:bool=False,
     ) -> Tuple[np.ndarray,np.ndarray]:
     """
-        - function to create a periodic signal out of the y values of a time-series given in phase space and a period
+        - function to create a periodic signal out of the `y` values of a time-series given in phase space and a `period`
 
         Parameters
         ----------
-            - y
+            - `y`
                 - np.ndarray
                 - has to be at least 2d
                 - y-values to be periodized
-            - period
+            - `period`
                 - np.ndarray, float
-                - if np.ndarray, has to be of same length as y
+                - if np.ndarray, has to be of same length as `y`
                 - period to use for the repetition
-            - repetitions
+            - `repetitions`
                 - float, optional
-                - number of times the signal (y) shall be repeated
-                - if a repetitions < 1 gets passed, the signal will be cut off at that point
+                - number of times the signal (`y`) shall be repeated
+                - if `repetitions < 1` gets passed, the signal will be cut off at that point
                 - the default is 2
-            - testplot
+            - `testplot`
                 - bool, optional
                 - whether to show a test-plot
-                - the default is False
+                - the default is `False`
 
         Raises
         ------
 
         Returns
         -------
-            - x_periodized
+            - `x_periodized`
                 - np.ndarray
-                - same shape as y
+                - same shape as `y`
                 - times of the periodized signal
-            - y_periodized
+            - `y_periodized`
                 - np.ndarray
-                - same shape as y
+                - same shape as `y`
                 - y-values of the periodized signal
 
         Dependencies
         ------------
             - numpy
             - matplotlib
+            - typing
 
         Comments
         --------
@@ -447,72 +448,67 @@ def periodic_expansion(
 
         Parameters
         ----------
-            - x
+            - `x`
                 - np.ndarray
                 - x-values of the datapoints to be expanded
-            - y 
+            - `y`
                 - np.ndarray
                 - y-values of the datapoints to be expanded
-            - phase_ref_min
+            - `x_ref_min`
                 - float, optional
                 - reference phase
                     - will be used in order to determine which phases to consider for appending
                 - used in the case of appending to the minimum and both ends
                 - the default is 0
-            - phase_ref_max
+            - `x_ref_max`
                 - float, optional
                 - reference phase
                     - will be used in order to determine which phases to consider for appending
                 - used in the case of appending to the minimum and both ends
                 - the default is 0
-            - minmax
+            - `minmax`
                 - str, optional
                 - wether to append to the maximum or minimum of the dataseries
                 - can take either
-                    - 'min'
+                    - `'min'`
                         - will expand on the minimum side
-                        - will consider all phases from phase_ref to the maximum phase
-                    - 'max'
+                        - will consider all phases from `x_ref_max` to the maximum phase
+                    - `'max'`
                         - will expand on the maximum side
-                        - will consider all phases the minimum phase up to phase_ref
-                    - 'both'
+                        - will consider all phases from the minimum phase up to `x_ref_min`
+                    - `'both'`
                         - will expand on both ends of the curve
-                        - requires 'phase_ref' to be a list with two entries
-                - the default is 'max'
-            - testplot
+                        - requires `x_ref_min` and `x_ref_max`
+                - the default is `'max'`
+            - `testplot`
                 - bool, optional
                 - whether to show a testplot of the result
-                - the default is False
+                - the default is `False`
 
         Raises
         ------
-            - ValueError
-                - if 'minmax' gets passed a wrong argument
-            - TypeError
-                - if 'phase_ref' gets passed a wrong type
+            - `ValueError`
+                - if `'minmax'` gets passed a wrong argument
 
         Returns
         -------
-            - expanded_x
+            - `expanded_x`
                 - np.ndarray
                 - x-values including the expanded part
-            - expanded_y
+            - `expanded_y`
                 - np.ndarray
                 - y-values including the expanded part
 
         Dependencies
         ------------
-            - numpy
             - matplotlib
+            - numpy
+            - typing
 
         Comments
         --------
     """
     
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-
     #sort to get correct appendix in the end
     sortidx = np.argsort(x)
     x = x[sortidx]
