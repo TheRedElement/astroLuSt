@@ -15,24 +15,29 @@ class ExecTimer:
 
         Attributes
         ----------
-            - verbose
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the higher the more information will be displayed
-            - df_protocoll
-                - pandas DataFrame
-                - dataframe storing all the tasks created with one instance of ExecTimer
+                - the default is 1
+
+        Infered Attributes
+        ------------------
+            - `df_protocoll`
+                - pd.DataFrame
+                - dataframe storing all the tasks created with one instance of `ExecTimer()`
 
         Methods
         -------
-            - check_taskname()
-            - checkpoint_start()
-            - checkpoint_end()
-            - estimate_runtime()
-            - get_execstats()
+            - `check_taskname()`
+            - `checkpoint_start()`
+            - `checkpoint_end()`
+            - `estimate_runtime()`
+            - `get_execstats()`
 
         Dependencies
         ------------
+            - matplotlib
             - numpy
             - pandas
             - time
@@ -57,17 +62,25 @@ class ExecTimer:
         self.df_protocoll["Duration"] = pd.to_timedelta(self.df_protocoll["Duration"])
         
         return
+    
+    def __repr__(self) -> str:
+        
+        return (
+            f'ExecTimer(\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
 
     def check_taskname(self,
         taskname:str,
-        ):
+        ) -> str:
         """
-            - method to check if a passed taskname is already existing in df_protocoll
-            - if that is the case the taskname will be modified by appending an index to it
+            - method to check if a passed `taskname` is already existing in `self.df_protocoll`
+            - if that is the case `taskname` will be modified by appending an unique index to it
 
             Parameters
             ----------
-                - taskname
+                - `taskname`
                     - str
                     - unique name given to the task
             
@@ -76,12 +89,12 @@ class ExecTimer:
 
             Returns
             -------
-                - taskname
+                - `taskname`
                     - str
-                    - modified input 'taskname'
-                    - if the input was unique, it will be returned as is
-                    - otherwise an index will be appended to it
-                        - i.e. 'tasknamen' will be returned for the n-th repetition of 'taskname'
+                    - modified input (`taskname`)
+                        - if the input was unique, it will be returned as is
+                        - otherwise an index will be appended to it
+                            - i.e. `tasknamen` will be returned for the n-th duplicate of `taskname`
 
             Comments
             --------
@@ -97,20 +110,21 @@ class ExecTimer:
         return taskname
 
     def checkpoint_start(self,
-        taskname:str, comment:str=''
+        taskname:str, comment:str=None,
         ) -> None:
         """
             - method to start a new task
 
             Parameters
             ----------
-                - taskname
+                - `taskname`
                     - str
                     - unique name given to the task
-                - comment
+                - `comment`
                     - str, optional
-                    - some comment to the task
-                    - the default is ""
+                    - some comment to starting the task
+                    - the default is `None`
+                        - will be set to `''`
             
             Raises
             ------
@@ -121,7 +135,10 @@ class ExecTimer:
             Comments
             --------
         """
-        
+
+        #initialize
+        if comment is None: comment = ''
+
         start_time = time.time()
         start_timestamp = np.datetime64('now')
         taskname = self.check_taskname(taskname)
@@ -149,16 +166,19 @@ class ExecTimer:
         taskname:str, comment:str='',
         ) -> None:
         """
-            - method to wrap up a task of name 'taskname'
+            - method to wrap up a task of name `taskname`
 
             Parameters
             ----------
-                - taskname
+                - `taskname`
                     - str
                     - unique name given to the task to finish
-                - comment
+                - `comment`
                     - str, optional
-                    - comment to overwrite
+                    - some comment to wrapping up the task
+                    - the default is `None`
+                        - will be set to `''`
+            
                 
             Raises
             ------
@@ -169,6 +189,9 @@ class ExecTimer:
             Comments
             --------
         """
+
+        #initialize
+        if comment is None: comment = ''
 
         end_time = time.time()
         end_timestamp = np.datetime64('now')
@@ -215,14 +238,14 @@ class ExecTimer:
 
             Parameters
             ----------
-                - taskname_pat
+                - `taskname_pat`
                     - str
-                    - regular expression to query the self.df_protocoll['Task']
-                        - all tasks that contain 'taskname_pat' will contribute to the runtime-estimate
-                - nrepeats
+                    - regular expression to query the `self.df_protocoll['Task']`
+                        - all tasks that contain `taskname_pat` will contribute to the runtime-estimate
+                - `nrepeats`
                     - int
                     - how often the task will be repeated
-                - ndone
+                - `ndone`
                     - int, optional
                     - how often the task has been executed already
                     - the default is 1
@@ -258,38 +281,39 @@ class ExecTimer:
 
             Parameters
             ----------
-                - taskname
+                - `taskname`
                     - str, optional
                     - unique name given to the task
-                    - the default is 'Decorator Task'            
-                - start_kwargs
+                    - the default is `'Decorator Task'`
+                - `start_kwargs`
                     - dict, optional
-                    - kwargs to pass to self.checkpoint_start()
-                    - the default is None
-                        - will default to {'taskname':'Decorator Task'}
-                - end_kwargs
+                    - kwargs to pass to `self.checkpoint_start()`
+                    - the default is `None`
+                        - will default to `{}`
+                - `end_kwargs`
                     - dict, optional
-                    - kwargs to pass to self.checkpoint_end()
-                    - the default is None
-                        - will default to {'taskname':'Decorator Task'}
+                    - kwargs to pass to `self.checkpoint_end()`
+                    - the default is `None`
+                        - will default to `{}`
             Raises
             ------
 
             Returns
             -------
-                - wrap
+                - `wrap`
                     - Any
-                    - output of wrapped function
+                    - output of wrapped (decorated) function
 
             Comments
             --------
                 - use like decorator, i.e. as follows
-
+    	            
+                    ```python
                     >>> @ExecTimer().time_exec(*args)
                     >>> def func(...):
                     >>>     ...
                     >>>     return ...
-                
+                    ```
 
         """
 
@@ -325,44 +349,45 @@ class ExecTimer:
         n:int=500,
         metrics:List[Callable]=None,
         drop_from_df_protocoll:bool=True,
-        ) -> Any:
+        ) -> pd.DataFrame:
         """
-            - decorator method to execute a function n times and return a plot of requested statistics
+            - decorator method to execute a function `n` times and return a plot of requested statistics
 
             Parameters
             ----------
-                - n
+                - `n`
                     - int, optional
                     - number of times the function shall be executed in order to get a statistics
                     - the default is 500
-                - metrics
+                - `metrics`
                     - list, optional
                     - contains callables
                     - callables calculating the requested statistics
-                    - the default is None
-                        - defaults to [np.nanmean, np.nanmedian, np.nanmin, np.nanmax]
-                - drop_from_df_protocoll
+                    - the default is `None`
+                        - defaults to `[np.nanmean, np.nanmedian, np.nanmin, np.nanmax]`
+                - `drop_from_df_protocoll`
                     - bool, optional
-                    - whether to drop the related entries from self.df_protocoll
-                    - the default is True
+                    - whether to drop the related entries from `self.df_protocoll`
+                    - the default is `True`
             
             Raises
             ------
 
             Returns
             -------
-                - df_execstats
+                - `df_execstats`
                     - pd.DataFrame
-                    - dataframe entries of the executions within self.get_execstats()
+                    - dataframe entries of the executions within `self.get_execstats()`
 
             Comments
             --------
                 - use like decorator, i.e. as follows
-
+                    ```python
                     >>> @ExecTimer().get_execstats(*args)
                     >>> def func(...):
                     >>>     ...
                     >>>     return ...
+                    ```
                             
         """
 
