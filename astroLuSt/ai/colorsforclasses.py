@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from typing import Union
 
-#%%generate colors
+#%%definitions
 
 def generate_colors(
     classes:Union[list,np.ndarray],

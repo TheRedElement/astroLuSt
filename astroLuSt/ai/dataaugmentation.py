@@ -13,7 +13,7 @@ import warnings
 
 
 class Augment1D: 
-    '''
+    """
         - class to execute data augmentation on 1D input samples
         
         Attributes
@@ -72,7 +72,7 @@ class Augment1D:
 
         Comments
         --------
-    '''
+    """
 
     def __init__(self,
         n_newsamples:int=1,

@@ -2,6 +2,7 @@
 #%%imports
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import Callable, Tuple, List
 
 from astroLuSt.monitoring.timers import ExecTimer
 
@@ -10,58 +11,71 @@ class DTW:
     #TODO: DTW, correct for wrong assignment of high correlation
     """
         - class for executing Dynamic Time Warping
-        - makes a prediction based on several template-curves (X_template)
+        - makes a prediction based on several template-curves (`X_template`)
             - prediction made via majority voting
 
         Attributes
         ----------
-            - X_template
+            - `X_template`
                 - list
-                - contains arrays of template time-series
-                    - those act as role models, to which new samples will be compared
-                    - can have different leghts
-            - threshold
-                - float
+                - contains arrays of template data-series
+                    - act as role models, to which new samples will be compared
+                    - can have different legths
+            - `y_template`
+                - np.ndarray, optional
+                - contains classes associated with each example in `X_template`
+                - the default is `None`
+                    - will generate a unique label for each sample in `X_template`
+            - `threshold`
+                - float, optional
                 - a classification threshold
-                    - optimal warping path which has a coe
-            - window
+                    - optimal warping path which has a correlation coefficient higher than `threshold` will be classified as the same class
+                - the default is 0.9
+            - `window`
                 - int, optional
                 - locality-constraint for the distance determination
-                - i.e. a distance between x1[i] and x2[j] is not allowed to be larger than the window parameter
-                - the default is None
-            - cost_fct
+                - i.e. a distance between `x1[i]` and `x2[j]` is not allowed to be larger than the window parameter
+                - the default is `None`
+            - `cost_fct`
                 - callable, optional
                 - cost function to use for the calculation
-                    - calculates the "distance between two points"
-                - the default is None
+                    - calculates the distance between two points
+                - the default is `None`
                     - Will use the euclidean distance
+                
+        Infered Attributes
+        ------------------
+            - TODO
 
         Methods
         -------
-            - accumulate_cost_matrix
-                - method to determine a distance matrix for two arrays
-                    - x1 and x2 can have different lengths
-                - implementation similar to Silva et al. (2016)
-                    - DOI:https://doi.org/10.1137/1.9781611974348.94
-                    - https://epubs.siam.org/doi/abs/10.1137/1.9781611974348.94
-            - optimal_warping_path
-                - computes the optimal warping path given a cost matrix
-                    - Based on Senin (2008)
-                    - https://www.researchgate.net/publication/228785661_Dynamic_Time_Warping_Algorithm_Review
-            - fit_predict
-                - fits the classifier and makes a prediction
-            - summary_plot
-                - function to display a brief summary plot of the DTW-result for two timeseries
+            - `accumulate_cost_matrix()`
+            - `optimal_warping_path()`
+            - `fit_predict()`
+            - `summary_plot()`
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+        
+        Comments
+        --------
 
     """
 
-    def __init__(self, X_template, threshold=0.9, window=None, cost_fct=None, y_template=None):
+    def __init__(self,
+        X_template:np.ndarray,
+        y_template:np.ndarray=None,
+        threshold:float=0.9, window:int=None, cost_fct:Callable=None,
+        ) -> None:
         
-        assert -1 <= threshold and threshold <= 1, f"'theshold' has to be in the range [-1,1] but has a value of {threshold}"
+        assert -1 <= threshold and threshold <= 1, f"`theshold` has to be in the range [-1,1] but has a value of {threshold}"
         try:
             len(X_template[0])
         except:
-            raise ValueError(f"'X_template' has to be a list of lists!")
+            raise ValueError(f"`X_template` has to be a list of lists!")
 
         self.X_template = X_template
         self.y_template = y_template
@@ -76,56 +90,53 @@ class DTW:
         self.pearsons = None
         self.y_pred = None
 
-        self.ET = ExecTimer()
-
         return
     
-    def __repr__(self):
-        return ("DTW(\n"
-                f"    X_template = {self.X_template},\n"
-                f"    threshold  = {self.threshold},\n"
-                f"    window     = {self.window},\n"
-                f"    cost_fct   = {self.cost_fct},\n"
-                f"    y_template = {self.y_template},\n"
-                ")\n")
+    def __repr__(self) -> str:
+        return (
+            f'DTW(\n'
+            f'    X_template = {repr(self.X_template)},\n'
+            f'    y_template = {repr(self.y_template)},\n'
+            f'    threshold = {repr(self.threshold)}, window = {repr(self.window)}, cost_fct = {repr(self.cost_fct)},\n'
+            f')'
+        )
 
 
-    def accumulate_cost_matrix(self, x1, x2, testplot=False):
+    def accumulate_cost_matrix(self,
+        x1:np.ndarray, x2:np.ndarray,
+        testplot:bool=False
+        ) -> np.ndarray:
         """
-            - method to determine a distance matrix for two arrays
-                - x1 and x2 can have different lengths
+            - method to determine a distance matrix for two arrays `x1` and `x2`
+                - `x1` and `x2` can have different lengths
             - implementation similar to Silva et al. (2016)
                 - DOI:https://doi.org/10.1137/1.9781611974348.94
                 - https://epubs.siam.org/doi/abs/10.1137/1.9781611974348.94
             
             Paramters
             ---------
-                - x1
-                    - np.array
-                    - some time series
-                - x2
-                    - np.array
-                    - some time series
-                - testplot
+                - `x1`
+                    - np.ndarray
+                    - some data series
+                - `x2`
+                    - np.ndarray
+                    - some data series
+                - `testplot`
                     - bool, optional
                     - whether to display a testplot of the result
-                    - the default is False
+                    - the default is `False`
             Raises
             ------
 
             Returns
             -------
-                - C
-                    - np.array
-                    - 2D array of the cost-matrix
+                - `C`
+                    - np.ndarray
+                    - 2D array
+                    - cost-matrix of the differences between `x1` and `x2`
 
-            Dependencies
-            ------------
-                - numpy
-            
             Comments
             --------
-
 
         """
         
@@ -161,40 +172,40 @@ class DTW:
 
         return C
 
-    def optimal_warping_path(self, C, testplot=False):
+    def optimal_warping_path(self,
+        C:np.ndarray,
+        testplot:bool=False
+        ) -> np.ndarray:
         """
-            - computes the optimal warping path given a cost matrix
+            - method to compute the optimal warping path given a cost matrix
                 - Based on Senin (2008)
                     - https://www.researchgate.net/publication/228785661_Dynamic_Time_Warping_Algorithm_Review
 
 
             Parameters
             ----------
-                - C
-                    - np.array
-                    - 2D array of the cost-matrix            
-                - testplot
+                - `C`
+                    - np.ndarray
+                    - 2D array
+                    - cost-matrix of the differences between `x1` and `x2`            
+                - `testplot`
                     - bool, optional
                     - whether to display a testplot of the result
-                    - the default is False
+                    - the default is `False`
 
             Raises
             ------
 
             Returns
             -------
-                - path
-                    - np.array
+                - `path`
+                    - np.ndarray
                     - contains tuples
-                        - indices of the cost-matrix C
+                        - indices of the cost-matrix `C`
                         - the tuples are the optimal warping path
-                        - the tuples contain the indices of the best corresponding points from both timeseries
-                            - i.e. a tuple (0,3) means that the zeroth element of the first timeseries best corresponds to the third element in the second timeseries
+                        - the tuples contain the indices of the best corresponding points from both data series
+                            - i.e. a tuple `(0,3)` means that the zeroth element of the first data series best corresponds to the third element in the second data series
 
-            Dependencies
-            ------------
-                - numpy
-            
             Comments
             --------
 
@@ -225,76 +236,65 @@ class DTW:
 
         return path
 
-    def fit_predict(self, X, expand_prediction=False, testplot=False, timeit=False):
+    def fit_predict(self,
+        X:np.ndarray,
+        expand_prediction:bool=False,
+        testplot:bool=False,
+        ) -> Tuple[list,np.ndarray,np.ndarray,list]:
         #TODO: Corrcoeff not great (if really bad match, no shift helps => corr in cost mat = 1, which is wrong!!)
         """
-            - function to fit the classifier and make a prediction
-            - prediction based on a majority vote from 'X_template'
+            - method to fit the classifier and make a prediction
+            - prediction based on a majority vote from `X_template`
 
             Parameters
             ----------
-                - X
-                    - np.array
-                    - 2D array 
+                - `X`
+                    - np.ndarray
+                    - 2D array
                     - design matrix
                         - contains time-series (of potentially different lengths) as samples
-                - expand_prediction
+                - `expand_prediction`
                     - bool, optional
-                    - if True will return the prediction for each time-series in 'X_template'
+                    - if `True` will return the prediction for each time-series in 'X_template'
                     - otherwise a majority vote of all the predictions will be returned
                         - multiple classes if multiple classes had the same number of votes
-                    - the default is False
-                - testplot
+                    - the default is `False`
+                - `testplot`
                     - bool, optional
-                    - whether to display the testplots of the results
-                    - the default is False
-                - timeit
-                    - bool, optional
-                    - whether to time the execution
-                    - the default is False
+                    - whether to display testplots of the results
+                    - the default is `False`
 
             Raises
             ------
 
             Returns
             -------
-                - y_pred
+                - `y_pred`
                     - list of lists
-                    - the predicted classes based on a majority vote of the predictions w.r.t. all time-series in 'X_template' will be returned
+                    - the predicted classes based on a majority vote of the predictions w.r.t. all data series in `self.X_template` will be returned
                         - multiple classes if multiple classes had the same number of votes
-                    - if 'expand_prediction' is set to True, the prediction for every time-series in 'X_template' will be returned
-                        - in this case y_pred will have the shape '(X.shape[0], X_template.shape[0])'
-                - Cs
-                    - np.array
+                    - if `expand_prediction` is set to `True`, the prediction for every data series in `self.X_template` will be returned
+                        - in this case `y_pred` will have the shape `(X.shape[0], self.X_template.shape[0])`
+                - `Cs`
+                    - np.ndarray
                     - 3D array of the cost-matrices
-                - paths
-                    - np.array
+                - `paths`
+                    - np.ndarray
                     - 2D array
                     - contains tuples as individual entries
                         - indices of the cost-matrix C
                         - the tuples are the optimal warping path
-                - pearsons
+                - `pearsons`
                     - list
                     - contains floats
                     - can take values in the range [-1, 1]
                     - the pearson correlation coefficients for paths
                     - i.e. the similarity between the two respective curves
-                        - high similarity for 'pearson' close to 1
-                        - low similarity otherwise
             
-            Dependencies
-            ------------
-                - numpy
-                - astroLuSt
-
             Comments
             --------
 
-
         """
-
-        if timeit:
-            self.ET.checkpoint_start('DTW.fit_predict()')
 
         #initialize return-lists
         y_pred = []
@@ -348,15 +348,15 @@ class DTW:
         self.y_pred = y_pred
         self.pearson = pearsons
 
-        if timeit:
-            self.ET.checkpoint_end('DTW.fit_predict()')
-
-
         return y_pred, Cs, paths, pearsons
 
-    def summary_plot(self, C, x1, x2, path=None, pearson=None, save=False):
+    def summary_plot(self,
+        C, x1, x2,
+        path=None, pearson=None,
+        save=False
+        ):
         """
-            - function to display a brief summary plot of the DTW-result
+            - method to display a brief summary plot of the DTW-result
 
             Parameters
             ----------
