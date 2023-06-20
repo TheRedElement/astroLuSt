@@ -111,10 +111,10 @@ class WandB_parallel_sweep:
         
         return (
             f'WandB_parallel_sweep(\n'
-            f'    sweep_id={self.sweep_id}, function={self.function},\n'
-            f'    n_jobs={self.n_jobs}, n_agents={self.n_agents},\n'
-            f'    wandb_mode={self.wandb_mode},\n'
-            f'    verbose={self.verbose},\n'
+            f'    sweep_id={repr(self.sweep_id)}, function={repr(self.function)},\n'
+            f'    n_jobs={repr(self.n_jobs)}, n_agents={repr(self.n_agents)},\n'
+            f'    wandb_mode={repr(self.wandb_mode)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
 
