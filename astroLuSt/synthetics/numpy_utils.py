@@ -13,77 +13,76 @@ from typing import Union, Tuple, Callable
 #%%definitions
 class VariableLinspace:
     """
-        - class to generate a datapoints where number of datapoints is not equidistant but defined by mutivariate gaussian distributions
-        - will generate 'num' datapoints (or as close as possible to that) from 'start' to 'stop' (inclusive)
+        - class to generate datapoints where number of datapoints is not equidistant but defined by mutivariate gaussian distributions
+        - will generate `num` datapoints (or as close as possible to that) from `start` to `stop` (inclusive)
 
         Attributes
         ----------
-            - start
+            - `start`
                 - int
                 - starting value of the datapoints to generate
-            - stop
+            - `stop`
                 - int
                 - stopping value of the datapoints to generate
-            - num
+            - `num`
                 - int, optional
                 - number of datapoints to generate
                 - might not be exact
-                    - if you want to have the exact number of datapoints set 'go_exact' to True
+                    - if you want to have the exact number of datapoints set `go_exact` to `True`
                 - the default is 100
-            - nintervals
+            - `nintervals`
                 - int, optional
-                - number of intervals to divide the whole range [start, stop] into
+                - number of intervals to divide the whole range `[start, stop]` into
                 - for each of those intervals the amount of datapoints equal to the value of a multivariate gaussian will be generated
                 - the generated datapoints for all intervals will then be combined to one dataseries
                 - the default is 70
-            - go_exact
+            - `go_exact`
                 - bool, optional
                 - whether to cut datapoints from the final generated dataseries until the num datapoints are reached
                     - datapoints will be cut at random, but the start and stop will still be part of the series
-                - the default is False
-            - maxiter
+                - the default is `False`
+            - `maxiter`
                 - int, optional
-                - maximum number of iterations to try and find a scaling for the underlying distribution that results in a linspace of shape as close to 'num' as possible
-                - the default is None
-                    - will test values from num/2 until 3/2*num
-                    -i.e. maxiter = num
-            - centers
+                - maximum number of iterations to try and find a scaling for the underlying distribution that results in a linspace of shape as close to `num` as possible
+                - the default is `None`
+                    - will test values from `num/2` until `3/2*num`
+            - `centers`
                 - np.ndarray, optional
                 - array of centers of the gaussians to use for the underlying data distribution
                     - the gaussians will get superpsitioned to create the final multivariate gaussian data distribution
-                - the default is None
-                    - will set the center at (stop-start)/2
-            - widths
+                - the default is `None`
+                    - will set the center at `(stop-start)/2`
+            - `widths`
                 - np.ndarray, optional
-                - array of the standard deviations corresponding to 'centers'
+                - array of the standard deviations corresponding to `centers`
                 - standard deviations of the gaussians to use for the underlying data distribution
                     - the gaussians will get superpsitioned to create the final multivariate gaussian data distribution
-                - the default is None
-                    - will be an array of ones with the same shape as 'centers'
-            - verbose
+                - the default is `None`
+                    - will be an array of ones with the same shape as `centers`
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
                 
         Infered Attributes
         ------------------
-            - best_combined_linspace
+            - `best_combined_linspace`
                 - np.ndarray
                 - final generated variable linspace that best matches the requested specifications
-            - best_testdist
+            - `best_testdist`
                 - np.ndarray
-                - underlying gaussian distribution of 'best_combined_linspace'
-            - intervals
+                - underlying gaussian distribution of `best_combined_linspace`
+            - `intervals`
                 - np.ndarray
-                - intervals used to generate 'best_combined_linspace'
+                - intervals used to generate `best_combined_linspace`
         
         Methods
         -------
-            - get_datapoint_distribution()
-            - make_combined_linspace()
-            -  make_exact()
-            - generate()
-            - plot_result()
+            - `get_datapoint_distribution()`
+            - `make_combined_linspace()`
+            - `make_exact()`
+            - `generate()`
+            - `plot_result()`
 
         Dependencies
         ------------
@@ -130,13 +129,14 @@ class VariableLinspace:
         return
     
     def __repr__(self) -> str:
+        
         return (
             f'VariableLinspace(\n'
-            f'    start={self.start}, stop={self.stop}, num={self.num},\n'
-            f'    nintervals={self.nintervals},\n'
-            f'    centers={self.centers}, widths={self.widths},\n'
-            f'    go_exact={self.go_exact}, maxiter={self.maxiter},\n'
-            f'    verbose={self.verbose},\n'
+            f'    start={repr(self.start)}, stop={repr(self.stop)}, num={repr(self.num)},\n'
+            f'    nintervals={repr(self.nintervals)},\n'
+            f'    centers={repr(self.centers)}, widths={repr(self.widths)},\n'
+            f'    go_exact={repr(self.go_exact)}, maxiter={repr(self.maxiter)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
     
@@ -144,11 +144,27 @@ class VariableLinspace:
     def check_shapes(self) -> None:
         """
             - readonly property to check if the passed inputs have the correct shapes
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+                - `ValueError`
+                    - if the shapes do not match
+                    - if `self.num` < `self.nintervals`
+
+            Returns
+            -------
+
+            Comments
+            --------
         """
         if self.centers.shape != self.widths.shape:
             raise ValueError(f'"self.centers" and "self.widths" have to be np.ndarrays of the same shape but have shapes {self.centers.shapes} and {self.widths.shapes}, respectively!')
         if self.num < self.nintervals:
             raise ValueError(f'"self.num" has to be greater than "self.nintervals"!')
+        
         return
 
     def get_datapoint_distribution(self,
@@ -160,13 +176,13 @@ class VariableLinspace:
 
             Parameters
             ----------
-                - centers
+                - `centers`
                     - np.ndarray
                     - means of the individual gaussians that construct the final distribution
-                - widths
+                - `widths`
                     - np.ndarray
                     - standard deviations of the individual gaussians that construct the final distribution
-                - intervals
+                - `intervals`
                     - np.ndarray
                     - interval on which the final combined gaussian shall be evaluated
 
@@ -175,7 +191,7 @@ class VariableLinspace:
 
             Returns
             -------
-                - dist
+                - `dist`
                     - np.ndarray
                     - combined gaussian distribution
 
@@ -202,21 +218,22 @@ class VariableLinspace:
 
             Parameters
             ----------
-                - intervals
+                - `intervals`
                     - np.ndarray
                     - intervals on which the variable linspace shall be defined
-                - dist
+                - `dist`
                     - np.ndarray
-                    - has to have same shape as intervals
+                    - has to have same shape as `intervals`
                     - underlying distribution of datapoints
+                    
             Raises
             ------
             
             Returns
             -------
-                - combined_linspace
+                - `combined_linspace`
                     - np.ndarray
-                    - variable linspace with the number of datapoints per interval are following 'dist'
+                    - variable linspace with the number of datapoints per interval are following `dist`
 
             Comments
             --------
@@ -240,15 +257,15 @@ class VariableLinspace:
         verbose
         ) -> np.ndarray:
         """
-            - method to remove 'num' random datapoints of a dataseries 'x'
+            - method to remove `num` random datapoints of a dataseries `x`
             - border points will not be removed
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - input dataseries
-                - num
+                - `num`
                     - int
                     - number of datapints to remove
 
@@ -257,9 +274,9 @@ class VariableLinspace:
 
             Returns
             -------
-                - x
+                - `x`
                     - np.ndarray
-                    - input array 'x' but with 'num' datapoints randomly removed from it
+                    - input array `x` but with `num` datapoints randomly removed from it
 
             Comments
             --------
@@ -287,66 +304,75 @@ class VariableLinspace:
 
             Parameters
             ----------
-                - start
+                - `start`
                     - int, optional
                     - starting value of the datapoints to generate
-                    - if set overwrites self.start
-                    - the default is None
-                - stop
+                    - if set overwrites `self.start`
+                    - the default is `None`
+                        - will use `self.start`
+                - `stop`
                     - int, optional
                     - stopping value of the datapoints to generate
-                    - if set overwrites self.stop
-                    - the default is None
-                - num
+                    - if set overwrites `self.stop`
+                    - the default is `None`
+                        - will use `self.stop`
+                - `num`
                     - int, optional
                     - number of datapoints to generate
                     - might not be exact
-                        - if you want to have the exact number of datapoints set 'go_exact' to True
-                    - if set overwrites self.num
-                    - the default is None
-                - nintervals
+                        - if you want to have the exact number of datapoints set `go_exact` to `True`
+                    - if set overwrites `self.num`
+                    - the default is `None`
+                        - will use `self.num`
+                - `nintervals`
                     - int, optional
-                    - number of intervals to divide the whole range [start, stop] into
+                    - number of intervals to divide the whole range `[start, stop]` into
                     - for each of those intervals the amount of datapoints equal to the value of a multivariate gaussian will be generated
                     - the generated datapoints for all intervals will then be combined to one dataseries
-                    - if set overwrites self.nintervals
-                    - the default is None
-                - go_exact
+                    - if set overwrites `self.nintervals`
+                    - the default is `None`
+                        - will use `self.nintervals`
+                - `go_exact`
                     - bool, optional
-                    - whether to cut datapoints from the final generated dataseries until the num datapoints are reached
-                        - datapoints will be cut at random, but the start and stop will still be part of the series
-                    - if set overwrites self.go_exact
-                    - the default is None
-                - maxiter
+                    - whether to cut datapoints from the final generated dataseries until the `num` datapoints are reached
+                        - datapoints will be cut at random, but the `start` and `stop` will still be part of the series
+                    - if set overwrites `self.go_exact`
+                    - the default is `None`
+                        - will use `self.go_exact`
+                - `maxiter`
                     - int, optional
-                    - maximum number of iterations to try and find a scaling for the underlying distribution that results in a linspace of shape as close to 'num' as possible
-                    - if set overwrites self.maxiter
-                    - the default is None
-                - centers
+                    - maximum number of iterations to try and find a scaling for the underlying distribution that results in a linspace of shape as close to `num` as possible
+                    - if set overwrites `self.maxiter`
+                    - the default is `None`
+                        - will use `self.maxiter`
+                - `centers`
                     - np.ndarray, optional
                     - array of centers of the gaussians to use for the underlying data distribution
                         - the gaussians will get superpsitioned to create the final multivariate gaussian data distribution
-                    - if set overwrites self.centers
-                    - the default is None
-                - widths
+                    - if set overwrites `self.centers`
+                    - the default is `None`
+                        - will use `self.centers`
+                - `widths`
                     - np.ndarray, optional
-                    - array of the standard deviations corresponding to 'centers'
+                    - array of the standard deviations corresponding to `centers`
                     - standard deviations of the gaussians to use for the underlying data distribution
                         - the gaussians will get superpsitioned to create the final multivariate gaussian data distribution
-                    - if set overwrites self.widths
-                    - the default is None
-                - verbose
+                    - if set overwrites `self.widths`
+                    - the default is `None`
+                        - will use `self.widths`
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - if set overwrites self.verbose
-                    - the default is None
+                    - if set overwrites `self.verbose`
+                    - the default is `None`
+                        - will use `self.verbose`
 
             Raises
             ------
 
             Returns
             -------
-                - best_combined_linspace
+                - `best_combined_linspace`
                     - np.ndarray
                     - combined (variable) linspace best matching the input specifications
 
@@ -408,7 +434,7 @@ class VariableLinspace:
 
         if verbose > 0:
             print(
-                f'INFO(VariableLinspace):\n'
+                f'INFO(VariableLinspace.generate):\n'
                 f'    Number of iterations:       {iteration}\n'
                 f'    Shape of combined_linspace: {combined_linspace.shape}\n'
                 f'    Desired shape:              {num}\n'
@@ -430,12 +456,12 @@ class VariableLinspace:
 
             Returns
             -------
-                - fig
-                    - matplotlib.figure.Figure
+                - `fig`
+                    - matplotlib Figure
                     - figure instance of the generated plot
-                - axs
+                - `axs`
                     - plt.Axes
-                    - axes corresponding to fig
+                    - axes corresponding to `fig`
 
             Comments
             --------
@@ -453,13 +479,10 @@ class VariableLinspace:
         ax1.set_ylabel("Number Of Points")
 
         ax1.legend()
-        plt.tight_layout()
-        plt.show()
 
         axs = fig.axes
 
         return fig, axs
     
 
-# %%
 
