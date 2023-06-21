@@ -219,7 +219,7 @@ class ParallelCoordinates:
     def __repr__(self) -> str:
 
         return (
-            f'WB_HypsearchPlot(\n'
+            f'ParallelCoordinates(\n'
             f'    interpkind={repr(self.interpkind)},\n'
             f'    res={repr(self.res)},\n'
             f'    axpos_coord={repr(self.axpos_coord)}, axpos_hist={repr(self.axpos_hist)},\n'
@@ -1219,7 +1219,6 @@ class ParallelCoordinates:
         #temporarily disable tight-layout if enabled by default
         plt.rcParams['figure.autolayout'] = False
 
-
         fig = plt.figure(**fig_kwargs)
         
         #axis used for plotting models
@@ -1562,7 +1561,7 @@ class LatentSpaceExplorer:
         plot_func:str=None,
         subplots_kwargs:dict=None, predict_kwargs:dict=None, plot_func_kwargs:dict=None,
         verbose:int=None,
-        ) -> Tuple[Figure, List[plt.Axes]]:
+        ) -> Tuple[Figure,List[plt.Axes]]:
         """
             - method to actually generate a plot showing samples out of the latent space while varying 1 latent variable
 
@@ -1622,7 +1621,7 @@ class LatentSpaceExplorer:
                     
             Raises
             ------
-                - `ValueError`
+                - `UserWarning`
                     - if `z0` is not equally spaced
 
             Returns
@@ -1656,8 +1655,8 @@ class LatentSpaceExplorer:
                 ```
         """
         #check shapes
-        if len(np.unique(np.diff(z0))) > 1:
-            raise ValueError(f'"z0" has to be equally spaced!')
+        if np.any((np.diff(np.diff(z0))) > 1e-8):
+             warnings.warn(f'"z0" has to be equally spaced!')
         
         #initialize properly
         z0         = np.array(z0)
@@ -1811,8 +1810,9 @@ class LatentSpaceExplorer:
                     
             Raises
             ------
-                - `ValueError`
+                - `UserWarning`
                     - if `z0` or `z1` is not equally spaced
+                - `ValueError`
                     - if `z0_idx` and `z1_idx` have the same value
 
             Returns
@@ -1885,7 +1885,7 @@ class LatentSpaceExplorer:
         fig, axs = plt.subplots(nrows=z1.shape[0], ncols=z0.shape[0], **subplots_kwargs)
         
 
-        tit = ', '.join([f'z{fzi_idx}: {fzi}' for fzi_idx, fzi in zip(zi_f_idxs, zi_f)])
+        tit = ', '.join([f'z[{fzi_idx}]: {fzi}' for fzi_idx, fzi in zip(zi_f_idxs, zi_f)])
 
         z0_step = np.max(z0)-np.min(z0)
         z1_step = np.max(z1)-np.min(z1)

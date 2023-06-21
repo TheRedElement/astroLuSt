@@ -98,3 +98,4 @@ def generate_colors(classes:Union[list,np.ndarray],
     colors = plt.cm.get_cmap(cmap, ncolors)
     colors = colors(divnorm(np.unique(classes_int)))
     return colors
+
