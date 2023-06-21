@@ -1,5 +1,12 @@
 
 
+#%%imports
+import ctypes
+import matplotlib.pyplot as plt
+import numpy as np
+import re
+
+#%%definitions
 class MindMap:
     """
         - class to create a very primitive mindmap using python code
@@ -75,7 +82,6 @@ class MindMap:
         edge_froms=None, edge_tos=None, edge_weights=None, edge_types=None, #edge attributes
         ):
 
-        import numpy as np
         
         #nodes
         if node_contents is None:
@@ -154,14 +160,14 @@ class MindMap:
     def __repr__(self):
 
         return ("MindMap(\n"
-                f"node_contents  = {self.node_contents},\n"
-                f"node_levels    = {self.node_levels},\n"
-                f"hide_branch    = {self.hide_branch},\n"
-                f"edge_froms     = {self.edge_froms},\n"
-                f"edge_tos       = {self.edge_tos},\n"
-                f"edge_weights   = {self.edge_weights},\n"
-                f"edge_typse     = {self.edge_types},\n"
-                ")\n")
+                f"node_contents  = {repr(self.node_contents)},\n"
+                f"node_levels    = {repr(self.node_levels)},\n"
+                f"hide_branch    = {repr(self.hide_branch)},\n"
+                f"edge_froms     = {repr(self.edge_froms)},\n"
+                f"edge_tos       = {repr(self.edge_tos)},\n"
+                f"edge_weights   = {repr(self.edge_weights)},\n"
+                f"edge_typse     = {repr(self.edge_types)},\n"
+                ")")
 
 
     #Error handling
@@ -213,9 +219,6 @@ class MindMap:
                 - matplotlib
                 - numpy
         """
-        # import astroLuSt.plotting_astroLuSt as alp
-        import matplotlib.pyplot as plt
-        import numpy as np
 
         #initialize with color-generator colors
         node_colors = np.empty((self.node_contents.shape[0], 3))
@@ -265,8 +268,6 @@ class MindMap:
             --------
 
         """
-        
-        import numpy as np
 
         r = np.sqrt(np.arange(0, n, 1)/(n)).reshape((n, 1)) #radius of each point
 
@@ -338,8 +339,6 @@ class MindMap:
             --------
 
         """
-        import numpy as np
-        import matplotlib.pyplot as plt
         
         if end_angle is None:
             end_angle = 2*np.pi
@@ -433,8 +432,6 @@ class MindMap:
             Comments
             --------
         """
-
-        import numpy as np
 
         n_roots = np.count_nonzero((self.node_levels == 0))
         n_nodes = self.node_contents.shape[0]
@@ -662,7 +659,6 @@ class MindMap:
                 - matplotlib
 
         """
-        import matplotlib.pyplot as plt
 
         #change background        
         plt.style.use(plt_style)
@@ -739,7 +735,6 @@ class MindMap:
             --------
 
         """
-        import ctypes
             
         #change wallpaper
         try:
@@ -758,7 +753,6 @@ class MindMap:
         """
             - function to save the MindMap as an indented list in a text-file
         """
-        import numpy as np
 
         max_depth = self.node_levels.max()
         min_depth = self.node_levels.min()
@@ -820,7 +814,6 @@ class MindMap:
             Comments
             --------
         """
-        import re
         import numpy as np
 
         # raise Warning("Not implement yet!")
