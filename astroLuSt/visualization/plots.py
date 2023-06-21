@@ -741,14 +741,14 @@ class ParallelCoordinates:
         #initialize a score_col placeholder if no score-col is provided
         if score_col is None:
             score_col_use = '<score_placeholder>'
-            while score_col in df.columns:
+            while score_col_use in df.columns:
                 score_col_use += '_'
             df = df.insert_at_idx(df.shape[1], pl.Series(score_col_use, np.zeros(df.shape[0])))
         else:
             score_col_use = score_col
+
         ##replace 'score_col' with 'score_col_use'
         score_scaling = score_scaling.replace('score_col', 'score_col_use')
-
         #filter which range of scores to display and remove scores evaluating to nan if desired
         df = df.filter(((pl.col(score_col_use).is_between(min_score, max_score))|(pl.col(score_col_use).is_nan())))
         df_minmaxscore_shape = df.shape[0]  #shape of dataframe after score_col_use boundaries got applied
@@ -759,14 +759,13 @@ class ParallelCoordinates:
     
         if verbose > 0:
             print(
-                f'INFO(WB_HypsearchPlot): Removed\n'
+                f'INFO(ParallelCoordinates): Removed\n'
                 f'    {df_input_shape-df_minmaxscore_shape} row(s) via ({min_score} < {score_col_use} < {max_score}),\n'
                 f'    {df_minmaxscore_shape-df_nonan_shape} row(s) containig nans,\n'
                 f'    {df_input_shape-df_nonan_shape} row(s) total.\n'
             )
         #apply user defined expression to scale the score-function and thus color-scale
         df = df.with_columns(eval(score_scaling).alias(score_col_use))
-        
         return df, score_col_use
     
     def __deal_withnan(self,
@@ -847,7 +846,7 @@ class ParallelCoordinates:
 
         if verbose > 0:
             print(
-                f'INFO(WB_HypsearchPlot): Removed\n'
+                f'INFO(ParallelCoordinates): Removed\n'
                 f'    {df_input_shape-df_inf_shape} row(s) where {score_col} evaluated to inf or -inf due to "score_scaling",\n'
                 # f'    {df_input_shape-df_inf_shape} row(s) total.\n'
             )
@@ -861,7 +860,7 @@ class ParallelCoordinates:
         return df
 
     def plot(self,
-        coordinates:Union[pl.DataFrame,List[dict]],
+        coordinates:Union[pl.DataFrame,List[dict],np.ndarray],
         id_col:str=None,
         score_col:str=None,
         coords_cols:Union[str,list]=r'^.*$',
@@ -888,13 +887,15 @@ class ParallelCoordinates:
             Parameters
             ----------
                 - `coordinates`
-                    - pl.DataFrame, list(dict)
+                    - pl.DataFrame, list(dict), np.ndarray
                     - structure contianing the coordinates to plot
                         - rows denote different runs/models
                         - columns different coordinates
                     - the structure should (but does not have to) contain
                         - an id column used for identification
                         - a score column used for rating different runs/models
+                    - will call `pl.DataFrame(coordinates)` if anything else than a pl.DataFrame is passed
+                        - if a np.ndarray is passed, make sure that the dtype is NOT `object`
                 - `id_col`
                     - str, optional
                     - name of the column to use as an ID
@@ -1195,11 +1196,13 @@ class ParallelCoordinates:
         #if desired also show the individual model-ids
         if show_idcol: df.insert_at_idx(0,  ids.to_series())
         #only display score, if score_col is provided
-        if score_col is not None: df.insert_at_idx(df.shape[1], scores.to_series())
+        if score_col is not None:
+            df.insert_at_idx(df.shape[1], scores.to_series())
+            #deal with inifinite values in score_col_use only if a score_col got passed
+            df = self.__deal_with_inf(df, score_col_use, verbose=verbose)
                 
-        #deal with missing and inifinite values
+        #deal with missing values
         df, fill_value = self.__deal_withnan(df)
-        df = self.__deal_with_inf(df, score_col, verbose=verbose)
 
 
         #coordinates
