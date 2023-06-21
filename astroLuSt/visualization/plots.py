@@ -1846,7 +1846,7 @@ class LatentSpaceExplorer:
                 >>> plt.rcParams['figure.autolayout'] = False #to keep no whitespace between generated samples
                 >>> plt.show()
                 ```
-                
+
         """
 
         #check shapes
@@ -1954,11 +1954,11 @@ class CornerPlot:
 
         Methods
         -------
-            - __2standardnormal()
-            - __2d_distributions()
-            - __1d_distributions()
-            - __make_equalrange()
-            - plot()
+            - `__2standardnormal()`
+            - `__2d_distributions()`
+            - `__1d_distributions()`
+            - `__make_equalrange()`
+            - `plot()`
 
         Dependencies
         ------------
@@ -1972,35 +1972,41 @@ class CornerPlot:
     """
 
     def __init__(self) -> None:
-        pass
+        return
+    
+    def __repr__(self) -> str:
+        return (
+            f'CornerPlot(\n'
+            f')'
+        )
 
     def __2standardnormal(self,
         d1:np.ndarray, mu1:float, sigma1:float,
         d2:np.ndarray, mu2:float, sigma2:float,
-        ):
+        ) -> Tuple[np.ndarray,float,float,np.ndarray,float,float]:
         """
-            - method to convert the input to a standard normal distibution
+            - private method to convert the input to a standard normal distibution
                 - zero mean
                 - unit variance
             
             Parameters
             ----------
-                - d1
+                - `d1`
                     - np.ndarray
                     - data of the first coordinate to plot
-                - mu1
+                - `mu1`
                     - np.ndarray
                     - mean of the first coordinate
-                - sigma1
+                - `sigma1`
                     - np.ndarray
                     - standard deviation of the first coordinate
-                - d2
+                - `d2`
                     - np.ndarray
                     - data of the second coordinate to plot
-                - mu2
+                - `mu2`
                     - np.ndarray
                     - mean of the second coordinate
-                - sigma2
+                - `sigma2`
                     - np.ndarray
                     - standard deviation of the second coordinate
 
@@ -2009,6 +2015,24 @@ class CornerPlot:
 
             Returns
             -------
+                - `d1`
+                    - np.ndarray
+                    - normalized input `d1`
+                - `mu1`
+                    - float
+                    - mean of `d1`
+                - `sigma1`
+                    - float
+                    - standard deviation of `d1`
+                - `d2`
+                    - np.ndarray
+                    - normalized input `d2`
+                - `mu2`
+                    - float
+                    - mean of `d2`
+                - `sigma2`
+                    - float
+                    - standard deviation of `d2`
 
             Comments
             --------
@@ -2041,70 +2065,70 @@ class CornerPlot:
 
             Parameters
             ----------
-                - idx1
+                - `idx1`
                     - int
                     - index of y coordinate in use
-                - idx2
+                - `idx2`
                     - int
                     - index of x coordinate in use
-                - idx
+                - `idx`
                     - int
                     - current subplot index
-                - d1
+                - `d1`
                     - np.ndarray
                     - data of the first coordinate to plot
-                - mu1
+                - `mu1`
                     - np.ndarray
                     - mean of the first coordinate
-                - sigma1
+                - `sigma1`
                     - np.ndarray
                     - standard deviation of the first coordinate
-                - l1
+                - `l1`
                     - str
                     - label to apply to y coordinate in use
-                - d2
+                - `d2`
                     - np.ndarray
                     - data of the second coordinate to plot
-                - mu2
+                - `mu2`
                     - np.ndarray
                     - mean of the second coordinate
-                - sigma2
+                - `sigma2`
                     - np.ndarray
                     - standard deviation of the second coordinate
-                - l2
+                - `l2`
                     - str
                     - label to apply to x coordinate in use
-                - corrmat
+                - `corrmat`
                     - np.ndarray
                     - correlation matrix for all passed coordinates
-                - y
+                - `y`
                     - np.ndarray
                     - labels for each sample
-                - cmap
+                - `cmap`
                     - str, Colormap
                     - name of colormap or Colormap instance to color the datapoints
-                - bins
+                - `bins`
                     - int
                     - number of bins to use for the estimation of the estimated normal distribution
-                - fig
+                - `fig`
                     - Figure
                     - figure to plot into
-                - nrowscols
+                - `nrowscols`
                     - int
                     - number of rows and columns of the corner-plot
-                - equal_range
+                - `equal_range`
                     - bool
                     - whether to display equal ranges in all subplots
-                - sctr_kwargs
+                - `sctr_kwargs`
                     - dict, optional
-                    - kwargs to pass to ax.scatter()
+                    - kwargs to pass to `ax.scatter()`
 
             Raises
             ------
 
             Returns
             -------
-                - ax
+                - `ax`
                     - plt.Axes
                     - created axis
 
@@ -2182,46 +2206,46 @@ class CornerPlot:
 
             Parameters
             ----------
-                - idx
+                - `idx`
                     - int
                     - current subplot index
-                - d1
+                - `d1`
                     - np.ndarray
                     - data of the first coordinate to plot
-                - mu1
+                - `mu1`
                     - np.ndarray
                     - mean of the first coordinate
-                - sigma1
+                - `sigma1`
                     - np.ndarray
                     - standard deviation of the first coordinate
-                - y
+                - `y`
                     - np.ndarray
                     - labels for each sample
-                - cmap
+                - `cmap`
                     - str, Colormap
                     - name of colormap or Colormap instance to color the datapoints
-                - bins
+                - `bins`
                     - int
                     - number of bins to use for the histograms
-                - fig
+                - `fig`
                     - Figure
                     - figure to plot into
-                - nrowscols
+                - `nrowscols`
                     - int
                     - number of rows and columns of the corner-plot
-                - equal_range
+                - `equal_range`
                     - bool
                     - whether to display equal ranges in all subplots
-                - hist_kwargs
+                - `hist_kwargs`
                     - dict, optional
-                    - kwargs to pass to ax.hist()
+                    - kwargs to pass to `ax.hist()`
 
             Raises
             ------
 
             Returns
             -------
-                - ax
+                - `ax`
                     - plt.Axes
                     - created axis
 
@@ -2298,10 +2322,10 @@ class CornerPlot:
 
             Parameters
             ----------
-                - fig
+                - `fig`
                     - Figure
-                    -  figure to modify the axes-ranges of
-                - nrowscols
+                    - figure to modify the axes-ranges of
+                - `nrowscols`
                     - int
                     - number of rows and columns in the figure
 
@@ -2356,62 +2380,62 @@ class CornerPlot:
 
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray
                     - contains samples as rows
                     - contains features as columns
-                - y
+                - `y`
                     - np.ndarray, str, optional
-                    - contains labels corresponding to X
+                    - contains labels corresponding to `X`
                     - if a np.ndarray is passed
                         - will be used as the colormap
                     - if a string is passed
                         - will be interpreted as the actual color
-                    - the default is None
-                        - will default to 'tab:blue'
-                - featurenames
+                    - the default is `None`
+                        - will default to `'tab:blue'`
+                - `featurenames`
                     - np.ndarray, optional
-                    - names to give to the features present in X
-                    - the default is None
-                        - will initialize with 'Feature i', where i is the index the feature appears in X
-                - mus
+                    - names to give to the features present in `X`
+                    - the default is `None`
+                        - will initialize with `'Feature i'`, where `i` is the index at which the feature appears in `X`
+                - `mus`
                     - np.ndarray, optional
-                    - contains the mean value estimates corresponding to X
-                    - the default is None
+                    - contains the mean value estimates corresponding to `X`
+                    - the default is `None`
                         - will be ignored
-                - sigmas
+                - `sigmas`
                     - np.ndarray, optional
-                    - contains the standard deviation estimates corresponding to X
-                    - the default is None
+                    - contains the standard deviation estimates corresponding to `X`
+                    - the default is `None`
                         - will be ignored
-                - corrmat
+                - `corrmat`
                     - np.ndarray, optional
-                    - correlation matrix for X
-                    - has to have shape (X.shape[1],X.shape[1])
-                    - the default is None
+                    - correlation matrix for `X`
+                    - has to have shape `(X.shape[1],X.shape[1])`
+                    - the default is `None`
                         - will infer the correlation coefficients
-                - bins
+                - `bins`
                     - int, optional
-                    - number of bins to use in plt.histogram
+                    - number of bins to use in `plt.histogram`
                     - also the resolution for the estimation of the normal distribution
                     - the default is 100
-                - cmap
+                - `cmap`
                     - str, mcolors.Colormap
                     - name of the colormap to use or Colormap instance
-                    - used to color the 1d and 2d distributions according to y
-                    - the default is 'viridis'
-                - equal_range
+                    - used to color the 1d and 2d distributions according to `y`
+                    - the default is `'viridis'`
+                - `equal_range`
                     - bool, optional
                     - whether to plot the data with equal x- and y-limits
-                    - the default is False
-                - asstandardnormal
+                    - the default is `False`
+                - `asstandardnormal`
                     - bool, optional
                     - whether to plot the data rescaled to zero mean and unit variance
-                    - the default is False
-                - fig
+                    - the default is `False`
+                - `fig`
                     - Figure, optional
                     - figure to plot into
-                    - the default is None
+                    - the default is `None`
                         - will create a new figure
 
             Raises
@@ -2419,12 +2443,12 @@ class CornerPlot:
 
             Returns
             -------
-                - fig
+                - `fig`
                     - Figure
                     - the created matplotlib figure
-                - axs
+                - `axs`
                     - plt.Axes
-                    - axes corresponding to 'fig'
+                    - axes corresponding to `fig`
 
             Comments
             --------
@@ -2506,97 +2530,6 @@ class CornerPlot:
         return fig, axs
     
 #%%functions
-def plot_dbe(
-    X:np.ndarray, y:np.ndarray,
-    res:int=100, k:int=1,
-    ax:plt.Axes=None,
-    contourf_kwargs:dict=None,
-    ) -> None:        
-    """
-        - function to plot estimated desicion-boundaries of data
-        - uses voronoi diagrams to to do so
-            - estimates the decision boundaries using KNN with k=1
-            - Source: https://stackoverflow.com/questions/37718347/plotting-decision-boundary-for-high-dimension-data
-                - last access: 17.05.2023
-        
-        Parameters
-        ----------
-            - X
-                - np.ndarray
-                - 2d array containing the features of the data
-                    - i.e. 2 features
-            - y
-                - np.ndarray
-                - 1d array of shape X.shape[0]
-                - labels corresponding to X
-            - res
-                - int, optional
-                - resolution of the estimated boundary
-                - the default is 100
-            - k
-                - int, optional
-                - number of neighbours to use in the KNN estimator
-                - the default is 1
-            - ax
-                - plt.Axes
-                - axes to add the density estimate to
-                - the default is None
-                    - will call plt.contourf() instead of ax.contourf()
-            - contourf_kwargs
-                - dict, optional
-                - kwargs to pass to .contourf() function
-                - the default is None
-                    - will be initialized with {'alpha':0.5, 'zorder':-1}
-
-
-        Raises
-        ------
-            - ValueError
-                - if either 'X' or 'y' are not passed in coorect shapes
-
-        Returns
-        -------
-
-        Dependencies
-        ------------
-            - matplotlib
-            - numpy
-            - sklearn
-
-        Comments
-        --------
-
-    """
-    
-    #initialize parameters
-    if contourf_kwargs is None: contourf_kwargs = {'alpha':0.5, 'zorder':-1}
-
-    y = y.flatten()
-
-    #check shapes
-    if X.shape[1] != 2:
-        raise ValueError(f'"X" has to contain 2 features. I.e. it has to be of shape (n_samples,2) and not {X.shape}')
-    if y.shape[0] != X.shape[0]:
-        raise ValueError(f'"y" has to be a 1d version of "X" containing the labels corresponding to the samples. I.e. it has to be of shape (n_samples,) and not {y.shape}')
-
-    #get background model
-    background_model = KNeighborsClassifier(n_neighbors=k)
-    background_model.fit(X, y)
-    xx, yy = np.meshgrid(
-        np.linspace(X[:,0].min(), X[:,0].max(), res),
-        np.linspace(X[:,1].min(), X[:,1].max(), res),
-    )
-
-    voronoiBackground = background_model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape((res, res))
-
-    #(add) plot
-    if ax is not None:
-        ax.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
-    else:
-        plt.contourf(xx, yy, voronoiBackground, **contourf_kwargs)
-
-    return
-
 def plot_predictioneval(
     y_true:np.ndarray, y_pred:np.ndarray,
     fig_kwargs:dict=None,
@@ -2604,45 +2537,45 @@ def plot_predictioneval(
     plot_kwargs:dict=None,
     ) -> Tuple[Figure,plt.Axes]:
     """
-        - function to produce a plot of the true and lables vs the model prediction
+        - function to produce a plot of the true and predicted lables vs the model prediction
 
         Parameters
         ----------
-            - y_true
+            - `y_true`
                 - np.ndarray
                 - ground-truth labels
                 - will be plotted on the x-axis
-            - y_pred
+            - `y_pred`
                 - np.ndarray
                 - labels predicted by the model
                 - will be plotted on the y-axis
-            - fig_kwargs
+            - `fig_kwargs`
                 - dict, optional
-                - kwargs to pass to plt.figure()
-                - the default is None
-                    - will be initialized with {}
-            - sctr_kwargs
+                - kwargs to pass to `plt.figure()`
+                - the default is `None`
+                    - will be initialized with `{}`
+            - `sctr_kwargs`
                 - dict, optional
-                - kwargs to pass to ax.scatter()
-                - the default is None
-                    - will be initialized with {'color':'tab:blue', 's':1}
-            - plot_kwargs
+                - kwargs to pass to `ax.scatter()`
+                - the default is `None`
+                    - will be initialized with `{'color':'tab:blue', 's':1}`
+            - `plot_kwargs`
                 - dict, optional
-                - kwargs to pass to ax.plot()
-                - the default is None
-                    - will be initialized with {'color':'tab:orange'}
+                - kwargs to pass to `ax.plot()`
+                - the default is `None`
+                    - will be initialized with `{'color':'tab:orange'}`
             
             Raises
             ------
 
             Returns
             -------
-                - fig
+                - `fig`
                     - Figure
                     - created figure
-                - axs
+                - `axs`
                     - plt.Axes
-                    - axes corresponding to fig
+                    - axes corresponding to `fig`
             
             Dependencies
             ------------
@@ -2676,3 +2609,4 @@ def plot_predictioneval(
     axs = fig.axes
 
     return fig, axs
+
