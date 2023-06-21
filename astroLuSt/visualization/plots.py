@@ -27,128 +27,128 @@ class ParallelCoordinates:
 
         Attributes
         ----------
-            - show_idcol
+            - `show_idcol`
                 - bool, optional
                 - whether to show a column encoding the ID of a particular run/model
                 - only recommended if the number of models is not too large
-                - the default is False
-            - interpkind
+                - the default is `False`
+            - `interpkind`
                 - str, optional
                 - function to use for the interpolation between the different coordinates
-                - argument passed as 'kind' to scipy.interpolate.interp1d()
-                - the default is 'quadratic'
-            - res
+                - argument passed as `kind` to `scipy.interpolate.interp1d()`
+                - the default is `'quadratic'`
+            - `res`
                 - int, optional
                 - resolution of the interpolated line
                     - i.e. the number of points used to plot each run/model
                 - the default is 1000
-            - axpos_coord
+            - `axpos_coord`
                 - tuple, int, optional
                 - position of where to place the axis containing the coordinate-plot
                 - specification following the matplotlib convention
-                    - will be passed to fig.add_subplot()
-                - the default is None
+                    - will be passed to `fig.add_subplot()`
+                - the default is `None`
                     - will use 121
-            - axpos_hist
+            - `axpos_hist`
                 - tuple, int, optional
                 - position of where to place the axis containing the histogram of scorings
                 - specification following the matplotlib convention
-                    - will be passed to fig.add_subplot()
-                - the default is None
+                    - will be passed to `fig.add_subplot()`
+                - the default is `None`
                     - will use 164
-            - map_suffix
+            - `map_suffix`
                 - str, optional
                 - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
-                - only use if your column-names contain the default ('__map')
-                - the default is '__map'
-            - ticks2display
+                - only use if your column-names contain the parameter default (`'__map'`)
+                - the default is `'__map'`
+            - `ticks2display`
                 - int, optional
                 - number of ticks to show for numeric coordinates
                 - the default is 5
-            - tickcolor
+            - `tickcolor`
                 - str, tuple, optional
                 - color to draw ticks and ticklabels in
                 - if a tuple is passed it has to be a RGBA-tuple
-                - the default is 'tab:grey'
-            - ticklabelrotation
+                - the default is `'tab:grey'`
+            - `ticklabelrotation`
                 - float, optional
                 - rotation of the ticklabels
                 - the default is 45
-            - tickformat
+            - `tickformat`
                 - str, optional
                 - formatstring for the (numeric) ticklabels
-                - the default is '%g'                
-            - nancolor
+                - the default is `'%g'`
+            - `nancolor`
                 - str, tuple, optional
                 - color to draw failed runs (evaluate to nan) in
                 - if a tuple is passed it has to be a RGBA-tuple
-                - the default is 'tab:grey'
-            - nanfrac
+                - the default is `'tab:grey'`
+            - `nanfrac`
                 - float, optional
                 - the fraction of the colormap to use for nan-values (i.e. failed runs)
                     - fraction of 256 (resolution of the colormap)
                 - will also influence the number of bins/binsize used in the performance-histogram
                 - a value between 0 and 1
                 - the default is 4/256
-            - linealpha
+            - `linealpha`
                 - float, optional
                 - alpha value of the lines representing runs/models
                 - the default is 1
-            - linewidth
+            - `linewidth`
                 - float, optional
                 - linewidth of the lines representing runs/models
                 - the default is 1
-            - base_cmap
+            - `base_cmap`
                 - str, mcolors.Colormap
                 - colormap to map the scores onto
-                - some space will be allocated for nan, if nans shall be displayed as well
-                - the default is 'plasma'
-            - cbar_over_hist
+                - some space will be allocated for `nan`, if nans shall be displayed as well
+                - the default is `'plasma'`
+            - `cbar_over_hist`
                 - bool, optional
                 - whether to plot a colorbar instead of the default performance-histogram
                 - the histogram also has a colorbar encoded
-                - the default is False
-            - n_jobs
+                - the default is `False`
+            - `n_jobs`
                 - int, optional
                 - number of threads to use when plotting the runs/models
                 - use for large coordinate-plots
-                - argmument passed to joblib.Parallel
+                - argmument passed to `joblib.Parallel`
                 - the default is 1
-            - n_jobs_addaxes
+            - `n_jobs_addaxes`
                 - int, optional
                 - number of threads to use when plotting the axes for the different coordinates
                 - use if a lot coordinates shall be plotted
-                - argmument passed to joblib.Parallel
-                - it could be that that a RuntimeError occurs if too many threads try to add axes at the same time
-                    - this error should be caught with a try-except statement, but in case it something still goes wrong try setting 'n_jobs_addaxes' to 1
+                - argmument passed to `joblib.Parallel`
+                - it could be that that a `RuntimeError` occurs if too many threads try to add axes at the same time
+                    - this error should be caught with a try-except statement, but in case it something still goes wrong try setting `n_jobs_addaxes` to 1
                 - the default is 1
-            - sleep
+            - `sleep`
                 - float, optional
                 - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                - the default is 0.1
-            - verbose
+                - the default is 0.1 (seconds)
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
-            - text_kwargs
+            - `text_kwargs`
                 - dict, optional
-                - kwargs passed to ax.text()
+                - kwargs passed to `ax.text()`
                     - affect the labels of the created subplots for each coordinate
-                - if the passed dict does not contain 'rotation', 'rotation':45 will be added
-                - the default is None
-                    - will be initialized with {'rotation':45}                
+                - if the passed dict does not contain `'rotation'`, `'rotation':45` will be added
+                - the default is `None`
+                    - will be initialized with `{'rotation':45}`                
 
         Methods
         -------
-            - make_new_cmap()
-            - col2range01()
-            - plot_model()
-            - add_coordaxes()
-            - add_score_distribution()
-            - __init_scorecol()
-            - __deal_with_nan()
-            - __deal_with_inf()
-            - plot()
+            - `make_new_cmap()`
+            - `col2range01()`
+            - `plot_model()`
+            - `add_coordaxes()`
+            - `add_score_distribution()`
+            - `__init_scorecol()`
+            - `__deal_with_nan()`
+            - `__deal_with_inf()`
+            - `plot()`
 
         Dependencies
         ------------
@@ -217,18 +217,19 @@ class ParallelCoordinates:
         return
 
     def __repr__(self) -> str:
+
         return (
             f'WB_HypsearchPlot(\n'
-            f'    interpkind={self.interpkind},\n'
-            f'    res={self.res},\n'
-            f'    axpos_coord={self.axpos_coord}, axpos_hist={self.axpos_hist},\n'
-            f'    map_suffix={self.map_suffix},\n'
-            f'    ticks2display={self.ticks2display}, tickcolor={self.tickcolor}, ticklabelrotation={self.ticklabelrotation}, tickformat={self.tickformat},\n'
-            f'    nancolor={self.nancolor}, nanfrac={self.nanfrac},\n'
-            f'    linealpha={self.linealpha}, linewidth={self.linewidth},\n'
-            f'    base_cmap={self.base_cmap}, cmap_over_hist={self.cbar_over_hist},\n'
-            f'    n_jobs={self.n_jobs}, n_jobs_addaxes={self.n_jobs_addaxes}, sleep={self.sleep},\n'
-            f'    verbose={self.verbose},\n'
+            f'    interpkind={repr(self.interpkind)},\n'
+            f'    res={repr(self.res)},\n'
+            f'    axpos_coord={repr(self.axpos_coord)}, axpos_hist={repr(self.axpos_hist)},\n'
+            f'    map_suffix={repr(self.map_suffix)},\n'
+            f'    ticks2display={repr(self.ticks2display)}, tickcolor={repr(self.tickcolor)}, ticklabelrotation={repr(self.ticklabelrotation)}, tickformat={repr(self.tickformat)},\n'
+            f'    nancolor={repr(self.nancolor)}, nanfrac={repr(self.nanfrac)},\n'
+            f'    linealpha={repr(self.linealpha)}, linewidth={repr(self.linewidth)},\n'
+            f'    base_cmap={repr(self.base_cmap)}, cmap_over_hist={repr(self.cbar_over_hist)},\n'
+            f'    n_jobs={repr(self.n_jobs)}, n_jobs_addaxes={repr(self.n_jobs_addaxes)}, sleep={repr(self.sleep)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
 
@@ -243,17 +244,17 @@ class ParallelCoordinates:
 
             Parameters
             ----------
-                - cmap
+                - `cmap`
                     - mcolors.Colormap
                     - template-colormap to use for the creation
-                - nancolor
+                - `nancolor`
                     - str, tuple, optional
                     - color to draw values representing nan in
                     - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is 'tab:grey'
-                - nanfrac
+                    - the default is `'tab:grey'`
+                - `nanfrac`
                     - float, optional
-                    - the fraction of the colormap to use for nan-values (i.e. failed runs)
+                    - the fraction of the colormap to use for `nan`-values (i.e. failed runs)
                         - fraction of 256 (resolution of the colormap)
                     - will also influence the number of bins/binsize used in the performance-histogram
                     - a value between 0 and 1
@@ -264,7 +265,7 @@ class ParallelCoordinates:
 
             Returns
             -------
-                - cmap
+                - `cmap`
                     - mcolors.Colormap
                     - modified input colormap
 
@@ -284,34 +285,34 @@ class ParallelCoordinates:
         map_suffix:str='__map',
         ) -> pl.DataFrame:
         """
-            - method to map any column onto the interval [0,1]
+            - method to map any column onto the interval `[0,1]`
             - a unique value for every unique element in categorical columns will be assigned to them
-            - continuous columns will just be scaled to lye within the range
+            - continuous columns will just be scaled to lie within the range
 
             Parameters
             ----------
-                - df
+                - `df`
                     - pl.DataFrame
                     - input dataframe
                         - the mapped column (name = original name with the appendix __map) will be append to it
-                        - the new colum is the input column ('colname') mapped onto the interval [0,1]
-                - colname
+                        - the new colum is the input column (`'colname'`) mapped onto the interval `[0,1]`
+                - `colname`
                     - str
                     - name of the column to be mapped
-                - map_suffix
+                - `map_suffix`
                     - str, optional
-                    - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
-                    - only use if your column-names contain the default ('__map')
-                    - the default is '__map'
+                    - suffix to add to the columns created by mapping the coordinates onto the intervals `[0,1]`
+                    - only use if your column-names contain the default (`'__map'`)
+                    - the default is `'__map'`
 
             Raises
             ------
 
             Returns
             -------
-                - df
+                - `df`
                     - pl.DataFrame
-                    - input dataframe with additional column ('colname'+'map_suffix') appended to it
+                    - input dataframe with additional column (`'colname'+'map_suffix'`) appended to it
 
             Comments
             --------
@@ -350,49 +351,49 @@ class ParallelCoordinates:
 
             Parameters
             ----------
-                - coordinates
+                - `coordinates`
                     - tuple, list
                     - iterable of coordinates specifying this particular run/model
-                - coordinates_map
+                - `coordinates_map`
                     - tuple, list
                     - iterable of coordinates specifying this particular run/model mapped to the interval [0,1]
-                - fill_value
+                - `fill_value`
                     - float
                     - value to use for plotting instead of nan
                     - i.e. value representing failed runs
-                - ax
+                - `ax`
                     - plt.Axes
                     - axis to plot the line onto
-                - cmap
+                - `cmap`
                     - mcolor.Colormap
                     - colormap to use for coloring the lines
-                - nancolor
+                - `nancolor`
                     - str, tuple, optional
                     - color to draw failed runs (evaluate to nan) in
                     - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is 'tab:grey'
-                - interpkind
+                    - the default is `'tab:grey'`
+                - `interpkind`
                     - str, optional
                     - function to use for the interpolation between the different coordinates
-                    - argument passed as 'kind' to scipy.interpolate.interp1d()
-                    - the default is 'quadratic'                
-                - res
+                    - argument passed as `kind` to `scipy.interpolate.interp1d()`
+                    - the default is `'quadratic'`                
+                - `res`
                     - int, optional
                     - res of the interpolated line
                         - i.e. the number of points used to plot each run/model
                     - the default is 1000
-                - linealpha
+                - `linealpha`
                     - float, optional
                     - alpha value of the lines representing runs/models
                     - the default is 1
-                - linewidth
+                - `linewidth`
                     - float, optional
                     - linewidth of the lines representing runs/models
                     - the default is 1    
-                - sleep
+                - `sleep`
                     - float, optional
                     - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - the default is 0.1
+                    - the default is 0.1 (seconds)
 
             Raises
             ------
@@ -435,68 +436,68 @@ class ParallelCoordinates:
         ) -> plt.Axes:
         """
             - method to add a new axis for each coordinate
-            - will move the spine to be aligned with the cordinates x-position in 'ax'
+            - will move the spine to be aligned with the cordinates x-position in `ax`
 
             Parameters
             ----------
-                - ax
+                - `ax`
                     - plt.Axes
                     - axis to add the new axis to
                     - should be the axis used for plotting the runs/models
-                - coordinate
+                - `coordinate`
                     - pl.Series
                     - series containing the coordinate to plot
-                - coordinate_map
+                - `coordinate_map`
                     - pl.Series
-                    - series containing the mapped values of 'coordinate'
-                - fill_value
+                    - series containing the mapped values of `coordinate`
+                - `fill_value`
                     - float
-                    - value to use for plotting instead of nan
+                    - value to use for plotting instead of `nan`
                     - i.e. value representing failed runs
-                - idx
+                - `idx`
                     - int
                     - index specifying which axis the current one is (i.e. 0 meaning it is the first axis, 1 the second, ect.)
-                    - used to determine where to place the axis based on 'n_coords'
-                        - position = idx//n_coords
-                        - 0 meaning directly at the location of 'ax'
-                        - 1 meaning at the far right of 'ax'
-                - n_coords
+                    - used to determine where to place the axis based on `n_coords`
+                        - `position = idx//n_coords`
+                        - 0 meaning directly at the location of `ax`
+                        - 1 meaning at the far right of `ax`
+                - `n_coords`
                     - int
                     - number of coordinates to plot in total
-                - ticks2display
+                - `ticks2display`
                     - int, optional
                     - number of ticks to show for numeric coordinates
                     - the default is 5
-                - tickcolor
+                - `tickcolor`
                     - str, tuple, optional
                     - color to draw ticks and ticklabels in
                     - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is 'tab:grey'
-                - ticklabelrotation
+                    - the default is `'tab:grey'`
+                - `ticklabelrotation`
                     - float, optional
                     - rotation of the ticklabels
                     - the default is 45
-                - tickformat
+                - `tickformat`
                     - str, optional
                     - formatstring for the (numeric) ticklabels
-                    - the default is '%g'                   
-                - sleep
+                    - the default is `'%g'`
+                - `sleep`
                     - float, optional
                     - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - the default is 0.1
-                - text_kwargs
+                    - the default is 0.1 (seconds)
+                - `text_kwargs`
                     - dict, optional
-                    - kwargs passed to ax.text()
+                    - kwargs passed to `ax.text()`
                         - affect the labels of the created subplots for each coordinate
-                    - the default is None
-                        - will be initialized with an empty dict
+                    - the default is `None`
+                        - will be initialized with an empty dict (`{}`)
 
             Raises
             ------
 
             Returns
             -------
-                - axp
+                - `axp`
                     - plt.Axes
                     - newly created axis
 
@@ -583,39 +584,39 @@ class ParallelCoordinates:
 
             Parameters
             ----------
-                - score_col_map
+                - `score_col_map`
                     - pl.Series
                     - series containing some score mapped onto the interval [0,1]
-                - nanfrac
+                - `nanfrac`
                     - float, optional
-                    - the fraction of the colormap to use for nan-values (i.e. failed runs)
+                    - the fraction of the colormap to use for `nan`-values (i.e. failed runs)
                         - fraction of 256 (resolution of the colormap)
                     - will also influence the number of bins/binsize used in the performance-histogram
                     - a value between 0 and 1
                     - the default is 4/256
-                - lab
+                - `lab`
                     - str, optional
                     - label to use for the y-axis of the plot
-                    - the default is None
-                - ticklabcolor
+                    - the default is `None`
+                - `ticklabcolor`
                     - str, tuple, optional
                     - color to draw ticks, ticklabels and axis labels in
                     - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is 'tab:grey'                    
-                - cmap
+                    - the default is `'tab:grey'`
+                - `cmap`
                     - mcolor.Colormap, str
                     - colormap to apply to the plot for encoding the score
-                    - the default is 'plasma'
-                - fig
+                    - the default is `'plasma'`
+                - `fig`
                     - Figure, optional
                     - figure to plot into
-                    - the default is None
+                    - the default is `None`
                         - will create a new figure
-                - axpos
+                - `axpos`
                     - tuplple, int
                     - axis position in standard matplotlib convention
-                    - will be passed to fig.add_subplot()
-                    - the default is None
+                    - will be passed to `fig.add_subplot()`
+                    - the default is `None`
                         - will use 111
                 
             Raises
@@ -674,42 +675,42 @@ class ParallelCoordinates:
         verbose:int=0
         ) -> Tuple[pl.DataFrame,str]:
         """
-            - method to inizialize the score column
-            - will be called in self.plot()
+            - private method to inizialize the score column
+            - will be called in `self.plot()`
 
             Parameters
             ----------
-                - df
+                - `df`
                     - pl.DataFrame
                     - input dataframe containing the score column/coordinate columns
                     - this dataframe will be modified
-                - score_col
+                - `score_col`
                     - str, optional
                     - name of the column to use for scoring
-                    - the default is None
+                    - the default is `None`
                         - will generate a placeholder column
-                - score_scaling
+                - `score_scaling`
                     - str, optional
                     - a polars expression
                     - scaling to apply to the (generated) score column
-                    - the default is 'pl.col(score_col)'
-                - min_score
+                    - the default is `'pl.col(score_col)'`
+                - `min_score`
                     - float, optional
                     - minimum score to plot
-                    - everything below will be dropped from 'df'
-                    - the default is None
-                        - will be set to -np.inf
-                - max_score
+                    - everything below will be dropped from `df`
+                    - the default is `None`
+                        - will be set to `-np.inf`
+                - `max_score`
                     - float, optional
                     - maximum score to plot
-                    - everything above will be dropped from 'df'
-                    - the default is None
-                        - will be set to np.inf
-                - remove_nanscore
+                    - everything above will be dropped from `df`
+                    - the default is `None`
+                        - will be set to `np.inf`
+                - `remove_nanscore`
                     - bool, optional
-                    - whether to drop all rows that have a score evaluating to np.nan
-                    - the default is False
-                - verbose
+                    - whether to drop all rows that have a score evaluating to `np.nan`
+                    - the default is `False`
+                - `verbose`
                     - int
                     - verbosity level
                     - the default is 0
@@ -719,15 +720,15 @@ class ParallelCoordinates:
 
             Returns
             -------
-                - df
+                - `df`
                     - pl.DataFrame
                     - dataframe modified according to the specifications
-                    - if score_col is None will contain one additional column
+                    - if `score_col` is `None` will contain one additional column
                         - this is a placeholder for score-col
                         - this column has only 0 as entries
-                - score_col_use
+                - `score_col_use`
                     - str
-                    - modified version of the input 'score_col'
+                    - modified version of the input `score_col`
 
             Comments
             --------
@@ -769,30 +770,30 @@ class ParallelCoordinates:
         return df, score_col_use
     
     def __deal_withnan(self,
-        df
+        df:pl.DataFrame
         ) -> Tuple[pl.DataFrame,float]:
         """
-            - method to deal with nan values in df
-            - essentially will replace all nan with a value 0.5 lower than the minimum of the numerical columns in the dataframe
+            - method to deal with `nan` values in df
+            - essentially will replace all `nan` with a value 0.5 lower than the minimum of the numerical columns in the dataframe
             - necessary to avoid issues while plotting
 
             Parameters
             ----------
-                - df
+                - `df`
                     - pl.DataFrame
-                    - input dataframe that will be modified (nan will be filled)
+                    - input dataframe that will be modified (`nan` will be filled)
 
             Raises
             ------
 
             Returns
             -------
-                - df
+                - `df`
                     - pl.DataFrame
-                    - dataframe with the nan filled as 0.5 lower than the minimum of all numerical columns in the input 'df'
+                    - dataframe with the `nan` filled as 0.5 lower than the minimum of all numerical columns in the input `df`
                 - fill_value
                     - float
-                    - the value used to fill the nan
+                    - the value used to fill the `nan`
 
             Comments
             --------
@@ -811,17 +812,17 @@ class ParallelCoordinates:
         verbose:int=0,
         ):
         """
-            - method that removes rows with infinite values in 'score_col' resulting from 'score_scaling'
+            - method that removes rows with infinite values in `score_col` resulting from `score_scaling`
 
             Parameters
             ----------
-                -  df
+                -  `df`
                     - pl.DataFrame
-                    - input dataframe that will be modified (inf and -inf will be replaced by nan)
-                - score_col
+                    - input dataframe that will be modified (`inf` and `-inf` will be replaced by `np.nan`)
+                - `score_col`
                     - str
                     - name of the score column
-                - verbose
+                - `verbose`
                     - int, optional
                     - verbosity level
                     - the default is 0
@@ -830,9 +831,9 @@ class ParallelCoordinates:
                 
             Returns
             -------
-                - df
+                - `df`
                     - pl.DataFrame
-                    - dataframe with the inf and -inf in score_col removed
+                    - dataframe with the `inf` and `-inf` in `score_col` removed
 
             Comment
             -------
@@ -886,7 +887,7 @@ class ParallelCoordinates:
 
             Parameters
             ----------
-                - coordinates
+                - `coordinates`
                     - pl.DataFrame, list(dict)
                     - structure contianing the coordinates to plot
                         - rows denote different runs/models
@@ -894,219 +895,219 @@ class ParallelCoordinates:
                     - the structure should (but does not have to) contain
                         - an id column used for identification
                         - a score column used for rating different runs/models
-                - id_col
+                - `id_col`
                     - str, optional
                     - name of the column to use as an ID
-                    - the default is None
+                    - the default is `None`
                         - will generate an id column by assigning a unique integer to each row
-                - score_col
+                - `score_col`
                     - str, optional
                     - name of the column used for scoring the different runs/models
-                    - the default is None
+                    - the default is `None`
                         - no scoring will be used
-                        - a dummy column consisting of zeros will be added to 'df'
-                - coords_cols
+                        - a dummy column consisting of zeros will be added to `df`
+                - `coords_cols`
                     - str, list
-                    - expression or list specifying the columns in 'df' to use as coordinates
-                    - the default is '^.*$'
+                    - expression or list specifying the columns in `df` to use as coordinates
+                    - the default is `'^.*$'`
                         - will select all columns
-                - min_score
+                - `min_score`
                     - float, optional
                     - minimum score to plot
-                    - everything below will be dropped from 'df'
-                    - the default is None
-                        - will be set to -np.inf
-                - max_score
+                    - everything below will be dropped from `df`
+                    - the default is `None`
+                        - will be set to `-np.inf`
+                - `max_score`
                     - float, optional
                     - maximum score to plot
-                    - everything above will be dropped from 'df'
-                    - the default is None
-                        - will be set to np.inf
-                - remove_nanscore
+                    - everything above will be dropped from `df`
+                    - the default is `None`
+                        - will be set to `np.inf`
+                - `remove_nanscore`
                     - bool, optional
-                    - whether to drop all rows that have a score evaluating to np.nan
-                    - the default is False
-                - score_scaling
+                    - whether to drop all rows that have a score evaluating to `np.nan`
+                    - the default is `False`
+                - `score_scaling`
                     - str, optional
                     - str representing a polars expression
-                    - will be applied to 'score_col' to scale it
+                    - will be applied to `score_col` to scale it
                         - might be useful for better visualization
                     - some useful examples
-                        - 'np.log10(pl.col(score_col))'
+                        - `'np.log10(pl.col(score_col))'`
                             - logarithmic score
-                        - 'np.abs(pl.col(score_col))'
+                        - `'np.abs(pl.col(score_col))'`
                             - absolute score
-                        - 'pl.col(score_col)**2'
+                        - `'pl.col(score_col)**2'`
                             - squared score
-                    - the default is 'pl.col(score_col)'
+                    - the default is `'pl.col(score_col)'`
                         - i.e. no modification
-                - show_idcol
+                - `show_idcol`
                     - bool, optional
                     - whether to show a column encoding the ID of a particular run/model
                     - only recommended if the number of models is not too large
-                    - overwrites self.show_idcol
-                    - the default is None
-                        - will default to self.show_idcol
-                - interpkind
+                    - overwrites `self.show_idcol`
+                    - the default is `None`
+                        - will default to `self.show_idcol`
+                - `interpkind`
                     - str, optional
                     - function to use for the interpolation between the different coordinates
-                    - argument passed as 'kind' to scipy.interpolate.interp1d()
-                    - overwrites self.interpkind
-                    - the default is None
-                        - will default to self.interpkind
-                - res
+                    - argument passed as `kind` to `scipy.interpolate.interp1d()`
+                    - overwrites `self.interpkind`
+                    - the default is `None`
+                        - will default to `self.interpkind`
+                - `res`
                     - int, optional
                     - resolution of the interpolated line
                         - i.e. the number of points used to plot each run/model
-                    - overwrites self.res
-                    - the default is None
-                        - defaults to self.res
-                - axpos_coord
+                    - overwrites `self.res`
+                    - the default is `None`
+                        - defaults to `self.res`
+                - `axpos_coord`
                     - tuple, int, optional
                     - position of where to place the axis containing the coordinate-plot
                     - specification following the matplotlib convention
-                        - will be passed to fig.add_subplot()
-                    - overwrites self.axpos_coord
-                    - the default is None
-                        - defaults to self.axpos_coord
-                - axpos_hist
+                        - will be passed to `fig.add_subplot()`
+                    - overwrites `self.axpos_coord`
+                    - the default is `None`
+                        - defaults to `self.axpos_coord`
+                - `axpos_hist`
                     - tuple, int, optional
                     - position of where to place the axis containing the histogram of scorings
                     - specification following the matplotlib convention
-                        - will be passed to fig.add_subplot()
-                    - overwrites self.axpos_hist
-                    - the default is None
-                        - defaults to self.axpos_hist
-                - ticks2display
+                        - will be passed to `fig.add_subplot()`
+                    - overwrites `self.axpos_hist`
+                    - the default is `None`
+                        - defaults to `self.axpos_hist`
+                - `ticks2display`
                     - int, optional
                     - number of ticks to show for numeric coordinates
-                    - overwrites self.ticks2display
-                    - the default is None
-                        - defaults to self.ticks2display
-                - tickcolor
+                    - overwrites `self.ticks2display`
+                    - the default is `None`
+                        - defaults to `self.ticks2display`
+                - `tickcolor`
                     - str, tuple, optional
                     - color to draw ticks and ticklabels in
                     - if a tuple is passed it has to be a RGBA-tuple
-                    - overwrites self.tickcolor
-                    - the default is None
-                        - defaults to self.tickcolor
-                - ticklabelrotation
+                    - overwrites `self.tickcolor`
+                    - the default is `None`
+                        - defaults to `self.tickcolor`
+                - `ticklabelrotation`
                     - float, optional
                     - rotation of the ticklabels
-                    - overwrites self.ticklabelrotation
-                    - the default is None
-                        - defaults to self.ticklabelrotation
-                - tickformat
+                    - overwrites `self.ticklabelrotation`
+                    - the default is `None`
+                        - defaults to `self.ticklabelrotation`
+                - `tickformat`
                     - str, optional
                     - formatstring for the (numeric) ticklabels
-                    - overwrites self.tickformat
-                    - the default is None
-                        - defaults to self.tickformat
-                - nancolor
+                    - overwrites `self.tickformat`
+                    - the default is `None`
+                        - defaults to `self.tickformat`
+                - `nancolor`
                     - str, tuple, optional
                     - color to draw failed runs (evaluate to nan) in
                     - if a tuple is passed it has to be a RGBA-tuple
-                    - overwrites self.nancolor
-                    - the default is None
-                        - defaults to self.nancolor
-                - nanfrac
+                    - overwrites `self.nancolor`
+                    - the default is `None`
+                        - defaults to `self.nancolor`
+                - `nanfrac`
                     - float, optional
                     - the fraction of the colormap to use for nan-values (i.e. failed runs)
                         - fraction of 256 (resolution of the colormap)
                     - will also influence the number of bins/binsize used in the performance-histogram
                     - a value between 0 and 1
-                    - overwrites self.nanfrac
-                    - the default is None
-                        - defaults to self.nanfrac
-                - linealpha
+                    - overwrites `self.nanfrac`
+                    - the default is `None`
+                        - defaults to `self.nanfrac`
+                - `linealpha`
                     - float, optional
                     - alpha value of the lines representing runs/models
-                    - overwrites self.linealpha
-                    - the default is None
-                        - defaults to self.linealpha
-                - linewidth
+                    - overwrites `self.linealpha`
+                    - the default is `None`
+                        - defaults to `self.linealpha`
+                - `linewidth`
                     - float, optional
                     - linewidth of the lines representing runs/models
-                    - overwrites self.linewidth
-                    - the default is None
-                        - defaults to self.linewidth
-                - base_cmap
+                    - overwrites `self.linewidth`
+                    - the default is `None`
+                        - defaults to `self.linewidth`
+                - `base_cmap`
                     - str, mcolors.Colormap
                     - colormap to map the scores onto
                     - some space will be allocated for nan, if nans shall be displayed as well
-                    - overwrites self.base_cmap
-                    - the default is None
-                        - defaults to self.base_cmap
-                - cbar_over_hist
+                    - overwrites `self.base_cmap`
+                    - the default is `None`
+                        - defaults to `self.base_cmap`
+                - `cbar_over_hist`
                     - bool, optional
                     - whether to plot a colorbar instead of the default performance-histogram
                     - the histogram also has a colorbar encoded
                     - overwrites self.cbar_over_hist
                     - the default is None
                         - defaults to self.cbar_over_hist
-                - n_jobs
+                - `n_jobs`
                     - int, optional
                     - number of threads to use when plotting the runs/modes
                     - use for large coordinate-plots
-                    - argmument passed to joblib.Parallel
-                    - overwrites self.n_jobs
-                    - the default is None
-                        - defaults to self.n_jobs
-                - n_jobs_addaxes
+                    - argmument passed to `joblib.Parallel`
+                    - overwrites `self.n_jobs`
+                    - the default is `None`
+                        - defaults to `self.n_jobs`
+                - `n_jobs_addaxes`
                     - int, optional
                     - number of threads to use when plotting the axes for the different coordinates
                     - use if a lot coordinates shall be plotted
-                    - argmument passed to joblib.Parallel
-                    - it could be that that a RuntimeError occurs if too many threads try to add axes at the same time
-                        - this error should be caught with a try-except statement, but in case it something still goes wrong try setting 'n_jobs_addaxes' to 1
-                    - overwrites self.n_jobs_addaxes
-                    - the default is None
-                        - defaults to self.n_jobs_addaxes
-                - sleep
+                    - argmument passed to `joblib.Parallel`
+                    - it could be that that a `RuntimeError` occurs if too many threads try to add axes at the same time
+                        - this error should be caught with a `try ... except` statement, but in case it something still goes wrong try setting `n_jobs_addaxes` to 1
+                    - overwrites `self.n_jobs_addaxes`
+                    - the default is `None`
+                        - defaults to `self.n_jobs_addaxes`
+                - `sleep`
                     - float, optional
                     - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - overwrites self.sleep
-                    - the default is None
-                        - defaults to self.sleep
-                - map_suffix
+                    - overwrites `self.sleep`
+                    - the default is `None`
+                        - defaults to `self.sleep`
+                - `map_suffix`
                     - str, optional
                     - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
-                    - only use if your column-names contain the default ('__map')
-                    - overwrites self.map_suffix
-                    - the default is None
-                        - defaults to self.map_suffix
-                - save
+                    - only use if your column-names contain the default (`'__map'`)
+                    - overwrites `self.map_suffix`
+                    - the default is `None`
+                        - defaults to `self.map_suffix`
+                - `save`
                     - str, optional
                     - filename to save the plot to
-                    - the default is False
+                    - the default is `False`
                         - will not save the plot
-                - max_nretries
+                - `max_nretries`
                     - int, optional
-                    - maximum number of retries in case a RuntimeError occurs during parallelized plotting
-                    - only relevant if 'n_jobs' or 'n_jobs_addaxes' is greater than 1 or -1
+                    - maximum number of retries in case a `RuntimeError` occurs during parallelized plotting
+                    - only relevant if `n_jobs` or `n_jobs_addaxes` is greater than 1 or -1
                     - the default is 4
-                - verbose
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - overwrites self.verbose
-                    - the default is None
-                        - defaults to self.verbose
-                - text_kwargs
+                    - overwrites `self.verbose`
+                    - the default is `None`
+                        - defaults to `self.verbose`
+                - `text_kwargs`
                     - dict, optional
-                    - kwargs passed to ax.text()
+                    - kwargs passed to `ax.text()`
                         - affect the labels of the created subplots for each coordinate
-                    - overwrites self.text_kwargs
-                    - the default is None
-                        - defaults to self.text_kwargs
-                - fig_kwargs
+                    - overwrites `self.text_kwargs`
+                    - the default is `None`
+                        - defaults to `self.text_kwargs`
+                - `fig_kwargs`
                     - dict, optional
-                    - kwargs to pass to plt.figure()
-                    - the default is None
+                    - kwargs to pass to `plt.figure()`
+                    - the default is `None`
                         - will not pass any additional arguments
-                - save_kwargs
+                - `save_kwargs`
                     - dict, optional
-                    - kwargs to pass to plt.savefig()
-                    - the default is None
+                    - kwargs to pass to `plt.savefig()`
+                    - the default is `None`
                         - will not pass any additional arguments
 
             Raises
@@ -1114,12 +1115,12 @@ class ParallelCoordinates:
 
             Returns
             -------
-                - fig
-                    - Figure
+                - `fig`
+                    - matplotlib Figure
                     - created figure
-                - axs
+                - `axs`
                     - plt.Axes
-                    - axes corresponding to 'fig'
+                    - axes corresponding to `fig`
 
             Comments
             --------
