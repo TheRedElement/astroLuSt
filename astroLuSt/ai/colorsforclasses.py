@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from typing import Union
 
-#%%definitions
+import warnings
 
+#%%definitions
 def generate_colors(
     classes:Union[list,np.ndarray],
     vmin:int=None, vmax:int=None, vcenter:int=None,
@@ -73,6 +74,7 @@ def generate_colors(
 
     """
 
+    warnings.warn('This function is deprecated. Use astroLuSt.visualization.plotting.generate_colors() instead!')
 
     classes_int = np.arange(0, np.unique(classes).shape[0], 1, dtype=int)    #initialize integer-class array
 
