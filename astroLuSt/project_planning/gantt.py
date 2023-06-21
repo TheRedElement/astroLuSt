@@ -84,6 +84,13 @@ class GANTT:
         self.percent_complete = np.array([])
         self.percent_idxi = np.array([], dtype=int)
 
+    def __repr__(self) -> str:
+        return (
+            f'GANTT(\n'
+            f'    time={repr(self.time)}'
+            f')'
+        )
+
     def sigmoid(self,
         x:np.ndarray,
         slope:np.ndarray=1, shift:np.ndarray=0
@@ -192,9 +199,9 @@ class GANTT:
                     
                     ```Latex
                     >>> \\begin{align}
-                    >>>     \\frac{\ln(e^{s_1x} + e^{a_1s_1})}{s_1}
-                    >>>         - \\frac{\ln(e^{s_2x} + e^{a_2s_2})}{s_2}
-                    >>>         - \mathcal{C}
+                    >>>     \\frac{\ln(e^{s_1a_1} + e^{s_1x})}{s_1}
+                    >>>         - \\frac{\ln(e^{s_2a_2 - s_2x} + 1)}{s_2}
+                    >>>         - \\mathcal{C}
                     >>> \\end{align}
                     ```
 
@@ -251,7 +258,7 @@ class GANTT:
         def ln1(bound):
             return np.log(np.e**(start_slope*bound) + np.e**(start_slope*start))
         def ln2(bound):
-            return np.log(np.e**(end_slope*bound)   + np.e**(end_slope*end))
+            return np.log(np.e**(end_slope*end-end_slope*bound)   + 1)
 
         #integral over whole interval
         if whole_area:
