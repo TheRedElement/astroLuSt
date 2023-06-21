@@ -5,7 +5,7 @@ import numpy as np
 import random
 from scipy.stats import norm
 import string
-from typing import Union, Callable, Tuple, List
+from typing import Union, Tuple
 
 from astroLuSt.preprocessing.dataseries_manipulation import periodize
 
@@ -18,27 +18,27 @@ class GenUniqueStrings:
 
         Attributes
         ----------
-            - n
+            - `n`
                 - int, optional
-                - lengths of the strings to generate (not counting 'suffix' and 'prefix')
+                - lengths of the strings to generate (not counting `suffix` and `prefix`)
                 - the default is 1
-            - char_choices
+            - `char_choices`
                 - int, list, optional
                 - iterable providing the set of characters to choose from
-                - the default is None
+                - the default is `None`
                     - will generate using uppercase letters and numbers
-            - prefix
+            - `prefix`
                 - str, optional
                 - a prefix to put in front of every generated string
-                - the default is None
-            - suffix
+                - the default is `None`
+            - `suffix`
                 - str, optional
                 - a suffix to put at the end of every generated string
-                - the default is None
+                - the default is `None`
 
         Methods
         -------
-            - rvs()
+            - `rvs()`
 
         Dependencies
         ------------
@@ -51,6 +51,7 @@ class GenUniqueStrings:
         --------
 
     """
+
     def __init__(self,
         n:int=1,
         char_choices:Union[list,str]=None,
@@ -72,10 +73,10 @@ class GenUniqueStrings:
 
         return (
             f'GenUniqueStrings(\n'
-            f'    n={self.n},\n'
-            f'    char_choices={self.char_choices},\n'
-            f'    prefix={self.prefix},\n'
-            f'    suffix={self.suffix},\n'
+            f'    n={repr(self.n)},\n'
+            f'    char_choices={repr(self.char_choices)},\n'
+            f'    prefix={repr(self.prefix)},\n'
+            f'    suffix={repr(self.suffix)},\n'
             f')'
         )
     
@@ -84,22 +85,22 @@ class GenUniqueStrings:
         random_state:int=None,
         ):
         """
-            - method similar to the scipy.stats rvs() method
+            - method similar to the `scipy.stats` `rvs()` method
             - rvs ... random variates
-            - will generate an array of size 'shape' containing randomly generated samples
+            - will generate an array of size `shape` containing randomly generated samples
             
             Parameters
             ----------
-                - shape
+                - `shape`
                     - int, tuple optional
                     - number of samples to generate
-                    - the default is None
+                    - the default is `None`
                         - will generate a single sample
-                - random_state
+                - `random_state`
                     - int, optional
                     - seed of the random number generator
                     - provide any integer for reproducible results
-                    - the default is None
+                    - the default is `None`
                         - non-reproducible results
 
             Raises
@@ -107,10 +108,10 @@ class GenUniqueStrings:
 
             Returns
             -------
-                - output
+                - `output`
                     - np.ndarray, str
                     - array containing the generated strings
-                    - if only one sample got generated and 'shape' is of type int a single string will be returned
+                    - if only one sample got generated and `shape` is of type int a single string will be returned
             
             Comments
             --------
@@ -144,59 +145,60 @@ class GeneratePeriodicSignals:
 
         Attributes
         ----------
-            - npoints
+            - `npoints`
                 - np.ndarray, int, optional
                 - number of points per dataseries
-                - if None
-                    - will default to shape[1] of the parameter 'shape' of self.rvs()
+                - if `None`
+                    - will default to `shape[1]` of the parameter `shape` of `self.rvs()`
                 - if int
                     - will use this many datapoints for all dataseries
-                - the default is None
-            - periods
+                - the default is `None`
+            - `periods`
                 - np.ndarray, int, float, optional
                 - periods of the individual generated dataseries
-                    - will generate as many unique periodized dataseries as elements in 'periods'
-                - if None
-                    - will default to shape[0] of the parameter 'shape' of self.rvs()
+                    - will generate as many unique periodized dataseries as elements in `periods`
+                - if `None`
+                    - will default to `shape[0]` of the parameter `shape` of `self.rvs()`
                 - if int or float
                     - will use this period for all dataseries
-                - the default is None
-            - x_offsets
+                - the default is `None`
+            - `x_offsets`
                 - np.ndarray, int, optional
-                - has to be of same length as periods
+                - has to be of same length as `periods`
                 - offsets to add to the x-values of the generated periodic dataseries
                 - if an np.ndarray
                     - will be interpreted as the offset per generated dataseries
                 - if an int
                     - will use that offset for all generated dataseries
-            - choices
+                - the default is `None`
+            - `choices`
                 - np.ndarray, int, optional
                 - has to be of dtype object
                 - contains either callables (functions) or np.ndarrays
-                    - callables will be evaluated on the parameter 'x' of self.rvs()
+                    - callables will be evaluated on the parameter `x` of `self.rvs()`
                     - np.ndarrays will be returned and periodized as they are
                 - these choices will be used to randomly generate dataseries
-                - the default is None
+                - the default is `None`
                     - will use an array containing the following methods
-                        - sine()
-                        - cosin()
-                        - tangent()
-                        - polynomial()
-                        - gaussian()
-                        - random()
+                        - `sine()`
+                        - `cosin()`
+                        - `tangent()`
+                        - `polynomial()`
+                        - `gaussian()`
+                        - `random()`
 
         Methods
         -------
-            - sine()
-            - cosin()
-            - tangent()
-            - polynomial()
-            - gaussian()
-            - random()
-            - select_choice()
-            - generate_one()
-            - rvs()
-            - plot_result()
+            - `sine()`
+            - `cosin()`
+            - `tangent()`
+            - `polynomial()`
+            - `gaussian()`
+            - `random()`
+            - `select_choice()`
+            - `generate_one()`
+            - `rvs()`
+            - `plot_result()`
 
         Dependencies
         ------------
@@ -240,7 +242,7 @@ class GeneratePeriodicSignals:
             f'    periods={repr(self.periods)},\n'
             f'    x_offsets={repr(self.x_offsets)},\n'
             # f'    choices={choices2print},\n'
-            f'    choices={self.passed_choices},\n'
+            f'    choices={repr(self.passed_choices)},\n'
             f')'
         )
 
@@ -253,10 +255,10 @@ class GeneratePeriodicSignals:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - input values to evaluate on
-                - kwargs
+                - `**kwargs`
                     - kwargs to pass to the function
                     - used for consistency across methods
             
@@ -265,9 +267,10 @@ class GeneratePeriodicSignals:
 
             Returns
             -------
-                - sin
+                - `sin`
                     - np.ndarray
-                    - evaluation of x
+                    - evaluation of `x`
+
             Comments
             --------
 
@@ -284,10 +287,10 @@ class GeneratePeriodicSignals:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - input values to evaluate on
-                - kwargs
+                - `**kwargs`
                     - kwargs to pass to the function
                     - used for consistency across methods
             
@@ -296,9 +299,10 @@ class GeneratePeriodicSignals:
 
             Returns
             -------
-                - cos
+                - `cos`
                     - np.ndarray
-                    - evaluation of x
+                    - evaluation of `x`
+
             Comments
             --------
 
@@ -315,10 +319,10 @@ class GeneratePeriodicSignals:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - input values to evaluate on
-                - kwargs
+                - `**kwargs`
                     - kwargs to pass to the function
                     - used for consistency across methods
             
@@ -327,9 +331,10 @@ class GeneratePeriodicSignals:
 
             Returns
             -------
-                - tan
+                - `tan`
                     - np.ndarray
-                    - evaluation of x
+                    - evaluation of `x`
+
             Comments
             --------
 
@@ -346,12 +351,12 @@ class GeneratePeriodicSignals:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - input values to evaluate on
-                - kwargs
+                - `**kwargs`
                     - kwargs to pass to the function
-                        - will use kwargs['p']
+                        - will use `kwargs['p']`
                             - polynomial coefficients
                     - used for consistency across methods
             
@@ -360,9 +365,10 @@ class GeneratePeriodicSignals:
 
             Returns
             -------
-                - poly
+                - `poly`
                     - np.ndarray
-                    - evaluation of x
+                    - evaluation of `x`
+
             Comments
             --------
 
@@ -379,16 +385,16 @@ class GeneratePeriodicSignals:
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - input values to evaluate on
-                - kwargs
+                - `**kwargs`
                     - kwargs to pass to the function
-                        - will use kwargs['loc']
+                        - will use `kwargs['loc']`
                             - mean of the gaussian
-                        - will use kwargs['scale']
+                        - will use `kwargs['scale']`
                             - standard deviation of the gaussian
-                        - will use kwargs['amp']
+                        - will use `kwargs['amp']`
                             - amplitude of the gaussian
                             - i.e. mixing coefficient
                     - used for consistency across methods
@@ -398,9 +404,10 @@ class GeneratePeriodicSignals:
 
             Returns
             -------
-                - gauss
+                - `gauss`
                     - np.ndarray
-                    - evaluation of x
+                    - evaluation of `x`
+
             Comments
             --------
 
@@ -413,16 +420,16 @@ class GeneratePeriodicSignals:
         **kwargs
         ) -> np.ndarray:
         """
-            - method to generate a random array of the same shape as x
+            - method to generate a random array of the same shape as `x`
 
             Parameters
             ----------
-                - x
+                - `x`
                     - np.ndarray
                     - input values to evaluate on
-                - kwargs
+                - `**kwargs`
                     - kwargs to pass to the function
-                        - will use kwargs['amp']
+                        - will use `kwargs['amp']`
                             - amplitude of the noise
                     - used for consistency across methods
             
@@ -431,9 +438,10 @@ class GeneratePeriodicSignals:
 
             Returns
             -------
-                - randarray
+                - `randarray`
                     - np.ndarray
-                    - evaluation of x
+                    - evaluation of `x`
+
             Comments
             --------
 
@@ -446,52 +454,54 @@ class GeneratePeriodicSignals:
         func_kwargs:dict=None
         ) -> np.ndarray:
         """
-            - method to randomly select from choices and evaluate on x or return directly
+            - method to randomly select from choices and evaluate on `x` or return directly
                 - will evaluate if a callable is chosen
                 - will return directly if an array is chosen
 
             Parameters
             ----------
-                - choices
+                - `choices`
                     - np.ndarray
                     - has to be of dtype object
                     - available options for the generation of the base-signal
                         -  base-signal will be generated
-                            - by evaluating on x
-                                - i.e. by calling choice(x, **kwargs)
+                            - by evaluating on `x`
+                                - i.e. by calling `choice(x, **kwargs)`
                             - by returning choice directly
-                                - if choice happens to be a np.ndarray
+                                - if `choice` happens to be a np.ndarray
                     - this signal will then be periodized
-                - x
+                - `x`
                     - np.ndarray
-                    - input values to evaluate 'choice' on
-                - func_kwargs
+                    - input values to evaluate `choice` on
+                - `func_kwargs`
                     - dict, optional
                     - function kwargs passed to choice
-                        - i.e. chioce(x, **kwargs) will be called
-                    - the default is None
-                        - will be initilized with dict
+                        - i.e. `chioce(x, **kwargs)` will be called
+                    - the default is `None`
+                        - will be initilized with following dict
                             
+                            ```python
                             >>> func_kwargs = {
                             >>>     'p':[np.random.randint(1,5)],
                             >>>     'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.randn(),
                             >>> }
-                    
-                        - 'p' will be used by self.polynomial()
-                        - 'amp' will be used by self.normal() and self.random()
-                        - 'loc' will be used by self.normal()
-                        - 'scale' will be used by self.normal()
+                            ```
+
+                        - `p` will be used by `self.polynomial()`
+                        - `amp` will be used by `self.normal()` and `self.random()`
+                        - `loc` will be used by `self.normal()`
+                        - `scale` will be used by `self.normal()`
             
             Raises
             ------
 
             Returns
             -------
-                - choice
+                - `choice`
                     - np.ndarray
-                    - the random choice evaluated on 'x'
+                    - the random choice evaluated on `x`
                         if choice is a callable
-                        - i.e. choice(x, **kwargs)
+                        - i.e. `choice(x, **kwargs)`
                     - the choice directly
                         - if choice is a np.ndarray
 
@@ -522,13 +532,13 @@ class GeneratePeriodicSignals:
 
             Parameters
             ----------
-                - y
+                - `y`
                     - np.ndarray
                     - y-values of the signal to periodize
-                - npoints
+                - `npoints`
                     - int
                     - number of datapoints the periodic data-series shall have
-                - period
+                - `period`
                     - float
                     - period the generated periodic signal shall have
             
@@ -537,10 +547,10 @@ class GeneratePeriodicSignals:
 
             Returns
             -------
-                - xp
+                - `xp`
                     - np.ndarray
                     - x-values of the periodic data-series
-                - yp
+                - `yp`
                     - np.ndarray
                     - y-values of the periodic data-series
 
@@ -567,85 +577,85 @@ class GeneratePeriodicSignals:
         # ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[np.ndarray]]: #works for python >= 3.9
         ) -> Tuple[np.ndarray, np.ndarray]:
         """
-            - method similar to the scipy.stats rvs() method
+            - method similar to the `scipy.stats` `rvs()` method
             - rvs ... random variates
-            - will generate an array of the same length as 'self.periods' containing randomly generated samples
-                - each generated dataseries can have a different length encoded in self.npoints
+            - will generate an array of the same length as `self.periods` containing randomly generated samples
+                - each generated dataseries can have a different length encoded in `self.npoints`
             
             Parameters
             ----------
-                - shape
+                - `shape`
                     - int, tuple, optional
                     - shape of the generated list of arrays
-                    - only used if one of self.periods and self.npoints is None
-                        - in the case that self.periods is None will
-                            - generate shape[0] dataseries with period of 1
-                        - in the case that self.npoints is None will
-                            - generate all timeseries with shape[1] points
-                    - the default is None
-                        - will use self.periods and self.npoints to infer the shapes
-                        - if self.period and self.npoints is None as well
-                            - will default to (1,10)
-                                - periods = 1
-                                - npoints = 10
+                    - only used if one of `self.periods` and `self.npoints` are `None`
+                        - in the case that `self.periods` is `None` will
+                            - generate `shape[0]` dataseries with period of 1
+                        - in the case that `self.npoints` is `None` will
+                            - generate all timeseries with `shape[1]` points
+                    - the default is `None`
+                        - will use `self.periods` and `self.npoints` to infer the shapes
+                        - if `self.period` and `self.npoints` is None as well
+                            - will default to `(1,10)`
+                                - `periods = 1`
+                                - `npoints = 10`
                                 - i.e. 1 sample with 10 datapoints
-                - choices
+                - `choices`
                     - np.ndarray, optional
                     - has to be of dtype object
                     - contains either callables (functions) or np.ndarrays
-                        - callables will be evaluated on x
+                        - callables will be evaluated on `x`
                         - np.ndarrays will be returned and periodized as they are
                     - these choices will be used to randomly generate dataseries
-                    - the default is None
-                        - will fallback to self.choices
-                - x
+                    - the default is `None`
+                        - will fallback to `self.choices`
+                - `x`
                     - np.ndarray, optional
                     - x-values of the timeseries in phase-space
-                    - i.e. before generating the periodic timeseries the chosen choice out of choices will be evaluated on x
-                        - choices(x) will be called
-                    - the default is None
-                        - will use  np.linspace(0,1,10,endpoint=False)
-                - noise_level_x
+                    - i.e. before generating the periodic timeseries the chosen choice out of choices will be evaluated on `x`
+                        - `choices(x)` will be called
+                    - the default is `None`
+                        - will use  `np.linspace(0,1,10,endpoint=False)`
+                - `noise_level_x`
                     - float, optional
                     - scale of the noise added to the periodized signal in x-direction
                     - the default is 0.1
-                - noise_level_y
+                - `noise_level_y`
                     - float, optional
                     - scale of the noise added to the periodized signal in y-direction
                     - the default is 0.1
-                - random_state
+                - `random_state`
                     - int, optional
                     - seed of the random number generator
                     - provide any integer for reproducible results
-                    - the default is None
+                    - the default is `None`
                         - non-reproducible results
-                - func_kwargs
+                - `func_kwargs`
                     - dict, optional
-                    - kwargs passed to self.select_choice()
+                    - kwargs passed to `self.select_choice()`
                     - contains kwargs for all choices in choices
-                    - the default is None
-                        - will autogenerate kwargs needed to use the default self.choices
+                    - the default is `None`
+                        - will autogenerate kwargs needed to use the default `self.choices`
 
             Raises
             ------
 
             Returns
             -------
-                - x_gen
+                - `x_gen`
                     - np.ndarray
                         - contains np.ndarrays
                             - can have different lengths
-                    - each entry contains the x-values of one generated periodic signal (entry in y_gen)
-                - y_gen
+                    - each entry contains the x-values of one generated periodic signal (entry in `y_gen`)
+                - `y_gen`
                     - np.ndarray
                         - contains np.ndarrays
                             - can have different lengths
                     - each entry contains the y-values of one generated periodic signal
-                        - the entry of x_gen contains the corresponding x-values
+                        - the entry of `x_gen` contains the corresponding x-values
             
             Comments
             --------
-                - make sure that whichever callable you pass within choices has **kwargs
+                - make sure that whichever callable you pass within choices can accept `**kwargs`
         """
 
         #initilaize
@@ -738,28 +748,28 @@ class GeneratePeriodicSignals:
 
             Parameters
             ----------
-                - fig_kwargs
+                - `fig_kwargs`
                     - dict, optional
-                    - kwargs to pass to plt.fig()
-                    - the default is None
-                        - will initialize with empty dict (fig_kwargs = {})
-                - plot_kwargs
+                    - kwargs to pass to `plt.fig()`
+                    - the default is `None`
+                        - will initialize with empty dict (`fig_kwargs = {}`)
+                - `plot_kwargs`
                     - dict, optional
-                    - kwargs to pass to ax.plot()
-                    - the default is None
-                        - will initialize with {'marker':'o'}
+                    - kwargs to pass to `ax.plot()`
+                    - the default is `None`
+                        - will initialize with `{'marker':'o'}`
 
             Raises
             ------
 
             Returns
             -------
-                - fig
-                    - Figure
+                - `fig`
+                    - matplotlib Figure
                     - created matplotlib figure
-                - axs
-                    - plt.Axs
-                    - axes corresponding to fig
+                - `axs`
+                    - `plt.Axs`
+                    - axes corresponding to `fig`
 
             Comments
             --------
