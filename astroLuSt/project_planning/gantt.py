@@ -1,69 +1,79 @@
 
-#______________________________________________________________________________
-#Class for creating a GANTT-chart variation (for Mission Planning)
+
+#%%imports
+from datetime import datetime
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import numpy as np
+from typing import Tuple
+
+from astroLuSt.visualization.plotting import generate_colors
+
+
+#%%definitions
 class GANTT:
     """
         - class to genereate a variation of a GANTT-chart
         
         Attributes
         ----------
-            - time
+            - `time`
+                - np.ndarray
                 - array of the period of time where the project takes place
-                - time has to be an array of datetime-objects!
-            - starts
+                - has to be an array of datetime-objects
+        
+        Infered Attributes
+        ------------------
+            - `starts`
+                - np.ndarray
                 - array of datetime-objects
-                - contains the starting point relative to time.min()
-                - i.e. the first task starts usually at start = 0
-            - ends
+                - contains the starting point relative to `time.min()`
+                - i.e. the first task starts usually at `start = 0`
+            - `ends`
+                - np.ndarray
                 - array of datetime-objects
-                - contains the starting point relative to time.min()
-            - tasks
+                - contains the endpoint relative to `time.min()`
+            - `tasks`
+                - np.ndarray
                 - relative workload for the tasks to be done (dependent on time)
-            - tasknames
+            - `tasknames`
+                - list
                 - nametag for each task
-            - weights
+            - `weights`
+                - np.ndarray
                 - array of weights weighting the importance of each task
-            - percent_complete
+            - `percent_complete`
+                - np.ndarray
                 - array of percentages
                 - defines how much of a specific task is completed
 
         Methods
         -------
-            - sigmoid
-                - returns the sigmoid of some input
-            - task_func
-                - fucntion that defines one task
-                - is a combination of two sigmoids with opposite signs before 'x'
-            - task
-                - function to add a task to the project
-            - make_graph
-                - function to visualize all tasks combined
-                    - includes a GANTT-variation
-                    - includes a GANTT-graph
-                - also returns the total workload for every timepoint
-            - make_classic_gantt
-                - function to create a Gantt-Graph in classical style
+            - `sigmoid()`
+            - `task_func()`
+            - `task()`
+            - `make_graph()`
+            - `make_classic_gantt()`
 
         Dependencies
         ------------
+            - datetime
             - matplotlib
             - numpy
-            - datetime
 
         Comments
         --------
-            - 'whole_area' (argument of 'self.task', will be adjusted for each graph separately)
-                - make sure you set 'whole_area' to the value you need, when passing a task to the class
+            - `whole_area` (argument of `self.task()`), will be adjusted for each graph separately
+                - make sure you set `whole_area` to the value you need, when passing a task to the class
 
     """
 
-    def __init__(self, time):
-
-        import numpy as np
-        from datetime import datetime
+    def __init__(self,
+        time:np.ndarray
+        ) -> None:
         
-        if any([type(t) != datetime for t in time]):
-            raise TypeError("'time' has to be an array containing 'datetime' objects!")
+        if not all([isinstance(t, datetime) for t in time]):
+            raise TypeError("`time` has to be an array containing `datetime` objects!")
         self.time = time
         self.starts = np.array([])
         self.ends = np.array([])
@@ -74,122 +84,170 @@ class GANTT:
         self.percent_complete = np.array([])
         self.percent_idxi = np.array([], dtype=int)
 
-    def sigmoid(self, time, slope, shift):
+    def sigmoid(self,
+        x:np.ndarray,
+        slope:np.ndarray=1, shift:np.ndarray=0
+        ) -> np.ndarray:
         """
-            - calculates the sigmoid function
-        """
-        import numpy as np
-        Q1 = 1 + np.e**(slope*(-(time - shift)))
-        return 1/Q1
+            - method to calculate a sigmoid function
 
-    def task_func(self, time, start, end, start_slope, end_slope):
-        """
-            - function to calculate a specific tasks workload curve
-            - combines two sigmoids with opposite signs before the exponent to do that
-        
             Parameters
             ----------
-                - time
-                    - np.array
-                    - the times (relative to the starting time) used for the tasks
-                        - i.e. an array starting with 0
-                - start
-                    - float
-                    - time at which the tasks starts
-                    - relative to the zero point in time (i.e. time.min() = 0)
-                - end
-                    - float
-                    - time at which the task ends
-                    - relative to the zero point in time (i.e. time.min() = 0)
-                - start_slope
-                    - float
-                    - how steep the starting phase should be
-                - end_slope
-                    - float
-                    - how steep the ending phase (reflection phase) should be
+                - `x`
+                    - np.ndarray
+                    - independent variable to calculate simoid of
+                - `slope`
+                    - np.ndarray, optional
+                    - parameter changing the slope of the sigmoid
+                    - the default is 1
+                - `shift`
+                    - np.ndarray
+                    - parameter to shift the sigmoid in direction of `x`
+                    - the default is 0
 
             Raises
             ------
 
             Returns
             -------
+                - `sigma`
+                    - np.ndarray
+                    - sigmoid evaluated on `x`
 
-            Dependencies
-            ------------
-                - numpy
-            
+            Comments
+            --------
+
+        """
+
+        Q1 = 1 + np.e**(slope*(-(x - shift)))
+        sigma = 1/Q1
+        return sigma
+
+    def task_func(self,
+        time:np.ndarray,
+        start:float, end:float,
+        start_slope:float=1, end_slope:float=1
+        ) -> np.ndarray:
+        """
+            - method to calculate a specific tasks workload curve
+            - combines two sigmoids with opposite signs in the exponent to do that
+        
+            Parameters
+            ----------
+                - `time`
+                    - np.ndarray
+                    - the times (relative to the starting time) used for the tasks
+                        - i.e. an array starting with 0
+                - `start`
+                    - float
+                    - time at which the tasks starts
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `end`
+                    - float
+                    - time at which the task ends
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `start_slope`
+                    - float, optional
+                    - how steep the starting phase should be
+                    -  the default is 1
+                - `end_slope`
+                    - float
+                    - how steep the ending phase (reflection phase) should be
+                    - the default is 1
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - task
+                    - np.ndarray
+                    - workload curve for `time`
+
             Comments
             --------
         """
+
         start_phase = self.sigmoid(time, start_slope, start)
         end_phase   = self.sigmoid(-time, end_slope, -end)
         task = start_phase + end_phase
         task -= task.min()
         task /= task.max()
+        
         return task
 
-    def task_integral(self, time, start, end, start_slope, end_slope, percent_complete, whole_area=True):
+    def task_integral(self,
+        time,
+        start:float, end:float,
+        start_slope:float=1, end_slope:float=1,
+        percent_complete:float=0,
+        whole_area:bool=True
+        ) -> int:
         """
-            - function to estimate the index corresponding to the 'percent_completed'
+            - method to estimate the index corresponding to the `percent_completed`
                 - To do this:
-                    - calculates the intergal of the function used to define a task ('task_func()')
+                    - calculates the intergal of the function used to define a task (`self.task_func()`)
                     - i.e. 2 sigmoids with opposite signs befor the exponent
                 - algebraic solution (latex formatting):
-
+                    
+                    ```Latex
                     >>> \\begin{align}
                     >>>     \\frac{\ln(e^{s_1x} + e^{a_1s_1})}{s_1}
                     >>>         - \\frac{\ln(e^{s_2x} + e^{a_2s_2})}{s_2}
                     >>>         - \mathcal{C}
                     >>> \\end{align}
+                    ```
 
             Parameters
             ----------
-                - time
-                    - np.array
+                - `time`
+                    - np.ndarray
                     - the times (relative to the starting time) used for the tasks
                         - i.e. an array starting with 0
-                - start
+                - `start`
                     - float
                     - time at which the tasks starts
-                    - relative to the zero point in time (i.e. time.min() = 0)
-                - end
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `end`
                     - float
                     - time at which the task ends
-                    - relative to the zero point in time (i.e. time.min() = 0)
-                - start_slope
-                    - float
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `start_slope`
+                    - float, optional
                     - how steep the starting phase should be
-                - end_slope
+                    -  the default is 1
+                - `end_slope`
                     - float
                     - how steep the ending phase (reflection phase) should be
-                - percent_complete
+                    - the default is 1
+                - `percent_complete`
                     - float, optional
                     - percentage describing how much of the task is completed
                     - number between 0 and 1
                     - the default is 0
-                - whole_area
+                - `whole_area`
                     - bool, optional
                     - whether to consider the whole area beneath the curves as 100% of the task
                         - this will especially in low percentages NOT line up with the actual GANTT-chart (second subplot) 
-                    - otherwise will consider the area between 'start' and 'end' as 100% of the task
+                    - otherwise will consider the area between `start` and `end` as 100% of the task
                         - will be exactly aligned with the GANTT-chart
                         - but it might be that 0% already has some area colored in
-                    - the default is True
+                    - the default is `True`
+
             Raises
             ------
 
             Returns
             -------
+                - `percent_idx`
+                    - int
+                    - index time that is closest to `percent_complete` of the whole time interval
 
-            Dependencies
-            ------------
-                - numpy
-            
             Comments
             --------
 
         """
-        import numpy as np
+
         def ln1(bound):
             return np.log(np.e**(start_slope*bound) + np.e**(start_slope*start))
         def ln2(bound):
@@ -222,77 +280,79 @@ class GANTT:
 
         return percent_idx
 
-    def task(self, start, end, start_slope, end_slope, taskname=None, weight=1, percent_complete=0, whole_area=True, testplot=False):
+    def task(self,
+        start:float, end:float,
+        start_slope:float=1, end_slope:float=1,
+        taskname:str=None,
+        weight:float=1, percent_complete:float=0,
+        whole_area:bool=True,
+        testplot:bool=False
+        ) -> np.ndarray:
         """
-            - function to define a specific task
+            - method to define a specific task
             - will add that task to 'self.tasks' as well
 
             Parameters
             ----------
-                - start
+                - `start`
                     - float
                     - time at which the tasks starts
-                    - relative to the zero point in time (i.e. time.min() = 0)
-                - end
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `end`
                     - float
                     - time at which the task ends
-                    - relative to the zero point in time (i.e. time.min() = 0)
-                - start_slope
-                    - float
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `start_slope`
+                    - float, optional
                     - how steep the starting phase should be
-                - end_slope
+                    -  the default is 1
+                - `end_slope`
                     - float
                     - how steep the ending phase (reflection phase) should be
-                - taskname
+                    - the default is 1
+                - `taskname`
                     - str, optional
                     - name of the task added
-                    - the default is None
-                        - Will generate 'Task' and add a number one more than the current amount of tasks
-                - weight
+                    - the default is `None`
+                        - Will generate `'Taskn'`, where `n` is the current number of tasks + 1
+                - `weight`
                     - float, optional
                     - weight to set the importance of the task with respect to the other tasks
                     - the default is 1
-                - percent_complete
+                - `percent_complete`
                     - float, optional
                     - percentage describing how much of the task is completed
                     - number between 0 and 1
                     - the default is 0
-                - whole_area
+                - `whole_area`
                     - bool, optional
                     - whether to consider the whole area beneath the curves as 100% of the task
                         - this will especially in low percentages NOT line up with the actual GANTT-chart (second subplot) 
-                    - otherwise will consider the area between 'start' and 'end' as 100% of the task
+                    - otherwise will consider the area between `start` and `end` as 100% of the task
                         - will be exactly aligned with the GANTT-chart
                         - but it might be that 0% already has some area colored in
-                    - the default is True
-                - testplot
+                    - the default is `True`
+                - `testplot`
                     - bool, optional
                     - whether to show a testplot of the created task
-                    - the default is False
+                    - the default is `False`
 
             Raises
             ------
-                - ValueError
-                    - if 'percent_complete' bigger than 1 or smaller than 0 is passed
+                - `ValueError`
+                    - if `percent_complete` bigger than 1 or smaller than 0 is passed
 
             Returns
             -------
-                - task
-                    - np.array
+                - `task`
+                    - np.ndarray
                     - an array of the percentages of workload over the whole task
             
-            Dependencies
-            ------------
-                - matplotlib
-                - numpy
-
             Comments
             --------
 
 
         """
-        import matplotlib.pyplot as plt
-        import numpy as np
 
         if percent_complete < 0 or percent_complete > 1:
             raise ValueError("'percent_complete has to be a float between 0 and 1!")
@@ -352,101 +412,90 @@ class GANTT:
         return task
 
 
-    def make_graph(
-        self,
-        projecttitle="Your Project", timeunit="Your Unit", today=None,
-        colors=None, enumerate_tasks=True,
-        show_totalwork=True, show_completion=True
-        ):
+    def plot_result(self,
+        today:float=None,
+        colors:np.ndarray=None, enumerate_tasks:bool=True,
+        show_totalwork:bool=True, show_completion:bool=True,
+        plot_kwargs:dict=None, fill_between_kwargs:dict=None,
+        ) -> Tuple[np.ndarray,Figure,plt.Axes]:
         """
-            - function to visualize the workload of a project w.r.t. the time
+            - method to visualize the workload of a project w.r.t. the time
             - will create a plot inlcuding a clssical GANTT-plot and a variation
 
             Parameters
             ----------
-                - projecttitle
-                    - str, optional
-                    - title of your project
-                        - will be shown as title of plot created
-                    - only relevant for the plot created
-                    - the default is 'Your Project'
-                - timeunit
-                    - str, optional
-                    - unit of 'time'
-                    - only relevant for the plot created
-                    - the default is 'Your Unit'
-                - today
+                - `today`
                     - float, optional
                     - current state
                     - will plot a vertical line at the current state in the plot created
                     - only relevant for the plot created
-                    - the default is None (will not plot a line)
-                - colors
-                    - list, np.array, optional
+                    - the default is `None`
+                        - will not plot a line
+                - `colors`
+                    - np.ndarray, optional
                     - list of matplotlib colors or rgb-tupels
-                    - the default is None
+                    - the default is `None`
                         - will generate colors automatically
-                - enumerate_tasks
+                - `enumerate_tasks`
                     - bool, optional
                     - whether to enumerate the tasks contained in the GANTT-instance
                         - will enumerate them in the order they got added to the GANTT-instance
-                    - only relevant for the plot created
-                    - the default is true
-                - show_totalwork
+                    - the default is `True`
+                - `show_totalwork`
                     - bool, optional
                     - whether to add a plot of the total work for each point in time
-                    - only relevant for the plot created
-                    - the default is True
-                - show_completion
+                    - the default is `True`
+                - `show_completion`
                     - bool, optional
                     - whether to show the completion of individual tasks
-                    - only relevant for the plot created
-                    - the default is True
-                - testplot
-                    - bool, optional
-                    - whether to show a testplot of the created task
-                    - the default is True
+                    - the default is `True`
+                - `plot_kwargs`
+                    - dict, optional
+                    - kwargs passed to `ax.plot()`
+                    - the default is `None`
+                        - will be set to `{}`
+                - `fill_between_kwargs`
+                    - dict, optional
+                    - kwargs passed to `ax.fill_between()`
+                    - the default is `None`
+                        - will be set to `{'alpha':0.3}`
                 
                 Raises
                 ------
-                    - TypeError
-                        - if 'colors' has wrong type
-                    - ValueError
-                        - if 'colors' has other length than 'self.tasks'
+                    - `TypeError`
+                        - if `colors` has wrong type
+                    - `ValueError`
+                        - if `colors` has other length than `self.tasks`
 
                 Returns
                 -------
-                    - tasks_combined
+                    - `tasks_combined`
                         - np.array
                         - combination of all tasks
                         - the maximum workload for a given point in time of all tasks combined is 100% 
-                    - fig
-                        - matplotlib figure object
-                    - axs
-                        - matplotlib axes object
-
-                Dependencies
-                ------------
-                    - matplotlib
-                    - numpy
-                    - astroLuSt
+                    - `fig`
+                        - matplotlib Figure
+                        - created figure
+                    - `axs`
+                        - plt.Axes
+                        - axes corresponding to `fig`
 
                 Comments
                 --------
-                    - 'whole_area' (argument of 'self.task', will be adjusted for each graph separately)
-                        - make sure you set 'whole_area' to the value you need, when passing a task to the class
+                    - `whole_area` (argument of `self.task`), will be adjusted for each graph separately
+                        - make sure you set `whole_area` to the value you need, when passing a task to the class
 
         """
 
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from astroLuSt.visualization.plotting import generate_colors
+        #initialize
+        if fill_between_kwargs is None: fill_between_kwargs = {'alpha':0.3}
+        if plot_kwargs is None: plot_kwargs = {}
 
         if colors is None:
             colors = generate_colors(len(self.tasks)+2, cmap='nipy_spectral')[1:-1]
-        elif type(colors) != (np.array and list):
+        elif not isinstance(colors, (np.ndarray, list)):
             raise TypeError("'colors' has to be a list or an np.array!")
-        elif len(colors) != len(self.task):
+        elif len(colors) != len(self.tasks):
             raise ValueError("'colors' has to have the same length as 'self.tasks'!")
         
         if today is None:
@@ -465,11 +514,9 @@ class GANTT:
 
 
         #create figure
-        fig = plt.figure(figsize=(16,9))
+        fig = plt.figure()
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212)
-
-        fig.suptitle(projecttitle, fontsize=24)
 
 
         #################
@@ -484,16 +531,16 @@ class GANTT:
         tasks_combined = (tasks_combined.T*self.weights).T    #weight all tasks
 
         for idx, (task, percent_idx, percent_complete, c) in enumerate(zip(tasks_combined, self.percent_idxi, self.percent_complete, colors)):
-            ax1.plot(self.time, task, zorder=2+(1/(idx+1)), color=c, alpha=1, linestyle="-", linewidth=5)
+            ax1.plot(self.time, task, zorder=2+(1/(idx+1)), color=c, **plot_kwargs)
             if show_completion:
-                ax1.fill_between(self.time, task, where=(self.time < self.time[percent_idx]), zorder=1+(1/(idx+1)), color=c, alpha=.3)
+                ax1.fill_between(self.time, task, where=(self.time < self.time[percent_idx]), zorder=1+(1/(idx+1)), color=c, **fill_between_kwargs)
 
         #total workload
         if show_totalwork:
-            ax1.plot(self.time, np.sum(tasks_combined, axis=0), linestyle=":", color="k", alpha=.6, label="Total workload", zorder=0.9)
-            ax1.fill_between(self.time, np.sum(tasks_combined, axis=0), where=(self.time>today), color="tab:grey", alpha=.2, label="TODO", zorder=0.9)
+            ax1.plot(self.time, np.sum(tasks_combined, axis=0), color="k", label="Total workload", zorder=0.9, **plot_kwargs)
+            ax1.fill_between(self.time, np.sum(tasks_combined, axis=0), where=(self.time>today), color="tab:grey", label="TODO", zorder=0.9, **fill_between_kwargs)
             if today is not None:
-                ax1.fill_between(self.time, np.sum(tasks_combined, axis=0), where=(self.time<today), color="tab:green", alpha=.2, label="Finished", zorder=0.9)
+                ax1.fill_between(self.time, np.sum(tasks_combined, axis=0), where=(self.time<today), color="tab:green", label="Finished", zorder=0.9, **fill_between_kwargs)
 
 
         #######
@@ -528,7 +575,7 @@ class GANTT:
         ax2.get_yaxis().set_visible(False)
         
         #create legend
-        ax1.legend(fontsize=16)
+        ax1.legend()
 
         #labelling
         ax1.set_xlabel("")
@@ -537,96 +584,73 @@ class GANTT:
         # ax1.set_xticks([])
         ax1.get_shared_x_axes().join(ax1, ax2)
         
-        ax1.tick_params("both", labelsize=20)
-        ax2.set_xlabel(f"Time [{timeunit}]", fontsize=20)
-        ax2.tick_params("both", labelsize=20)
+        ax2.set_xlabel("Time")
 
 
-        axs = plt.gcf().get_axes()
+        axs = fig.axes
         
-        plt.tight_layout()
 
         return tasks_combined, fig, axs
 
-    def make_classic_gantt(
-        self,
-        projecttitle="Your Project", timeunit="Your Unit", today=None,
-        colors=None, enumerate_tasks=False,
-        ):
+    def plot_classic_gantt(self,
+        today:float=None,
+        colors:np.ndarray=None, enumerate_tasks:bool=False,
+        ) -> Tuple[Figure,plt.Axes]:
         """
-            - function to create a GANTT-graph in classical style
+            - method to create a GANTT-graph in classical style
             
             Parameters
             ----------
-                - projecttitle
-                    - str, optional
-                    - title of your project
-                        - will be shown as title of plot created
-                    - only relevant for the plot created
-                    - the default is 'Your Project'
-                - timeunit
-                    - str, optional
-                    - unit of 'time'
-                    - only relevant for the plot created
-                    - the default is 'Your Unit'
-                - today
+                - `today`
                     - float, optional
                     - current state
                     - will plot a vertical line at the current state in the plot created
                     - only relevant for the plot created
                     - the default is None (will not plot a line)
-                - colors
-                    - list, np.array, optional
+                - `colors`
+                    - np.ndarray, optional
                     - list of matplotlib colors or rgb-tupels
-                    - the default is None
+                    - the default is `None`
                         - will generate colors automatically
-                - enumerate_tasks
+                - `enumerate_tasks`
                     - bool, optional
                     - whether to enumerate the tasks contained in the GANTT-instance
                         - will enumerate them in the order they got added to the GANTT-instance
                     - only relevant for the plot created
-                    - the default is true
+                    - the default is `True`
                 
                 Raises
                 ------
-                    - TypeError
-                        - if 'colors' has wrong type
-                    - ValueError
-                        - if 'colors' has other length than 'self.tasks'
+                    - `TypeError`
+                        - if `colors` has wrong type
+                    - `ValueError`
+                        - if `colors` has other length than `self.tasks`
 
                 Returns
                 -------
-                    - fig
-                        - matplotlib figure object
-                    - axs
-                        - matplotlib axes object
-
-                Dependencies
-                ------------
-                    - matplotlib
-                    - numpy
-                    - astroLuSt
+                    - `fig`
+                        - matplotlib Figure
+                        - created figure
+                    - `axs`
+                        - plt.Axes
+                        - axes corresponding to `fig`
 
                 Comments
                 --------
 
         """
-        import numpy as np
-        import matplotlib.pyplot as plt
-        import astroLuSt.visualization.plotting_astroLuSt as alp
 
         #check shapes
         if colors is None:
-            colors = alp.Plot_LuSt.color_generator(len(self.tasks), color2black_factor=.9, color2white_factor=.9)[0]
+            colors = generate_colors(len(self.tasks)+2, cmap='nipy_spectral')[1:-1]
         elif type(colors) != (np.array and list):
             raise TypeError("'colors' has to be a list or an np.array!")
         elif len(colors) != len(self.task):
             raise ValueError("'colors' has to have the same length as 'self.tasks'!")
 
         #create plot
-        fig = plt.figure(figsize=(16,9))
+        fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        fig.suptitle(projecttitle, fontsize=24)
 
         ax1.plot(self.time, np.ones_like(self.time), alpha=0)   #just needed to get correct xaxis-labels
 
@@ -652,14 +676,10 @@ class GANTT:
         ax1.tick_params(axis='y', which='minor', left=False)
         ax1.xaxis.grid(which="both", zorder=0)
         ax1.get_yaxis().set_visible(False)
-        #labelling
-        ax1.set_xlabel(f"Time [{timeunit}]", fontsize=20)
-        ax1.tick_params("both", labelsize=20)
 
-        ax1.legend(fontsize=16)
+        ax1.legend()
 
-        axs = plt.gcf().get_axes()
-        plt.tight_layout()
+        axs = fig.axes
 
 
         return fig, axs
