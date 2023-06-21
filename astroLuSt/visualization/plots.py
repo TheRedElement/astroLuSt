@@ -1337,48 +1337,49 @@ class LatentSpaceExplorer:
 
         Attributes
         ----------
-            - plot_func
+            - `plot_func`
                 - str, optional
                 - function to use for visualizing each individual sample
-                - has to be the string equivalent of any method that can be called on plt.Axes
+                - has to be the string equivalent of any method that can be called on `plt.Axes`
                 - the corresponding function has to take at least one argument (the values to plot)
-                - the default is 'plot'
-            - subplots_kwargs
+                - the default is `'plot'`
+            - `subplots_kwargs`
                 - dict, optional
-                - kwargs to pass to plt.subplots()
-                - the default is None
-                    - will be initialized with {}
-            - predict_kwargs
+                - kwargs to pass to `plt.subplots()`
+                - the default is `None`
+                    - will be initialized with `{}`
+            - `predict_kwargs`
                 - dict, optional
-                - kwargs to pass to generator.predict()
-                    - generator is a parameter passed self.plot()
-                - the default is None
-                    - will be initialized with {}
-            - plot_func_kwargs
+                - kwargs to pass to `generator.predict()`
+                    - generator is a parameter passed `self.plot()`
+                - the default is `None`
+                    - will be initialized with `{}`
+            - `plot_func_kwargs`
                 - dict, optional
-                - kwargs to pass to the function passed to 'plot_func'
-                - the default is None
-                    - will be initialized with {}
-            - verbose
+                - kwargs to pass to the function passed to `plot_func`
+                - the default is `None`
+                    - will be initialized with `{}`
+            - `verbose`
                 - int, optional
                 - verbosity level
                 - the default is 0
 
         Methods
         -------
-            - plot()
+            - `plot()`
 
         Dependencies
         ------------
             - matplotlib
             - numpy
             - scipy
+            - sklearn
             - typing
 
         Comments
         --------
             - a figure shall be created before calling this method
-            - if the plot is not showing you might have to call plt.show() after the execution of this method
+            - if the plot is not showing you might have to call `plt.show()` after the execution of this method
 
     """
 
@@ -1402,11 +1403,12 @@ class LatentSpaceExplorer:
         return
     
     def __repr__(self) -> str:
+        
         return (
             f'PlotLatentExamples(\n'
-            f'    plot_func={self.plot_func},\n'
-            f'    subplots_kwargs={self.subplots_kwargs}, predict_kwargs={self.predict_kwargs}, plot_func_kwargs={self.plot_func_kwargs},\n'
-            f'    verbose={self.verbose},\n'
+            f'    plot_func={repr(self.plot_func)},\n'
+            f'    subplots_kwargs={repr(self.subplots_kwargs)}, predict_kwargs={repr(self.predict_kwargs)}, plot_func_kwargs={self.plot_func_kwargs},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
 
@@ -1425,47 +1427,40 @@ class LatentSpaceExplorer:
             
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray
                     - 2d array containing the features of the data
                         - i.e. 2 features
-                - y
+                - `y`
                     - np.ndarray
-                    - 1d array of shape X.shape[0]
-                    - labels corresponding to X
-                - res
+                    - 1d array of shape `X.shape[0]`
+                    - labels corresponding to `X`
+                - `res`
                     - int, optional
                     - resolution of the estimated boundary
                     - the default is 100
-                - k
+                - `k`
                     - int, optional
                     - number of neighbours to use in the KNN estimator
                     - the default is 1
-                - ax
+                - `ax`
                     - plt.Axes
                     - axes to add the density estimate to
-                    - the default is None
-                        - will call plt.contourf() instead of ax.contourf()
-                - contourf_kwargs
+                    - the default is `None`
+                        - will call `plt.contourf()` instead of `ax.contourf()`
+                - `contourf_kwargs`
                     - dict, optional
-                    - kwargs to pass to .contourf() function
-                    - the default is None
-                        - will be initialized with {'alpha':0.5, 'zorder':-1}
-
+                    - kwargs to pass to `.contourf()` function
+                    - the default is `None`
+                        - will be initialized with `{'alpha':0.5, 'zorder':-1}`
 
             Raises
             ------
-                - ValueError
-                    - if either 'X' or 'y' are not passed in coorect shapes
+                - `ValueError`
+                    - if either `X` or `y` are not passed in coorect shapes
 
             Returns
             -------
-
-            Dependencies
-            ------------
-                - matplotlib
-                - numpy
-                - sklearn
 
             Comments
             --------
@@ -1510,40 +1505,40 @@ class LatentSpaceExplorer:
 
             Parameters
             ----------
-                - X
+                - `X`
                     - np.ndarray
                     - input dataset
                     - contains samples as rows and features as columns
-                - y
+                - `y`
                     - np.ndarray, str, optional
                     - labels corresponding to X
                     - if np.ndarray
                         - will be used as a colormap
-                    - if str
+                    - if `str`
                         - will be interpreted as that specific color
-                    - the default is None
-                        - will be set to 'tab:blue'
-                - featurenames
+                    - the default is `None`
+                        - will be set to `'tab:blue'`
+                - `featurenames`
                     - np.ndarray, optional
-                    - names to give to the features present in X
-                    - the deafault is None
-                - corner_kwargs
+                    - names to give to the features present in `X`
+                    - the deafault is `None`
+                - `corner_kwargs`
                     - dict, optional
-                    - kwargs to pass to astroLuSt.visualization.plots.corner_plot()
-                    - the default is None
-                        - will initialize with {}                    
+                    - kwargs to pass to `astroLuSt.visualization.plots.corner_plot()`
+                    - the default is `None`
+                        - will initialize with `{}`
 
             Raises
             ------
 
             Returns
             -------
-                - fig
-                    - Figure
+                - `fig`
+                    - matplotlib Figure
                     - the created matplotlib figure
-                - axs
+                - `axs`
                     - plt.Axes
-                    - axes corresponding to 'fig'
+                    - axes corresponding to `fig`
             Comments
             --------
         """
@@ -1569,92 +1564,96 @@ class LatentSpaceExplorer:
         verbose:int=None,
         ) -> Tuple[Figure, List[plt.Axes]]:
         """
-            - method to actually generate a plot showing samples out of the latent space while varying 2 latent variables
+            - method to actually generate a plot showing samples out of the latent space while varying 1 latent variable
 
             Parameters
             ----------
-                - generator
+                - `generator`
                     - Callable class
                     - has to implement a predict method
                     - will be called to generate samples from the provided latent variables
-                        - the latent variables are a list of the length len(zi_f)+1
-                            - i.e. the zi_f fixed variables + the iterated z0 latent variable
-                - z0
+                        - the latent variables are a list of the length `len(zi_f)+1`
+                            - i.e. the `zi_f` fixed variables + the iterated `z0` latent variable
+                - `z0`
                     - list
                     - values of one of the latent dimensions interpretable by generator
                     - will be iterated over and used to generate a grid
                     - has to be equally spaced
-                - zi_f
+                - `zi_f`
                     - list, int
-                    - fixed variables of all latent dimensions which are not z0
+                    - fixed values of all latent dimensions which are not `z0`
                     - if a list gets passed
-                        - has to contain as many entries as the list that get interpreted by generator.predict - 1
+                        - has to contain as many entries as the list that get interpreted by `generator.predict - 1`
                         - each entry represents one latent dimensions value in order
                     - if an integer gets passed
                         - has to be of same value as the length of the list that get interpreted by generator.predict - 1
-                        - will be initialized with a list of zeros length zi_f
-                - z0_idx
+                        - will be initialized with a list of zeros length `zi_f`
+                - `z0_idx`
                     - int, optional
-                    - index of where in the list of latent dimensions z0 is located
-                    - has to differ from z1_idx
+                    - index of where in the list of latent dimensions `z0` is located
+                    - has to differ from `z1_idx`
                     - the deafult is 0
-                        - will set z0 as the first element of the latent vector 
-                - subplots_kwargs
+                        - will set `z0` as the first element of the latent vector 
+                - `subplots_kwargs`
                     - dict, optional
-                    - kwargs to pass to plt.subplots()
-                    - overwrites self.subplot_kwargs
-                    - the default is None
-                        - will default to self.subplot_kwargs
-                - predict_kwargs
+                    - kwargs to pass to `plt.subplots()`
+                    - overwrites `self.subplot_kwargs`
+                    - the default is `None`
+                        - will default to `self.subplot_kwargs`
+                - `predict_kwargs`
                     - dict, optional
-                    - kwargs to pass to generator.predict()
-                        - generator is a parameter passed self.plot()
-                    - overwrites self.subplot_kwargs
-                    - the default is None
-                        - will default to self.subplot_kwargs
-                - plot_func_kwargs
+                    - kwargs to pass to `generator.predict()`
+                        - generator is a parameter passed `self.plot()`
+                    - overwrites `self.predict_kwargs`
+                    - the default is `None`
+                        - will default to `self.predict_kwargs`
+                - `plot_func_kwargs`
                     - dict, optional
-                    - kwargs to pass to the function passed to 'plot_func'
-                    - overwrites self.plot_func_kwargs
-                    - the default is None
-                        - will default to self.plot_func_kwargs
-                - verbose
+                    - kwargs to pass to the function passed to `plot_func`
+                    - overwrites `self.plot_func_kwargs`
+                    - the default is `None`
+                        - will default to `self.plot_func_kwargs`
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - overwrites self.verbose
-                    - the default is None
-                        - will default to self.verbose
+                    - overwrites `self.verbose`
+                    - the default is `None`
+                        - will default to `self.verbose`
                     
             Raises
             ------
-                - ValueError
-                    - if 'z0' is not equally spaced
+                - `ValueError`
+                    - if `z0` is not equally spaced
 
             Returns
             -------
-                - fig
-                    - Figure
+                - `fig`
+                    - matplotlib Figure
                     - created figure
-                - axs
+                - `axs`
                     - list(plt.Axes)
-                    - axes corresponding to fig
+                    - axes corresponding to `fig`
                     - contains an axis to set labels and title as last entry
 
             Comments
             --------
                 - if you want to show something in the background simply follow this structure:
-                
+
+                ```python
                 >>> PLE = PlotLatentExamples(...)
                 >>> fig, axs = PLE.plot_1d(...)
                 >>> axs[-1].plot(...)
                 >>> plt.show()
+                ```
                 
                 - you can also use function that take plt.Axes as parameters. The following example plots some decision boundary estmiate in the background of the latent space examples:
                 
+                ```python
                 >>> PLE = PlotLatentExamples(...)
                 >>> fig, axs = PLE.plot_1d(...)
                 >>> plot_dbe(..., ax=axs[-1])
-                >>> plt.show()            
+                >>> plt.show()
+                ```
         """
         #check shapes
         if len(np.unique(np.diff(z0))) > 1:
@@ -1747,103 +1746,107 @@ class LatentSpaceExplorer:
 
             Parameters
             ----------
-                - generator
+                - `generator`
                     - Callable class
-                    - has to implement a predict method
+                    - has to implement a `predict` method
                     - will be called to generate samples from the provided latent variables
-                        - the latent variables are a list of the length len(zi_f)+2 
-                            - i.e. the zi_f fixed variables + the iterated z0 and z1 variables 
-                - z0
+                        - the latent variables are a list of the length `len(zi_f)+2`
+                            - i.e. the `zi_f` fixed variables + the iterated `z0` and `z1` variables 
+                - `z0`
                     - list
                     - values of one of the latent dimensions interpretable by generator
                     - will be iterated over and used to generate a grid
                     - has to be equally spaced
-                - z1
+                - `z1`
                     - list
                     - values of the second latent dimension interpretable by generator
                     - will be iterated over and used to generate a grid
                     - has to be equally spaced
-                - zi_f
+                - `zi_f`
                     - list, int
-                    - fixed variables of all latent dimensions which are not 'z0' and 'z1'
+                    - fixed variables of all latent dimensions which are not `z0` and `z1`
                     - if a list gets passed
-                        - has to contain as many entries as the list that get interpreted by generator.predict - 2
+                        - has to contain as many entries as the list that get interpreted by `generator.predict - 2`
                         - each entry represents one latent dimensions value in order
                     - if an integer gets passed
                         - has to be of same value as the length of the list that get interpreted by generator.predict - 2
-                        - will be initialized with a list of zeros length zi_f
-                - z0_idx
+                        - will be initialized with a list of zeros length `zi_f`
+                - `z0_idx`
                     - int, optional
-                    - index of where in the list of latent dimensions z0 is located
-                    - has to differ from z1_idx
+                    - index of where in the list of latent dimensions `z0` is located
+                    - has to differ from `z1_idx`
                     - the deafult is 0
-                        - will set z0 as the first element of the latent vector 
-                - z1_idx
+                        - will set `z0` as the first element of the latent vector 
+                - `z1_idx`
                     - int, optional
-                    - index of where in the list of latent dimensions z1 is located
-                    - has to differ from z0_idx
+                    - index of where in the list of latent dimensions `z1` is located
+                    - has to differ from `z0_idx`
                     - the deafult is 1
-                        - will set z1 as the second element of the latent vector 
-                    - int, optional
-                - subplots_kwargs
+                        - will set `z1` as the second element of the latent vector 
+                - `subplots_kwargs`
                     - dict, optional
-                    - kwargs to pass to plt.subplots()
-                    - overwrites self.subplot_kwargs
-                    - the default is None
-                        - will default to self.subplot_kwargs
-                - predict_kwargs
+                    - kwargs to pass to `plt.subplots()`
+                    - overwrites `self.subplot_kwargs`
+                    - the default is `None`
+                        - will default to `self.subplot_kwargs`
+                - `predict_kwargs`
                     - dict, optional
-                    - kwargs to pass to generator.predict()
-                        - generator is a parameter passed self.plot()
-                    - overwrites self.subplot_kwargs
-                    - the default is None
-                        - will default to self.subplot_kwargs
-                - plot_func_kwargs
+                    - kwargs to pass to `generator.predict()`
+                        - generator is a parameter passed `self.plot()`
+                    - overwrites `self.predict_kwargs`
+                    - the default is `None`
+                        - will default to `self.predict_kwargs`
+                - `plot_func_kwargs`
                     - dict, optional
-                    - kwargs to pass to the function passed to 'plot_func'
-                    - overwrites self.plot_func_kwargs
-                    - the default is None
-                        - will default to self.plot_func_kwargs
-                - verbose
+                    - kwargs to pass to the function passed to `plot_func`
+                    - overwrites `self.plot_func_kwargs`
+                    - the default is `None`
+                        - will default to `self.plot_func_kwargs`
+                - `verbose`
                     - int, optional
                     - verbosity level
-                    - overwrites self.verbose
-                    - the default is None
-                        - will default to self.verbose
+                    - overwrites `self.verbose`
+                    - the default is `None`
+                        - will default to `self.verbose`
                     
             Raises
             ------
-                - ValueError
-                    - if 'z0' or 'z1' is not equally spaced
-                    - if 'z0_idx' and 'z1_idx' have the same value
+                - `ValueError`
+                    - if `z0` or `z1` is not equally spaced
+                    - if `z0_idx` and `z1_idx` have the same value
 
             Returns
             -------
-                - fig
+                - `fig`
                     - Figure
                     - created figure
-                - axs
+                - `axs`
                     - list(plt.Axes)
-                    - axes corresponding to fig
+                    - axes corresponding to `fig`
                     - contains an axis to set labels and title as last entry
 
             Comments
             --------
                 - if you want to show something in the background simply follow this structure:
                 
+                ```python
                 >>> PLE = PlotLatentExamples(...)
                 >>> fig, axs = PLE.plot_2d(...)
                 >>> axs[-1].plot(...)
                 >>> plt.rcParams['figure.autolayout'] = False #to keep no whitespace between generated samples
                 >>> plt.show()
-                
+                ```
+
                 - you can also use function that take plt.Axes as parameters. The following example plots some decision boundary estmiate in the background of the latent space examples:
                 
+                ```python
                 >>> PLE = PlotLatentExamples(...)
                 >>> fig, axs = PLE.plot_2d(...)
                 >>> plot_dbe(..., ax=axs[-1])
                 >>> plt.rcParams['figure.autolayout'] = False #to keep no whitespace between generated samples
                 >>> plt.show()
+                ```
+                
         """
 
         #check shapes
