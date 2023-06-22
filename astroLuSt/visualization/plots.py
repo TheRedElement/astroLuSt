@@ -752,7 +752,6 @@ class ParallelCoordinates:
         #filter which range of scores to display and remove scores evaluating to nan if desired
         df = df.filter(((pl.col(score_col_use).is_between(min_score, max_score))|(pl.col(score_col_use).is_nan())))
         df_minmaxscore_shape = df.shape[0]  #shape of dataframe after score_col_use boundaries got applied
-        
         if remove_nanscore:
             df = df.filter(pl.col(score_col_use).is_not_nan())
         df_nonan_shape = df.shape[0]    #shape of dataframe after nans got removed
@@ -766,6 +765,7 @@ class ParallelCoordinates:
             )
         #apply user defined expression to scale the score-function and thus color-scale
         df = df.with_columns(eval(score_scaling).alias(score_col_use))
+
         return df, score_col_use
     
     def __deal_withnan(self,
@@ -840,7 +840,7 @@ class ParallelCoordinates:
         """
 
         df_input_shape = df.shape[0]
-        df = df.filter(pl.col(score_col).is_finite())
+        df = df.filter((pl.col(score_col).is_finite()|pl.col(score_col).is_nan()))
 
         df_inf_shape = df.shape[0]
 
@@ -1203,7 +1203,6 @@ class ParallelCoordinates:
                 
         #deal with missing values
         df, fill_value = self.__deal_withnan(df)
-
 
         #coordinates
         coords = df.columns
