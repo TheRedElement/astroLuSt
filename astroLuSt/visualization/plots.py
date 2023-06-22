@@ -669,7 +669,7 @@ class ParallelCoordinates:
 
     def __init_scorecol(self,
         df:pl.DataFrame,
-        score_col:str=None, score_scaling:str='pl.col(score_col)',
+        score_col:Union[str,int]=None, score_scaling:str='pl.col(score_col)',
         min_score:float=None, max_score:float=None,
         remove_nanscore:bool=False,
         verbose:int=0
@@ -685,8 +685,11 @@ class ParallelCoordinates:
                     - input dataframe containing the score column/coordinate columns
                     - this dataframe will be modified
                 - `score_col`
-                    - str, optional
-                    - name of the column to use for scoring
+                    - str, int, optional
+                    - if str
+                        - name of the column to use for scoring
+                    - if int
+                        - interpreted as index of the column
                     - the default is `None`
                         - will generate a placeholder column
                 - `score_scaling`
@@ -744,6 +747,8 @@ class ParallelCoordinates:
             while score_col_use in df.columns:
                 score_col_use += '_'
             df = df.insert_at_idx(df.shape[1], pl.Series(score_col_use, np.zeros(df.shape[0])))
+        elif isinstance(score_col, int):
+            score_col_use = df.columns[score_col]
         else:
             score_col_use = score_col
 
@@ -862,7 +867,7 @@ class ParallelCoordinates:
     def plot(self,
         coordinates:Union[pl.DataFrame,List[dict],np.ndarray],
         id_col:str=None,
-        score_col:str=None,
+        score_col:Union[str,int]=None,
         coords_cols:Union[str,list]=r'^.*$',
         min_score:float=None, max_score:float=None, remove_nanscore:bool=False,
         score_scaling:str='pl.col(score_col)',
@@ -902,8 +907,11 @@ class ParallelCoordinates:
                     - the default is `None`
                         - will generate an id column by assigning a unique integer to each row
                 - `score_col`
-                    - str, optional
-                    - name of the column used for scoring the different runs/models
+                    - str, int, optional
+                    - if str
+                        - name of the column used for scoring the different runs/models
+                    - if int
+                        - index of the column used for scoring in the different runs/models                    
                     - the default is `None`
                         - no scoring will be used
                         - a dummy column consisting of zeros will be added to `df`
