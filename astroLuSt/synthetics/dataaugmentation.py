@@ -183,13 +183,13 @@ class AugmentAxis:
 
         Methods
         -------
-            - `add_noise()`
+            - `add_noise_t()`
             - `apply_transform()`
-            - `crop()`
-            - `flip_axis()`
+            - `crop_t()`
+            - `flip_axis_t()`
             - `get_transformations()`
-            - `obscure_observations()`
-            - `rescale()`
+            - `obscure_observations_t()`
+            - `rescale_t()`
             - `shift_features()`
             
 
