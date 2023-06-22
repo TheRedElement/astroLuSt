@@ -50,7 +50,7 @@ def generate_colors(classes:Union[list,np.ndarray],
             - `cmap`
                 - str, optional
                 - name of the colormap to use for coloring the different classes
-                - the default is `'viridis'`
+                - the default is `'nipy_spectral'`
 
         Raises
         ------

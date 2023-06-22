@@ -4,14 +4,16 @@
 from datetime import datetime
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+import matplotlib.colors as mcolors
 import numpy as np
-from typing import Tuple
+import polars as pl
+from typing import Tuple, Union, List
 
 from astroLuSt.visualization.plotting import generate_colors
 
 
 #%%definitions
-class GANTT:
+class GANTT_:
     """
         - class to genereate a variation of a GANTT-chart
         
@@ -691,3 +693,213 @@ class GANTT:
 
         return fig, axs
 
+class GANTT:
+
+    def  __init__(self) -> None:
+        return
+    
+    def plot_gantt(self,
+        df:pl.DataFrame,
+        ax:plt.Axes=None,
+        start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None,
+        color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
+        cmap:str='nipy_spectral',
+        axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
+        ) -> None:
+        """
+            - method to create a GANTT chart given information stored in a pl.DataFrame
+
+            Parameters
+            ----------
+                - `df`
+                    - pl.DataFrame
+                    - dataframe containing all tasks to plot in the GANTT chart
+                - `ax`
+                    - plt.Axes, optional
+                    - axes to plot the graph onto
+                    - if `None`
+                        - will call `plt.barh()` ect. instead of `ax.barh()`
+                    - the default is `None`
+                - `start_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `end_col` and `dur_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `end_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `start_col` and `dur_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `dur_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `start_col` and `end_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `color_by`
+                    - str, int, optional
+                    - the column by which to color the bars for each task
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is 0
+                - `sort_by`
+                    - str, int, optional
+                    - the column by which to sort the bars for each task
+                        - i.e. the y-axis of the chart
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is 0
+                - `cmap`
+                    - str, optional
+                    - colormap to use for coloring bars by `color_by`
+                    - the default is `nipy_spectral`
+                - `axvline_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `.axvline()`
+                    - the default is `None`
+                        - will be set to `{'color':'k', 'linestyle':'--'}`
+                - `text_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `.text()`
+                    - the default is `None`
+                        - will be set to `{'ha':'left', 'va':'bottom', 'y':0}`
+                - `grid_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `ax.grid()`
+                    - the default is `None`
+                        - will be set to `{'visible':True, 'axis':'x'}`
+
+            Raises
+            ------
+                - `ValueError`
+                    - if more than two of `start_col`, `end_col`, `dur_col` are `None`
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+
+        if axvline_kwargs is None: axvline_kwargs = {'color':'k', 'linestyle':'--'}
+        if text_kwargs is None:    text_kwargs    = {'ha':'left', 'va':'bottom', 'y':0}
+        if grid_kwargs is None:    grid_kwargs    = {'visible':True, 'axis':'x'}
+
+        if isinstance(color_by, int):   col_cmap  = df.columns[color_by]
+        else:                           col_cmap  = color_by
+        if isinstance(sort_by, int):    col_sort  = df.columns[sort_by]
+        else:                           col_sort  = sort_by
+        if isinstance(start_col, int):  col_start = df.columns[start_col]
+        else:                           col_start = start_col
+        if isinstance(end_col, int):    col_end   = df.columns[end_col]
+        else:                           col_end   = end_col
+        if isinstance(dur_col, int):    col_dur   = df.columns[dur_col]
+        else:                           col_dur   = dur_col
+        
+            
+        #generate colormap for plot
+        colors = generate_colors(
+            classes=df[col_cmap].n_unique()+2,
+            cmap=cmap
+        )[1:-1]
+
+        #determine how much of the task has been finished already and duration of whole task
+        ##duration missing
+        if col_start is not None and col_end is not None:
+            completed = (((df[col_end]-df[col_start])).cast(int) * df['completion']).cast(pl.Datetime)
+            duration  = (df[col_end]-df[col_start]).cast(pl.Datetime)
+            start = df[col_start]
+        ##end missing
+        elif col_start is not None and col_end is None and col_dur is not None:
+            completed = (df[col_dur].cast(int) * df['completion']).cast(pl.Datetime)
+            duration  = df[col_dur].cast(pl.Datetime)
+            start = df[col_start]
+        ##start missing
+        elif col_start is None and col_end is not None and col_dur is not None:
+            completed = (df[col_dur].cast(int) * df['completion']).cast(pl.Datetime)
+            duration  = df[col_dur].cast(pl.Datetime)
+            start = df[col_end] - df[col_dur]
+        else:
+            raise ValueError('At least two of `col_start`, `col_end`, `col_dur` have to be not `None`!')
+
+        #plot onto axis
+        if ax is not None:
+            #add bar for each task
+            ax.barh(y=df[col_sort], width=duration,  left=start, color=colors, alpha=0.5, zorder=0)
+            ax.barh(y=df[col_sort], width=completed, left=start, color=colors, alpha=1.0, zorder=1)
+            
+            #vertical line for today
+            today = np.datetime64(datetime.now())
+            ax.axvline(today, **axvline_kwargs)
+            ax.text(x=today, s=' Today', **text_kwargs)
+
+            #correct y_axis for sorting
+            ax.invert_yaxis()
+            ax.set_xticks(ax.get_xticks())
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+
+            #add gridlines
+            ax.grid(**grid_kwargs)
+
+            #labelling
+            ax.set_xlabel('Time')
+            ax.set_ylabel(col_sort)
+
+
+        #plot in current figure
+        else:
+            #add bar for each task
+            plt.barh(y=df[col_sort], width=duration,  left=start, color=colors, alpha=0.5, zorder=0)
+            plt.barh(y=df[col_sort], width=completed, left=start, color=colors, alpha=1.0, zorder=1)
+            
+            #vertical line for today
+            plt.axvline(np.datetime64(datetime.now()), **axvline_kwargs)
+
+        return 
+    
+    def plot_workload(self,
+        ) -> None:
+
+        return
+    
+    def plot(self,
+        X:Union[pl.DataFrame,List[dict],str],
+        plot_gantt_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
+
+        #initialize
+        if plot_gantt_kwargs is None:
+            plot_gantt_kwargs = {}
+
+        #get correct type for X
+        if isinstance(X, pl.DataFrame): df = X
+        elif isinstance(X, str):        df = pl.read_csv(X)
+        else:                           df = pl.DataFrame(X)
+
+        #plot
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+
+        axs = fig.axes
+
+        self.plot_gantt(df=df, ax=ax1, **plot_gantt_kwargs)
+
+        return fig, axs
