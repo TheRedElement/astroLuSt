@@ -866,7 +866,7 @@ class ParallelCoordinates:
 
     def plot(self,
         coordinates:Union[pl.DataFrame,List[dict],np.ndarray],
-        id_col:str=None,
+        id_col:Union[str,int]=None,
         score_col:Union[str,int]=None,
         coords_cols:Union[str,list]=r'^.*$',
         min_score:float=None, max_score:float=None, remove_nanscore:bool=False,
@@ -902,8 +902,12 @@ class ParallelCoordinates:
                     - will call `pl.DataFrame(coordinates)` if anything else than a pl.DataFrame is passed
                         - if a np.ndarray is passed, make sure that the dtype is NOT `object`
                 - `id_col`
-                    - str, optional
+                    - str, int optional
                     - name of the column to use as an ID
+                    - if str
+                        - will be interpreted as the column name
+                    - if int
+                        - will be interpreted as index of column
                     - the default is `None`
                         - will generate an id column by assigning a unique integer to each row
                 - `score_col`
@@ -1173,11 +1177,15 @@ class ParallelCoordinates:
             df = pl.DataFrame(coordinates)
 
         
-        #initialize idcol correctly (generate id if None has been passed)
+        #initialize idcol correctly
+        ##generate id if None has been passed
         if id_col is None:
             id_col = 'id'
             df = df.insert_at_idx(0, pl.Series(id_col, np.arange(0, df.shape[0], 1, dtype=np.int64)))
-        
+        ##obtain string corresponding to the passed index
+        elif isinstance(id_col, int):
+            id_col = df.columns[id_col]
+
         #initialize score column
         df, score_col_use = self.__init_scorecol(
             df=df,
