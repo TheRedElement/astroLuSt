@@ -1,7 +1,7 @@
 
 
 #%%imports
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import matplotlib.colors as mcolors
@@ -758,6 +758,26 @@ class GANTT:
 
             Returns
             -------
+                - `df`
+                    - pl.DataFrame
+                    - input dataframe with infered columns added
+                - `start`
+                    - pl.Series
+                    - infered starting timestamps if `None` provided
+                    - otherwise the passed starting timestamps
+                - `end`
+                    - pl.Series
+                    - infered ending timestamps if `None` provided
+                    - otherwise the passed ending timestamps
+                - `duration`
+                    - pl.Series
+                    - infered durations if `None` provided
+                    - otherwise the passed starting durations
+                - `completed`
+                    - pl.Series
+                    - if `None` was provided to `comp_col`
+                        - series of ones
+                    - otherwise the passed completion fractions
 
             Comments
             --------      
@@ -842,18 +862,21 @@ class GANTT:
 
         return sigma
 
-    def task_func(self,
-        time:np.ndarray,
-        start:float, end:float,
-        start_slope:float=1, end_slope:float=1
+    def workload_curve(self,
+        time:pl.Series,
+        start:pl.Series, end:pl.Series, duration:pl.Series, completed:pl.Series=None,
+        weight:Union[pl.Series,float]=1,
+        start_slope:Union[pl.Series,float]=1, end_slope:Union[pl.Series,float]=-1,
+        time_scaling:float=1E-12,
         ) -> np.ndarray:
+        #TODO: Docstring
         """
             - method to calculate a specific tasks workload curve
             - combines two sigmoids with opposite signs in the exponent to do that
         
             Parameters
             ----------
-                - `time`
+                - `x`
                     - np.ndarray
                     - the times (relative to the starting time) used for the tasks
                         - i.e. an array starting with 0
@@ -887,13 +910,26 @@ class GANTT:
             --------
         """
 
-        start_phase = self.sigmoid(time, start_slope, start)
-        end_phase   = self.sigmoid(-time, end_slope, -end)
-        task = start_phase + end_phase
-        task -= task.min()
-        task /= task.max()
+        #get workload-curves
+        ##no offset by start, because start is the zeropoint
+        time_eval = np.array(len(start)*[time.cast(int)])
+        l_start = self.sigmoid(time_eval.T, slope= start_slope*time_scaling, shift=(start.cast(int).to_numpy()))
+        l_end   = self.sigmoid(time_eval.T, slope=-end_slope  *time_scaling, shift=(start.cast(int).to_numpy()+duration.cast(int).to_numpy()))
+
+        ##weight curves
+        workload = weight*(l_start+l_end)
         
-        return task
+        
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # ax.plot(time, l1)
+        # # ax.plot(time, l2)
+        # ax.axvline(start[0], color='k', linestyle=':')
+        # ax.axvline(start[1], color='k', linestyle=':')
+        # ax.axvline(start[2], color='k', linestyle=':')
+        # plt.show()
+
+        return workload
 
     def plot_gantt(self,
         df:pl.DataFrame,
@@ -1060,11 +1096,35 @@ class GANTT:
     def plot_workload(self,
         df:pl.DataFrame,
         ax:plt.Axes=None,
+        start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
+        color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
+        res:int=100,
         ) -> None:
 
-        time = np.linspace()
+        df, start, end, duration, completed = self.__get_missing(
+            df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col
+        )
+
+        #get increments in time to reach res datapoints
+        ls_interval = (end.max()-start.min())/timedelta(res)
+
+        #time only needed for plotting
+        time = pl.date_range(start.min(), end.max(), interval=timedelta(ls_interval))
+
+        workload = self.workload_curve(
+            time=time,
+            start=start, end=end, duration=duration, completed=completed,
+            weight=1, start_slope=1, end_slope=1,
+            time_scaling=1E-12,
+        )
 
 
+        #plot curves
+        # ax.plot(time, l1)
+        ax.axvline(start[0], color='k', linestyle=':')
+        ax.axvline(start[1], color='k', linestyle=':')
+        ax.axvline(start[2], color='k', linestyle=':')
+        ax.plot(time, workload)
 
         return
     
@@ -1087,8 +1147,8 @@ class GANTT:
         ax1 = fig.add_subplot(111)
 
 
-        self.plot_gantt(df=df, ax=ax1, **plot_gantt_kwargs)
-        # self.plot_workload(df=df)
+        # self.plot_gantt(df=df, ax=ax1, **plot_gantt_kwargs)
+        self.plot_workload(df=df, ax=ax1, **plot_workload_kwargs)
 
         axs = fig.axes
 
