@@ -698,10 +698,207 @@ class GANTT:
     def  __init__(self) -> None:
         return
     
+    def __get_missing(
+        self,
+        df:pl.DataFrame,
+        start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
+        ) -> Tuple[pl.DataFrame,pl.Series,pl.Series,pl.Series,pl.Series]:
+        """
+            - method to infer missing columns in `df`
+
+            Parameters
+            ----------
+                - `df`
+                    - pl.DataFrame
+                    - dataframe containing all tasks to plot in the GANTT chart
+                - `start_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `end_col` and `dur_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `end_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `start_col` and `dur_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `dur_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `start_col` and `end_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `comp_col`
+                    - str, int, optional
+                    - the column containing values describing how much of a task is completed
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 (100%) for all entries in `df`
+
+            Raises
+            ------
+                - `ValueError`
+                    - if more than two of `start_col`, `end_col`, `dur_col` are `None`
+
+            Returns
+            -------
+
+            Comments
+            --------      
+        """
+
+
+        if comp_col is None:
+            comp_col = '<completion placeholder>'
+            df = df.with_columns(pl.lit(1).alias(comp_col))
+
+        if isinstance(start_col, int):  col_start = df.columns[start_col]
+        else:                           col_start = start_col
+        if isinstance(end_col, int):    col_end   = df.columns[end_col]
+        else:                           col_end   = end_col
+        if isinstance(dur_col, int):    col_dur   = df.columns[dur_col]
+        else:                           col_dur   = dur_col
+        if isinstance(comp_col, int):   col_comp  = df.columns[comp_col]
+        else:                           col_comp  = comp_col
+
+
+        #determine how much of the task has been finished already and duration of whole task
+        ##duration missing
+        if col_start is not None and col_end is not None:
+            completed = (((df[col_end]-df[col_start])).cast(int) * df[col_comp]).cast(pl.Datetime)
+            duration  = (df[col_end]-df[col_start]).cast(pl.Datetime)
+            start = df[col_start]
+            end = df[col_end]
+        ##end missing
+        elif col_start is not None and col_end is None and col_dur is not None:
+            completed = (df[col_dur].cast(int) * df[col_comp]).cast(pl.Datetime)
+            duration  = df[col_dur].cast(pl.Datetime)
+            start = df[col_start]
+            end = df[col_start] + df[col_dur]
+        ##start missing
+        elif col_start is None and col_end is not None and col_dur is not None:
+            completed = (df[col_dur].cast(int) * df[col_comp]).cast(pl.Datetime)
+            duration  = df[col_dur].cast(pl.Datetime)
+            start = df[col_end] - df[col_dur]
+            end = df[col_end]
+        else:
+            raise ValueError('At least two of `col_start`, `col_end`, `col_dur` have to be not `None`!')
+
+        return df, start, end, duration, completed
+
+    def sigmoid(self,
+        x:np.ndarray,
+        slope:np.ndarray=1, shift:np.ndarray=0
+        ) -> np.ndarray:
+        """
+            - method to calculate a sigmoid function
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - independent variable to calculate simoid of
+                - `slope`
+                    - np.ndarray, optional
+                    - parameter changing the slope of the sigmoid
+                    - the default is 1
+                - `shift`
+                    - np.ndarray
+                    - parameter to shift the sigmoid in direction of `x`
+                    - the default is 0
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `sigma`
+                    - np.ndarray
+                    - sigmoid evaluated on `x`
+
+            Comments
+            --------
+
+        """
+
+        Q1 = 1 + np.e**(slope*(-(x - shift)))
+        sigma = 1/Q1
+
+        return sigma
+
+    def task_func(self,
+        time:np.ndarray,
+        start:float, end:float,
+        start_slope:float=1, end_slope:float=1
+        ) -> np.ndarray:
+        """
+            - method to calculate a specific tasks workload curve
+            - combines two sigmoids with opposite signs in the exponent to do that
+        
+            Parameters
+            ----------
+                - `time`
+                    - np.ndarray
+                    - the times (relative to the starting time) used for the tasks
+                        - i.e. an array starting with 0
+                - `start`
+                    - float
+                    - time at which the tasks starts
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `end`
+                    - float
+                    - time at which the task ends
+                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                - `start_slope`
+                    - float, optional
+                    - how steep the starting phase should be
+                    -  the default is 1
+                - `end_slope`
+                    - float
+                    - how steep the ending phase (reflection phase) should be
+                    - the default is 1
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - task
+                    - np.ndarray
+                    - workload curve for `time`
+
+            Comments
+            --------
+        """
+
+        start_phase = self.sigmoid(time, start_slope, start)
+        end_phase   = self.sigmoid(-time, end_slope, -end)
+        task = start_phase + end_phase
+        task -= task.min()
+        task /= task.max()
+        
+        return task
+
     def plot_gantt(self,
         df:pl.DataFrame,
         ax:plt.Axes=None,
-        start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None,
+        start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
         cmap:str='nipy_spectral',
         axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
@@ -750,6 +947,15 @@ class GANTT:
                     - the default is `None`
                         - will be infered by using `start_col` and `end_col`
                         - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `comp_col`
+                    - str, int, optional
+                    - the column containing values describing how much of a task is completed
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 (100%) for all entries in `df`
                 - `color_by`
                     - str, int, optional
                     - the column by which to color the bars for each task
@@ -789,8 +995,6 @@ class GANTT:
 
             Raises
             ------
-                - `ValueError`
-                    - if more than two of `start_col`, `end_col`, `dur_col` are `None`
 
             Returns
             -------
@@ -807,38 +1011,16 @@ class GANTT:
         else:                           col_cmap  = color_by
         if isinstance(sort_by, int):    col_sort  = df.columns[sort_by]
         else:                           col_sort  = sort_by
-        if isinstance(start_col, int):  col_start = df.columns[start_col]
-        else:                           col_start = start_col
-        if isinstance(end_col, int):    col_end   = df.columns[end_col]
-        else:                           col_end   = end_col
-        if isinstance(dur_col, int):    col_dur   = df.columns[dur_col]
-        else:                           col_dur   = dur_col
-        
-            
+
         #generate colormap for plot
         colors = generate_colors(
             classes=df[col_cmap].n_unique()+2,
             cmap=cmap
         )[1:-1]
 
-        #determine how much of the task has been finished already and duration of whole task
-        ##duration missing
-        if col_start is not None and col_end is not None:
-            completed = (((df[col_end]-df[col_start])).cast(int) * df['completion']).cast(pl.Datetime)
-            duration  = (df[col_end]-df[col_start]).cast(pl.Datetime)
-            start = df[col_start]
-        ##end missing
-        elif col_start is not None and col_end is None and col_dur is not None:
-            completed = (df[col_dur].cast(int) * df['completion']).cast(pl.Datetime)
-            duration  = df[col_dur].cast(pl.Datetime)
-            start = df[col_start]
-        ##start missing
-        elif col_start is None and col_end is not None and col_dur is not None:
-            completed = (df[col_dur].cast(int) * df['completion']).cast(pl.Datetime)
-            duration  = df[col_dur].cast(pl.Datetime)
-            start = df[col_end] - df[col_dur]
-        else:
-            raise ValueError('At least two of `col_start`, `col_end`, `col_dur` have to be not `None`!')
+        df, start, end, duration, completed = self.__get_missing(
+            df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col
+        )
 
         #plot onto axis
         if ax is not None:
@@ -876,18 +1058,24 @@ class GANTT:
         return 
     
     def plot_workload(self,
+        df:pl.DataFrame,
+        ax:plt.Axes=None,
         ) -> None:
+
+        time = np.linspace()
+
+
 
         return
     
     def plot(self,
         X:Union[pl.DataFrame,List[dict],str],
-        plot_gantt_kwargs:dict=None,
+        plot_gantt_kwargs:dict=None, plot_workload_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
 
         #initialize
-        if plot_gantt_kwargs is None:
-            plot_gantt_kwargs = {}
+        if plot_gantt_kwargs is None:    plot_gantt_kwargs = {}
+        if plot_workload_kwargs is None: plot_workload_kwargs = {}
 
         #get correct type for X
         if isinstance(X, pl.DataFrame): df = X
@@ -898,8 +1086,10 @@ class GANTT:
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
 
-        axs = fig.axes
 
         self.plot_gantt(df=df, ax=ax1, **plot_gantt_kwargs)
+        # self.plot_workload(df=df)
+
+        axs = fig.axes
 
         return fig, axs
