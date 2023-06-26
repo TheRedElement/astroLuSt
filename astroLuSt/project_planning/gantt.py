@@ -1123,7 +1123,6 @@ class GANTT:
         return workload, total_workload
 
 
-
     def plot_gantt(self,
         df:pl.DataFrame,
         ax:plt.Axes=None,
@@ -1566,6 +1565,51 @@ class GANTT:
         X:Union[pl.DataFrame,List[dict],str],
         plot_gantt_kwargs:dict=None, plot_workload_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to create a combined workload-GANTT plot (2 panels) given tasks stored in `X`
+
+            Parameters
+            ----------
+                - X
+                    - pl.DataFrame, list, str
+                    - object containing informations to individual tasks of your project
+                    - if pl.DataFrame
+                        - will be used as such
+                    - if list
+                        - has to contain dicts
+                        - will be converted to pl.DataFrame
+                            - i.e. `pl.DataFrame(X)` will be called
+                    - if str
+                        - will be interpreted as filename to csv file
+                        - will load file into a pl.DataFrame
+                        - i.e. `pl.read_csv(X)` will be called
+                - `plot_gantt_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.plot_gantt()`
+                    - the default is `None`
+                        - will be set to `{}`
+                - `plot_workload_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.plot_workload()`
+                    - the default is `None`
+                        - will be set to `{}`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - matplotlib Figure
+                    - created figure
+                - `axs`
+                    - plt.Axis
+                    - axis corresponding to `fig`
+
+            Comments
+            --------
+
+        """
 
         #initialize
         if plot_gantt_kwargs is None:    plot_gantt_kwargs = {}
