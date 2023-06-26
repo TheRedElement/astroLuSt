@@ -708,6 +708,7 @@ class GANTT:
         df:pl.DataFrame,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
+        weight_col:Union[str,int]=None,
         verbose:int=None,
         ) -> Tuple[pl.DataFrame,pl.Series,pl.Series,pl.Series,pl.Series,pl.Series,pl.Series,str,str,str,str,str,str]:
         """
@@ -855,23 +856,29 @@ class GANTT:
         if end_slope_col is None:
             end_slope_col = '<end_slope placeholder>'
             df = df.with_columns(pl.lit(1).alias(end_slope_col))
+        if weight_col is None:
+            weight_col = '<weight placeholder>'
+            df = df.with_columns(pl.lit(1).alias(weight_col))
 
         start_slope = df[start_slope_col]
         end_slope   = df[end_slope_col]
+        weight      = df[weight_col]
 
 
-        if isinstance(start_col, int):          col_start = df.columns[start_col]
-        else:                                   col_start = start_col
-        if isinstance(end_col, int):            col_end   = df.columns[end_col]
-        else:                                   col_end   = end_col
-        if isinstance(dur_col, int):            col_dur   = df.columns[dur_col]
-        else:                                   col_dur   = dur_col
-        if isinstance(comp_col, int):           col_comp  = df.columns[comp_col]
-        else:                                   col_comp  = comp_col
-        if isinstance(start_slope_col, int):    col_start_slope  = df.columns[start_slope_col]
-        else:                                   col_start_slope  = start_slope_col
-        if isinstance(end_slope_col, int):      col_end_slope  = df.columns[end_slope_col]
-        else:                                   col_end_slope  = end_slope_col
+        if isinstance(start_col, int):          col_start       = df.columns[start_col]
+        else:                                   col_start       = start_col
+        if isinstance(end_col, int):            col_end         = df.columns[end_col]
+        else:                                   col_end         = end_col
+        if isinstance(dur_col, int):            col_dur         = df.columns[dur_col]
+        else:                                   col_dur         = dur_col
+        if isinstance(comp_col, int):           col_comp        = df.columns[comp_col]
+        else:                                   col_comp        = comp_col
+        if isinstance(start_slope_col, int):    col_start_slope = df.columns[start_slope_col]
+        else:                                   col_start_slope = start_slope_col
+        if isinstance(end_slope_col, int):      col_end_slope   = df.columns[end_slope_col]
+        else:                                   col_end_slope   = end_slope_col
+        if isinstance(weight_col, int):         col_weight      = df.columns[weight_col]
+        else:                                   col_weight      = weight_col
 
 
         #determine how much of the task has been finished already and duration of whole task
@@ -918,11 +925,12 @@ class GANTT:
         completed.rename(   col_comp,           in_place=True)
         start_slope.rename( col_start_slope,    in_place=True)
         end_slope.rename(   col_end_slope,      in_place=True)
+        weight.rename(      col_weight,         in_place=True)
 
         return (
             df,
-            start, end, duration, completed, start_slope, end_slope,
-            col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope,
+            start, end, duration, completed, start_slope, end_slope, weight,
+            col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope, col_weight
         )
 
     def __generate_cmap(self,
@@ -983,7 +991,7 @@ class GANTT:
         slope:np.ndarray=1, shift:np.ndarray=0
         ) -> np.ndarray:
         """
-            - method to calculate a sigmoid function
+            - method to calculate a generalized sigmoid function
 
             Parameters
             ----------
@@ -1006,7 +1014,7 @@ class GANTT:
             -------
                 - `sigma`
                     - np.ndarray
-                    - sigmoid evaluated on `x`
+                    - generalized sigmoid evaluated on `x`
 
             Comments
             --------
@@ -1019,31 +1027,31 @@ class GANTT:
         return sigma
   
     def workload_curve(self,
-        time:pl.Series,
+        x:pl.Series,
         start:pl.Series, end:pl.Series, duration:pl.Series, completed:pl.Series=None,
         start_slope:pl.Series=None, end_slope:pl.Series=None,
-        weight:Union[pl.Series,float]=1,
+        weight:pl.Series=None,
         time_scaling:float=1E-12,
         ) -> Tuple[np.ndarray,np.ndarray]:
         #TODO: Docstring
         """
-            - method to calculate a specific tasks workload curve
-            - combines two sigmoids with opposite signs in the exponent to do that
+            - method to calculate a specific tasks workload curve (workload over time)
+            - combines two sigmoids with opposite slopes
         
             Parameters
             ----------
                 - `x`
                     - np.ndarray
-                    - the times (relative to the starting time) used for the tasks
-                        - i.e. an array starting with 0
+                    - the x-values to be evaluated
+                        - usually times
                 - `start`
-                    - float
-                    - time at which the tasks starts
-                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                    - pl.Series
+                    - time at which the tasks start
                 - `end`
-                    - float
-                    - time at which the task ends
-                    - relative to the zero point in time (i.e. `time.min() = 0`)
+                    - pl.Series
+                    - time at which the tasks end
+                - `duration`
+                - `completed`
                 - `start_slope`
                     - float, optional
                     - how steep the starting phase should be
@@ -1052,6 +1060,7 @@ class GANTT:
                     - float
                     - how steep the ending phase (reflection phase) should be
                     - the default is 1
+                - `weight`
 
             Raises
             ------
@@ -1068,16 +1077,14 @@ class GANTT:
 
         #get workload-curves
         ##no offset by start, because start is the zeropoint
-        time_eval = np.array(len(start)*[time.cast(int)])
+        time_eval = np.array(len(start)*[x.cast(int)])
         l_start = self.sigmoid(time_eval.T, slope= start_slope.cast(float).to_numpy()*time_scaling, shift=(start.cast(int).to_numpy()))
         l_end   = self.sigmoid(time_eval.T, slope=-end_slope.cast(float).to_numpy()  *time_scaling, shift=(start.cast(int).to_numpy()+duration.cast(int).to_numpy()))
-
         ##weight curves
         workload = (l_start+l_end)
         workload -= workload.min()
         workload /= np.nanmax(workload, axis=0)
-        workload *= weight
-
+        workload *= weight.to_numpy()
 
         #total workload
         total_workload = np.sum(workload, axis=1)
@@ -1222,11 +1229,13 @@ class GANTT:
         )[1:-1]
 
         df, \
-        start, end, duration, completed, start_slope, end_slope, \
-        col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope \
+        start, end, duration, completed, start_slope, end_slope, weight,\
+        col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope, \
+        col_weight \
             = self.__get_missing(
                 df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col,
                 start_slope_col=None, end_slope_col=None,
+                weight_col=None,
                 verbose=verbose,        
         )
 
@@ -1274,6 +1283,7 @@ class GANTT:
         ax:plt.Axes=None,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
+        weight_col:Union[str,int]=None,
         color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
         cmap:str='nipy_spectral',
         res:int=100,
@@ -1295,11 +1305,13 @@ class GANTT:
 
 
         df, \
-        start, end, duration, completed, start_slope, end_slope, \
-        col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope \
+        start, end, duration, completed, start_slope, end_slope, weight, \
+        col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope, \
+        col_weight, \
             = self.__get_missing(
                 df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col,
                 start_slope_col=start_slope_col, end_slope_col=end_slope_col,
+                weight_col=weight_col,
                 verbose=verbose,
         )
 
@@ -1310,9 +1322,9 @@ class GANTT:
         time      = pl.date_range(start.min(), end.max(), interval=timedelta(ls_interval))
 
         workload, total_workload = self.workload_curve(
-            time=time,
+            x=time,
             start=start, end=end, duration=duration, completed=completed,
-            weight=1, start_slope=start_slope, end_slope=end_slope,
+            weight=weight, start_slope=start_slope, end_slope=end_slope,
             time_scaling=1E-12,
         )
 
