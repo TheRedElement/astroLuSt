@@ -695,16 +695,22 @@ class GANTT_:
 
 class GANTT:
 
-    def  __init__(self) -> None:
+    def  __init__(self,
+        verbose:int=0,
+        ) -> None:
+
+        self.verbose = verbose
+
         return
     
     def __get_missing(
         self,
         df:pl.DataFrame,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
+        verbose:int=None,
         ) -> Tuple[pl.DataFrame,pl.Series,pl.Series,pl.Series,pl.Series]:
         """
-            - method to infer missing columns in `df`
+            - private method to infer missing columns in `df`
 
             Parameters
             ----------
@@ -750,6 +756,12 @@ class GANTT:
                         - will be interpreted as column name
                     - the default is `None`
                         - will be set to 1 (100%) for all entries in `df`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - will override `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
 
             Raises
             ------
@@ -783,6 +795,7 @@ class GANTT:
             --------      
         """
 
+        if verbose is None: verbose = self.verbose
 
         if comp_col is None:
             comp_col = '<completion placeholder>'
@@ -801,26 +814,102 @@ class GANTT:
         #determine how much of the task has been finished already and duration of whole task
         ##duration missing
         if col_start is not None and col_end is not None:
+            # completed = (((df[col_end]-df[col_start])).cast(int) * df[col_comp]).cast(pl.Time)
+            # duration  = (df[col_end]-df[col_start]).cast(pl.Time)
             completed = (((df[col_end]-df[col_start])).cast(int) * df[col_comp]).cast(pl.Datetime)
             duration  = (df[col_end]-df[col_start]).cast(pl.Datetime)
             start = df[col_start]
             end = df[col_end]
+            if verbose > 1:
+                print(
+                    f'INFO(GANTT.__get_missing):\n'
+                    f'    Infering `duration` from `start` and `end`'
+                )
         ##end missing
         elif col_start is not None and col_end is None and col_dur is not None:
-            completed = (df[col_dur].cast(int) * df[col_comp]).cast(pl.Datetime)
-            duration  = df[col_dur].cast(pl.Datetime)
+            completed = (df[col_dur].cast(int) * df[col_comp]).cast(pl.Time)
+            duration  = df[col_dur].cast(pl.Time)
             start = df[col_start]
             end = df[col_start] + df[col_dur]
+            if verbose > 1:
+                print(
+                    f'INFO(GANTT.__get_missing):\n'
+                    f'    Infering `end` from `start` and `duration`'
+                )
         ##start missing
         elif col_start is None and col_end is not None and col_dur is not None:
-            completed = (df[col_dur].cast(int) * df[col_comp]).cast(pl.Datetime)
-            duration  = df[col_dur].cast(pl.Datetime)
+            completed = (df[col_dur].cast(int) * df[col_comp]).cast(pl.Time)
+            duration  = df[col_dur].cast(pl.Time)
             start = df[col_end] - df[col_dur]
             end = df[col_end]
+            if verbose > 1:
+                print(
+                    f'INFO(GANTT.__get_missing):\n'
+                    f'    Infering `start` from `end` and `duration`'
+                )
         else:
             raise ValueError('At least two of `col_start`, `col_end`, `col_dur` have to be not `None`!')
 
+        #rename series to have correct names
+        start.rename(    col_start, in_place=True)
+        end.rename(      col_end,   in_place=True)
+        duration.rename( col_dur,   in_place=True)
+        completed.rename(col_comp,  in_place=True)
+
         return df, start, end, duration, completed
+
+    def __generate_cmap(self,
+        df:pl.DataFrame,
+        col_cmap:str, cmap:str,
+        ) -> np.ndarray:
+        """
+            - private method to generate a list of colors for unique elements in `df[col_map]`
+
+            Parameters
+            ----------
+                - `df`
+                    - pl.DataFrame
+                    - dataframe containing `col_cmap` as column
+                - `col_cmap`
+                    - str
+                    - column name to be considered for the coloring
+                    - will assign one color to each unique element in `df[col_cmap]`
+                - `cmap`
+                    - str
+                    - colormap to use for generating the colors
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `colors`
+                    - np.ndarray
+                    - generated colors corresponding to unique elements in `df[col_cmap]`
+                        - each unique element will have a unique color
+                        - the order of `colors` is the same as the one of `df[col_cmap]`
+
+            Comments
+            --------
+        """
+
+        nuniquecolors = df[col_cmap].n_unique()
+        ncolors = df[col_cmap].shape[0]
+
+        gen_colors = generate_colors(
+            classes=nuniquecolors+2,
+            cmap=cmap
+        )[1:-1]
+
+        #init output
+        colors = np.zeros((ncolors,4))
+        uniques, indices = np.unique(df[col_cmap], return_index=True)
+        
+        #replace output with corresponding colors
+        for u, idx in zip(uniques, indices):
+            colors[(df[col_cmap].to_numpy()==u)] += gen_colors[idx]
+        
+        return colors
 
     def sigmoid(self,
         x:np.ndarray,
@@ -868,7 +957,7 @@ class GANTT:
         weight:Union[pl.Series,float]=1,
         start_slope:Union[pl.Series,float]=1, end_slope:Union[pl.Series,float]=-1,
         time_scaling:float=1E-12,
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray,np.ndarray]:
         #TODO: Docstring
         """
             - method to calculate a specific tasks workload curve
@@ -917,19 +1006,21 @@ class GANTT:
         l_end   = self.sigmoid(time_eval.T, slope=-end_slope  *time_scaling, shift=(start.cast(int).to_numpy()+duration.cast(int).to_numpy()))
 
         ##weight curves
-        workload = weight*(l_start+l_end)
-        
-        
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111)
-        # ax.plot(time, l1)
-        # # ax.plot(time, l2)
-        # ax.axvline(start[0], color='k', linestyle=':')
-        # ax.axvline(start[1], color='k', linestyle=':')
-        # ax.axvline(start[2], color='k', linestyle=':')
-        # plt.show()
+        workload = (l_start+l_end)
+        workload -= workload.min()
+        workload /= np.nanmax(workload, axis=0)
+        workload *= weight
 
-        return workload
+
+        #total workload
+        total_workload = np.sum(workload, axis=1)
+        
+        #normalize workload
+        workload /= np.nanmax(total_workload)
+        total_workload /= np.nanmax(total_workload)
+        
+
+        return workload, total_workload
 
     def plot_gantt(self,
         df:pl.DataFrame,
@@ -937,6 +1028,7 @@ class GANTT:
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
         cmap:str='nipy_spectral',
+        verbose:int=None,
         axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
         ) -> None:
         """
@@ -1013,6 +1105,12 @@ class GANTT:
                     - str, optional
                     - colormap to use for coloring bars by `color_by`
                     - the default is `nipy_spectral`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - will override `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
                 - `axvline_kwargs`
                     - dict, optional
                     - kwargs to be passed to `.axvline()`
@@ -1039,6 +1137,7 @@ class GANTT:
             --------
         """
 
+        if verbose is None:        verbose = self.verbose
         if axvline_kwargs is None: axvline_kwargs = {'color':'k', 'linestyle':'--'}
         if text_kwargs is None:    text_kwargs    = {'ha':'left', 'va':'bottom', 'y':0}
         if grid_kwargs is None:    grid_kwargs    = {'visible':True, 'axis':'x'}
@@ -1098,8 +1197,16 @@ class GANTT:
         ax:plt.Axes=None,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
+        cmap:str='nipy_spectral',
         res:int=100,
         ) -> None:
+
+
+        if isinstance(color_by, int):   col_cmap  = df.columns[color_by]
+        else:                           col_cmap  = color_by
+        if isinstance(sort_by, int):    col_sort  = df.columns[sort_by]
+        else:                           col_sort  = sort_by
+
 
         df, start, end, duration, completed = self.__get_missing(
             df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col
@@ -1109,22 +1216,57 @@ class GANTT:
         ls_interval = (end.max()-start.min())/timedelta(res)
 
         #time only needed for plotting
-        time = pl.date_range(start.min(), end.max(), interval=timedelta(ls_interval))
+        time      = pl.date_range(start.min(), end.max(), interval=timedelta(ls_interval))
 
-        workload = self.workload_curve(
+        workload, total_workload = self.workload_curve(
             time=time,
             start=start, end=end, duration=duration, completed=completed,
             weight=1, start_slope=1, end_slope=1,
             time_scaling=1E-12,
         )
 
+        t_comp = (start.cast(int)+completed.cast(int)).cast(pl.Datetime)
+        
+        workloads_to_plot = [
+            total_workload,
+            *workload.T,
+        ]
+        tcomps_to_plot = [
+            np.inf,
+            *t_comp.cast(int),
+        ]
+
+
+        #generate colormap for plot
+        colors = self.__generate_cmap(
+            df,
+            col_cmap=col_cmap, cmap=cmap,
+        )
+        colors = np.append([[0,0,0,1]], colors, axis=0) #append black for total curve
 
         #plot curves
-        # ax.plot(time, l1)
+        #all
+
+        for idx, (c, wtp, tctp) in enumerate(zip(colors, workloads_to_plot, tcomps_to_plot)):
+            # wherebool = (time.cast(int) < tctp)
+            # print(wherebool)
+            # ax.fill_between(time, wtp, where=wherebool, alpha=.5)
+            ax.plot(time, wtp, color=c)
+            ax.fill_between(time, wtp, color=c, alpha=0.5)
+        # #completed
+        # ax.plot(time, workload)
+        # ax.fill_between(time, total_workload, where=(time<t_comp), color='k', facecolor='tab:blue', linestyle=':', alpha=1)
+
+
+        # ax.axvline(start+completed.cast(int)*duration.cast(int))
         ax.axvline(start[0], color='k', linestyle=':')
         ax.axvline(start[1], color='k', linestyle=':')
         ax.axvline(start[2], color='k', linestyle=':')
-        ax.plot(time, workload)
+        ax.axvline((start.cast(int)+completed.cast(int)).cast(pl.Datetime)[0], color='b')
+        ax.axvline((start.cast(int)+completed.cast(int)).cast(pl.Datetime)[1], color='b')
+        ax.axvline((start.cast(int)+completed.cast(int)).cast(pl.Datetime)[2], color='b')
+        
+        ax.axvline(np.datetime64('2023-07-06'), color='r')
 
         return
     
