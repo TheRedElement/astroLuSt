@@ -776,6 +776,15 @@ class GANTT:
                         - will be interpreted as column name
                     - the default is `None`
                         - will be set to 1 for all entries in `df`
+                - `weight_col`
+                    - str, int, optional
+                    - the column containing values describing how much each task contributes to the overall workload
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 for all entries in `df`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -820,6 +829,11 @@ class GANTT:
                     - if `None` was provided
                         - series of ones
                     - otherwise the passed end slopes
+                - `weight`
+                    - pl.Series
+                    - if `None` was provided
+                        - series of ones
+                    - otherwise the passed weights
                 - `col_start`
                     - str
                     - updated column name in `df` of `col_start`
@@ -838,6 +852,9 @@ class GANTT:
                 - `col_end_slope`
                     - str
                     - updated column name in `df` of `col_end_slope`
+                - `col_weight`
+                    - str
+                    - updated column name in `df` of `col_weight`
 
 
             Comments
@@ -1033,7 +1050,6 @@ class GANTT:
         weight:pl.Series=None,
         time_scaling:float=1E-12,
         ) -> Tuple[np.ndarray,np.ndarray]:
-        #TODO: Docstring
         """
             - method to calculate a specific tasks workload curve (workload over time)
             - combines two sigmoids with opposite slopes
@@ -1051,25 +1067,36 @@ class GANTT:
                     - pl.Series
                     - time at which the tasks end
                 - `duration`
+                    - pl.Series
+                    - duration of each task
                 - `completed`
+                    - pl.Series
+                    - factor describing how much of each task is completed
                 - `start_slope`
-                    - float, optional
-                    - how steep the starting phase should be
-                    -  the default is 1
+                    - pl.Series
+                    - how steep the starting phase should be for each task
                 - `end_slope`
-                    - float
-                    - how steep the ending phase (reflection phase) should be
-                    - the default is 1
+                    - pl.Series
+                    - how steep the ending phase (reflection phase) should be for each task
                 - `weight`
+                    - pl.Series
+                    - weights describing how much each task contributes to the overall workload
+                - `time_scaling`
+                    - float
+                    - factor to scale integers converted to datetime objects
+                    - will affect the steepness of the individual curves
 
             Raises
             ------
 
             Returns
             -------
-                - task
+                - `workload`
                     - np.ndarray
-                    - workload curve for `time`
+                    - workload curve for each task
+                - `total_workload`
+                    - np.ndarray
+                    - workload curve for the weighted sum of all tasks in dependence of time
 
             Comments
             --------
@@ -1290,6 +1317,157 @@ class GANTT:
         verbose:int=None,
         plot_kwargs:dict=None, fill_between_kwargs:dict=None, axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None
         ) -> None:
+        """
+            - method to generate a workload plot of the tasks provided in `df`
+            - each task will be represented by two generalized sigmoids
+                - one for the starting phase
+                - other for the ending phase
+            
+            Parameters
+            ----------
+                - `df`
+                    - pl.DataFrame
+                    - dataframe containing all tasks to plot in the workload chart
+                - `ax`
+                    - plt.Axes, optional
+                    - axes to plot the graph onto
+                    - if `None`
+                        - will call `plt.barh()` ect. instead of `ax.barh()`
+                    - the default is `None`
+                - `start_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `end_col` and `dur_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `end_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `start_col` and `dur_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `dur_col`
+                    - str, int, optional
+                    - the column containing timestamps of when the tasks started
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be infered by using `start_col` and `end_col`
+                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                - `comp_col`
+                    - str, int, optional
+                    - the column containing values describing how much of a task is completed
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 (100%) for all entries in `df`
+                - `start_slope_col`
+                    - str, int, optional
+                    - the column containing values describing how steep the incline at the starting side of each task is
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 for all entries in `df`
+                - `end_slope_col`
+                    - str, int, optional
+                    - the column containing values describing how steep the incline at the ending side of each task is
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 for all entries in `df`
+                - `weight_col`
+                    - str, int, optional
+                    - the column containing values describing how much each task contributes to the overall workload
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 for all entries in `df`
+                - `color_by`
+                    - str, int, optional
+                    - the column by which to color the workload-curves for each task
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is 0
+                - `sort_by`
+                    - str, int, optional
+                    - irrelevant for workload-chart
+                    - the column by which to sort the bars for each task in a GANTT chart
+                        - i.e. the y-axis of the chart
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is 0
+                - `cmap`
+                    - str, optional
+                    - colormap to use for coloring bars by `color_by`
+                    - the default is `nipy_spectral`
+                - `res`
+                    - int
+                    - resolution of the workload-curves
+                        - i.e. for how many datapoints to calculate the workload
+                    - the default is 100
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - will override `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `plot_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `.plot()`
+                    - the default is `None`
+                        - will be set to `{}`
+                - `fill_between_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `.fill_between()`
+                    - the default is `None`
+                        - will be set to `{'alpha':0.5}`
+                - `axvline_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `.axvline()`
+                    - the default is `None`
+                        - will be set to `{'color':'k', 'linestyle':'--'}`
+                - `text_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `.text()`
+                    - the default is `None`
+                        - will be set to `{'ha':'left', 'va':'bottom', 'y':0}`
+                - `grid_kwargs`
+                    - dict, optional
+                    - kwargs to be passed to `ax.grid()`
+                    - the default is `None`
+                        - will be set to `{'visible':True, 'axis':'x'}`
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
 
         if verbose is None:             verbose                 = self.verbose
         if plot_kwargs is None:         plot_kwargs             = {}
@@ -1367,7 +1545,6 @@ class GANTT:
             ax.grid(**grid_kwargs)
 
             #labelling
-            # ax.set_xticklabels([])
             ax.tick_params(labelbottom=False)
             ax.set_ylabel('Relative Workload [-]')
         
