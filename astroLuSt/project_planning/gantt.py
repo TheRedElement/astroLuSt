@@ -709,7 +709,7 @@ class GANTT:
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         verbose:int=None,
-        ) -> Tuple[pl.DataFrame,pl.Series,pl.Series,pl.Series,pl.Series]:
+        ) -> Tuple[pl.DataFrame,pl.Series,pl.Series,pl.Series,pl.Series,pl.Series,pl.Series,str,str,str,str,str,str]:
         """
             - private method to infer missing columns in `df`
 
@@ -819,6 +819,25 @@ class GANTT:
                     - if `None` was provided
                         - series of ones
                     - otherwise the passed end slopes
+                - `col_start`
+                    - str
+                    - updated column name in `df` of `col_start`
+                - `col_end`
+                    - str
+                    - updated column name in `df` of `col_end`
+                - `col_dur`
+                    - str
+                    - updated column name in `df` of `col_dur`
+                - `col_comp`
+                    - str
+                    - updated column name in `df` of `col_comp`
+                - `col_start_slope`
+                    - str
+                    - updated column name in `df` of `col_start_slope`
+                - `col_end_slope`
+                    - str
+                    - updated column name in `df` of `col_end_slope`
+
 
             Comments
             --------      
@@ -900,7 +919,11 @@ class GANTT:
         start_slope.rename( col_start_slope,    in_place=True)
         end_slope.rename(   col_end_slope,      in_place=True)
 
-        return df, start, end, duration, completed, start_slope, end_slope
+        return (
+            df,
+            start, end, duration, completed, start_slope, end_slope,
+            col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope,
+        )
 
     def __generate_cmap(self,
         df:pl.DataFrame,
@@ -1198,16 +1221,25 @@ class GANTT:
             cmap=cmap
         )[1:-1]
 
-        df, start, end, duration, completed, start_slope, end_slope = self.__get_missing(
-            df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col
+        df, \
+        start, end, duration, completed, start_slope, end_slope, \
+        col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope \
+            = self.__get_missing(
+                df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col,
+                start_slope_col=None, end_slope_col=None,
+                verbose=verbose,        
         )
 
         #plot onto axis
         if ax is not None:
             #add bar for each task
-            ax.barh(y=df[col_sort], width=duration,  left=start, color=colors, alpha=0.5, zorder=0)
-            ax.barh(y=df[col_sort], width=completed, left=start, color=colors, alpha=1.0, zorder=1)
+            bars_d = ax.barh(y=df[col_sort], width=duration,  left=start, color=colors, alpha=0.5, zorder=0)
+            bars_c = ax.barh(y=df[col_sort], width=completed, left=start, color=colors, alpha=1.0, zorder=1)
             
+            #add labels to bars
+            ax.bar_label(bars_d, labels=[f'{p:g}%' for p in df[col_comp]*100])
+
+
             #vertical line for today
             today = np.datetime64(datetime.now())
             ax.axvline(today, **axvline_kwargs)
@@ -1262,10 +1294,13 @@ class GANTT:
         else:                           col_sort  = sort_by
 
 
-        df, start, end, duration, completed, start_slope, end_slope = self.__get_missing(
-            df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col,
-            start_slope_col=start_slope_col, end_slope_col=end_slope_col,
-            verbose=verbose,
+        df, \
+        start, end, duration, completed, start_slope, end_slope, \
+        col_start, col_end, col_dur, col_comp, col_start_slope, col_end_slope \
+            = self.__get_missing(
+                df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col,
+                start_slope_col=start_slope_col, end_slope_col=end_slope_col,
+                verbose=verbose,
         )
 
         #get increments in time to reach res datapoints
