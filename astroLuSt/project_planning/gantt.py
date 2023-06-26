@@ -707,6 +707,7 @@ class GANTT:
         self,
         df:pl.DataFrame,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
+        start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         verbose:int=None,
         ) -> Tuple[pl.DataFrame,pl.Series,pl.Series,pl.Series,pl.Series]:
         """
@@ -756,6 +757,24 @@ class GANTT:
                         - will be interpreted as column name
                     - the default is `None`
                         - will be set to 1 (100%) for all entries in `df`
+                - `start_slope_col`
+                    - str, int, optional
+                    - the column containing values describing how steep the incline at the starting side of each task is
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 for all entries in `df`
+                - `end_slope_col`
+                    - str, int, optional
+                    - the column containing values describing how steep the incline at the ending side of each task is
+                    - if int
+                        - will be interpreted as index of the column
+                    - otherwise
+                        - will be interpreted as column name
+                    - the default is `None`
+                        - will be set to 1 for all entries in `df`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -790,6 +809,16 @@ class GANTT:
                     - if `None` was provided to `comp_col`
                         - series of ones
                     - otherwise the passed completion fractions
+                - `start_slope`
+                    - pl.Series
+                    - if `None` was provided
+                        - series of ones
+                    - otherwise the passed start slopes
+                - `end_slope`
+                    - pl.Series
+                    - if `None` was provided
+                        - series of ones
+                    - otherwise the passed end slopes
 
             Comments
             --------      
@@ -797,25 +826,38 @@ class GANTT:
 
         if verbose is None: verbose = self.verbose
 
+        #initialize non-essential columns accordingly
         if comp_col is None:
             comp_col = '<completion placeholder>'
             df = df.with_columns(pl.lit(1).alias(comp_col))
+        if start_slope_col is None:
+            start_slope_col = '<start_slope placeholder>'
+            df = df.with_columns(pl.lit(1).alias(start_slope_col))
+        if end_slope_col is None:
+            end_slope_col = '<end_slope placeholder>'
+            df = df.with_columns(pl.lit(1).alias(end_slope_col))
 
-        if isinstance(start_col, int):  col_start = df.columns[start_col]
-        else:                           col_start = start_col
-        if isinstance(end_col, int):    col_end   = df.columns[end_col]
-        else:                           col_end   = end_col
-        if isinstance(dur_col, int):    col_dur   = df.columns[dur_col]
-        else:                           col_dur   = dur_col
-        if isinstance(comp_col, int):   col_comp  = df.columns[comp_col]
-        else:                           col_comp  = comp_col
+        start_slope = df[start_slope_col]
+        end_slope   = df[end_slope_col]
+
+
+        if isinstance(start_col, int):          col_start = df.columns[start_col]
+        else:                                   col_start = start_col
+        if isinstance(end_col, int):            col_end   = df.columns[end_col]
+        else:                                   col_end   = end_col
+        if isinstance(dur_col, int):            col_dur   = df.columns[dur_col]
+        else:                                   col_dur   = dur_col
+        if isinstance(comp_col, int):           col_comp  = df.columns[comp_col]
+        else:                                   col_comp  = comp_col
+        if isinstance(start_slope_col, int):    col_start_slope  = df.columns[start_slope_col]
+        else:                                   col_start_slope  = start_slope_col
+        if isinstance(end_slope_col, int):      col_end_slope  = df.columns[end_slope_col]
+        else:                                   col_end_slope  = end_slope_col
 
 
         #determine how much of the task has been finished already and duration of whole task
         ##duration missing
         if col_start is not None and col_end is not None:
-            # completed = (((df[col_end]-df[col_start])).cast(int) * df[col_comp]).cast(pl.Time)
-            # duration  = (df[col_end]-df[col_start]).cast(pl.Time)
             completed = (((df[col_end]-df[col_start])).cast(int) * df[col_comp]).cast(pl.Datetime)
             duration  = (df[col_end]-df[col_start]).cast(pl.Datetime)
             start = df[col_start]
@@ -851,12 +893,14 @@ class GANTT:
             raise ValueError('At least two of `col_start`, `col_end`, `col_dur` have to be not `None`!')
 
         #rename series to have correct names
-        start.rename(    col_start, in_place=True)
-        end.rename(      col_end,   in_place=True)
-        duration.rename( col_dur,   in_place=True)
-        completed.rename(col_comp,  in_place=True)
+        start.rename(       col_start,          in_place=True)
+        end.rename(         col_end,            in_place=True)
+        duration.rename(    col_dur,            in_place=True)
+        completed.rename(   col_comp,           in_place=True)
+        start_slope.rename( col_start_slope,    in_place=True)
+        end_slope.rename(   col_end_slope,      in_place=True)
 
-        return df, start, end, duration, completed
+        return df, start, end, duration, completed, start_slope, end_slope
 
     def __generate_cmap(self,
         df:pl.DataFrame,
@@ -928,7 +972,7 @@ class GANTT:
                     - parameter changing the slope of the sigmoid
                     - the default is 1
                 - `shift`
-                    - np.ndarray
+                    - np.ndarray, optional
                     - parameter to shift the sigmoid in direction of `x`
                     - the default is 0
 
@@ -950,12 +994,12 @@ class GANTT:
         sigma = 1/Q1
 
         return sigma
-
+  
     def workload_curve(self,
         time:pl.Series,
         start:pl.Series, end:pl.Series, duration:pl.Series, completed:pl.Series=None,
+        start_slope:pl.Series=None, end_slope:pl.Series=None,
         weight:Union[pl.Series,float]=1,
-        start_slope:Union[pl.Series,float]=1, end_slope:Union[pl.Series,float]=-1,
         time_scaling:float=1E-12,
         ) -> Tuple[np.ndarray,np.ndarray]:
         #TODO: Docstring
@@ -1002,8 +1046,8 @@ class GANTT:
         #get workload-curves
         ##no offset by start, because start is the zeropoint
         time_eval = np.array(len(start)*[time.cast(int)])
-        l_start = self.sigmoid(time_eval.T, slope= start_slope*time_scaling, shift=(start.cast(int).to_numpy()))
-        l_end   = self.sigmoid(time_eval.T, slope=-end_slope  *time_scaling, shift=(start.cast(int).to_numpy()+duration.cast(int).to_numpy()))
+        l_start = self.sigmoid(time_eval.T, slope= start_slope.cast(float).to_numpy()*time_scaling, shift=(start.cast(int).to_numpy()))
+        l_end   = self.sigmoid(time_eval.T, slope=-end_slope.cast(float).to_numpy()  *time_scaling, shift=(start.cast(int).to_numpy()+duration.cast(int).to_numpy()))
 
         ##weight curves
         workload = (l_start+l_end)
@@ -1019,8 +1063,9 @@ class GANTT:
         workload /= np.nanmax(total_workload)
         total_workload /= np.nanmax(total_workload)
         
-
         return workload, total_workload
+
+
 
     def plot_gantt(self,
         df:pl.DataFrame,
@@ -1153,7 +1198,7 @@ class GANTT:
             cmap=cmap
         )[1:-1]
 
-        df, start, end, duration, completed = self.__get_missing(
+        df, start, end, duration, completed, start_slope, end_slope = self.__get_missing(
             df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col
         )
 
@@ -1196,11 +1241,20 @@ class GANTT:
         df:pl.DataFrame,
         ax:plt.Axes=None,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
+        start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
         cmap:str='nipy_spectral',
         res:int=100,
+        verbose:int=None,
+        plot_kwargs:dict=None, fill_between_kwargs:dict=None, axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None
         ) -> None:
 
+        if verbose is None:             verbose                 = self.verbose
+        if plot_kwargs is None:         plot_kwargs             = {}
+        if fill_between_kwargs is None: fill_between_kwargs     = {'alpha':0.5}
+        if axvline_kwargs is None:      axvline_kwargs          = {'color':'k', 'linestyle':'--'}
+        if text_kwargs is None:         text_kwargs             = {'ha':'left', 'va':'bottom', 'y':0}
+        if grid_kwargs is None:         grid_kwargs             = {'visible':True, 'axis':'x'}
 
         if isinstance(color_by, int):   col_cmap  = df.columns[color_by]
         else:                           col_cmap  = color_by
@@ -1208,8 +1262,10 @@ class GANTT:
         else:                           col_sort  = sort_by
 
 
-        df, start, end, duration, completed = self.__get_missing(
-            df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col
+        df, start, end, duration, completed, start_slope, end_slope = self.__get_missing(
+            df=df, start_col=start_col, end_col=end_col, dur_col=dur_col, comp_col=comp_col,
+            start_slope_col=start_slope_col, end_slope_col=end_slope_col,
+            verbose=verbose,
         )
 
         #get increments in time to reach res datapoints
@@ -1221,12 +1277,13 @@ class GANTT:
         workload, total_workload = self.workload_curve(
             time=time,
             start=start, end=end, duration=duration, completed=completed,
-            weight=1, start_slope=1, end_slope=1,
+            weight=1, start_slope=start_slope, end_slope=end_slope,
             time_scaling=1E-12,
         )
 
+        #time corresponding to fraction of task-completion
         t_comp = (start.cast(int)+completed.cast(int)).cast(pl.Datetime)
-        
+
         workloads_to_plot = [
             total_workload,
             *workload.T,
@@ -1244,29 +1301,40 @@ class GANTT:
         )
         colors = np.append([[0,0,0,1]], colors, axis=0) #append black for total curve
 
-        #plot curves
-        #all
+        #plot onto axis
+        if ax is not None:
+            #plot curves
+            for idx, (c, wtp, tctp) in enumerate(zip(colors, workloads_to_plot, tcomps_to_plot)):
+                #boolean of what is completed (fill that)
+                wherebool = (time.cast(int).to_numpy() < tctp)
+                ax.plot(time, wtp, color=c, **plot_kwargs)
+                if idx > 0:
+                    ax.fill_between(time, wtp, color=c, where=wherebool, **fill_between_kwargs)
 
-        for idx, (c, wtp, tctp) in enumerate(zip(colors, workloads_to_plot, tcomps_to_plot)):
-            # wherebool = (time.cast(int) < tctp)
-            # print(wherebool)
-            # ax.fill_between(time, wtp, where=wherebool, alpha=.5)
-            ax.plot(time, wtp, color=c)
-            ax.fill_between(time, wtp, color=c, alpha=0.5)
-        # #completed
-        # ax.plot(time, workload)
-        # ax.fill_between(time, total_workload, where=(time<t_comp), color='k', facecolor='tab:blue', linestyle=':', alpha=1)
+            #vertical line for today
+            today = np.datetime64(datetime.now())
+            ax.axvline(today, **axvline_kwargs)
+            ax.text(x=today, s=' Today', **text_kwargs)
 
+            #add gridlines
+            ax.grid(**grid_kwargs)
 
-        # ax.axvline(start+completed.cast(int)*duration.cast(int))
-        ax.axvline(start[0], color='k', linestyle=':')
-        ax.axvline(start[1], color='k', linestyle=':')
-        ax.axvline(start[2], color='k', linestyle=':')
-        ax.axvline((start.cast(int)+completed.cast(int)).cast(pl.Datetime)[0], color='b')
-        ax.axvline((start.cast(int)+completed.cast(int)).cast(pl.Datetime)[1], color='b')
-        ax.axvline((start.cast(int)+completed.cast(int)).cast(pl.Datetime)[2], color='b')
+            #labelling
+            # ax.set_xticklabels([])
+            ax.tick_params(labelbottom=False)
+            ax.set_ylabel('Relative Workload [-]')
         
-        ax.axvline(np.datetime64('2023-07-06'), color='r')
+        #plot onto current figure
+        else:
+            #plot curves
+            for idx, (c, wtp, tctp) in enumerate(zip(colors, workloads_to_plot, tcomps_to_plot)):
+                #boolean of what is completed (fill that)
+                wherebool = (time.cast(int).to_numpy() < tctp)
+                plt.plot(time, wtp, color=c, **plot_kwargs)
+                if idx > 0:
+                    plt.fill_between(time, wtp, color=c, where=wherebool, **fill_between_kwargs)
+
+
 
         return
     
@@ -1286,11 +1354,12 @@ class GANTT:
 
         #plot
         fig = plt.figure()
-        ax1 = fig.add_subplot(111)
+        ax2 = fig.add_subplot(212)
+        ax1 = fig.add_subplot(211, sharex=ax2)
 
-
-        # self.plot_gantt(df=df, ax=ax1, **plot_gantt_kwargs)
+        #plotting
         self.plot_workload(df=df, ax=ax1, **plot_workload_kwargs)
+        self.plot_gantt(   df=df, ax=ax2, **plot_gantt_kwargs)
 
         axs = fig.axes
 
