@@ -10,7 +10,7 @@ from typing import Union
 def generate_colors(classes:Union[list,np.ndarray], 
     vmin:float=None, vmax:float=None, vcenter:float=None,
     ncolors:int=None,
-    cmap:str="nipy_spectral"
+    cmap:Union[str,mcolors.Colormap]="nipy_spectral"
     ) -> list:
     """
         - function to generate colors for a given set of unique classes
@@ -48,8 +48,8 @@ def generate_colors(classes:Union[list,np.ndarray],
                 - the default is `None`
                     - will be set to the number of unique classes in `y_pred`
             - `cmap`
-                - str, optional
-                - name of the colormap to use for coloring the different classes
+                - str, mcolors.Colormap, optional
+                - name of the colormap or ListedColormap to use for coloring the different classes
                 - the default is `'nipy_spectral'`
 
         Raises
