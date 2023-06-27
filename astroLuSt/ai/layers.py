@@ -8,14 +8,33 @@ import tensorflow.keras.backend as K
 #%%definitions
 class Sampling(Layer):
     """
-        - sampling layer
+        - sampling layer as found in Variational Autoencoders
         - uses (`z_mu`, `z_log_var`) to sample `z`
         - `z` is the encoding vector
+
+        Attributes
+        ----------
+
+        Methods
+        -------
+            - `call()`
+
+        Dependencies
+        ------------
+            - keras
+            - tensorflow
+
+        Comments
+        --------
+
     """
     def __init__(self, **kwargs):
         super(Sampling, self).__init__(**kwargs) #necessary to save also custom layers
 
-    def call(self, inputs):
+    def call(self,
+        inputs
+        ):
+
         z_mu, z_log_var = inputs
         batch = tf.shape(z_mu)[0]
         dim = tf.shape(z_mu)[1]
