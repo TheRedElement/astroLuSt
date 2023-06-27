@@ -695,7 +695,7 @@ class GANTT_:
 
 class GANTT:
     """
-    - 
+    - class to create a Workload- and GANTT-Chart given some taballaric project data
 
     Attributes
     ----------
@@ -707,7 +707,7 @@ class GANTT:
             - otherwise
                 - will be interpreted as column name
             - the default is `None`
-                - will be infered by using `end_col` and `dur_col`
+                - will be infered by using `end_col` and `dur_col` once `self.plot_gantt()` or `self.plot_workload()` are called
                 - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
         - `end_col`
             - str, int, optional
@@ -717,7 +717,7 @@ class GANTT:
             - otherwise
                 - will be interpreted as column name
             - the default is `None`
-                - will be infered by using `start_col` and `dur_col`
+                - will be infered by using `start_col` and `dur_col` once `self.plot_gantt()` or `self.plot_workload()` are called
                 - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
         - `dur_col`
             - str, int, optional
@@ -727,7 +727,7 @@ class GANTT:
             - otherwise
                 - will be interpreted as column name
             - the default is `None`
-                - will be infered by using `start_col` and `end_col`
+                - will be infered by using `start_col` and `end_col` once `self.plot_gantt()` or `self.plot_workload()` are called
                 - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
         - `comp_col`
             - str, int, optional
@@ -737,7 +737,34 @@ class GANTT:
             - otherwise
                 - will be interpreted as column name
             - the default is `None`
-                - will be set to 1 (100%) for all entries in `df`
+                - will be set to 1 (100%) for all entries in `df` once `self.plot_gantt()` or `self.plot_workload()` are called
+        - `start_slope_col`
+            - str, int, optional
+            - the column containing values describing how steep the incline at the starting side of each task is for the corresponding workload-curve
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is `None`
+                - will be set to 1 for all entries in `df`
+        - `end_slope_col`
+            - str, int, optional
+            - the column containing values describing how steep the incline at the ending side of each task is for the corresponding workload-curve
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is `None`
+                - will be set to 1 for all entries in `df`
+        - `weight_col`
+            - str, int, optional
+            - the column containing values describing how much each task contributes to the overall workload
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is `None`
+                - will be set to 1 for all entries in `df`
         - `color_by`
             - str, int, optional
             - the column by which to color the bars for each task
@@ -757,14 +784,30 @@ class GANTT:
             - the default is 0
         - `cmap`
             - str, optional
-            - colormap to use for coloring bars by `color_by`
+            - colormap to use for coloring bars in the GANTT-chart and curves in the workload-chart
+            - colormap applied according to `color_by`
             - the default is `nipy_spectral`
+        - `total_color`
+            - list, optional
+            - has to have length of 4
+                - RGBA-tuple
+            - color to use for the total workload
+            - the default is `None`
+                - will be set to `[0,0,0,1]` (black)
+        - `res`
+            - int, optional
+            - resolution of the workload-curves
+                - i.e. for how many datapoints to calculate the workload
+            - the default is 100
+        - `time_scaling`
+            - float, optional
+            - factor to scale integers converted to datetime objects
+            - will affect the steepness of the individual workload-curves 
+            - the default is 1E-12
         - `verbose`
             - int, optional
             - verbosity level
-            - will override `self.verbose`
-            - the default is `None`
-                - will fall back to `self.verbose`
+            - the default is 0
         - `plot_kwargs`
             - dict, optional
             - kwargs to be passed to `.plot()`
@@ -790,6 +833,27 @@ class GANTT:
             - kwargs to be passed to `ax.grid()`
             - the default is `None`
                 - will be set to `{'visible':True, 'axis':'x'}`    
+
+        Methods
+        -------
+            - `__get_missing()`
+            - `__get_cmap()`
+            - `sigmoid()`
+            - `workload_curve()`
+            - `plot_gantt()`
+            - `plot_workload()`
+            - `plot()`
+        
+        Dependencies
+        ------------
+            - datetime
+            - matplotlib
+            - numpy
+            - polars
+            - typing
+
+        Comments
+        --------
     
     """
     
@@ -798,7 +862,7 @@ class GANTT:
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         weight_col:Union[str,int]=None,
         color_by:Union[str,int]=0, sort_by:Union[str,int]=0,                  
-        cmap:str=None,
+        cmap:str=None, total_color=None,
         res:int=100,
         time_scaling:float=1E-12,
         plot_kwargs:dict=None, fill_between_kwargs:dict=None, axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
@@ -817,6 +881,8 @@ class GANTT:
 
         if cmap is None:                self.cmap                   = 'nipy_spectral'
         else:                           self.cmap                   = cmap
+        if total_color is None:         self.total_color            = [0,0,0,1]
+        else:                           self.total_color            = total_color
         if plot_kwargs is None:         self.plot_kwargs            = {}
         else:                           self.plot_kwargs            = plot_kwargs 
         if fill_between_kwargs is None: self.fill_between_kwargs    = {'alpha':0.5}
@@ -837,15 +903,15 @@ class GANTT:
         
         return (
             f'GANTT(\n'
-            f'    cmap={repr(self.cmap)},\n'
-            f'    res={repr(self.res)},\n'
             f'    start_col={repr(self.start_col)}, end_col={repr(self.end_col)}, dur_col={repr(self.dur_col)}, comp_col={repr(self.comp_col)},\n'
             f'    start_slope_col={repr(self.start_slope_col)}, end_slope_col={repr(self.end_slope_col)},\n'
             f'    weight_col={repr(self.weight_col)},\n'
             f'    color_by={repr(self.color_by)}, sort_by={repr(self.sort_by)},\n'
+            f'    cmap={repr(self.cmap)}, total_color={repr(self.total_color)},\n'
+            f'    res={repr(self.res)},\n'
             f'    time_scaling={repr(self.time_scaling)},\n'
-            f'    plot_kwargs={repr(self.plot_kwargs)}, fill_between_kwargs={repr(self.fill_between_kwargs)}, axvline_kwargs={repr(self.axvline_kwargs)}, text_kwargs={repr(self.text_kwargs)}, grid_kwargs={repr(self.grid_kwargs)},\n'
             f'    verbose={repr(self.verbose)},\n'
+            f'    plot_kwargs={repr(self.plot_kwargs)}, fill_between_kwargs={repr(self.fill_between_kwargs)}, axvline_kwargs={repr(self.axvline_kwargs)}, text_kwargs={repr(self.text_kwargs)}, grid_kwargs={repr(self.grid_kwargs)},\n'
             f')'
         )
     
@@ -1490,8 +1556,9 @@ class GANTT:
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         weight_col:Union[str,int]=None,
         color_by:Union[str,int]=None, sort_by:Union[str,int]=None,
-        cmap:str=None,
+        cmap:str=None, total_color:list=None,
         res:int=None,
+        time_scaling:float=None,
         verbose:int=None,
         plot_kwargs:dict=None, fill_between_kwargs:dict=None, axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None
         ) -> None:
@@ -1627,6 +1694,14 @@ class GANTT:
                     - overrides `self.cmap`
                     - the default is `None`
                         - will fall back to `self.cmap`
+                - `total_color`
+                    - list, optional
+                    - has to have length of 4
+                        - RGBA-tuple
+                    - color to use for the total workload
+                    - overrides `self.total_color`
+                    - the default is `None`
+                        - will fall back to `self.total_color`
                 - `res`
                     - int, optional
                     - resolution of the workload-curves
@@ -1634,6 +1709,12 @@ class GANTT:
                     - overrides `self.res`
                     - the default is `None`
                         - will fall back to `self.res`
+                - `time_scaling`
+                    - float, optional
+                    - factor to scale integers converted to datetime objects
+                    - will affect the steepness of the individual curves
+                    - the default is `None`
+                        - will fall back to `self.time_scaling`                        
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -1682,23 +1763,25 @@ class GANTT:
         """
 
         #default values
-        if start_col is None:           start_col       = self.start_col
-        if end_col is None:             end_col         = self.end_col
-        if dur_col is None:             dur_col         = self.dur_col
-        if comp_col is None:            comp_col        = self.comp_col
-        if start_slope_col is None:     start_slope_col = self.start_slope_col
-        if end_slope_col is None:       end_slope_col   = self.end_slope_col
-        if weight_col is None:          weight_col      = self.weight_col
-        if color_by is None:            color_by        = self.color_by
-        if sort_by is None:             sort_by         = self.sort_by
-        if cmap is None:                cmap            = self.cmap   
-        if res is None:                 res             = self.res     
-        if verbose is None:             verbose                 = self.verbose
-        if plot_kwargs is None:         plot_kwargs             = self.plot_kwargs
-        if fill_between_kwargs is None: fill_between_kwargs     = self.fill_between_kwargs
-        if axvline_kwargs is None:      axvline_kwargs          = self.axvline_kwargs
-        if text_kwargs is None:         text_kwargs             = self.text_kwargs
-        if grid_kwargs is None:         grid_kwargs             = self.grid_kwargs
+        if start_col is None:           start_col           = self.start_col
+        if end_col is None:             end_col             = self.end_col
+        if dur_col is None:             dur_col             = self.dur_col
+        if comp_col is None:            comp_col            = self.comp_col
+        if start_slope_col is None:     start_slope_col     = self.start_slope_col
+        if end_slope_col is None:       end_slope_col       = self.end_slope_col
+        if weight_col is None:          weight_col          = self.weight_col
+        if color_by is None:            color_by            = self.color_by
+        if sort_by is None:             sort_by             = self.sort_by
+        if cmap is None:                cmap                = self.cmap   
+        if total_color is None:         total_color         = self.total_color
+        if res is None:                 res                 = self.res     
+        if time_scaling is None:        time_scaling        = self.time_scaling
+        if verbose is None:             verbose             = self.verbose
+        if plot_kwargs is None:         plot_kwargs         = self.plot_kwargs
+        if fill_between_kwargs is None: fill_between_kwargs = self.fill_between_kwargs
+        if axvline_kwargs is None:      axvline_kwargs      = self.axvline_kwargs
+        if text_kwargs is None:         text_kwargs         = self.text_kwargs
+        if grid_kwargs is None:         grid_kwargs         = self.grid_kwargs
 
         if isinstance(color_by, int):   col_cmap  = df.columns[color_by]
         else:                           col_cmap  = color_by
@@ -1727,7 +1810,7 @@ class GANTT:
             x=time,
             start=start, end=end, duration=duration, completed=completed,
             weight=weight, start_slope=start_slope, end_slope=end_slope,
-            time_scaling=1E-12,
+            time_scaling=time_scaling,
         )
 
         #time corresponding to fraction of task-completion
@@ -1748,7 +1831,7 @@ class GANTT:
             df,
             col_cmap=col_cmap, cmap=cmap,
         )
-        colors = np.append([[0,0,0,1]], colors, axis=0) #append black for total curve
+        colors = np.append([total_color], colors, axis=0) #append black for total curve
 
         #plot onto axis
         if ax is not None:
@@ -1781,8 +1864,6 @@ class GANTT:
                 plt.plot(time, wtp, color=c, **plot_kwargs)
                 if idx > 0:
                     plt.fill_between(time, wtp, color=c, where=wherebool, **fill_between_kwargs)
-
-
 
         return
     
