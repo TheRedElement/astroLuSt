@@ -694,17 +694,162 @@ class GANTT_:
         return fig, axs
 
 class GANTT:
+    """
+    - 
 
+    Attributes
+    ----------
+        - `start_col`
+            - str, int, optional
+            - the column containing timestamps of when the tasks started
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is `None`
+                - will be infered by using `end_col` and `dur_col`
+                - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+        - `end_col`
+            - str, int, optional
+            - the column containing timestamps of when the tasks started
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is `None`
+                - will be infered by using `start_col` and `dur_col`
+                - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+        - `dur_col`
+            - str, int, optional
+            - the column containing timestamps of when the tasks started
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is `None`
+                - will be infered by using `start_col` and `end_col`
+                - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+        - `comp_col`
+            - str, int, optional
+            - the column containing values describing how much of a task is completed
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is `None`
+                - will be set to 1 (100%) for all entries in `df`
+        - `color_by`
+            - str, int, optional
+            - the column by which to color the bars for each task
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is 0
+        - `sort_by`
+            - str, int, optional
+            - the column by which to sort the bars for each task
+                - i.e. the y-axis of the chart
+            - if int
+                - will be interpreted as index of the column
+            - otherwise
+                - will be interpreted as column name
+            - the default is 0
+        - `cmap`
+            - str, optional
+            - colormap to use for coloring bars by `color_by`
+            - the default is `nipy_spectral`
+        - `verbose`
+            - int, optional
+            - verbosity level
+            - will override `self.verbose`
+            - the default is `None`
+                - will fall back to `self.verbose`
+        - `plot_kwargs`
+            - dict, optional
+            - kwargs to be passed to `.plot()`
+            - the default is `None`
+                - will be set to `{}`
+        - `fill_between_kwargs`
+            - dict, optional
+            - kwargs to be passed to `.fill_between()`
+            - the default is `None`
+                - will be set to `{'alpha':0.5}`                
+        - `axvline_kwargs`
+            - dict, optional
+            - kwargs to be passed to `.axvline()`
+            - the default is `None`
+                - will be set to `{'color':'k', 'linestyle':'--'}`
+        - `text_kwargs`
+            - dict, optional
+            - kwargs to be passed to `.text()`
+            - the default is `None`
+                - will be set to `{'ha':'left', 'va':'bottom', 'y':0}`
+        - `grid_kwargs`
+            - dict, optional
+            - kwargs to be passed to `ax.grid()`
+            - the default is `None`
+                - will be set to `{'visible':True, 'axis':'x'}`    
+    
+    """
+    
     def  __init__(self,
+        start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
+        start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
+        weight_col:Union[str,int]=None,
+        color_by:Union[str,int]=0, sort_by:Union[str,int]=0,                  
+        cmap:str=None,
+        res:int=100,
+        time_scaling:float=1E-12,
+        plot_kwargs:dict=None, fill_between_kwargs:dict=None, axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
         verbose:int=0,
         ) -> None:
 
+        self.start_col          = start_col
+        self.end_col            = end_col
+        self.dur_col            = dur_col
+        self.comp_col           = comp_col
+        self.start_slope_col    = start_slope_col
+        self.end_slope_col      = end_slope_col
+        self.weight_col         = weight_col
+        self.color_by           = color_by
+        self.sort_by            = sort_by
+
+        if cmap is None:                self.cmap                   = 'nipy_spectral'
+        else:                           self.cmap                   = cmap
+        if plot_kwargs is None:         self.plot_kwargs            = {}
+        else:                           self.plot_kwargs            = plot_kwargs 
+        if fill_between_kwargs is None: self.fill_between_kwargs    = {'alpha':0.5}
+        else:                           self.fill_between_kwargs    = fill_between_kwargs 
+        if axvline_kwargs is None:      self.axvline_kwargs         = {'color':'k', 'linestyle':'--'}
+        else:                           self.axvline_kwargs         = axvline_kwargs 
+        if text_kwargs is None:         self.text_kwargs            = {'ha':'left', 'va':'bottom', 'y':0}
+        else:                           self.text_kwargs            = text_kwargs 
+        if grid_kwargs is None:         self.grid_kwargs            = {'visible':True, 'axis':'x'}
+        else:                           self.grid_kwargs            = grid_kwargs 
+        self.res = res
+        self.time_scaling = time_scaling
         self.verbose = verbose
 
         return
     
-    def __get_missing(
-        self,
+    def __repr__(self) -> str:
+        
+        return (
+            f'GANTT(\n'
+            f'    cmap={repr(self.cmap)},\n'
+            f'    res={repr(self.res)},\n'
+            f'    start_col={repr(self.start_col)}, end_col={repr(self.end_col)}, dur_col={repr(self.dur_col)}, comp_col={repr(self.comp_col)},\n'
+            f'    start_slope_col={repr(self.start_slope_col)}, end_slope_col={repr(self.end_slope_col)},\n'
+            f'    weight_col={repr(self.weight_col)},\n'
+            f'    color_by={repr(self.color_by)}, sort_by={repr(self.sort_by)},\n'
+            f'    time_scaling={repr(self.time_scaling)},\n'
+            f'    plot_kwargs={repr(self.plot_kwargs)}, fill_between_kwargs={repr(self.fill_between_kwargs)}, axvline_kwargs={repr(self.axvline_kwargs)}, text_kwargs={repr(self.text_kwargs)}, grid_kwargs={repr(self.grid_kwargs)},\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
+    
+    def __get_missing(self,
         df:pl.DataFrame,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
@@ -1045,10 +1190,10 @@ class GANTT:
   
     def workload_curve(self,
         x:pl.Series,
-        start:pl.Series, end:pl.Series, duration:pl.Series, completed:pl.Series=None,
-        start_slope:pl.Series=None, end_slope:pl.Series=None,
-        weight:pl.Series=None,
-        time_scaling:float=1E-12,
+        start:pl.Series, end:pl.Series, duration:pl.Series, completed:pl.Series,
+        start_slope:pl.Series, end_slope:pl.Series,
+        weight:pl.Series,
+        time_scaling:float=None,
         ) -> Tuple[np.ndarray,np.ndarray]:
         """
             - method to calculate a specific tasks workload curve (workload over time)
@@ -1072,6 +1217,7 @@ class GANTT:
                 - `completed`
                     - pl.Series
                     - factor describing how much of each task is completed
+                    - not needed in function
                 - `start_slope`
                     - pl.Series
                     - how steep the starting phase should be for each task
@@ -1082,9 +1228,11 @@ class GANTT:
                     - pl.Series
                     - weights describing how much each task contributes to the overall workload
                 - `time_scaling`
-                    - float
+                    - float, optional
                     - factor to scale integers converted to datetime objects
                     - will affect the steepness of the individual curves
+                    - the default is `None`
+                        - will fall back to `self.time_scaling`
 
             Raises
             ------
@@ -1101,6 +1249,8 @@ class GANTT:
             Comments
             --------
         """
+
+        if time_scaling is None: time_scaling = self.time_scaling
 
         #get workload-curves
         ##no offset by start, because start is the zeropoint
@@ -1127,8 +1277,8 @@ class GANTT:
         df:pl.DataFrame,
         ax:plt.Axes=None,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
-        color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
-        cmap:str='nipy_spectral',
+        color_by:Union[str,int]=None, sort_by:Union[str,int]=None,
+        cmap:str=None,
         verbose:int=None,
         axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
         ) -> None:
@@ -1153,9 +1303,12 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.start_col`
                     - the default is `None`
-                        - will be infered by using `end_col` and `dur_col`
-                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                        - will fall back to `self.start_col`
+                        - if that is also `None`
+                            - will be infered by using `end_col` and `dur_col`
+                            - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
                 - `end_col`
                     - str, int, optional
                     - the column containing timestamps of when the tasks started
@@ -1163,9 +1316,12 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.end_col`
                     - the default is `None`
-                        - will be infered by using `start_col` and `dur_col`
-                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                        - will fall back to `self.end_col`
+                        - if that is also `None`
+                            - will be infered by using `start_col` and `dur_col`
+                            - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
                 - `dur_col`
                     - str, int, optional
                     - the column containing timestamps of when the tasks started
@@ -1173,9 +1329,12 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.dur_col`
                     - the default is `None`
-                        - will be infered by using `start_col` and `end_col`
-                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                        - will fall back to `self.dur_col`
+                        - if that is also `None`
+                            - will be infered by using `start_col` and `end_col`
+                            - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
                 - `comp_col`
                     - str, int, optional
                     - the column containing values describing how much of a task is completed
@@ -1183,8 +1342,11 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.comp_col`
                     - the default is `None`
-                        - will be set to 1 (100%) for all entries in `df`
+                        - will fall back to `self.comp_col`
+                        - if that is also `None`
+                            - will be set to 1 (100%) for all entries in `df`
                 - `color_by`
                     - str, int, optional
                     - the column by which to color the bars for each task
@@ -1192,7 +1354,9 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
-                    - the default is 0
+                    - overrides `self.color_by`
+                    - the default is `None`
+                        - will fall back to `self.color_by`
                 - `sort_by`
                     - str, int, optional
                     - the column by which to sort the bars for each task
@@ -1201,11 +1365,15 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
-                    - the default is 0
+                    - overrides `self.sort_by`
+                    - the default is `None`
+                        - will fall back to `self.sort_by`
                 - `cmap`
                     - str, optional
                     - colormap to use for coloring bars by `color_by`
-                    - the default is `nipy_spectral`
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -1215,18 +1383,21 @@ class GANTT:
                 - `axvline_kwargs`
                     - dict, optional
                     - kwargs to be passed to `.axvline()`
+                    - overrides `self.axvline_kwargs`
                     - the default is `None`
-                        - will be set to `{'color':'k', 'linestyle':'--'}`
+                        - will fall back to `self.axvline_kwargs`
                 - `text_kwargs`
                     - dict, optional
                     - kwargs to be passed to `.text()`
+                    - overrides `self.text_kwargs`
                     - the default is `None`
-                        - will be set to `{'ha':'left', 'va':'bottom', 'y':0}`
+                        - will fall back to `self.text_kwargs`
                 - `grid_kwargs`
                     - dict, optional
                     - kwargs to be passed to `ax.grid()`
+                    - overrides `self.grid_kwargs`
                     - the default is `None`
-                        - will be set to `{'visible':True, 'axis':'x'}`
+                        - will fall back to `self.grid_kwargs`
 
             Raises
             ------
@@ -1238,10 +1409,18 @@ class GANTT:
             --------
         """
 
-        if verbose is None:        verbose = self.verbose
-        if axvline_kwargs is None: axvline_kwargs = {'color':'k', 'linestyle':'--'}
-        if text_kwargs is None:    text_kwargs    = {'ha':'left', 'va':'bottom', 'y':0}
-        if grid_kwargs is None:    grid_kwargs    = {'visible':True, 'axis':'x'}
+        #default values
+        if start_col is None:       start_col       = self.start_col
+        if end_col is None:         end_col         = self.end_col
+        if dur_col is None:         dur_col         = self.dur_col
+        if comp_col is None:        comp_col        = self.comp_col
+        if color_by is None:        color_by        = self.color_by
+        if sort_by is None:         sort_by         = self.sort_by
+        if cmap is None:            cmap            = self.cmap
+        if verbose is None:         verbose         = self.verbose
+        if axvline_kwargs is None:  axvline_kwargs  = self.axvline_kwargs
+        if text_kwargs is None:     text_kwargs     = self.text_kwargs
+        if grid_kwargs is None:     grid_kwargs     = self.grid_kwargs
 
         if isinstance(color_by, int):   col_cmap  = df.columns[color_by]
         else:                           col_cmap  = color_by
@@ -1310,9 +1489,9 @@ class GANTT:
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         weight_col:Union[str,int]=None,
-        color_by:Union[str,int]=0, sort_by:Union[str,int]=0,
-        cmap:str='nipy_spectral',
-        res:int=100,
+        color_by:Union[str,int]=None, sort_by:Union[str,int]=None,
+        cmap:str=None,
+        res:int=None,
         verbose:int=None,
         plot_kwargs:dict=None, fill_between_kwargs:dict=None, axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None
         ) -> None:
@@ -1340,9 +1519,12 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.start_col`
                     - the default is `None`
-                        - will be infered by using `end_col` and `dur_col`
-                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                        - will fall back to `self.start_col`
+                        - if that is also `None`
+                            - will be infered by using `end_col` and `dur_col`
+                            - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
                 - `end_col`
                     - str, int, optional
                     - the column containing timestamps of when the tasks started
@@ -1350,9 +1532,12 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.end_col`
                     - the default is `None`
-                        - will be infered by using `start_col` and `dur_col`
-                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                        - will fall back to `self.end_col`
+                        - if that is also `None`
+                            - will be infered by using `start_col` and `dur_col`
+                            - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
                 - `dur_col`
                     - str, int, optional
                     - the column containing timestamps of when the tasks started
@@ -1360,9 +1545,12 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.dur_col`
                     - the default is `None`
-                        - will be infered by using `start_col` and `end_col`
-                        - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
+                        - will fall back to `self.dur_col`
+                        - if that is also `None`
+                            - will be infered by using `start_col` and `end_col`
+                            - therefore at least two `start_col`, `end_col`, `dur_col` have to be not `None`
                 - `comp_col`
                     - str, int, optional
                     - the column containing values describing how much of a task is completed
@@ -1370,8 +1558,11 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.comp_col`
                     - the default is `None`
-                        - will be set to 1 (100%) for all entries in `df`
+                        - will fall back to `self.comp_col`
+                        - if that is also `None`
+                            - will be set to 1 (100%) for all entries in `df`
                 - `start_slope_col`
                     - str, int, optional
                     - the column containing values describing how steep the incline at the starting side of each task is
@@ -1379,8 +1570,11 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.start_slope_col`
                     - the default is `None`
-                        - will be set to 1 for all entries in `df`
+                        - will fall back to `self.start_slope_col`
+                        - if that is also `None`
+                            - will be set to 1 for all entries in `df`
                 - `end_slope_col`
                     - str, int, optional
                     - the column containing values describing how steep the incline at the ending side of each task is
@@ -1388,8 +1582,11 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.end_slope_col`
                     - the default is `None`
-                        - will be set to 1 for all entries in `df`
+                        - will fall back to `self.end_slope_col`
+                        - if that is also `None`
+                            - will be set to 1 for all entries in `df`
                 - `weight_col`
                     - str, int, optional
                     - the column containing values describing how much each task contributes to the overall workload
@@ -1397,35 +1594,46 @@ class GANTT:
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
+                    - overrides `self.weight_col`
                     - the default is `None`
-                        - will be set to 1 for all entries in `df`
+                        - will fall back to `self.weight_col`
+                        - if that is also `None`
+                            - will be set to 1 for all entries in `df`
                 - `color_by`
                     - str, int, optional
-                    - the column by which to color the workload-curves for each task
+                    - the column by which to color the bars for each task
                     - if int
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
-                    - the default is 0
+                    - overrides `self.color_by`
+                    - the default is `None`
+                        - will fall back to `self.color_by`
                 - `sort_by`
                     - str, int, optional
-                    - irrelevant for workload-chart
-                    - the column by which to sort the bars for each task in a GANTT chart
+                    - not used in this method
+                    - the column by which to sort the bars for each task in `self.plot_gantt()`
                         - i.e. the y-axis of the chart
                     - if int
                         - will be interpreted as index of the column
                     - otherwise
                         - will be interpreted as column name
-                    - the default is 0
+                    - overrides `self.sort_by`
+                    - the default is `None`
+                        - will fall back to `self.sort_by`
                 - `cmap`
                     - str, optional
-                    - colormap to use for coloring bars by `color_by`
-                    - the default is `nipy_spectral`
+                    - colormap to use for coloring workload-curves by `color_by`
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
                 - `res`
-                    - int
+                    - int, optional
                     - resolution of the workload-curves
                         - i.e. for how many datapoints to calculate the workload
-                    - the default is 100
+                    - overrides `self.res`
+                    - the default is `None`
+                        - will fall back to `self.res`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -1435,28 +1643,33 @@ class GANTT:
                 - `plot_kwargs`
                     - dict, optional
                     - kwargs to be passed to `.plot()`
+                    - overrides `self.plot_kwargs`
                     - the default is `None`
-                        - will be set to `{}`
+                        - will fall back to `self.plot_kwargs`
                 - `fill_between_kwargs`
                     - dict, optional
                     - kwargs to be passed to `.fill_between()`
+                    - overrides `self.fill_between_kwargs`
                     - the default is `None`
-                        - will be set to `{'alpha':0.5}`
+                        - will fall back to `self.fill_between_kwargs`
                 - `axvline_kwargs`
                     - dict, optional
                     - kwargs to be passed to `.axvline()`
+                    - overrides `self.axvline_kwargs`
                     - the default is `None`
-                        - will be set to `{'color':'k', 'linestyle':'--'}`
+                        - will fall back to `self.axvline_kwargs`
                 - `text_kwargs`
                     - dict, optional
                     - kwargs to be passed to `.text()`
+                    - overrides `self.text_kwargs`
                     - the default is `None`
-                        - will be set to `{'ha':'left', 'va':'bottom', 'y':0}`
+                        - will fall back to `self.text_kwargs`
                 - `grid_kwargs`
                     - dict, optional
                     - kwargs to be passed to `ax.grid()`
+                    - overrides `self.grid_kwargs`
                     - the default is `None`
-                        - will be set to `{'visible':True, 'axis':'x'}`
+                        - will fall back to `self.grid_kwargs`
 
             Raises
             ------
@@ -1468,12 +1681,24 @@ class GANTT:
             --------
         """
 
+        #default values
+        if start_col is None:           start_col       = self.start_col
+        if end_col is None:             end_col         = self.end_col
+        if dur_col is None:             dur_col         = self.dur_col
+        if comp_col is None:            comp_col        = self.comp_col
+        if start_slope_col is None:     start_slope_col = self.start_slope_col
+        if end_slope_col is None:       end_slope_col   = self.end_slope_col
+        if weight_col is None:          weight_col      = self.weight_col
+        if color_by is None:            color_by        = self.color_by
+        if sort_by is None:             sort_by         = self.sort_by
+        if cmap is None:                cmap            = self.cmap   
+        if res is None:                 res             = self.res     
         if verbose is None:             verbose                 = self.verbose
-        if plot_kwargs is None:         plot_kwargs             = {}
-        if fill_between_kwargs is None: fill_between_kwargs     = {'alpha':0.5}
-        if axvline_kwargs is None:      axvline_kwargs          = {'color':'k', 'linestyle':'--'}
-        if text_kwargs is None:         text_kwargs             = {'ha':'left', 'va':'bottom', 'y':0}
-        if grid_kwargs is None:         grid_kwargs             = {'visible':True, 'axis':'x'}
+        if plot_kwargs is None:         plot_kwargs             = self.plot_kwargs
+        if fill_between_kwargs is None: fill_between_kwargs     = self.fill_between_kwargs
+        if axvline_kwargs is None:      axvline_kwargs          = self.axvline_kwargs
+        if text_kwargs is None:         text_kwargs             = self.text_kwargs
+        if grid_kwargs is None:         grid_kwargs             = self.grid_kwargs
 
         if isinstance(color_by, int):   col_cmap  = df.columns[color_by]
         else:                           col_cmap  = color_by
