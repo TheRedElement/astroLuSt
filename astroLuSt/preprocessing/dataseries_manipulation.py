@@ -2,10 +2,329 @@
 #%%imports
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+import matplotlib.colors as mcolors
 import numpy as np
 from typing import Union, Tuple, Callable
 
-#%%definitions
+from astroLuSt.visualization.plotting import generate_colors
+
+
+#%%classes
+class PeriodicExpansion:
+    """
+        - class to expand periodic timeseries on either side (min or max)
+            - takes all datapoints up to a reference x-value
+            - appends them to the original according to specification
+        - follows structure of sklearn transformers
+        
+        Attributes
+        ----------
+            - `x_ref_min`
+                - float, optional
+                - reference x-value for appending to minimum side
+                    - will be used in order to determine which phases to consider for appending
+                - used if `minmax` contains `min`
+                - the default is 0
+            - `x_ref_max`
+                - float, optional
+                - reference x-value for appending to maximum side
+                    - will be used in order to determine which phases to consider for appending
+                - used if `minmax` contains `max`
+                - the default is 0
+            - `minmax`
+                - str, optional
+                - specify where to extend the dataseries
+                - if `'min'` is contained in `minmax`
+                    - will expand on the minimum side
+                    - will consider all phases from `x_ref_min` to the maximum phase
+                - if `'max'` is contained in `minmax`
+                    - will expand on the maximum side
+                    - will consider all phases from the minimum phase up to `x_ref_max`
+                - the default is `None`
+                    - will be set to `'minmax'`
+
+        Methods
+        -------
+            - `fit()`
+            - `transform()`
+            - `fit_transform()`
+            - `plot_result()`
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+
+        Comments
+        --------
+
+    """
+
+    def __init__(self,
+        x_ref_min:float=0, x_ref_max:float=0,
+        minmax:str=None,
+        verbose:int=0,
+        ) -> None:
+        
+        self.x_ref_min  = x_ref_min
+        self.x_ref_max  = x_ref_max
+        if minmax is None:  self.minmax = 'minmax'
+        else:               self.minmax = minmax
+        
+        self.verbose    = verbose
+
+        return
+
+    def __repr__(self) -> str:
+        
+        return (
+            f'PeriodicExpansion(\n'
+            f'    x_ref_min={repr(self.x_ref_min)}, x_ref_max={repr(self.x_ref_max)},\n'
+            f'    minmax={repr(self.minmax)},\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
+    
+    def fit(self,
+        X:np.ndarray, y:np.ndarray=None,
+        x_ref_min:float=None, x_ref_max:float=None,
+        minmax:str=None,
+        ) -> None:
+        """
+            - method to fit the transformer
+            
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - contains dataseries to be transformed
+                - `y`
+                    - np.ndarray, optional
+                    - 1D array
+                    - contains x-values for all dataseries/features contained in `X`
+                    - the default is `None`
+                        - will generate x-values between 0 and 1
+                        - i.e. `y = np.linspace(0,1,X.shape[1])` will be called
+                - `x_ref_min`
+                    - float, optional
+                    - reference x-value for appending to minimum side
+                        - will be used in order to determine which phases to consider for appending
+                    - used if `minmax` contains `min`
+                    - overrides `self.x_ref_min`
+                    - the default is `None`
+                        - will fall back to `self.x_ref_min`
+                - `x_ref_max`
+                    - float, optional
+                    - reference x-value for appending to maximum side
+                        - will be used in order to determine which phases to consider for appending
+                    - used if `minmax` contains `max`
+                    - overrides `self.x_ref_max`
+                    - the default is `None`
+                        - will fall back to `self.x_ref_max`
+                - `minmax`
+                    - str, optional
+                    - specify where to extend the dataseries
+                    - if `'min'` is contained in `minmax`
+                        - will expand on the minimum side
+                        - will consider all phases from `x_ref_min` to the maximum phase
+                    - if `'max'` is contained in `minmax`
+                        - will expand on the maximum side
+                        - will consider all phases from the minimum phase up to `x_ref_max`
+                    - overrides `self.minmax`
+                    - the default is `None`
+                        - will fall back to `self.minmax`
+                        
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+
+        if x_ref_min is None:   x_ref_min   = self.x_ref_min
+        if x_ref_max is None:   x_ref_max   = self.x_ref_max
+        if minmax is None:      minmax      = self.minmax
+        if y is None:           y           = np.linspace(0,1,X.shape[1])
+
+        #internalize input arrays
+        self.X      = X
+        self.y      = y
+
+        #initialize output arrays
+        self.X_expanded = X.copy()
+        self.y_expanded = y.copy()
+
+        if 'min' in minmax:
+            y_bool = (x_ref_min < y)
+            
+            X_append = X[:,y_bool]
+            y_append = np.nanmin(y) - (np.nanmax(y) - y[y_bool])
+            self.X_expanded = np.append(self.X_expanded, X_append, axis=1)
+            self.y_expanded = np.append(self.y_expanded, y_append)
+
+        if 'max' in minmax:
+            y_bool = (y < x_ref_max)
+
+            X_append = X[:,y_bool]
+            y_append = np.nanmax(y) + (y[y_bool] - np.nanmin(y))
+            self.X_expanded = np.append(self.X_expanded, X_append, axis=1)
+            self.y_expanded = np.append(self.y_expanded, y_append)
+
+        return
+    
+    def transform(self,
+        X:np.ndarray=None, y:np.ndarray=None,
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to transform the input
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray, optional
+                    - not needed in this method
+                    - contains dataseries to be transformed
+                    - the default is `None`
+                - `y`
+                    - np.ndarray, optional
+                    - not needed in this method
+                    - contains x-values for all dataseries/features contained in `X`
+                    - the default is `None`
+                        
+            Raises
+            ------
+
+            Returns
+            -------
+                - `X_expanded`
+                    - np.ndarray
+                    - the transformed version of `X`
+                    - i.e. `X` with datapoints appended according to specification
+                - `y_expanded`
+                    - np.ndarray
+                    - the transformed version of `y`
+                    - i.e. `y` with datapoints appended according to specification
+
+            Comments
+            --------            
+        """
+
+
+        return self.X_expanded, self.y_expanded
+    
+    def fit_transform(self,
+        X:np.ndarray, y:np.ndarray=None,
+        fit_kwargs:dict=None,
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to fit the transformer and transform the input
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray, optional
+                    - not needed in this method
+                    - contains dataseries to be transformed
+                    - the default is `None`
+                - `y`
+                    - np.ndarray, optional
+                    - not needed in this method
+                    - contains x-values for all dataseries/features contained in `X`
+                    - the default is `None`
+                - `fit_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.fit()`
+                    - the default is `None`
+                        - will be set to `{}`
+                        
+            Raises
+            ------
+
+            Returns
+            -------
+                - `X_expanded`
+                    - np.ndarray
+                    - the transformed version of `X`
+                    - i.e. `X` with datapoints appended according to specification
+                - `y_expanded`
+                    - np.ndarray
+                    - the transformed version of `y`
+                    - i.e. `y` with datapoints appended according to specification
+
+            Comments
+            --------
+        
+        """
+
+        if fit_kwargs is None: fit_kwargs = {}
+
+        self.fit(X, y, **fit_kwargs)
+
+        return self.X_expanded, self.y_expanded
+    
+    def plot_result(self,
+        cmap:Union[str,mcolors.Colormap]='nipy_spectral',
+        sctr_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to plot the result after successful transformation
+
+            Parameters
+            ----------
+                - `cmap`
+                    - str, mcolors.Colormap, optional
+                    - colormap to use for plotting different samples in `X`
+                    - the default is `nipy_spectral`
+                - `sctr_kwargs`
+                    - dict, optinonal
+                    - kwargs to pass to `ax.scatter`
+                    - the default is `None`
+                        - willbe set to `{}`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - matplotlib Figure
+                    - created figure
+                - `axs`
+                    - plt.Axes
+                    - axis corresponding to `fig`
+            
+            Comments
+            --------
+        """
+
+        if sctr_kwargs is None: sctr_kwargs = {}
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+
+        colors = generate_colors(classes=self.X_expanded.shape[0], cmap=cmap)
+        for x, xe, c in zip(self.X, self.X_expanded, colors):
+            exp_bool = ~np.isin(self.y_expanded, self.y)
+            ax1.scatter(self.y,                    x,            facecolor='none', ec=c,      **sctr_kwargs)
+            ax1.scatter(self.y_expanded[exp_bool], xe[exp_bool], facecolor=c,      ec='none', **sctr_kwargs)
+            
+        ax1.scatter(np.nan, np.nan, facecolor='none',     ec='tab:blue', label='Original',        **sctr_kwargs)
+        ax1.scatter(np.nan, np.nan, facecolor='tab:blue', ec='none',     label='Newly Generated', **sctr_kwargs)
+
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+
+        ax1.legend()
+
+        axs = fig.axes
+
+        return fig, axs
+    
+
+#%%functions
 
 def phase2time(
     phase:Union[np.ndarray,float],
@@ -437,133 +756,3 @@ def periodize(
         plt.show()
 
     return x_periodized, y_periodized, 
-
-def periodic_expansion(
-    x:np.ndarray, y:np.ndarray,
-    x_ref_min:float=0, x_ref_max:float=0,
-    minmax:str="max",
-    testplot=False,
-    ):
-    """
-        - function to expand a periodic timeseries on either side
-            - takes all datapoints up to a reference phase
-            - appends them to the original array according to specification  
-
-        Parameters
-        ----------
-            - `x`
-                - np.ndarray
-                - x-values of the datapoints to be expanded
-            - `y`
-                - np.ndarray
-                - y-values of the datapoints to be expanded
-            - `x_ref_min`
-                - float, optional
-                - reference phase
-                    - will be used in order to determine which phases to consider for appending
-                - used in the case of appending to the minimum and both ends
-                - the default is 0
-            - `x_ref_max`
-                - float, optional
-                - reference phase
-                    - will be used in order to determine which phases to consider for appending
-                - used in the case of appending to the minimum and both ends
-                - the default is 0
-            - `minmax`
-                - str, optional
-                - wether to append to the maximum or minimum of the dataseries
-                - can take either
-                    - `'min'`
-                        - will expand on the minimum side
-                        - will consider all phases from `x_ref_max` to the maximum phase
-                    - `'max'`
-                        - will expand on the maximum side
-                        - will consider all phases from the minimum phase up to `x_ref_min`
-                    - `'both'`
-                        - will expand on both ends of the curve
-                        - requires `x_ref_min` and `x_ref_max`
-                - the default is `'max'`
-            - `testplot`
-                - bool, optional
-                - whether to show a testplot of the result
-                - the default is `False`
-
-        Raises
-        ------
-            - `ValueError`
-                - if `'minmax'` gets passed a wrong argument
-
-        Returns
-        -------
-            - `expanded_x`
-                - np.ndarray
-                - x-values including the expanded part
-            - `expanded_y`
-                - np.ndarray
-                - y-values including the expanded part
-
-        Dependencies
-        ------------
-            - matplotlib
-            - numpy
-            - typing
-
-        Comments
-        --------
-    """
-    
-    #sort to get correct appendix in the end
-    sortidx = np.argsort(x)
-    x = x[sortidx]
-    y = y[sortidx]
-
-    #append to maximum
-    if minmax == "max":
-        x_bool = (x < x_ref_max)
-        appendix_phases = np.nanmax(x) + (x[phase_bool] - np.nanmin(x))
-        x_ref = x_ref_max
-    #append to minimum
-    elif minmax == "min":
-        phase_bool = (x > x_ref_min)
-        appendix_phases = np.nanmin(x) - (np.nanmax(x) - x[phase_bool])
-        x_ref = x_ref_min
-    elif minmax == "both":
-        if x_ref_min < x_ref_max:
-            raise ValueError("'x_ref_min' has to be greater or equal than 'x_ref_max' ")
-        x_ref = [x_ref_min, x_ref_max]
-        x_bool_max = (x < x_ref_max)
-        x_bool_min = (x > x_ref_min)
-        x_bool = x_bool_max|x_bool_min
-        appendix_x_max = np.nanmax(x) + (x[x_bool_max] - np.nanmin(x))
-        appendix_x_min = np.nanmin(x) - (np.nanmax(x) - x[x_bool_min])
-        appendix_x = np.append(appendix_x_max, appendix_x_min)
-    else:
-        raise ValueError("'minmax' has to bei either 'min', 'max' or 'both'!")
-    
-    appendix_y = y[phase_bool]
-
-
-    expanded_x = np.append(x, appendix_x)
-    expanded_y = np.append(y, appendix_y)
-
-    if testplot:
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.scatter(x,          y,          color="tab:grey", alpha=0.5, zorder=2, label="Original Input")
-        ax1.scatter(expanded_x, expanded_y, color="tab:blue", alpha=1,   zorder=1, label="Expanded Input")
-    
-        if minmax == 'both':
-            ax1.axvline(x_ref[0], color="g", linestyle="--", label="Reference Phase")
-            ax1.axvline(x_ref[1], color="g", linestyle="--")
-        else:
-            ax1.axvline(x_ref,    color="g", linestyle="--", label="Reference Phase")
-        
-        ax1.set_xlabel("x")
-        ax1.set_ylabel("y")
-        
-        ax1.legend()
-
-        plt.tight_layout()
-        plt.show()
-    
-    return expanded_x, expanded_y
