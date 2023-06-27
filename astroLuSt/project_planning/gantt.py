@@ -103,7 +103,7 @@ class GANTT:
                 - will be interpreted as column name
             - the default is 0
         - `cmap`
-            - str, optional
+            - str, mcolors.Colormap, optional
             - colormap to use for coloring bars in the GANTT-chart and curves in the workload-chart
             - colormap applied according to `color_by`
             - the default is `nipy_spectral`
@@ -182,7 +182,7 @@ class GANTT:
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         weight_col:Union[str,int]=None,
         color_by:Union[str,int]=0, sort_by:Union[str,int]=0,                  
-        cmap:str=None, total_color=None,
+        cmap:Union[str,mcolors.Colormap]=None, total_color=None,
         res:int=100,
         time_scaling:float=1E-12,
         plot_kwargs:dict=None, fill_between_kwargs:dict=None, axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
@@ -483,7 +483,7 @@ class GANTT:
 
     def __generate_cmap(self,
         df:pl.DataFrame,
-        col_cmap:str, cmap:str,
+        col_cmap:str, cmap:Union[str,mcolors.Colormap],
         ) -> np.ndarray:
         """
             - private method to generate a list of colors for unique elements in `df[col_map]`
@@ -498,7 +498,7 @@ class GANTT:
                     - column name to be considered for the coloring
                     - will assign one color to each unique element in `df[col_cmap]`
                 - `cmap`
-                    - str
+                    - str, mcolors.Colormap
                     - colormap to use for generating the colors
 
             Raises
@@ -664,7 +664,7 @@ class GANTT:
         ax:plt.Axes=None,
         start_col:Union[str,int]=None, end_col:Union[str,int]=None, dur_col:Union[str,int]=None, comp_col:Union[str,int]=None,
         color_by:Union[str,int]=None, sort_by:Union[str,int]=None,
-        cmap:str=None,
+        cmap:Union[str,mcolors.Colormap]=None,
         verbose:int=None,
         axvline_kwargs:dict=None, text_kwargs:dict=None, grid_kwargs:dict=None,
         ) -> None:
@@ -755,7 +755,7 @@ class GANTT:
                     - the default is `None`
                         - will fall back to `self.sort_by`
                 - `cmap`
-                    - str, optional
+                    - str, mcolor.Colormap, optional
                     - colormap to use for coloring bars by `color_by`
                     - overrides `self.cmap`
                     - the default is `None`
@@ -876,7 +876,7 @@ class GANTT:
         start_slope_col:Union[str,int]=None, end_slope_col:Union[str,int]=None,
         weight_col:Union[str,int]=None,
         color_by:Union[str,int]=None, sort_by:Union[str,int]=None,
-        cmap:str=None, total_color:list=None,
+        cmap:Union[str,mcolors.Colormap]=None, total_color:list=None,
         res:int=None,
         time_scaling:float=None,
         verbose:int=None,
@@ -1009,7 +1009,7 @@ class GANTT:
                     - the default is `None`
                         - will fall back to `self.sort_by`
                 - `cmap`
-                    - str, optional
+                    - str, mcolors.Colormap, optional
                     - colormap to use for coloring workload-curves by `color_by`
                     - overrides `self.cmap`
                     - the default is `None`
