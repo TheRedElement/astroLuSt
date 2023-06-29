@@ -1,4 +1,7 @@
 
+#TODO: DTW, correct for wrong assignment of high correlation
+
+
 #%%imports
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +11,6 @@ from astroLuSt.monitoring.timers import ExecTimer
 
 #%%definitions
 class DTW:
-    #TODO: DTW, correct for wrong assignment of high correlation
     """
         - class for executing Dynamic Time Warping
         - makes a prediction based on several template-curves (`X_template`)
