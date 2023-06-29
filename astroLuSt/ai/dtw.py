@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import Callable, Tuple, List
 
-from astroLuSt.monitoring.timers import ExecTimer
-
 #%%definitions
 class DTW:
     """
