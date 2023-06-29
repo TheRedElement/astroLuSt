@@ -12,47 +12,59 @@ class DTW:
     """
         - class for executing Dynamic Time Warping
         - makes a prediction based on several template-curves (`X_template`)
-            - prediction made via majority voting
 
         Attributes
         ----------
             - `X_template`
-                - list
+                - np.ndarray
                 - contains arrays of template data-series
                     - act as role models, to which new samples will be compared
-                    - can have different legths
+                    - can have different lengths
             - `y_template`
                 - np.ndarray, optional
-                - contains classes associated with each example in `X_template`
-                - the default is `None`
-                    - will generate a unique label for each sample in `X_template`
-            - `threshold`
-                - float, optional
-                - a classification threshold
-                    - optimal warping path which has a correlation coefficient higher than `threshold` will be classified as the same class
-                - the default is 0.9
+                - array of labels corresponding to `X_template`
+                - relevant in `self.predict()` if `threshold is not None`
+                - the default `None`
+                    - will generate a unique label for every sampel in `X_template`
             - `window`
                 - int, optional
                 - locality-constraint for the distance determination
-                - i.e. a distance between `x1[i]` and `x2[j]` is not allowed to be larger than the window parameter
+                - i.e. a distance between the points `X[i,j]` and `X_template[k,l]` is not allowed to be larger than the window parameter
+                    - `X` is hereby the training dataset
+                    - `X_template` is the template dataset
+                    - `i`, `k` are sample-indices
+                    - `j`, `l` are feature-indices
                 - the default is `None`
+                    - allows any distance
             - `cost_fct`
                 - callable, optional
                 - cost function to use for the calculation
                     - calculates the distance between two points
+                - has to take two arguments
+                    - `x`
+                        - float
+                        - feature-value 1
+                    - `y`
+                        - float
+                        - feature-value 2
                 - the default is `None`
                     - Will use the euclidean distance
-                
-        Infered Attributes
-        ------------------
-            - TODO
+            - `threshold`
+                - float, optional
+                - a classification threshold
+                    - optimal warping path which has an absolute correlation coefficient (|r_P|) higher than `threshold` will be classified as being of the same type as the template-curve
+                - has to be value in the interval [0,1]
+                - the default is `None`
+                    - will output correlations instead of binary classification during prediction
 
         Methods
         -------
             - `accumulate_cost_matrix()`
             - `optimal_warping_path()`
+            - `fit()`
+            - `predict()`
             - `fit_predict()`
-            - `summary_plot()`
+            - `plot_result()`
 
         Dependencies
         ------------
@@ -66,45 +78,40 @@ class DTW:
     """
 
     def __init__(self,
-        X_template:np.ndarray,
-        y_template:np.ndarray=None,
-        threshold:float=0.9, window:int=None, cost_fct:Callable=None,
+        X_template:np.ndarray, y_template:np.ndarray=None,
+        window:int=None, cost_fct:Callable=None,
+        threshold:float=None,
         ) -> None:
         
-        assert -1 <= threshold and threshold <= 1, f"`theshold` has to be in the range [-1,1] but has a value of {threshold}"
+        if threshold is not None: assert 0 <= threshold and threshold <= 1, f"`theshold` has to be in the interval [0,1] but is {threshold}"
         try:
             len(X_template[0])
         except:
-            raise ValueError(f"`X_template` has to be a list of lists!")
+            raise ValueError(f"`X_template` has to be a list of np.ndarrays!")
 
         self.X_template = X_template
-        self.y_template = y_template
-        self.threshold = threshold
-        self.window = window
-        #initialize cost_function
-        self.cost_fct = cost_fct
-        if cost_fct is None:
-            self.cost_fct = lambda x, y:  np.abs(x-y)
-        if y_template is None:
-            self.y_template = np.arange(len(self.X_template))  #auto-generate class labels, if none are provided
-        self.pearsons = None
-        self.y_pred = None
+        if y_template is None: self.y_template = np.arange(len(self.X_template)) #unique labels for every template sample
+        else:                  self.y_template = y_template
+        if cost_fct is None:   self.cost_fct = lambda x, y: np.abs(x-y)
+        else:                  self.cost_fct = cost_fct
+        self.threshold  = threshold
+        self.window     = window
+
 
         return
     
     def __repr__(self) -> str:
         return (
             f'DTW(\n'
-            f'    X_template = {repr(self.X_template)},\n'
-            f'    y_template = {repr(self.y_template)},\n'
-            f'    threshold = {repr(self.threshold)}, window = {repr(self.window)}, cost_fct = {repr(self.cost_fct)},\n'
+            f'    X_template={repr(self.X_template)}, y_template={repr(self.y_template)},\n'
+            f'    threshold={repr(self.threshold)}, window={repr(self.window)}, cost_fct={repr(self.cost_fct)},\n'
             f')'
         )
 
 
     def accumulate_cost_matrix(self,
         x1:np.ndarray, x2:np.ndarray,
-        testplot:bool=False
+        window:int=None, cost_fct:Callable=None
         ) -> np.ndarray:
         """
             - method to determine a distance matrix for two arrays `x1` and `x2`
@@ -117,14 +124,35 @@ class DTW:
             ---------
                 - `x1`
                     - np.ndarray
-                    - some data series
+                    - some 1D data series
                 - `x2`
                     - np.ndarray
-                    - some data series
-                - `testplot`
-                    - bool, optional
-                    - whether to display a testplot of the result
-                    - the default is `False`
+                    - some 1D data series
+                - `window`
+                    - int, optional
+                    - locality-constraint for the distance determination
+                    - i.e. a distance between the points `x1[j]` and `x2[l]` is not allowed to be larger than the window parameter
+                        - `j`, `l` are feature-indices
+                    - overrides `self.window`
+                    - the default is `None`
+                        - will fallback to `self.window`
+                        - if that is `None` as well
+                            - allows any distance
+                - `cost_fct`
+                    - callable, optional
+                    - cost function to use for the calculation
+                        - calculates the distance between two points
+                    - has to take two arguments
+                        - `x`
+                            - float
+                            - feature-value 1
+                        - `y`
+                            - float
+                            - feature-value 2
+                    - overrides `self.cost_fct`
+                    - the default is `None`
+                        - will default to `self.cost_fct`
+            
             Raises
             ------
 
@@ -140,11 +168,15 @@ class DTW:
 
         """
         
-        #initialize window
-        if self.window is None:
-            window = np.max([len(x1), len(x2)])-1
-        else:
-            window = self.window
+        #default values
+        ##initialize window
+        if window is None:
+            #fallback to self.window
+            if self.window is not None: window = self.window
+            #default value if that is also None
+            else:                       window = np.max([len(x1), len(x2)])-1
+        ##cost function to use
+        if cost_fct is None:            cost_fct = self.cost_fct
 
         #get specification of time-series
         n, m = len(x1), len(x2)
@@ -165,16 +197,10 @@ class DTW:
                 ])
                 C[i,j] = cost + last_min
 
-        #plot
-        if testplot:
-            self.summary_plot()
-
-
         return C
 
     def optimal_warping_path(self,
         C:np.ndarray,
-        testplot:bool=False
         ) -> np.ndarray:
         """
             - method to compute the optimal warping path given a cost matrix
@@ -187,11 +213,10 @@ class DTW:
                 - `C`
                     - np.ndarray
                     - 2D array
-                    - cost-matrix of the differences between `x1` and `x2`            
-                - `testplot`
-                    - bool, optional
-                    - whether to display a testplot of the result
-                    - the default is `False`
+                    - cost-matrix of the differences between `X[i]` and `X_template[k]`
+                        - `X` is hereby the training dataset
+                        - `X_template` is the template dataset
+                        - `i`, `k` are sample-indices
 
             Raises
             ------
@@ -200,17 +225,15 @@ class DTW:
             -------
                 - `path`
                     - np.ndarray
-                    - contains tuples
-                        - indices of the cost-matrix `C`
-                        - the tuples are the optimal warping path
-                        - the tuples contain the indices of the best corresponding points from both data series
-                            - i.e. a tuple `(0,3)` means that the zeroth element of the first data series best corresponds to the third element in the second data series
+                    - contains indices of the cost-matrix `C`
+                        - the indices denote the optimal warping path
+                        - the indices contain the indices of the best corresponding points from both data series
+                            - i.e. an entry `[0,3]` means that the zeroth element of the first data series best corresponds to the third element in the second data series
 
             Comments
             --------
 
         """
-
 
         path = []
         i, j = C.shape[0]-1, C.shape[1]-1
@@ -231,38 +254,132 @@ class DTW:
                     j -= 1
                 path.append((i,j))
 
-        if testplot:
-            self.summary_plot()
+        path = np.array(path)
 
         return path
 
-    def fit_predict(self,
-        X:np.ndarray,
-        expand_prediction:bool=False,
-        testplot:bool=False,
-        ) -> Tuple[list,np.ndarray,np.ndarray,list]:
-        #TODO: Corrcoeff not great (if really bad match, no shift helps => corr in cost mat = 1, which is wrong!!)
+
+    def fit(self,
+        X:np.ndarray, y:np.ndarray=None,
+        window:int=None, cost_fct:Callable=None,
+        ) -> None:
         """
-            - method to fit the classifier and make a prediction
-            - prediction based on a majority vote from `X_template`
+            - method to fit the classifier
 
             Parameters
             ----------
                 - `X`
                     - np.ndarray
-                    - 2D array
-                    - design matrix
-                        - contains time-series (of potentially different lengths) as samples
-                - `expand_prediction`
+                    - can contain samples of different lengths
+                    - training set to be compared to `self.X_template`
+                - `y`
+                    - np.ndarray, optional
+                    - labels corresponding to `X`
+                    - not used in the method
+                    - the default is `None`
+                - `window`
+                    - int, optional
+                    - locality-constraint for the distance determination
+                    - i.e. a distance between the points `x1[j]` and `x2[l]` is not allowed to be larger than the window parameter
+                        - `j`, `l` are feature-indices
+                    - overrides `self.window`
+                    - the default is `None`
+                        - will fallback to `self.window`
+                - `cost_fct`
+                    - callable, optional
+                    - cost function to use for the calculation
+                        - calculates the distance between two points
+                    - has to take two arguments
+                        - `x`
+                            - float
+                            - feature-value 1
+                        - `y`
+                            - float
+                            - feature-value 2
+                    - overrides `self.cost_fct`
+                    - the default is `None`
+                        - will default to `self.cost_fct`                        
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+
+        """
+
+        #default parameters
+        if window is None: window = self.window
+        if cost_fct is None: cost_fct = self.cost_fct
+        
+
+        #initialize result arrays
+        self.Cs = np.empty((len(X), len(self.X_template)), dtype=object)
+        self.pearsons = np.empty((len(X), len(self.X_template)), dtype=object)
+        self.paths = np.empty((len(X), len(self.X_template)), dtype=object)
+
+        #run fit for every sample in X
+        for iidx, x in enumerate(X):
+
+            #compare sample to every template-time-series
+            for jidx, xt in enumerate(self.X_template):
+
+                #fitting procedure
+                C = self.accumulate_cost_matrix(x, xt, cost_fct=cost_fct)
+                path = self.optimal_warping_path(C)
+                pearson = np.abs(np.corrcoef(path.T)[0,1])
+                
+                #append results
+                self.Cs[iidx, jidx] = C
+                self.pearsons[iidx, jidx] = pearson
+                self.paths[iidx, jidx] = path
+
+        return
+
+    def predict(self,
+        X:np.ndarray=None, y:np.ndarray=None,
+        threshold:float=None, multi_hot_encoded:bool=False
+        ) -> np.ndarray:
+        """
+            - method to predict with the fitted classifier
+            
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - not used in the method
+                    - can contain samples of different lengths
+                    - training set to be compared to `self.X_template`
+                - `y`
+                    - np.ndarray, optional
+                    - labels corresponding to `X`
+                    - not used in the method
+                    - the default is `None`
+                - `threshold`
+                    - float, optional
+                    - a classification threshold
+                        - optimal warping path which has an absolute correlation coefficient (|r_P|) higher than `threshold` will be classified as being of the same type as the template-curve
+                    - has to be value in the interval [0,1]
+                    - overrides `self.threshold`
+                    - the default is `None`
+                        - will fall back to `self.threshold`
+                - `multi_hot_encoded`
                     - bool, optional
-                    - if `True` will return the prediction for each time-series in 'X_template'
-                    - otherwise a majority vote of all the predictions will be returned
-                        - multiple classes if multiple classes had the same number of votes
-                    - the default is `False`
-                - `testplot`
-                    - bool, optional
-                    - whether to display testplots of the results
-                    - the default is `False`
+                    - whether to convert the calculated correlations to a multi-hot encoded matrix
+                        - will consider every unique class in `self.y_template`
+                        - will calculate the overall correlation trend w.r.t. `threshold` for all template-curves
+                        - i.e. computes $\sum_{class} r_P(class) - threshold$ for every sample in `X` and every unique class
+                            - if the the result is > 0 this means that (w.r.t. `threshold`) there is a correlation
+                                - Hence a 1 will be assigned for that class
+                            - if the the result is < 0 this means that (w.r.t. `threshold`) there is no correlation
+                                - Hence a 0 will be assigned for that class
+                    - only relevant if `threshold` and `self.threshold` are not `None`
+                    - the default is False
+                        - will return the overall correlation trend instead
+                        - i.e. $\sum_{class} r_P(class) - threshold$
 
             Raises
             ------
@@ -270,101 +387,123 @@ class DTW:
             Returns
             -------
                 - `y_pred`
-                    - list of lists
-                    - the predicted classes based on a majority vote of the predictions w.r.t. all data series in `self.X_template` will be returned
-                        - multiple classes if multiple classes had the same number of votes
-                    - if `expand_prediction` is set to `True`, the prediction for every data series in `self.X_template` will be returned
-                        - in this case `y_pred` will have the shape `(X.shape[0], self.X_template.shape[0])`
-                - `Cs`
                     - np.ndarray
-                    - 3D array of the cost-matrices
-                - `paths`
+                    - array containing the labes for `X`
+                    - has shape `(X.shape[0],self.X_template.shape[0])`
+                    - returns matrix of 0 and 1 if `multi_hot_encoded == True`
+                        - 1 if the overall correlation exceeds `threshold`
+                        - 0 otherwise
+                    - the second axis of `y_pred` will be sorted in ascending order w.r.t. the classlabels if `multi_hot_encoded == True`
+                    - otherwise returns the overall correlation as entries
+
+            Comments
+            --------
+        """
+
+        if threshold is None: threshold = self.threshold
+
+        if threshold is None:
+            y_pred = self.pearsons
+        else:
+            uniques = np.sort(np.unique(self.y_template))
+            y_pred = np.empty((self.pearsons.shape[0], uniques.shape[0]))
+            for idx, yi in enumerate(uniques):
+                #get pearsons per class
+                class_pearsons = self.pearsons[:,(yi==self.y_template)]
+                #get difference of correlation and threshold (samples below threshold will be negative, samples above will be positive)
+                diff = (class_pearsons - threshold)
+
+                #sum to check what to overall correlation trend is (part of class if > 0,  not part of class if < 0)
+                y_pred[:,idx] = diff.sum(axis=1)
+        
+            #define that sample is part of class, if the overall correlation exceeds threshold (i.e. more positive values in diff than negative ones)
+            if multi_hot_encoded:
+                y_pred = (y_pred>0).astype(int)
+
+
+        return y_pred
+
+    def fit_predict(self,
+        X:np.ndarray, y:np.ndarray=None,
+        fit_kwargs:dict=None, predict_kwargs:dict=None
+        ):
+        """
+            - method to fit the classifier and make the prediction at the same time
+
+            Parameters
+            ----------
+                - `X`
                     - np.ndarray
-                    - 2D array
-                    - contains tuples as individual entries
-                        - indices of the cost-matrix C
-                        - the tuples are the optimal warping path
-                - `pearsons`
-                    - list
-                    - contains floats
-                    - can take values in the range [-1, 1]
-                    - the pearson correlation coefficients for paths
-                    - i.e. the similarity between the two respective curves
+                    - not used in the method
+                    - can contain samples of different lengths
+                    - training set to be compared to `self.X_template`
+                - `y`
+                    - np.ndarray, optional
+                    - labels corresponding to `X`
+                    - not used in the method
+                    - the default is `None`
+                - `fit_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.fit()`
+                    - the default is `None`
+                        - will be set to `{}`
+                - `predict_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.predict()`
+                    - the default is `None`
+                        - will be set to `{}`
             
+            Raises
+            ------
+
+            Returns
+            -------
+             - `y_pred`
+                    - np.ndarray
+                    - array containing the labes for `X`
+                    - has shape `(X.shape[0],self.X_template.shape[0])`
+                    - returns matrix of 0 and 1 if `multi_hot_encoded == True`
+                        - 1 if the overall correlation exceeds `threshold`
+                        - 0 otherwise
+                    - the second axis of `y_pred` will be sorted in ascending order w.r.t. the classlabels if `multi_hot_encoded == True`
+                    - otherwise returns the overall correlation as entries
+
             Comments
             --------
 
         """
 
-        #initialize return-lists
-        y_pred = []
-        Cs = []
-        pearsons = []
-        paths = []
+        if fit_kwargs is None:      fit_kwargs = {}
+        if predict_kwargs is None:  predict_kwargs = {}
 
-        #run fit for every sample in X
-        for x in X:
-            y_pred_sample = []  #list to save prediction for each template-time-series
+        self.fit(X, y, **fit_kwargs)
+        y_pred = self.predict(X, y, **predict_kwargs)
 
-            #compare sample to every template-time-series
-            for xt, yt in zip(self.X_template, self.y_template):
+        return y_pred
 
-                #fitting procedure
-                C = self.accumulate_cost_matrix(x, xt, testplot=False)
-                path = self.optimal_warping_path(C, testplot=False)
-                pearson = np.corrcoef(np.array(path).T)[0,1]
-                
-                #append results
-                Cs.append(C)
-                pearsons.append(pearson)
-                paths.append(path)
-
-                #plotting
-                if testplot:
-                    self.summary_plot(C, x, xt, path=path, pearson=pearson, save=False)
-
-                #append if curves are more similar than threshold
-                if pearson > self.threshold:
-                    y_pred_sample.append(yt)
-                    
-                    #TODO: correct for wrong assignment of good correlation
-                    path_cost = C[tuple(np.array(path).T)]
-                    print(path_cost.min(), path_cost.max(), (path_cost.max()-path_cost.min())/path_cost.max())
-                else:
-                    #append sample "not" similar to this curve
-                    y_pred_sample.append("~"*expand_prediction+str(yt)) #only append "not" if expand_prediction is True
-            
-
-            #append prediction for every timeseries in X_template
-            if expand_prediction:
-                y_pred.append(y_pred_sample)
-            
-            #execute majority voting
-            else:
-                uniques, counts = np.unique(y_pred_sample, return_counts=True)
-                y_pred.append(list(uniques[(counts==counts.max())]))
-
-        #update attributes
-        self.y_pred = y_pred
-        self.pearson = pearsons
-
-        return y_pred, Cs, paths, pearsons
-
-    def summary_plot(self,
-        C, x1, x2,
-        path=None, pearson=None,
-        save=False
+    def plot_result(self,
+        X:list,
+        X_idx:int=0, Xtemp_idx:int=0,
         ):
         """
-            - method to display a brief summary plot of the DTW-result
+            - method to display a brief summary plot of the DTW-result for an example combination of template- and train- curve
 
             Parameters
             ----------
-                - save
-                    - str, optional
-                    - location of where to save the plot to
-                    - the default is False
-
+                - `X`
+                    - np.ndarray
+                    - can contain samples of different lengths
+                    - training set to be compared to `self.X_template`
+                    - should be same array as used to fit the classifier
+                - `X_idx`
+                    - int, optional
+                    - index of the sample in `X` to plot
+                    - the default is 0
+                - `Xtemp_idx`
+                    - int, optional
+                    - index of the sample in `self.X_template` to plot
+                    - the default is 0
+            
             Raises
             ------
 
@@ -375,68 +514,61 @@ class DTW:
                 - axs
                     - list of matpotlib axes object
 
-            Dependencies
-            ------------
-                - numpy
-                - matplotlib
-            
             Comments
             --------
 
         """
 
-        if pearson is None:
-            tit = None
-        else:
-            tit = f"corr:  {pearson:.3f}"
+        X_plot = X[X_idx]
+        Xtemp_plot = self.X_template[Xtemp_idx]
+        C = self.Cs[X_idx, Xtemp_idx]
+        path = self.paths[X_idx, Xtemp_idx]
+        pearson = self.pearsons[X_idx, Xtemp_idx]
+
+        # if pearson is None: tit = None
+        # else: tit = f"corr:  {pearson:.3f}"
+
+        #adjust path to ignore first row and column
+        path = np.array(path) - np.array([1,1])
 
         cx = np.arange(0, C.shape[1]-1, 1)
         cy = np.arange(0, C.shape[0]-1, 1)
         cxx, cyy = np.meshgrid(cx,cy)
 
-        fontsize=16
         fig = plt.figure(figsize=(9,9))
         axleg = fig.add_subplot(4,4,10, frameon=False)
         ax1 = fig.add_subplot(222)
         ax2 = fig.add_subplot(242)
         ax3 = fig.add_subplot(426)
 
-        ax1.set_title("Cost-Matrix", fontsize=fontsize+4)
+        ax1.set_title("Cost-Matrix")
         
         #plot
         contour = ax1.contourf(cxx, cyy, C[1:,1:], zorder=1)    #exclude np.inf row and column
-        c1, = ax2.plot(x1, cy, color="tab:blue", label="x1")
-        c2, = ax3.plot(cx, x2, color="tab:orange", label="x2")
-        if path is not None:
-            path = np.array(path) - np.array([1,1])             #adjust path to ignore first row and column
-            owp, = ax1.plot(path[:,1], path[:,0], color="r", zorder=2, label="Optimal\nWarping Path")
-            ax1.plot(path[:,1], path[:,0], color="w", linewidth=5, zorder=1)
-            handles = [c1, c2, owp]
-        else:
-            handles = [c1, c2]
+        c1,     = ax2.plot(X_plot, cy,         color="tab:blue",   label=f'X[{X_idx}]')
+        c2,     = ax3.plot(cx,     Xtemp_plot, color="tab:orange", label=f'X_template[{Xtemp_idx}]')
+        owp,    = ax1.plot(path[:,1], path[:,0], color="r", zorder=2, label="Optimal\nWarping Path")
+        ax1.plot(path[:,1], path[:,0], color="w", linewidth=5, zorder=1)
+        handles = [c1, c2, owp]
 
         #add colorbar
         fig.subplots_adjust(right=0.8)
         cbar_ax = fig.add_axes([0.83, 0.53, 0.05, 0.35])
         cbar = fig.colorbar(contour, cax=cbar_ax)
-        cbar.set_label("Cost", fontsize=fontsize)
-        cbar.ax.tick_params("both", labelsize=fontsize-4)
+        cbar.set_label("Cost")
 
         #hide ticks of cost-matrix
         ax1.set_xticks([])
         ax1.set_yticks([])
 
         #rotate labels, adjust ticklabelsizes
-        ax1.tick_params("both", labelsize=fontsize)
-        ax2.tick_params("both", rotation=-90, labelsize=fontsize)
-        ax3.tick_params("both", rotation=0, labelsize=fontsize)
+        ax2.tick_params("both", rotation=-90)
+        ax3.tick_params("both", rotation=0)
         
         #invert axes accordingly
         ax1.invert_yaxis()
         ax2.invert_yaxis()
 
-        # ax1.set_aspect(1/ax1.get_data_ratio())    #ensure square subplot
-        
         #Position ticks
         ax3.yaxis.tick_right()
         ax2.xaxis.tick_top()
@@ -446,18 +578,12 @@ class DTW:
         ax3.margins(x=0, tight=True)
 
         #add legend
-        axleg.tick_params(labelcolor="none", which="both", labelsize=fontsize, top=False, bottom=False, left=False, right=False) #hide ticks and ticklabels
-        leg = axleg.legend(handles=handles, fontsize=fontsize-4, title=tit, title_fontsize=fontsize-4, loc="best")
+        axleg.tick_params(labelcolor="none", which="both", top=False, bottom=False, left=False, right=False) #hide ticks and ticklabels
+        leg = axleg.legend(handles=handles, title=r'$|r_P| =$%-4g'%pearson, loc="best")
         leg._legend_box.align = "left"
 
         #reduce white space between plots
         plt.subplots_adjust(wspace=0, hspace=0)
-
-        # plt.tight_layout()
-        #save
-        if type(save) == str:
-            plt.savefig(save, dpi=180, bbox_inches="tight")
-        plt.show()
 
         axs = fig.axes
 
