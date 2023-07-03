@@ -10,6 +10,26 @@ from typing import Union, Tuple, Any, Callable
 
 #%%classes
 class BUBBLES:
+    """
+        - 
+
+        Attributes
+        ----------
+
+        Methods
+        -------
+
+        Dependencies
+        ------------
+            - joblib
+            - matplotlib
+            - numpy
+            - typing
+        
+        Comments
+        --------
+
+    """
 
     def __init__(self,
         func:Union[str,Callable],
@@ -36,12 +56,40 @@ class BUBBLES:
     def __repr__(self) -> str:
         return (
             f'BUBBLES(\n'
+            f'    func={repr(self.func)},\n'
+            f'    r0={repr(self.r0)}, min_pts={repr(self.min_pts)},\n'
+            f'    res={repr(self.res)},\n'
+            f'    n_jobs={repr(self.n_jobs)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
     
     def get_most_common(self,
         x:np.ndarray
         ) -> Any:
+        """
+            - method to obtain the most common element in `x`
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - input array to get the most common element from
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `most_common`
+                    - Any
+                    - entry of `x` that is most common
+
+            Comments
+            --------
+
+        """
+
         uniques, counts = np.unique(x, return_counts=True)
         most_common = uniques[np.argmax(counts)]
         
@@ -53,10 +101,87 @@ class BUBBLES:
         r0:float=None, min_pts:int=None,
         fit:bool=True,
         **kwargs,
-        ) -> None:
+        ) -> Tuple[np.ndarray,Any]:
+        """
+            - private method to determine if any point in `X` is within a radius `r0` of the entries in `X_grid`
+            - used to fit the classifier
+            - used to make predictions
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - training/testing data to fit/predict
+                - `y`
+                    - np.ndarray, optional
+                    - labels corresponding to `X`
+                    - has to be passed during fitting
+                    - will be ignored during inference
+                    - the default is `None`
+                - `X_grid`
+                    - np.ndarray, optional
+                    - array of shape `(X.shape[1],*[res]*X.shape[1])`
+                        - i.e. `res` datapoints in as many dimensions as `X` has features
+                    - has to be passed during fitting
+                    - will be ignored during inference
+                    - the default is `None`
+                - `r0`
+                    - float, optional
+                    - radius around any point in `X_grid` (during fitting) or `self.X_grid` (during inference) in which any point in `X` has to lie to be considered close to that grid-point
+                    - during fitting
+                        - the label for any point in `X_grid` will be assigned by the dominant label in `X` that is within the radius `r0`
+                        - if the point in `X_grid` contains no points out of `X`, it will be considered as noise and set to `np.nan`
+                    - during inference
+                        - any point in `X` will be tested against the not-noise-points in `self.X_grid`
+                            - if it falls within the radius of any point in `self.X_grid`, it will get the corresponding label assigned to it
+                            - otherwise it will be assigned the label `-1`, which means that the datapoint is noise
+                    - overwrites `self.r0`
+                    - the default is `None`
+                        - will fall back to `self.r0`                
+                - `min_pts`
+                    - int, optional
+                    - minimum number of points a sphere around any point in `X_grid` has to contain to not be considered noise
+                    - i.e. if the point contains less than `min_pts` points in its `r0` neighborhood, it will be considered as noise and dropped from  the grid
+                    - overwrites `self.min_pts`
+                    - the default is `None`
+                        - will fall back to `self.min_pts`                
+                - `fit`
+                    - bool, optional
+                    - flag of the classifier state
+                    - if set to `True`
+                        - runs in fitting mode
+                    - if set to `False`
+                        - runs in inference mode
+                -`**kwargs`
+                    - dict, optional
+                    - kwargs passed to the function
+
+            Raises
+            ------
+                - `ValueError`
+                    - if `y` is missing during fitting
+
+            Returns
+            -------
+                - fitting
+                    - Xy_grid
+                        - np.ndarray
+                        - combined array of 
+                            - grid point coordinates (`Xy[:-1]`) 
+                            - grid point label ('Xy[-1]`)
+                - inference
+                    - y_pred
+                        - Any
+                        - predicted label for the input datapoint `X`
+
+            Comments
+            --------
+        """
 
         #while fitting
         if fit:
+            if y is None: raise(ValueError('`y` cannot be `None` during fitting (i.e. `fit==True`), since this is a supervised classifier.'))
+            
             diff = np.sum(np.sqrt((X_grid-X)**2), axis=1)
             y_bool = (diff < r0)
 
@@ -85,8 +210,85 @@ class BUBBLES:
         fit:bool=True,
         **kwargs,
         ) -> None:
-        
+        """
+            - private method to determine if any point in `X` is within a cuboid of sidelength `r0` of the entries in `X_grid`
+            - used to fit the classifier
+            - used to make predictions
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - training/testing data to fit/predict
+                - `y`
+                    - np.ndarray, optional
+                    - labels corresponding to `X`
+                    - has to be passed during fitting
+                    - will be ignored during inference
+                    - the default is `None`
+                - `X_grid`
+                    - np.ndarray, optional
+                    - array of shape `(X.shape[1],*[res]*X.shape[1])`
+                        - i.e. `res` datapoints in as many dimensions as `X` has features
+                    - has to be passed during fitting
+                    - will be ignored during inference
+                    - the default is `None`
+                - `r0`
+                    - float, optional
+                    - side length of the cuboid around any point in `X_grid` (during fitting) or `self.X_grid` (during inference) in which any point in `X` has to lie to be considered close to that grid-point
+                    - during fitting
+                        - the label for any point in `X_grid` will be assigned by the dominant label in `X` that is within the corresponding cuboid
+                        - if the point in `X_grid` contains no points out of `X`, it will be considered as noise and set to `np.nan`
+                    - during inference
+                        - any point in `X` will be tested against the not-noise-points in `self.X_grid`
+                            - if it falls within the cuboid of any point in `self.X_grid`, it will get the corresponding label assigned to it
+                            - otherwise it will be assigned the label `-1`, which means that the datapoint is noise
+                    - overwrites `self.r0`
+                    - the default is `None`
+                        - will fall back to `self.r0`
+                - `min_pts`
+                    - int, optional
+                    - minimum number of points a cuboid around any point in `X_grid` has to contain to not be considered noise
+                    - i.e. if the point contains less than `min_pts` points in its `r0` neighborhood, it will be considered as noise and dropped from  the grid
+                    - overwrites `self.min_pts`
+                    - the default is `None`
+                        - will fall back to `self.min_pts`
+                - `fit`
+                    - bool, optional
+                    - flag of the classifier state
+                    - if set to `True`
+                        - runs in fitting mode
+                    - if set to `False`
+                        - runs in inference mode
+                -`**kwargs`
+                    - dict, optional
+                    - kwargs passed to the function
+
+            Raises
+            ------
+                - `ValueError`
+                    - if `y` is missing during fitting
+
+            Returns
+            -------
+                - fitting
+                    - Xy_grid
+                        - np.ndarray
+                        - combined array of 
+                            - grid point coordinates (`Xy[:-1]`) 
+                            - grid point label ('Xy[-1]`)
+                - inference
+                    - y_pred
+                        - Any
+                        - predicted label for the input datapoint `X`
+
+            Comments
+            --------
+        """
+
+        #while fitting
         if fit:
+            if y is None: raise(ValueError('`y` cannot be `None` during fitting (i.e. `fit==True`), since this is a supervised classifier.'))
             y_bool = np.all((
                 (X_grid-r0/2 < X)&
                 (X < X_grid+r0/2)
@@ -99,17 +301,19 @@ class BUBBLES:
 
             return Xy_grid
         
+        #while predicting
         else:
             y_bool = np.all((
                 (self.X_grid-self.r0/2 < X)&
                 (X < self.X_grid+self.r0/2)
             ), axis=1)
 
+            #assign class
             if y_bool.sum() > 0:
                 y_pred = self.get_most_common(self.y_grid[y_bool])
+            #classify as noise
             else:
                 y_pred = -1
-
 
             return y_pred
 
