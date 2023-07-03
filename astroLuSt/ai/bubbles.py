@@ -4,7 +4,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
-from typing import Tuple
+from typing import Union, Tuple
 
 #%%classes
 class BUBBLES:
@@ -30,41 +30,61 @@ class BUBBLES:
 
         return xy
 
+    def __rect_2d(self,
+        y_grid:np.ndarray, X_grid:np.ndarray,
+        X:np.ndarray, y:np.ndarray,
+        min_pts:int,
+        ) -> np.ndarray:
+
+        for i in range(len(X_grid)-1):
+            for j in range(len(X_grid[i])-1):
+                y_bool = (
+                    (X[:,0] > X_grid[i  ,j  ][0]) &
+                    (X[:,1] > X_grid[i  ,  j][1]) &
+                    (X[:,0] < X_grid[i+1,j+1][0]) &
+                    (X[:,1] < X_grid[i+1,j+1][1]) 
+                )
+
+                if y_bool.sum() > min_pts:
+                    uniques, counts = np.unique(y[y_bool], return_counts=True)
+                    y_grid[i, j] = uniques[np.argmax(counts)]
+
+
+        return y_grid
+
     def fit(self,
         X:np.ndarray, y:np.ndarray,
+        res:Union[int,tuple]=10, min_pts:int=0,
         r0:float=None,
         ) -> None:
         
         print(X.shape)
-        uidxs = np.array([np.where(y==yu)[0] for yu in np.unique(y)])
+        X_base = np.linspace(np.nanmin(X, axis=0), np.nanmax(X, axis=0), res)
+        print(f'X_base.shape: {X_base.shape}')
 
-        x0 = np.zeros((uidxs.shape[0], X.shape[1]))
+        X_grid = np.array(np.meshgrid(*X_base.T)).T
+        print(f'X_grid.shape: {X_grid.shape}')
 
-        for idx, ui in enumerate(uidxs):
-            x0[idx] = X[np.random.choice(ui),:]
+        y_grid = np.zeros(X_grid.shape[:-1])-1
 
-        sphs = np.zeros((X.shape[0],100,X.shape[1]))
-        print(sphs.shape)
-        for idx, x in enumerate(X):
-            # print(x.shape)
-            sphs[idx] = self.nd_sphere(x, r0)
-
-
-        sphs = np.sum(sphs, axis=(1))/sphs.shape[1]
-        print(sphs.shape)
-    
         
-        print(X.shape, x0.shape)
+        y_grid = self.__rect_2d(
+            y_grid=y_grid, X_grid=X_grid,
+            X=X, y=y,
+            min_pts=min_pts,
+        )
+
+        
+
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1.scatter(*X.T, c=y, alpha=0.5, s=10)
-        ax1.scatter(*x0.T, marker='v')
-        ax1.scatter(sphs[:,0], sphs[:,1], s=5, marker='s')
-        # for sph in sphs:
-        #     ax1.plot(sph[:,0], sph[:,1], color='tab:blue')
-        
+        cont1 = ax1.contourf(*X_grid.T, y_grid.T)
+        # cont1 = ax1.contour(*X_grid.T, y_grid.T)
+        ax1.scatter(*X.T, c=y, alpha=0.5, s=10, ec='w', vmin=-1)
+        fig.colorbar(cont1)
+        plt.show()
 
-        return
+        return X_grid, y_grid
     
     def predict(self,
         X:np.ndarray, y:np.ndarray,
