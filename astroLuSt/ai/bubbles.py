@@ -4,7 +4,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
-from typing import Union, Tuple
+from typing import Union, Tuple, Any
 
 #%%classes
 class BUBBLES:
@@ -19,6 +19,14 @@ class BUBBLES:
             f')'
         )
     
+    def get_most_common(self,
+        x:np.ndarray
+        ) -> Any:
+        uniques, counts = np.unique(x, return_counts=True)
+        most_common = uniques[np.argmax(counts)]
+        return most_common
+
+
     def nd_sphere(self,
         x0:np.ndarray, r:float,
         ) -> np.ndarray:
@@ -36,21 +44,38 @@ class BUBBLES:
         min_pts:int,
         ) -> np.ndarray:
 
-        for i in range(len(X_grid)-1):
-            for j in range(len(X_grid[i])-1):
-                y_bool = (
-                    (X[:,0] > X_grid[i  ,j  ][0]) &
-                    (X[:,1] > X_grid[i  ,  j][1]) &
-                    (X[:,0] < X_grid[i+1,j+1][0]) &
-                    (X[:,1] < X_grid[i+1,j+1][1]) 
-                )
+        for idx, Xi in enumerate(X_grid):
+            y_bool
 
-                if y_bool.sum() > min_pts:
-                    uniques, counts = np.unique(y[y_bool], return_counts=True)
-                    y_grid[i, j] = uniques[np.argmax(counts)]
+        # for i in range(len(X_grid)-1):
+        #     for j in range(len(X_grid[i])-1):
+        #         y_bool = (
+        #             (X[:,0] > X_grid[i  ,j  ][0]) &
+        #             (X[:,1] > X_grid[i  ,  j][1]) &
+        #             (X[:,0] < X_grid[i+1,j+1][0]) &
+        #             (X[:,1] < X_grid[i+1,j+1][1]) 
+        #         )
+
+        #         if y_bool.sum() > min_pts:
+        #             y[i, j] = self.get_most_common(y[y_bool])
 
 
         return y_grid
+
+    def __sphere_nd(self,
+        X:np.ndarray, y:np.ndarray,
+        min_pts:int,
+        r0:float,
+        ) -> None:
+        for idx, Xi in enumerate(self.X_grid):
+            diff = np.sum(np.sqrt((Xi-X)**2), axis=1)
+
+            y_bool = (diff < r0)
+
+            if y_bool.sum() > min_pts:
+                self.y_grid[idx] = self.get_most_common(y[y_bool])
+        
+        return
 
     def fit(self,
         X:np.ndarray, y:np.ndarray,
@@ -62,29 +87,27 @@ class BUBBLES:
         X_base = np.linspace(np.nanmin(X, axis=0), np.nanmax(X, axis=0), res)
         print(f'X_base.shape: {X_base.shape}')
 
-        X_grid = np.array(np.meshgrid(*X_base.T)).T
-        print(f'X_grid.shape: {X_grid.shape}')
-
-        y_grid = np.zeros(X_grid.shape[:-1])-1
-
+        self.X_grid = np.array(np.meshgrid(*X_base.T))
         
-        y_grid = self.__rect_2d(
-            y_grid=y_grid, X_grid=X_grid,
+        #2d array of points for X_grid
+        self.X_grid = np.vstack([np.ravel(Xg) for Xg in self.X_grid]).T
+        print(f'X_grid.shape: {self.X_grid.shape}')
+
+        self.y_grid = np.zeros(self.X_grid.shape[:-1])-1
+        print(f'y_grid.shape: {self.y_grid.shape}')
+
+
+        # self.y_grid = self.__rect_nd(
+        #     X=X, y=y,
+        #     min_pts=min_pts,
+        # )
+        self.__sphere_nd(
             X=X, y=y,
             min_pts=min_pts,
+            r0=r0,
         )
 
-        
-
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        cont1 = ax1.contourf(*X_grid.T, y_grid.T)
-        # cont1 = ax1.contour(*X_grid.T, y_grid.T)
-        ax1.scatter(*X.T, c=y, alpha=0.5, s=10, ec='w', vmin=-1)
-        fig.colorbar(cont1)
-        plt.show()
-
-        return X_grid, y_grid
+        return
     
     def predict(self,
         X:np.ndarray, y:np.ndarray,
@@ -99,10 +122,19 @@ class BUBBLES:
         return
     
     def plot_result(self,
+        X:np.ndarray=None, y:np.ndarray=None,
+        dims:Union[list,slice]=None,
         ) -> Tuple[Figure,plt.Axes]:
 
         fig = plt.figure()
-        ax1 = fig.add_subplot(111)
+        ax1 = fig.add_subplot(111, projection='3d')
+
+        sctr1 = ax1.scatter(*self.X_grid[:,dims].T, c=self.y_grid, alpha=0.1, s=10)
+        if X is not None:
+            sctr2 = ax1.scatter(*X[:,:3].T, c=y, alpha=0.5, s=50, ec='w', vmin=-1)
+
+
+        fig.colorbar(sctr1)
 
         axs = fig.axes
 
