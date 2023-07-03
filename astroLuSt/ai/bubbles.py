@@ -29,11 +29,11 @@ class BUBBLES:
 
     def __rect_nd(self,
         X:np.ndarray, y:np.ndarray,
-        res, min_pts:int,
+        r0:float, min_pts:int,
         ) -> None:
         
-        X_min = self.X_grid-res/2
-        X_max = self.X_grid+res/2
+        X_min = self.X_grid-r0/2
+        X_max = self.X_grid+r0/2
         for idx, (x_min, x_max) in enumerate(zip(X_min, X_max)):
             
             y_bool = np.all((
@@ -81,15 +81,16 @@ class BUBBLES:
         print(f'y_grid.shape: {self.y_grid.shape}')
 
 
-        # self.__rect_nd(
-        #     X=X, y=y,
-        #     res=res, min_pts=min_pts,
-        # )
-        self.__sphere_nd(
+        self.__rect_nd(
             X=X, y=y,
             min_pts=min_pts,
             r0=r0,
         )
+        # self.__sphere_nd(
+        #     X=X, y=y,
+        #     min_pts=min_pts,
+        #     r0=r0,
+        # )
 
         return
     
@@ -107,14 +108,15 @@ class BUBBLES:
     
     def plot_result(self,
         X:np.ndarray=None, y:np.ndarray=None,
-        dims:Union[list,slice]=None,
+        dims:list=None,
         remove_noise:bool=False,
         ) -> Tuple[Figure,plt.Axes]:
 
+        if dims is None: dims = [0,1]
 
         cmap = 'Set2'
-        if self.X_grid.shape[1] < 3: projection = None
-        else:                        projection = '3d'
+        if self.X_grid.shape[1] < 3 or len(dims) < 3: projection = None
+        else:                                          projection = '3d'
 
         fig = plt.figure()
         ax1 = fig.add_subplot(111, projection=projection)
@@ -123,7 +125,6 @@ class BUBBLES:
         # if self.X_grid.shape[1] == 2:
         #     # mappable = ax1.contourf(*self.X_grid.T, self.y_grid)
         #     mappable = ax1.tricontourf(*self.X_grid.T, self.y_grid)
-        
         if remove_noise:
             mappable = ax1.scatter(*self.X_grid[(self.y_grid!=-1)].T[dims], c=self.y_grid[(self.y_grid!=-1)], alpha=0.5, s=10, vmin=-1, cmap=cmap)
         else:
