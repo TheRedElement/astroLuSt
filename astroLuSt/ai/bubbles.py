@@ -13,6 +13,8 @@ class BUBBLES:
 
     def __init__(self,
         func:Union[str,Callable],
+        r0:float, min_pts:int=0,
+        res:int=10, 
         n_jobs:int=-1,
         verbose:int=0,
         ) -> None:
@@ -21,6 +23,10 @@ class BUBBLES:
         elif func == 'rect':    self.func   = self.__rect_nd
         elif func is None:      self.func   = self.__sphere_nd
         else:                   self.func   = func
+        self.r0         = r0
+        self.min_pts    = min_pts
+        self.res        = res
+        
         if n_jobs is None:      self.n_jobs = 1
         else:                   self.n_jobs = n_jobs
 
@@ -110,9 +116,9 @@ class BUBBLES:
 
     def fit(self,
         X:np.ndarray, y:np.ndarray,
-        res:Union[int,tuple]=10,
         func:Union[str,Callable]=None,
-        min_pts:int=0, r0:float=None,
+        r0:float=None, min_pts:int=0,
+        res:Union[int,tuple]=10,
         n_jobs:int=None,
         verbose:int=None,
         ) -> None:
@@ -121,6 +127,9 @@ class BUBBLES:
         if func == 'sphere':    func    = self.__sphere_nd
         elif func == 'rect':    func    = self.__rect_nd
         elif func is None:      func    = self.func
+        if r0 is None:          r0      = self.r0
+        if min_pts is  None:    min_pts = self.min_pts
+        if res is None:         res     = self.res
 
         if n_jobs is None:      n_jobs  = self.n_jobs 
 
@@ -184,9 +193,16 @@ class BUBBLES:
     
     def fit_predict(self,
         X:np.ndarray, y:np.ndarray,
+        fit_kwargs:dict=None, predict_kwargs:dict=None,
         ) -> np.ndarray:
+
+        if fit_kwargs is None:      fit_kwargs = {}
+        if predict_kwargs is None:  predict_kwargs = {}
         
-        return
+        self.fit(X, y, **fit_kwargs)
+        y_pred = self.predict(X, **predict_kwargs)
+
+        return y_pred
     
     def plot_result(self,
         X:np.ndarray=None, y:np.ndarray=None,
