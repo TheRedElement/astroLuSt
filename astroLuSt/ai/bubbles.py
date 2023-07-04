@@ -1,4 +1,6 @@
 
+#TODO: NAME (Supervised, Finte Element, Grid, Uniform, Decision Boundary, Noise, Grid, )
+#       - INFECT, BUBBLES
 
 #%%imports
 from joblib import Parallel, delayed
