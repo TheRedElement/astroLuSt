@@ -1541,7 +1541,7 @@ class LatentSpaceExplorer:
                     - the deafault is `None`
                 - `corner_kwargs`
                     - dict, optional
-                    - kwargs to pass to `astroLuSt.visualization.plots.corner_plot()`
+                    - kwargs to pass to `astroLuSt.visualization.plots.CornerPlot.plot()`
                     - the default is `None`
                         - will initialize with `{}`
 
