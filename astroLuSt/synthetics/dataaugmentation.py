@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from typing import Union, List, Tuple, Callable
+import warnings
 
 from astroLuSt.preprocessing.scaling import AxisScaler
 
@@ -359,6 +360,8 @@ class AugmentAxis:
             Comments
             --------
         """
+        
+        warnings.warn('`class_weights` is not fully functioing yet! If you want to be sure to get the correct output it is suggested to use `sample_weights` instead.')
         sample_weights = y.copy().astype(np.float64)
         uniques, counts = np.unique(sample_weights, return_counts=True)
         for u, c, cw in zip(uniques, counts, class_weights):
