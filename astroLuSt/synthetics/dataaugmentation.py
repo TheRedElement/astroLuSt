@@ -331,6 +331,7 @@ class AugmentAxis:
 
     def class_weights2sample_weights(self,
         class_weights:np.ndarray, y:np.ndarray,
+        label_idx:int=0,
         ) -> np.ndarray:
         """
             - method to convert class weights to sample weights given an array of labels
@@ -340,6 +341,11 @@ class AugmentAxis:
                 - `class_weights`
                     - np.ndarray
                     - weights per class
+                        - classes are sorted in ascending order
+                        - `class_weights` has to be passed accordingly
+                            - i.e. weight for class with lowest value at index 0 in `class_weights`
+                            - i.e. weight for class with second-lowest value at index 1 in `class_weights`
+                            - ect.
                     - has to have same shape as `np.unique(y)`
                 - `y`
                     - np.ndarray
@@ -361,8 +367,7 @@ class AugmentAxis:
             --------
         """
         
-        warnings.warn('`class_weights` is not fully functioing yet! If you want to be sure to get the correct output it is suggested to use `sample_weights` instead.')
-        sample_weights = y.copy().astype(np.float64)
+        sample_weights = y.copy().astype(np.float64)[:,label_idx]
         uniques, counts = np.unique(sample_weights, return_counts=True)
         for u, c, cw in zip(uniques, counts, class_weights):
             sample_weights[(sample_weights==u)] = cw/c
@@ -1093,7 +1098,7 @@ class AugmentAxis:
     
     def flow(self,
         X:np.ndarray, y:np.ndarray=None, X_misc:List[np.ndarray]=None,
-        sample_weights:list=None, class_weights:list=None,
+        sample_weights:list=None, class_weights:list=None, label_idx:int=0,
         nsamples:int=None,
         verbose:int=None,
         apply_transform_kwargs:dict=None,
@@ -1109,8 +1114,10 @@ class AugmentAxis:
                 - `y`
                     - np.ndarray
                     - labels corresponding to `X`
+                    - if `class_weights` are passed
+                        - has to contain integer labels as column at `label_idx`
                     - the default is `None`
-                    - will be ignored and returned as array of `np.nan`
+                        - will be ignored and returned as array of `np.nan`
                 - `X_misc`
                     - list, optional
                     - list of np.ndarrays of same first dimension as `X`
@@ -1124,6 +1131,20 @@ class AugmentAxis:
                     - probabilities for each sample to be drawn for augmentation
                     - the default is `None`
                         - will assume uniform distribution over the input `X`
+                - `class_weights`
+                    - np.ndarray, optional
+                    - weights per class in `y[:,label_idx]`
+                        - classes are sorted in ascending order
+                        - `class_weights` has to be passed accordingly
+                            - i.e. weight for class with lowest value at index 0 in `class_weights`
+                            - i.e. weight for class with second-lowest value at index 1 in `class_weights`
+                            - ect.
+                    - the default is `None`
+                        - will use `sample_weights` instead
+                - `label_idx`
+                    - int, optional
+                    - index to the column in `y` that contains the class-labels
+                    - the default is 0
                 - `nsamples`
                     - int, optional
                     - number of new samples to generate
@@ -1179,7 +1200,7 @@ class AugmentAxis:
             sample_weights_use = np.ones(X.shape[0])/len(X)
         ##convert class_weights to sample_weights if no sample_weights provided
         elif class_weights is not None and sample_weights is None and y is not None:
-            sample_weights_use = self.class_weights2sample_weights(class_weights, y[:,0])
+            sample_weights_use = self.class_weights2sample_weights(class_weights, y[:,label_idx])
         ##use sample_weights
         elif class_weights is None and sample_weights is not None:
             sample_weights_use = sample_weights
