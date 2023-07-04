@@ -12,13 +12,103 @@ from typing import Union, Tuple, Any, Callable
 #%%classes
 class BUBBLES:
     """
-        - 
+        - TODO: NAME
+        - supervised classifier
+        - estimates decision-boundaries based on grid with finite number of datapoints
+        - also is able to find outliers
 
         Attributes
         ----------
+            - `func`
+                - str, callable
+                - function to use for determining if any point in `X_grid` is considered close to any point in `X`
+                - allowed strings
+                    - 'sphere'
+                        - will use `self.__sphere_nd`
+                        - uses spheres around points in `X_grid` to determine closeness
+                    - 'rect' 
+                        - will use `self.__rect_nd`
+                        - uses a cuboids around points in `X_grid` to determine closeness
+                - if callable
+                    - has to take the following arguments
+                        - `X`
+                            - np.ndarray
+                            - training set during `self.fit`
+                            - a single test point during `self.predict`
+                        - `y`
+                            - np.ndarray, optional
+                            - labels corresponding to `X`
+                            - required during `fit`
+                            - optional during `predict`
+                        - `X_grid`
+                            - np.ndarray, optional
+                            - has to have as many features as `X`
+                            - points of the grid to use for decision boundary estimation
+                            - will become `self.X_grid` once the calculation is done
+                        - `r0`
+                            - float, optional
+                            - some distance measure
+                            - required during `fit`
+                            - optional during `predict`
+                        - 'min_pts`
+                            - int, optional
+                            - measure of minimum number of points in `X` any point in `X_grid` has to be close to in order to be classified  NOT as an outlier
+                            - required during `fit`
+                            - optional during `predict`
+                        - `fit`
+                            - bool, optional
+                            - flag of classifier state
+                            - `True` for fitting mode
+                            - `False` for inference mode
+                        - `**kwargs`
+                            - dict
+                            - additional kwargs to be passed to `func`
+                    - note that optional arguments must be optional in the definition of `func` as well!
+                    - has to return the following
+                        - during fitting
+                            - `Xy_grid`
+                                - np.ndarray
+                                - 1d array of shape `(n_features+1)`
+                                - contains coordinates of the tested point in `self.X_grid` as fisrt elements
+                                - contains the estimated label for that point as last element
+                        - during inference
+                            - `y_pred`
+                                - float
+                                - predicted label for the point `X` based on `self.X_grid` and `self.y_grid`
+                - the default is `None`
+                    - will use `sphere`
+            - `r0`
+                - float
+                - radius around any point in `X_grid` (during fitting) or `self.X_grid` (during inference) in which any point in `X` has to lie to be considered close to that grid-point
+                - during fitting
+                    - the label for any point in `X_grid` will be assigned by the dominant label in `X` that is within the radius `r0`
+                    - if the point in `X_grid` contains no points out of `X`, it will be considered as noise and set to `np.nan`
+                - during inference
+                    - any point in `X` will be tested against the not-noise-points in `self.X_grid`
+                        - if it falls within the radius of any point in `self.X_grid`, it will get the corresponding label assigned to it
+                        - otherwise it will be assigned the label `-1`, which means that the datapoint is noise
+            - `min_pts`
+                - int, optional
+                - minimum number of points a sphere around any point in `X_grid` has to contain to not be considered noise
+                - i.e. if the point contains less than `min_pts` points in its `r0` neighborhood, it will be considered as noise and dropped from  the grid
+                - the default is 0
+            - `res`
+                - int, optional
+                - resolution of the `X_grid` in all dimensions
+                - will be passed to `np.linspace()`
+                - high values for `res` are especially bad in high dimensions
+                    - i.e. "Curse of dimensionality" (https://en.wikipedia.org/wiki/Curse_of_dimensionality)
+                - the default is 10
 
         Methods
         -------
+            - get_parameters()
+            - get_most_common()
+            - fit()
+            - predict()
+            - fit_predict()
+            - score()
+            - plot_result()
 
         Dependencies
         ------------
@@ -81,37 +171,6 @@ class BUBBLES:
         )
 
         return d
-
-    def get_most_common(self,
-        x:np.ndarray
-        ) -> Any:
-        """
-            - method to obtain the most common element in `x`
-
-            Parameters
-            ----------
-                - `x`
-                    - np.ndarray
-                    - input array to get the most common element from
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `most_common`
-                    - Any
-                    - entry of `x` that is most common
-
-            Comments
-            --------
-
-        """
-
-        uniques, counts = np.unique(x, return_counts=True)
-        most_common = uniques[np.argmax(counts)]
-        
-        return most_common
 
     def __sphere_nd(self,
         X:np.ndarray, y:np.ndarray=None,
@@ -369,6 +428,37 @@ class BUBBLES:
         
         return params
 
+    def get_most_common(self,
+        x:np.ndarray
+        ) -> Any:
+        """
+            - method to obtain the most common element in `x`
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - input array to get the most common element from
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `most_common`
+                    - Any
+                    - entry of `x` that is most common
+
+            Comments
+            --------
+
+        """
+
+        uniques, counts = np.unique(x, return_counts=True)
+        most_common = uniques[np.argmax(counts)]
+        
+        return most_common
+
     def fit(self,
         X:np.ndarray, y:np.ndarray,
         func:Union[str,Callable]=None,
@@ -428,6 +518,17 @@ class BUBBLES:
                                 - dict
                                 - additional kwargs to be passed to `func`
                         - note that optional arguments must be optional in the definition of `func` as well!
+                        - has to return the following
+                            - during fitting
+                                - `Xy_grid`
+                                    - np.ndarray
+                                    - 1d array of shape `(n_features+1)`
+                                    - contains coordinates of the tested point in `self.X_grid` as fisrt elements
+                                    - contains the estimated label for that point as last element
+                            - during inference
+                                - `y_pred`
+                                    - float
+                                    - predicted label for the point `X` based on `self.X_grid` and `self.y_grid`                    
                     - overwrites `self.func`
                     - the default is `None`
                         - will fall back to `self.func`
