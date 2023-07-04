@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import matplotlib.colors as mcolors
 import numpy as np
+from sklearn.metrics import accuracy_score
 from typing import Union, Tuple, Any, Callable
 
 #%%classes
@@ -24,6 +25,7 @@ class BUBBLES:
             - joblib
             - matplotlib
             - numpy
+            - sklearn
             - typing
         
         Comments
@@ -424,7 +426,7 @@ class BUBBLES:
             Comments
             --------
                 - make sur to choose `res` acoording to the dimensionality and size of your dataset
-                
+
         """
         
         #default values
@@ -481,9 +483,50 @@ class BUBBLES:
         n_jobs:int=None,
         verbose:int=None,
         ) -> np.ndarray:
+        """
+            - method to make predictions using the fitted classifier
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - dataset to predict labels of
+                    - has to have shape `(n_samples,n_features)`
+                - `y`
+                    - np.ndarray, optional
+                    - labels corresponding to `X`
+                    - not needed during inference
+                    - the default is `None`
+                - `n_jobs`
+                    - int, optional
+                    - number of threads to use for parallel computattion
+                    - will be passed to `joblib.Parallel()`
+                    - overwrites `self.n_jobs`
+                    - the default is `None`
+                        - falls back to `self.n_jobs`
+                - 'verbose`
+                    - int, optional
+                    - verbosity level
+                    - overwrites `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`                    
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `y_pred`
+                    - np.ndarray
+                    - predicted labels corresponding to `X`
+
+            Comments
+            --------
+
+        """
 
 
-        if n_jobs is None:      n_jobs  = self.n_jobs 
+        if n_jobs is None:  n_jobs  = self.n_jobs 
         if verbose is None: verbose = self.verbose
 
         y_pred = np.array(Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
@@ -499,6 +542,40 @@ class BUBBLES:
         X:np.ndarray, y:np.ndarray,
         fit_kwargs:dict=None, predict_kwargs:dict=None,
         ) -> np.ndarray:
+        """
+            - method to fit the classifier and make a prediction on the passed dataset
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - training set of shape `(n_samples, n_features)`
+                - y
+                    - np.ndarray
+                    - labels corresponding to `X`
+                - `fit_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.fit()`
+                    - the default is `None`
+                        - will be set to `{}`
+                - `predict_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.predict()`
+                    - the default is `None`
+                        - will be set to `{}`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `y_pred`
+                    - np.ndarray
+                    - predicted labels corresponding to `X`
+
+            Comments
+            --------
+        """
 
         if fit_kwargs is None:      fit_kwargs = {}
         if predict_kwargs is None:  predict_kwargs = {}
@@ -507,13 +584,64 @@ class BUBBLES:
         y_pred = self.predict(X, **predict_kwargs)
 
         return y_pred
-    
+
+    def score(self,
+        X:np.ndarray, y:np.ndarray,
+        sample_weight:np.ndarray=None,
+        predict_kwargs:dict=None,
+        ) -> float:
+        """
+            - given input-data and true labels return the mean accuracy
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - test set of shape `(n_samples, n_features)`
+                - y
+                    - np.ndarray
+                    - labels corresponding to `X`
+                - `sample_weight`
+                    - np.ndarray
+                    - sample weights for samples in `X`
+                    - will be passed to `sklearn.metrics.accuracy_score`
+                    - the default is `None`
+                - `predict_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.predict()`
+                    - the default is `None`
+                        - will be set to `{}`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - score
+                    - float
+                    - mean accuracy accross all samples in `X`, give the (ground-truth) labels in `y`
+
+            Comments
+            --------
+
+        """
+        if predict_kwargs is None: predict_kwargs = {}
+
+        y_pred = self.predict(X, **predict_kwargs)
+
+        score = accuracy_score(y, y_pred, sample_weight=sample_weight)
+
+        return score
+
     def plot_result(self,
         X:np.ndarray=None, y:np.ndarray=None,
         dims:list=None,
         cmap:Union[str,mcolors.Colormap]=None,
         grid_scatter_kwargs:dict=None, data_scatter_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
+        """
+            - 
+        """
 
         #default values
         if dims is None:            dims = [0,1]
