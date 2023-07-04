@@ -321,8 +321,8 @@ class BUBBLES:
     def fit(self,
         X:np.ndarray, y:np.ndarray,
         func:Union[str,Callable]=None,
-        r0:float=None, min_pts:int=0,
-        res:Union[int,tuple]=10,
+        r0:float=None, min_pts:int=None,
+        res:Union[int,tuple]=None,
         n_jobs:int=None,
         verbose:int=None,
         ) -> None:
