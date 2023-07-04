@@ -40,10 +40,14 @@ class BUBBLES:
         n_jobs:int=-1,
         verbose:int=0,
         ) -> None:
-        
-        if func == 'sphere':    self.func   = self.__sphere_nd
-        elif func == 'rect':    self.func   = self.__rect_nd
-        elif func is None:      self.func   = self.__sphere_nd
+
+        self.allowed_funcs = ['sphere', 'rect']        
+        if isinstance(func, str):
+            assert func in self.allowed_funcs, f'if `func` is a string it has to be in {self.allowed_funcs}!'
+        if func is None:        self.func   = 'sphere'
+        # if func == 'sphere':    self.func   = self.__sphere_nd
+        # elif func == 'rect':    self.func   = self.__rect_nd
+        # elif func is None:      self.func   = self.__sphere_nd
         else:                   self.func   = func
         self.r0         = r0
         self.min_pts    = min_pts
@@ -66,6 +70,11 @@ class BUBBLES:
             f')'
         )
     
+    # def __dict__(self) -> dict:
+        
+
+    #     return
+
     def get_most_common(self,
         x:np.ndarray
         ) -> Any:
@@ -319,6 +328,10 @@ class BUBBLES:
 
             return y_pred
 
+    def get_parameters(self,
+        ) -> dict:
+        dict(self)
+        return
 
     def fit(self,
         X:np.ndarray, y:np.ndarray,
@@ -355,20 +368,30 @@ class BUBBLES:
                                 - np.ndarray
                                 - training set during `self.fit`
                                 - a single test point during `self.predict`
+                            - `y`
+                                - np.ndarray, optional
+                                - labels corresponding to `X`
+                                - required during `fit`
+                                - optional during `predict`
                             - `r0`
-                                - float
+                                - float, optional
                                 - some distance measure
+                                - required during `fit`
+                                - optional during `predict`
                             - 'min_pts`
-                                - int
+                                - int, optional
                                 - measure of minimum number of points in `X` any point in `X_grid` has to be close to in order to be classified  NOT as an outlier
+                                - required during `fit`
+                                - optional during `predict`
                             - `fit`
-                                - bool
+                                - bool, optional
                                 - flag of classifier state
                                 - `True` for fitting mode
                                 - `False` for inference mode
                             - `**kwargs`
                                 - dict
                                 - additional kwargs to be passed to `func`
+                        - note that optional arguments must be optional in the definition of `func` as well!
                     - overwrites `self.func`
                     - the default is `None`
                         - will fall back to `self.func`
@@ -430,9 +453,7 @@ class BUBBLES:
         """
         
         #default values
-        if func == 'sphere':    func    = self.__sphere_nd
-        elif func == 'rect':    func    = self.__rect_nd
-        elif func is None:      func    = self.func
+        if func is None:        func    = self.func
         if r0 is None:          r0      = self.r0
         if min_pts is  None:    min_pts = self.min_pts
         if res is None:         res     = self.res
@@ -440,6 +461,16 @@ class BUBBLES:
         if n_jobs is None:      n_jobs  = self.n_jobs 
 
         if verbose is None: verbose = self.verbose
+
+        #adopt hyperparameters
+        self.r0 = r0
+        self.min_pts = min_pts
+        self.func = func
+
+        #use correct function
+        if func == 'sphere':    func = self.__sphere_nd
+        elif func == 'rect':    func = self.__rect_nd
+        else:                   func = func
 
         #generate grid from linspaces
         X_base = np.linspace(np.nanmin(X, axis=0), np.nanmax(X, axis=0), res)
@@ -453,7 +484,6 @@ class BUBBLES:
 
         #assign labels to grid-points
         Xy_grid = np.array(Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
-            # delayed(self.__sphere_nd)(
             delayed(func)(
                 X=X, y=y,
                 r0=r0, min_pts=min_pts,
@@ -465,16 +495,11 @@ class BUBBLES:
         #separate grid from label
         self.X_grid = Xy_grid[:,:-1]
         self.y_grid = Xy_grid[:,-1]
-
+        print(self.X_grid.shape)
 
         #remove points that got classified as noise (np.nan)
         self.X_grid = self.X_grid[np.isfinite(self.y_grid)]
         self.y_grid = self.y_grid[np.isfinite(self.y_grid)]
-
-        #adopt hyperparameters
-        self.r0 = r0
-        self.min_pts = min_pts
-        self.func = func
 
         return
     
@@ -525,12 +550,17 @@ class BUBBLES:
 
         """
 
-
+        #default values
         if n_jobs is None:  n_jobs  = self.n_jobs 
         if verbose is None: verbose = self.verbose
 
+        #use correct function
+        if self.func == 'sphere':   func = self.__sphere_nd
+        elif self.func == 'rect':   func = self.__rect_nd
+        else:                       func = self.func
+
         y_pred = np.array(Parallel(n_jobs=n_jobs, verbose=verbose, prefer='threads')(
-            delayed(self.func)(
+            delayed(func)(
                 X=Xi,
                 fit=False,
             ) for Xi in X
