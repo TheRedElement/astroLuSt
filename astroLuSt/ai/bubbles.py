@@ -144,7 +144,7 @@ class BUBBLES:
                     - i.e. if the point contains less than `min_pts` points in its `r0` neighborhood, it will be considered as noise and dropped from  the grid
                     - overwrites `self.min_pts`
                     - the default is `None`
-                        - will fall back to `self.min_pts`                
+                        - will fall back to `self.min_pts`
                 - `fit`
                     - bool, optional
                     - flag of the classifier state
@@ -326,6 +326,106 @@ class BUBBLES:
         n_jobs:int=None,
         verbose:int=None,
         ) -> None:
+        """
+            - method to fit the classifier
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - training set of shape `(n_samples, n_features)`
+                - y
+                    - np.ndarray
+                    - labels corresponding to `X`
+                - `func`
+                    - str, callable, optional
+                    - function to use for determining if any point in `X_grid` is considered close to any point in `X`
+                    - allowed strings
+                        - 'sphere'
+                            - will use `self.__sphere_nd`
+                            - uses spheres around points in `X_grid` to determine closeness
+                        - 'rect' 
+                            - will use `self.__rect_nd`
+                            - uses a cuboids around points in `X_grid` to determine closeness
+                    - if callable
+                        - has to take the following arguments
+                            - `X`
+                                - np.ndarray
+                                - training set during `self.fit`
+                                - a single test point during `self.predict`
+                            - `r0`
+                                - float
+                                - some distance measure
+                            - 'min_pts`
+                                - int
+                                - measure of minimum number of points in `X` any point in `X_grid` has to be close to in order to be classified  NOT as an outlier
+                            - `fit`
+                                - bool
+                                - flag of classifier state
+                                - `True` for fitting mode
+                                - `False` for inference mode
+                            - `**kwargs`
+                                - dict
+                                - additional kwargs to be passed to `func`
+                    - overwrites `self.func`
+                    - the default is `None`
+                        - will fall back to `self.func`
+                - `r0`
+                    - float, optional
+                    - radius around any point in `X_grid` (during fitting) or `self.X_grid` (during inference) in which any point in `X` has to lie to be considered close to that grid-point
+                    - during fitting
+                        - the label for any point in `X_grid` will be assigned by the dominant label in `X` that is within the radius `r0`
+                        - if the point in `X_grid` contains no points out of `X`, it will be considered as noise and set to `np.nan`
+                    - during inference
+                        - any point in `X` will be tested against the not-noise-points in `self.X_grid`
+                            - if it falls within the radius of any point in `self.X_grid`, it will get the corresponding label assigned to it
+                            - otherwise it will be assigned the label `-1`, which means that the datapoint is noise
+                    - overwrites `self.r0`
+                    - will be adopted as 'self.r0` by the classifer if set
+                    - the default is `None`
+                        - will fall back to `self.r0`                
+                - `min_pts`
+                    - int, optional
+                    - minimum number of points a sphere around any point in `X_grid` has to contain to not be considered noise
+                    - i.e. if the point contains less than `min_pts` points in its `r0` neighborhood, it will be considered as noise and dropped from  the grid
+                    - overwrites `self.min_pts`
+                    - will be adopted as 'self.min_pts` by the classifer if set
+                    - the default is `None`
+                        - will fall back to `self.min_pts`
+                - `res`
+                    - int, optional
+                    - resolution of the `X_grid` in all dimensions
+                    - will be passed to `np.linspace()`
+                    - high values for `res` are especially bad in high dimensions
+                        - i.e. "Curse of dimensionality" (https://en.wikipedia.org/wiki/Curse_of_dimensionality)
+                    - overwrites `self.res`
+                    - the default is `None`
+                        - will fallback to `self.res`
+                - `n_jobs`
+                    - int, optional
+                    - number of threads to use for parallel computattion
+                    - will be passed to `joblib.Parallel()`
+                    - overwrites `self.n_jobs`
+                    - the default is `None`
+                        - falls back to `self.n_jobs`
+                - 'verbose`
+                    - int, optional
+                    - verbosity level
+                    - overwrites `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+                - make sur to choose `res` acoording to the dimensionality and size of your dataset
+                
+        """
         
         #default values
         if func == 'sphere':    func    = self.__sphere_nd
