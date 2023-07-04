@@ -178,7 +178,7 @@ class BUBBLES:
         r0:float=None, min_pts:int=None,
         fit:bool=True,
         **kwargs,
-        ) -> Tuple[np.ndarray,Any]:
+        ) -> Union[np.ndarray,Any]:
         """
             - private method to determine if any point in `X` is within a radius `r0` of the entries in `X_grid`
             - used to fit the classifier
@@ -286,7 +286,7 @@ class BUBBLES:
         r0:float=None, min_pts:int=None,
         fit:bool=True,
         **kwargs,
-        ) -> None:
+        ) -> Union[np.ndarray,Any]:
         """
             - private method to determine if any point in `X` is within a cuboid of sidelength `r0` of the entries in `X_grid`
             - used to fit the classifier
@@ -632,7 +632,6 @@ class BUBBLES:
         #separate grid from label
         self.X_grid = Xy_grid[:,:-1]
         self.y_grid = Xy_grid[:,-1]
-        print(self.X_grid.shape)
 
         #remove points that got classified as noise (np.nan)
         self.X_grid = self.X_grid[np.isfinite(self.y_grid)]
@@ -835,7 +834,7 @@ class BUBBLES:
                     - str, mcolors.Colormap, optional
                     - colormap to use for encoding the labels (`self.y_grid`, `y`)
                     - the default if `None`
-                        - will be set to `nipy_spectral`
+                        - will be set to `Accent`
                 - `grid_scatter_kwargs`
                     - dict, optional
                     - kwargs to pass `ax.scatter()` for plotting `self.X_grid` and `self.y_grid`
@@ -865,7 +864,7 @@ class BUBBLES:
 
         #default values
         if features is None:             features            = [0,1]
-        if cmap is None:                 cmap                = 'nipy_spectral'
+        if cmap is None:                 cmap                = 'Accent'
         if grid_scatter_kwargs is None:  grid_scatter_kwargs = {'alpha':0.5, 'vmin':-1,}
         if data_scatter_kwargs is None:  data_scatter_kwargs = {'alpha':0.5, 'vmin':-1, 'ec':'w'}
 
@@ -888,7 +887,13 @@ class BUBBLES:
             ax1.scatter(*X[:,features].T, c=y, cmap=cmap, **data_scatter_kwargs)
 
         #add colorbar
-        fig.colorbar(mappable, ax=ax1)
+        cbar = fig.colorbar(mappable, ax=ax1)
+        cbar.set_label('Class')
+
+        #labelling
+        ax1.set_xlabel(f'X[:,{features[0]}]')
+        ax1.set_ylabel(f'X[:,{features[1]}]')
+        if projection=='3d': ax1.set_zlabel(f'X[:,{features[2]}]')
 
         axs = fig.axes
 
