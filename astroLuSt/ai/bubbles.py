@@ -70,10 +70,17 @@ class BUBBLES:
             f')'
         )
     
-    # def __dict__(self) -> dict:
+    def __dict__(self) -> dict:
         
+        d = dict(
+            func=self.func,
+            r0=self.r0, min_pts=self.min_pts,
+            res=self.res,
+            n_jobs=self.n_jobs,
+            verbose=self.verbose,
+        )
 
-    #     return
+        return d
 
     def get_most_common(self,
         x:np.ndarray
@@ -329,9 +336,38 @@ class BUBBLES:
             return y_pred
 
     def get_parameters(self,
+        deep:bool=True,
         ) -> dict:
-        dict(self)
-        return
+        """
+            - function to get current parameters of the classifier
+        
+        Parameters
+        ----------
+            - deep
+                - bool optional
+                - if True will return parameters for estimator and contained subobjects that are estimators
+                - no effect as of now
+                    - here just to achieve structure as sklearn
+                - the default is True
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - params
+                - dict
+                - parameters of the estimator
+
+        Comments
+        --------
+
+
+        """
+
+        params = self.__dict__()
+        
+        return params
 
     def fit(self,
         X:np.ndarray, y:np.ndarray,
@@ -665,24 +701,77 @@ class BUBBLES:
 
     def plot_result(self,
         X:np.ndarray=None, y:np.ndarray=None,
-        dims:list=None,
+        features:list=None,
         cmap:Union[str,mcolors.Colormap]=None,
         grid_scatter_kwargs:dict=None, data_scatter_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
-            - 
+            - method to plot the result of a fitted classifier
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray, optional
+                    - data to plot into the plot of `self.X_grid`
+                    - the default is `None`
+                        - will only plot datapoints in `self.X_grid` (i.e. the decision boundary)
+                - `y`
+                    - np.ndarray, optional
+                    - labels corresponding to `X`
+                    - will be used to color the datapoint in `X`
+                    - only relevant if `X` is passed as well
+                    - the default is `None`
+                        - no coloring
+                - `features`
+                    - list, optional
+                    - indices of the features of `self.X_grid` and `X` to plot
+                    - can have a maximum length of 3
+                    - if you want to only look at one feature simply pass `[0,0]` for the 0-th feature
+                    - the default is `None`
+                        - will be set to [0,1]
+                        - i.e. plots the first two feature
+                - `cmap`
+                    - str, mcolors.Colormap, optional
+                    - colormap to use for encoding the labels (`self.y_grid`, `y`)
+                    - the default if `None`
+                        - will be set to `nipy_spectral`
+                - `grid_scatter_kwargs`
+                    - dict, optional
+                    - kwargs to pass `ax.scatter()` for plotting `self.X_grid` and `self.y_grid`
+                    - the default is `None`
+                        - will be set to {'alpha':0.5, 'vmin':-1}
+                - `data_scatter_kwargs`
+                    - dict, optional
+                    - kwargs to pass `ax.scatter()` for plotting `X` and `y`
+                    - the default is `None`
+                        - will be set to {'alpha':0.5, 'vmin':-1, 'ec':'w'}
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
         """
 
         #default values
-        if dims is None:            dims = [0,1]
-        if cmap is None:            cmap = 'nipy_spectral'
-        if grid_scatter_kwargs is None:  grid_scatter_kwargs = {'alpha':0.5, 's':10, 'vmin':-1,}
-        if data_scatter_kwargs is None:  data_scatter_kwargs = {'alpha':0.5, 's':50, 'vmin':-1, 'ec':'w'}
+        if features is None:             features            = [0,1]
+        if cmap is None:                 cmap                = 'nipy_spectral'
+        if grid_scatter_kwargs is None:  grid_scatter_kwargs = {'alpha':0.5, 'vmin':-1,}
+        if data_scatter_kwargs is None:  data_scatter_kwargs = {'alpha':0.5, 'vmin':-1, 'ec':'w'}
 
         #select plotting dimension based on self.X_grid and dims
-        if self.X_grid.shape[1] < 3 or len(dims) < 3:
+        if self.X_grid.shape[1] < 3 or len(features) < 3:
             projection = None
-            dims = dims[:2]
+            features = features[:2]
         else:
             projection = '3d'
 
@@ -691,11 +780,11 @@ class BUBBLES:
         ax1 = fig.add_subplot(111, projection=projection)
 
         #plot grid
-        mappable = ax1.scatter(*self.X_grid.T[dims],                    c=self.y_grid,                    cmap=cmap, **grid_scatter_kwargs)
+        mappable = ax1.scatter(*self.X_grid.T[features], c=self.y_grid, cmap=cmap, **grid_scatter_kwargs)
         
         #if a dataset has been passed plot that as well
         if X is not None:
-            ax1.scatter(*X[:,dims].T, c=y, cmap=cmap, **data_scatter_kwargs)
+            ax1.scatter(*X[:,features].T, c=y, cmap=cmap, **data_scatter_kwargs)
 
         #add colorbar
         fig.colorbar(mappable, ax=ax1)
