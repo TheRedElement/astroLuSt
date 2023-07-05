@@ -12,11 +12,11 @@ from sklearn.metrics import accuracy_score
 from typing import Union, Tuple, Any, Callable
 
 #%%classes
-class BUBBLES:
+class ND_BUBBLES:
     """
-        - TODO: NAME
+        - (Noise Detecting) Blueprint Using Building Block Label Estimation (in Space)
         - supervised classifier
-        - estimates decision-boundaries based on grid with finite number of datapoints
+        - estimates decision-boundaries based on grid (Blueprint) with finite number of datapoints (Building Blocks)
         - also is able to find outliers
 
         Attributes
