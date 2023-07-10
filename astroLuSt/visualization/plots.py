@@ -425,17 +425,18 @@ class ParallelCoordinates:
 
         return
 
-    def add_coordaxes(self,
+    def add_coordax(self,
         ax:plt.Axes,
         coordinate:pl.Series, coordinate_map:pl.Series,
         fill_value:float,
         idx:int, n_coords:int,
         ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45, tickformat:str='%g',
+        lab:str=None,
         sleep=0,
         text_kwargs:dict=None,
         ) -> plt.Axes:
         """
-            - method to add a new axis for each coordinate
+            - method to add a new axis coordinate
             - will move the spine to be aligned with the cordinates x-position in `ax`
 
             Parameters
@@ -481,6 +482,11 @@ class ParallelCoordinates:
                     - str, optional
                     - formatstring for the (numeric) ticklabels
                     - the default is `'%g'`
+                - `lab`
+                    - str, optional
+                    - label to plot for the added axes
+                    - the default is `None`
+                        - will use the name of the coordinate
                 - `sleep`
                     - float, optional
                     - time to sleep after finishing each job in plotting runs/models and coordinate-axes
@@ -505,6 +511,7 @@ class ParallelCoordinates:
             --------
         """
 
+        if lab is None: lab = coordinate.name
         if text_kwargs is None: text_kwargs = {}
 
         #initialize new axis
@@ -561,7 +568,7 @@ class ParallelCoordinates:
         #add spine labels (ylabs) on top  of each additional axis
         ax.text(
             x=(idx/n_coords), y=1.01,
-            s=coordinate.name,
+            s=lab,
             transform=ax.transAxes,
             color=tickcolor,
             **text_kwargs
@@ -876,6 +883,7 @@ class ParallelCoordinates:
         res:int=None,
         axpos_coord:tuple=None, axpos_hist:tuple=None,
         ticks2display:int=None, tickcolor:Union[str,tuple]=None, ticklabelrotation:float=None, tickformat:str=None,
+        coordinate_labs:list=None,
         nancolor:Union[str,tuple]=None, nanfrac:float=None,
         linealpha:float=None, linewidth:float=None,
         base_cmap:Union[str,mcolors.Colormap]=None, cbar_over_hist:bool=None,
@@ -1016,6 +1024,13 @@ class ParallelCoordinates:
                     - overwrites `self.tickformat`
                     - the default is `None`
                         - defaults to `self.tickformat`
+                - `coordinate_labs`
+                    - list, optional
+                    - list of labels to plot above each coordinate
+                    - has to have at least as many entries as coordinates to plot + 1
+                        - because of the score-column
+                    - the default is `None`
+                        - will autogenerate the labels
                 - `nancolor`
                     - str, tuple, optional
                     - color to draw failed runs (evaluate to nan) in
@@ -1282,22 +1297,28 @@ class ParallelCoordinates:
                         f'    Retrying to plot. Number of elapsed retries: {nretries}.'
                     )
 
+        #generate score label from score_scaling expression
+        score_lab = re.sub(r'pl\.col\(score\_col\)', score_col_use, score_scaling)
+        score_lab = re.sub(r'(np|pl|pd)\.', '', score_lab)
+
         #plot one additional y-axis for every single coordinate
         ##try except to retry if a RuntimeError occured
+        if coordinate_labs is None: coordinate_labs = [None]*(len(coords)-1) + [score_lab]
         e = True
         nretries = 0
         while e and nretries < max_nretries:
             try:
                 axps = Parallel(n_jobs=n_jobs_addaxes, verbose=verbose, prefer='threads')(
-                    delayed(self.add_coordaxes)(
+                    delayed(self.add_coordax)(
                         ax=ax1,
                         coordinate=coordinate, coordinate_map=coordinate_map,
                         fill_value=fill_value,
                         idx=idx, n_coords=n_coords,
                         ticks2display=ticks2display, tickcolor=tickcolor, ticklabelrotation=ticklabelrotation, tickformat=tickformat,
+                        lab=clab,
                         sleep=sleep,
                         text_kwargs=text_kwargs,
-                    ) for idx, (coordinate, coordinate_map) in enumerate(zip(df.select(pl.col(coords)), df.select(pl.col(coords_map))))
+                    ) for idx, (coordinate, coordinate_map, clab) in enumerate(zip(df.select(pl.col(coords)), df.select(pl.col(coords_map)), coordinate_labs))
                 )
                 e = False
             except RuntimeError as err:
@@ -1309,10 +1330,6 @@ class ParallelCoordinates:
                         f'    The following error occured while plotting the models: {err}.\n'
                         f'    Retrying to plot. Number of elapsed retries: {nretries}.'
                     )
-        
-        #generate score label from score_scaling expression
-        score_lab = re.sub(r'pl\.col\(score\_col\)', score_col_use, score_scaling)
-        score_lab = re.sub(r'(np|pl|pd)\.', '', score_lab)
         
         #if a score column has been passed use it
         if score_col is not None:
