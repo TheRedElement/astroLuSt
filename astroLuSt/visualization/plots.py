@@ -323,7 +323,7 @@ class ParallelCoordinates:
         #for numeric columns squeeze them into range(0,1) to be comparable accross hyperparams
         if coordinate.is_numeric() and len(coordinate.unique()) > 1:
             exp = (pl.col(colname)-pl.col(colname).min())/(pl.col(colname).max()-pl.col(colname).min())
-        
+
         #for categorical columns convert them to unique indices in the range(0,1)
         else:
             # coordinate = coordinate.fill_null('None')
@@ -2315,9 +2315,11 @@ class CornerPlot:
             ax.tick_params(bottom=False, top=True, labelbottom=False, labeltop=True)
             ax.xaxis.set_label_position('top')
             ax.set_xlabel(countlab)
+            ax.set_yticklabels(ax.get_yticklabels(), visible=False)
         else:
             orientation = "vertical"
             ax.set_ylabel(countlab)
+            ax.set_xticklabels(ax.get_xticklabels(), visible=False)
 
         #plot histograms (color each class in y)
         for yu, c in zip(np.unique(y), colors):
