@@ -1200,7 +1200,7 @@ class AugmentAxis:
             sample_weights_use = np.ones(X.shape[0])/len(X)
         ##convert class_weights to sample_weights if no sample_weights provided
         elif class_weights is not None and sample_weights is None and y is not None:
-            sample_weights_use = self.class_weights2sample_weights(class_weights, y[:,label_idx])
+            sample_weights_use = self.class_weights2sample_weights(class_weights, y, label_idx=label_idx)
         ##use sample_weights
         elif class_weights is None and sample_weights is not None:
             sample_weights_use = sample_weights
