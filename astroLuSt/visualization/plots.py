@@ -2235,6 +2235,7 @@ class CornerPlot:
         fig:Figure, nrowscols:int,
         equal_range:bool,
         hist_kwargs:dict,
+        sctr_kwargs:dict,
         ) -> plt.Axes:
         """
             - method to generate (on-diagonal) 1d distributions (i.e. histograms)
@@ -2274,6 +2275,10 @@ class CornerPlot:
                 - `hist_kwargs`
                     - dict, optional
                     - kwargs to pass to `ax.hist()`
+                - `sctr_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.scatter()`
+                    - will use only part of the information to format 1d-histograms similarly to the scatters
 
             Raises
             ------
@@ -2289,6 +2294,10 @@ class CornerPlot:
 
         """
 
+        if 'vmin' in sctr_kwargs.keys(): vmin = sctr_kwargs['vmin']
+        else:                            vmin = None
+        if 'vmax' in sctr_kwargs.keys(): vmax = sctr_kwargs['vmax']
+        else:                            vmax = None
 
         #get colors for distributions
         if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
@@ -2297,7 +2306,7 @@ class CornerPlot:
             colors = [y]
         else:
             ##generate colormap if classes are passed
-            colors = cmap(mcolors.Normalize()(np.unique(y).astype(np.float64)))
+            colors = cmap(mcolors.Normalize(vmin=vmin, vmax=vmax)(np.unique(y).astype(np.float64)))
 
         #add panel
         ax = fig.add_subplot(nrowscols, nrowscols, idx)
@@ -2563,6 +2572,7 @@ class CornerPlot:
                         fig, nrowscols,
                         equal_range,
                         hist_kwargs,
+                        sctr_kwargs,
                     )            
         
         #make x and y limits equal if requested
