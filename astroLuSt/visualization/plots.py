@@ -2593,12 +2593,22 @@ class CornerPlot:
 class MultiConfusionMatrix:
 
     def __init__(self,
+        normalize:np.ndarray=None,
+        score_decimals:int=2,
         cmap:Union[str,mcolors.Colormap]=None,
+        subplots_kwargs:dict=None,
+        fig_kwargs:dict=None,
+        verbose:int=0,
         ) -> None:
 
+        self.normalize      = normalize
+        self.score_decimals = score_decimals
         if cmap is None:    self.cmap = 'nipy_spectral'
         else:               self.cmap = cmap
+        if subplots_kwargs is None: self.subplots_kwargs = dict(sharex='all', sharey='all')
+        if fig_kwargs is None:      self.fig_kwargs = dict(figsize=(9,9))
         
+        self.verbose = verbose
         
         return
 
@@ -2606,7 +2616,7 @@ class MultiConfusionMatrix:
         ax:plt.Axes,
         score:np.ndarray,
         m_labels:Union[list,Literal['score']], score_decimals:int,
-        cmap,
+        cmap:Union[str,mcolors.Colormap],
         ) -> None:
 
         #default parameters
@@ -2615,18 +2625,21 @@ class MultiConfusionMatrix:
         else: raise ValueError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
 
         
-        colors = generate_colors(len(score), cmap=cmap)
+        colors = generate_colors(len(score)+1, cmap=cmap)
         bars = ax.barh(
             y=np.arange(score.shape[0])[::-1], width=score,
             color=colors,
         )
 
-        #add model labels if desired        
-        for b, c, mlab in zip(bars, colors[::-1], m_labels):
+        #add model labels if desired
+        for idx, (b, c, mlab) in enumerate(zip(bars, colors[::-1], m_labels)):
+            if idx < len(bars)/2:   sc = colors[-1]
+            else:                   sc = colors[0]
             ax.text(
                 x=0.01*max(ax.get_xlim()), y=b.get_y()+b.get_height()/2,
                 s=np.round(mlab, score_decimals),
-                c=c, va='center'
+                c=sc, va='center',
+                # backgroundcolor='w'
             )
         
         ax.grid(visible=True, axis='x')
@@ -2635,7 +2648,7 @@ class MultiConfusionMatrix:
 
     def plot(self,
         y_true:np.ndarray, y_pred:np.ndarray,
-        labels:np.ndarray=None, m_labels:np.ndarray=None, score_decimals:int=2,
+        labels:np.ndarray=None, m_labels:np.ndarray=None, score_decimals:int=None,
         sample_weight:np.ndarray=None,
         normalize:np.ndarray=None,
         cmap:Union[str,mcolors.Colormap]=None,
@@ -2644,18 +2657,25 @@ class MultiConfusionMatrix:
         ) -> Tuple[Figure,plt.Axes]:
 
         #default parameters
-        if m_labels is None:        m_labels = []
-        if cmap is None:            cmap = self.cmap
-        if subplots_kwargs is None: subplots_kwargs = dict(sharex='all', sharey='all')
-        if fig_kwargs is None:      fig_kwargs = dict(figsize=(9,9))
+        if m_labels is None:        m_labels        = []
+        if normalize is None:       normalize       = self.normalize
+        if score_decimals is None:  score_decimals  = self.score_decimals
+        if cmap is None:            cmap            = self.cmap
+        if subplots_kwargs is None: subplots_kwargs = self.subplots_kwargs
+        if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
 
         unique_classes = np.unique([y_true, y_pred])
         nrowscols = np.max([unique_classes.shape[0], unique_classes.shape[0]])
         if labels is None: labels = unique_classes
 
-        #get confusion matrices for all models
-        confmats = np.array([confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight) for yt, yp in zip(y_true.T, y_pred.T)])
 
+        #catch errors
+        if len(labels) < nrowscols: raise ValueError(f'`labels` has to be at least of length equal to the number of unique classes in `y_true` and `y_pred` ({nrowscols}) but has length {len(labels)}!')
+
+        #get confusion matrices for all models (Transpose because sklearn.metric.confusion_matrix is inversely defined to this method)
+        confmats = np.array([confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight).T for yt, yp in zip(y_true.T, y_pred.T)])
+
+        #plotting
         fig, axs = plt.subplots(
             nrows=nrowscols, ncols=nrowscols,
             **subplots_kwargs,
