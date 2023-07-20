@@ -2662,7 +2662,15 @@ class MultiConfusionMatrix:
 
     def __repr__(self):
 
-        return
+        return (
+            f'MultiConfusionMatrix(\n'
+            f'    score_decimals={repr(self.score_decimals)},\n'
+            f'    cmap={repr(self.cmap)}, vmin={self.vmin}, vmax={self.vmax}, vcenter={self.vcenter},\n'
+            f'    subplots_kwargs={repr(self.subplots_kwargs)},\n'
+            f'    fig_kwargs={repr(self.fig_kwargs)},\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
 
     def plot_bar(self,
         ax:plt.Axes,
@@ -2775,6 +2783,79 @@ class MultiConfusionMatrix:
         fig_kwargs:dict=None,
         imshow_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to produce classic confusion matrix
+            - similar to `sklearn.metrics.ConfusionMatrixDisplay`
+                - BUT axes defined inversely
+                - https://scikit-learn.org/stable/modules/generated/sklearn.metrics.ConfusionMatrixDisplay.html#sklearn.metrics.ConfusionMatrixDisplay (last access: 2023/07/20)
+
+            Parameters
+            ----------
+                - `confmat`
+                    - np.ndarray
+                    - array containing confusion matrix
+                    - has to be of shape `(nclasses, nclasses)`
+                - `labels`
+                    - np.ndarray, optional
+                    - labels to display for different classes present in `y_true` and `y_pred`
+                    - will assign labels in ascending orders for the values present in `y_true` and `y_pred`
+                    - the default is `None`
+                        - will generate labels using `np.arange(confmats.shape[-1])`
+                - `score_decimals`
+                    - int, optional
+                    - number of decimals to round each model's `score` to when displaying
+                    - only relevant if `m_labels == 'score'`
+                    - overrides `self.score_decimals` 
+                    - the default is `None`
+                        - will fall back to `self.score_decimals`
+                - `cmap`
+                    - str, mcolors.Colormap, optional
+                    - colormap to use for coloring the different models
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
+                - `vmin`
+                    - float, optional
+                    - minimum value of the colormapping
+                    - used in scaling the colormap
+                    - overrides `self.vmin`
+                    - the default is `None`
+                        - will fall back to `self.vmin`
+                - `vmax`
+                    - float, optional
+                    - maximum value of the colormapping
+                    - used in scaling the colormap
+                    - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                    - overrides `self.vmax`
+                    - the default is `None`
+                        - will fall back to `self.vmax`
+                - `fig_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `plt.figure()`
+                    - overrides `self.fig_kwargs`
+                    - the default is `None`
+                        - will fall back to `self.fig_kwargs`
+                - `imshow_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.imshow()`
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created matplotlib figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
+        """
 
         if cmap is None:            cmap            = self.cmap
         if score_decimals is None:  score_decimals  = self.score_decimals
@@ -2969,10 +3050,10 @@ class MultiConfusionMatrix:
         normalize:Literal['true','pred','all']=None,
         plot_func:Literal['multi', 'single', 'auto']='auto',
         plot_multimodel_kwargs:dict=None,
-        plot_single_kwargs:dict=None,
+        plot_singlemodel_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
-            - method to produce the plot
+            - method to produce the plot of the confusion-matrix
 
             Parameters
             ----------
@@ -3022,9 +3103,26 @@ class MultiConfusionMatrix:
                     - will be passed to `sklearn.metrics.confusion_matrix()`
                     - the default is `None`
                         - no normalization
+                - `plot_func`
+                    - Literal['auto','multi','single'], optional
+                    - method to use for deciding how to display the confusion matrix
+                    - if `'auto'`
+                        - will automatically decide
+                    - if `'multi'`
+                        - will use `self.plot_multimodel()` even if only one model passed
+                    - if `single`
+                        - will use `self.plot_singlemodel()`
+                        - will plot the first entry of confmats even if multiple are passed
+                            - i.e. `confmats[0]`
+                    - the default is `auto`
                 - `plot_multimodel_kwargs`
                     - dict, optional
-                    - kwargs to pass to `self.plot_multimodel_kwargs()`
+                    - kwargs to pass to `self.plot_multimodel()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `plot_singlemodel_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.plot_singlemodel()`
                     - the default is `None`
                         - will be set to `dict()`
 
@@ -3049,7 +3147,7 @@ class MultiConfusionMatrix:
         
         #default values
         if plot_multimodel_kwargs is None:  plot_multimodel_kwargs  = dict()
-        if plot_single_kwargs is None:      plot_single_kwargs      = dict()
+        if plot_singlemodel_kwargs is None: plot_singlemodel_kwargs = dict()
 
         #get confusion matrices for all models (Transpose because sklearn.metric.confusion_matrix is inversely defined to this method)
         #initialize labels
