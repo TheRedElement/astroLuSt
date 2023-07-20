@@ -2768,13 +2768,54 @@ class MultiConfusionMatrix:
 
         return
 
-    def plot_single_model(self,
-        y_true:np.ndarray, y_pred:np.ndarray,
-        labels:np.ndarray, score_decimals:int,
-        cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
-        ):
+    def plot_singlemodel(self,
+        confmat:np.ndarray,
+        labels:np.ndarray=None, score_decimals:int=None,
+        cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None,
+        fig_kwargs:dict=None,
+        imshow_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
 
-        return
+        if cmap is None:            cmap            = self.cmap
+        if score_decimals is None:  score_decimals  = self.score_decimals
+        if fig_kwargs is None:      fig_kwargs      = dict()
+        if imshow_kwargs is None:   imshow_kwargs   = dict()
+
+        #generate colors for cell text
+        colors = generate_colors(confmat.shape[-1], vmin=vmin, vmax=vmax, cmap=cmap)
+
+        #coordinates for plotting
+        x = np.arange(confmat.shape[-1])
+        
+        #plot
+        fig = plt.figure(**fig_kwargs)
+        ax1 = fig.add_subplot(111)
+
+        #plot confmat
+        mesh = ax1.pcolormesh(x, x, confmat, cmap=cmap, vmin=vmin, vmax=vmax, **imshow_kwargs)
+
+        #add text
+        for row in x:
+            for col in x:
+                if confmat[row,col] < confmat.max()/2:  c = colors[-1]
+                else:                                   c = colors[0]
+                ax1.text(
+                    x=x[col], y=x[row],
+                    s=np.round(confmat[row,col], score_decimals),
+                    color=c, ha='center', va='center'
+                ) 
+
+        #labelling
+        ax1.set_xticks(x, labels=labels[:x.shape[0]])
+        ax1.set_yticks(x, labels=labels[:x.shape[0]])
+
+        ax1.invert_yaxis()
+        ax1.set_xlabel('True')
+        ax1.set_ylabel('Predicted')
+
+        axs = fig.axes
+
+        return fig, axs
 
     def plot_multimodel(self,
         confmats:np.ndarray,
@@ -2926,7 +2967,9 @@ class MultiConfusionMatrix:
         labels:np.ndarray=None,
         sample_weight:np.ndarray=None,
         normalize:Literal['true','pred','all']=None,
+        plot_func:Literal['multi', 'single', 'auto']='auto',
         plot_multimodel_kwargs:dict=None,
+        plot_single_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
             - method to produce the plot
@@ -3006,10 +3049,23 @@ class MultiConfusionMatrix:
         
         #default values
         if plot_multimodel_kwargs is None:  plot_multimodel_kwargs  = dict()
+        if plot_single_kwargs is None:      plot_single_kwargs      = dict()
 
         #get confusion matrices for all models (Transpose because sklearn.metric.confusion_matrix is inversely defined to this method)
         #initialize labels
         if y_true is not None and y_pred is not None:
+            if len(y_true.shape) < 2:
+                y_true = y_true.reshape(-1,1)
+                warnings.warn(message=(
+                    f'`y_true` has to be two dimensional but has shape {y_true.shape}!\n'
+                    f'    Called `y_true.reshape(-1,1)`. Therefore you might not get the expected result.'
+                ))
+            if len(y_pred.shape) < 2:
+                y_pred = y_pred.reshape(-1,1)
+                warnings.warn(message=(
+                    f'`y_pred` has to be two dimensional but has shape {y_pred.shape}!'
+                    f'    Called `y_pred.reshape(-1,1)`. Therefore you might not get the expected result.'
+                ))
             if labels is None: labels = np.unique([y_true, y_pred])
             confmats = np.array([confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight).T for yt, yp in zip(y_true.T, y_pred.T)])
         elif y_true is None or y_pred is None and confmats is not None:
@@ -3021,17 +3077,30 @@ class MultiConfusionMatrix:
         #reshape confmats if wrong shape has been passed
         if len(confmats.shape) != 3:
             confmats = confmats.reshape(1, *confmats.shape)
-
+        
         #check if all shapes are correct
         if confmats.shape[1] != confmats.shape[2]: raise ValueError(f'Confusion matrices have to be square matrices but `confmats` has shape {confmats.shape}')
 
+        #decide on plotting strategy
+        if plot_func == 'auto':
+            if confmats.shape[0] == 1:  plot_func = 'single'
+            else:                       plot_func = 'multi'
 
         #create plots
-        fig, axs = self.plot_multimodel(
-            confmats=confmats,
-            labels=labels,
-            **plot_multimodel_kwargs
-        )
+        if plot_func == 'multi':
+            fig, axs = self.plot_multimodel(
+                confmats=confmats,
+                labels=labels,
+                **plot_multimodel_kwargs,
+            )
+        elif plot_func == 'single':
+            fig, axs = self.plot_singlemodel(
+                confmats[0],
+                labels=labels,
+                **plot_single_kwargs,
+            )
+        else:
+            raise ValueError(f'`plot_func` has to be one of `["multi", "single", "auto"] but is {plot_func}')
 
         return fig, axs
 
