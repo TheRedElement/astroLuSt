@@ -2591,6 +2591,26 @@ class CornerPlot:
         return fig, axs
     
 class MultiConfusionMatrix:
+    """
+        - class to create a multi-model confusion matrix
+
+        Attributes
+        ----------
+
+        Methods
+        -------
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - sklearn
+            - typing
+        
+        Comments
+        --------
+
+    """
 
     def __init__(self,
         normalize:np.ndarray=None,
@@ -2618,14 +2638,52 @@ class MultiConfusionMatrix:
         m_labels:Union[list,Literal['score']], score_decimals:int,
         cmap:Union[str,mcolors.Colormap],
         ) -> None:
+        """
+            - method to create a bar-plot in one panel (`ax`)
+            - i.e. confusion matrix cell of one class-combination
+
+            Parameters
+            ----------
+                - `ax`
+                    - plt.Axes
+                    - axis to plot onto
+                - `score`
+                    - np.ndarray
+                    - scores of one class-combination for all models
+                - `m_labels`
+                    - list, Literal['score']
+                    - labels to show for each created bar (model)
+                    - if `'score'` is passed
+                        - will show the respective models score for tha combination of classes
+                - `score_decimals`
+                    - int
+                    - number of decimals to round `score` to when displaying
+                    - only relevant if `m_labels == 'score'`
+                - `cmap`
+                    - str, mcolors.Colormap
+                    - colormap to use for coloring the different models
+
+            Raises
+            ------
+                - TypeError
+                    - if `m_labels` is of the wrong type
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
 
         #default parameters
         if m_labels == 'score': m_labels = score
         elif isinstance(m_labels, (list, np.ndarray)): m_labels = m_labels
-        else: raise ValueError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
+        else: raise TypeError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
 
-        
+        #generate colors for the bars
         colors = generate_colors(len(score)+1, cmap=cmap)
+        
+        #create barplor
         bars = ax.barh(
             y=np.arange(score.shape[0])[::-1], width=score,
             color=colors,
@@ -2655,6 +2713,9 @@ class MultiConfusionMatrix:
         subplots_kwargs:dict=None,
         fig_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to produce the confusion-matrix plot
+        """
 
         #default parameters
         if m_labels is None:        m_labels        = []
