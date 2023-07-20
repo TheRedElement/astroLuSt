@@ -12,9 +12,12 @@ import re
 from scipy.interpolate import interp1d
 from scipy import stats
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix
 import time
-from typing import Union, Tuple, List, Callable
+from typing import Union, Tuple, List, Callable, Literal
 import warnings
+
+from astroLuSt.visualization.plotting import generate_colors
 
 
 
@@ -2587,6 +2590,104 @@ class CornerPlot:
 
         return fig, axs
     
+class MultiConfusionMatrix:
+
+    def __init__(self,
+        cmap:Union[str,mcolors.Colormap]=None,
+        ) -> None:
+
+        if cmap is None:    self.cmap = 'nipy_spectral'
+        else:               self.cmap = cmap
+        
+        
+        return
+
+    def plot_bar(self,
+        ax:plt.Axes,
+        score:np.ndarray,
+        m_labels:Union[list,Literal['score']], score_decimals:int,
+        cmap,
+        ) -> None:
+
+        #default parameters
+        if m_labels == 'score': m_labels = score
+        elif isinstance(m_labels, (list, np.ndarray)): m_labels = m_labels
+        else: raise ValueError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
+
+        
+        colors = generate_colors(len(score), cmap=cmap)
+        bars = ax.barh(
+            y=np.arange(score.shape[0])[::-1], width=score,
+            color=colors,
+        )
+
+        #add model labels if desired        
+        for b, c, mlab in zip(bars, colors[::-1], m_labels):
+            ax.text(
+                x=0.01*max(ax.get_xlim()), y=b.get_y()+b.get_height()/2,
+                s=np.round(mlab, score_decimals),
+                c=c, va='center'
+            )
+        
+        ax.grid(visible=True, axis='x')
+
+        return
+
+    def plot(self,
+        y_true:np.ndarray, y_pred:np.ndarray,
+        labels:np.ndarray=None, m_labels:np.ndarray=None, score_decimals:int=2,
+        sample_weight:np.ndarray=None,
+        normalize:np.ndarray=None,
+        cmap:Union[str,mcolors.Colormap]=None,
+        subplots_kwargs:dict=None,
+        fig_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
+
+        #default parameters
+        if m_labels is None:        m_labels = []
+        if cmap is None:            cmap = self.cmap
+        if subplots_kwargs is None: subplots_kwargs = dict(sharex='all', sharey='all')
+        if fig_kwargs is None:      fig_kwargs = dict(figsize=(9,9))
+
+        unique_classes = np.unique([y_true, y_pred])
+        nrowscols = np.max([unique_classes.shape[0], unique_classes.shape[0]])
+        if labels is None: labels = unique_classes
+
+        #get confusion matrices for all models
+        confmats = np.array([confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight) for yt, yp in zip(y_true.T, y_pred.T)])
+
+        fig, axs = plt.subplots(
+            nrows=nrowscols, ncols=nrowscols,
+            **subplots_kwargs,
+            **fig_kwargs,
+        )
+        
+        for row in range(nrowscols):
+            for col in range(nrowscols):
+
+                #plot barchart
+                self.plot_bar(
+                    ax=axs[row,col],
+                    score=confmats[:,row,col], m_labels=m_labels, score_decimals=score_decimals,
+                    cmap=cmap,
+                )
+
+                #set axis labels
+                if col == 0:            axs[row,col].set_ylabel(labels[row])
+                if row == nrowscols-1:  axs[row,col].set_xlabel(labels[col])
+                
+                axs[row,col].set_yticklabels([])
+
+        #figure labels
+        plt.figtext(0.5, 0.0, 'True',      rotation=0 , fontsize='large')
+        plt.figtext(0.0, 0.5, 'Predicted', rotation=90, fontsize='large')
+
+        plt.tight_layout()
+
+        axs = fig.axes
+
+        return fig, axs
+
 #%%functions
 def plot_predictioneval(
     y_true:np.ndarray, y_pred:np.ndarray,
