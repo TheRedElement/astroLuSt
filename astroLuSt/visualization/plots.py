@@ -2600,12 +2600,15 @@ class MultiConfusionMatrix:
         Attributes
         ----------
             - `score_decimals`
-                - int
+                - int, optional
                 - number of decimals to round `score` to when displaying
                 - only relevant if `m_labels == 'score'`
+                - the default is 2
             - `cmap`
-                - str, mcolors.Colormap
+                - str, mcolors.Colormap, optional
                 - colormap to use for coloring the different models
+                - the default is `None`
+                    - will be set to `'nipy_spectral'`
             - `vmin`
                 - float, optional
                 - minimum value of the colormapping
@@ -2624,8 +2627,22 @@ class MultiConfusionMatrix:
                 - used in scaling the colormap
                 - argument of `astroLuSt.visualization.plotting.generate_colors()`
                 - the default is `None`
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the deafault is 0
+            - `fig_kwargs`
+                - dict, optional
+                - kwargs to pass to `plt.figure()`
+                - the default is `None`
+                    - will be set to `dict(figsize=(9,9))`
+
         Methods
         -------
+            - `plot_bar()`
+            - `plot_singlemodel()`
+            - `plot_multimodel()`
+            - `plot()`
 
         Dependencies
         ------------
@@ -2643,20 +2660,19 @@ class MultiConfusionMatrix:
         score_decimals:int=2,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         subplots_kwargs:dict=None,
-        fig_kwargs:dict=None,
         verbose:int=0,
+        fig_kwargs:dict=None,
         ) -> None:
 
         self.score_decimals = score_decimals
-        if cmap is None:    self.cmap = 'nipy_spectral'
-        else:               self.cmap = cmap
+        if cmap is None:        self.cmap       = 'nipy_spectral'
+        else:                   self.cmap       = cmap
         self.vmin       = vmin
-        self.vmax       = vmin
+        self.vmax       = vmax
         self.vcenter    = vcenter
-        if subplots_kwargs is None: self.subplots_kwargs = dict(sharex='all', sharey='all')
-        if fig_kwargs is None:      self.fig_kwargs = dict(figsize=(9,9))
+        self.verbose    = verbose
+        if fig_kwargs is None:  self.fig_kwargs = dict(figsize=(9,9))
         
-        self.verbose = verbose
         
         return
 
@@ -2666,9 +2682,8 @@ class MultiConfusionMatrix:
             f'MultiConfusionMatrix(\n'
             f'    score_decimals={repr(self.score_decimals)},\n'
             f'    cmap={repr(self.cmap)}, vmin={self.vmin}, vmax={self.vmax}, vcenter={self.vcenter},\n'
-            f'    subplots_kwargs={repr(self.subplots_kwargs)},\n'
-            f'    fig_kwargs={repr(self.fig_kwargs)},\n'
             f'    verbose={repr(self.verbose)},\n'
+            f'    fig_kwargs={repr(self.fig_kwargs)},\n'
             f')'
         )
 
@@ -2859,7 +2874,7 @@ class MultiConfusionMatrix:
 
         if cmap is None:            cmap            = self.cmap
         if score_decimals is None:  score_decimals  = self.score_decimals
-        if fig_kwargs is None:      fig_kwargs      = dict()
+        if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
         if imshow_kwargs is None:   imshow_kwargs   = dict()
 
         #generate colors for cell text
@@ -2966,9 +2981,8 @@ class MultiConfusionMatrix:
                 - `subplots_kwargs`
                     - dict, optional
                     - kwargs to pass to `plt.subplots()`
-                    - overrides `self.subplots_kwargs`
                     - the default is `None`
-                        - will fall back to `self.subplots_kwargs`
+                        - will be set to `dict(sharex='all', sharey='all')`
                 - `fig_kwargs`
                     - dict, optional
                     - kwargs to pass to `plt.figure()`
@@ -3000,7 +3014,7 @@ class MultiConfusionMatrix:
         if m_labels is None:        m_labels        = []
         if score_decimals is None:  score_decimals  = self.score_decimals
         if cmap is None:            cmap            = self.cmap
-        if subplots_kwargs is None: subplots_kwargs = self.subplots_kwargs
+        if subplots_kwargs is None: subplots_kwargs = dict(sharex='all', sharey='all')
         if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
 
         nrowscols = confmats.shape[-1]
@@ -3195,7 +3209,7 @@ class MultiConfusionMatrix:
             fig, axs = self.plot_singlemodel(
                 confmats[0],
                 labels=labels,
-                **plot_single_kwargs,
+                **plot_singlemodel_kwargs,
             )
         else:
             raise ValueError(f'`plot_func` has to be one of `["multi", "single", "auto"] but is {plot_func}')
