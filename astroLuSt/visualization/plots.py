@@ -2593,10 +2593,37 @@ class CornerPlot:
 class MultiConfusionMatrix:
     """
         - class to create a multi-model confusion matrix
+        - inspired by the Weights&Biases Parallel-Coordinates plot 
+            - https://wandb.ai/wandb/plots/reports/Confusion-Matrix-Usage-and-Examples--VmlldzozMDg1NTM (last access: 2023/07/20)
+
 
         Attributes
         ----------
-
+            - `score_decimals`
+                - int
+                - number of decimals to round `score` to when displaying
+                - only relevant if `m_labels == 'score'`
+            - `cmap`
+                - str, mcolors.Colormap
+                - colormap to use for coloring the different models
+            - `vmin`
+                - float, optional
+                - minimum value of the colormapping
+                - used in scaling the colormap
+                - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                - the default is `None`
+            - `vmax`
+                - float, optional
+                - maximum value of the colormapping
+                - used in scaling the colormap
+                - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                - the default is `None`
+            - `vcenter`
+                - float, optional
+                - center value of the colormapping
+                - used in scaling the colormap
+                - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                - the default is `None`
         Methods
         -------
 
@@ -2613,18 +2640,19 @@ class MultiConfusionMatrix:
     """
 
     def __init__(self,
-        normalize:np.ndarray=None,
         score_decimals:int=2,
-        cmap:Union[str,mcolors.Colormap]=None,
+        cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         subplots_kwargs:dict=None,
         fig_kwargs:dict=None,
         verbose:int=0,
         ) -> None:
 
-        self.normalize      = normalize
         self.score_decimals = score_decimals
         if cmap is None:    self.cmap = 'nipy_spectral'
         else:               self.cmap = cmap
+        self.vmin       = vmin
+        self.vmax       = vmin
+        self.vcenter    = vcenter
         if subplots_kwargs is None: self.subplots_kwargs = dict(sharex='all', sharey='all')
         if fig_kwargs is None:      self.fig_kwargs = dict(figsize=(9,9))
         
@@ -2632,15 +2660,19 @@ class MultiConfusionMatrix:
         
         return
 
+    def __repr__(self):
+
+        return
+
     def plot_bar(self,
         ax:plt.Axes,
         score:np.ndarray,
-        m_labels:Union[list,Literal['score']], score_decimals:int,
-        cmap:Union[str,mcolors.Colormap],
+        m_labels:Union[list,Literal['score']]=None, score_decimals:int=None,
+        cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         ) -> None:
         """
             - method to create a bar-plot in one panel (`ax`)
-            - i.e. confusion matrix cell of one class-combination
+                - i.e. confusion matrix cell of one class-combination
 
             Parameters
             ----------
@@ -2651,17 +2683,48 @@ class MultiConfusionMatrix:
                     - np.ndarray
                     - scores of one class-combination for all models
                 - `m_labels`
-                    - list, Literal['score']
-                    - labels to show for each created bar (model)
+                    - np.ndarray, Literal['score'], optional
+                    - labels to show for the different models (entries in `score`)
                     - if `'score'` is passed
-                        - will show the respective models score for tha combination of classes
+                        - will show the respective model's (normalized) score                    
+                    - the default is `None`
+                        - no labels shown
                 - `score_decimals`
-                    - int
-                    - number of decimals to round `score` to when displaying
+                    - int, optional
+                    - number of decimals to round each model's `score` to when displaying
                     - only relevant if `m_labels == 'score'`
+                    - overrides `self.score_decimals` 
+                    - the default is `None`
+                        - will fall back to `self.score_decimals`
                 - `cmap`
-                    - str, mcolors.Colormap
+                    - str, mcolors.Colormap, optional
                     - colormap to use for coloring the different models
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
+                - `vmin`
+                    - float, optional
+                    - minimum value of the colormapping
+                    - used in scaling the colormap
+                    - overrides `self.vmin`
+                    - the default is `None`
+                        - will fall back to `self.vmin`
+                - `vmax`
+                    - float, optional
+                    - maximum value of the colormapping
+                    - used in scaling the colormap
+                    - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                    - overrides `self.vmax`
+                    - the default is `None`
+                        - will fall back to `self.vmax`
+                - `vcenter`
+                    - float, optional
+                    - center value of the colormapping
+                    - used in scaling the colormap
+                    - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                    - overrides `self.vcenter`
+                    - the default is `None`
+                        - will fall back to `self.vcenter`
 
             Raises
             ------
@@ -2678,10 +2741,11 @@ class MultiConfusionMatrix:
         #default parameters
         if m_labels == 'score': m_labels = score
         elif isinstance(m_labels, (list, np.ndarray)): m_labels = m_labels
+        elif m_labels is None:  m_labels = []
         else: raise TypeError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
 
         #generate colors for the bars
-        colors = generate_colors(len(score)+1, cmap=cmap)
+        colors = generate_colors(len(score)+1, vmin, vmax, vcenter, cmap=cmap)
         
         #create barplor
         bars = ax.barh(
@@ -2704,37 +2768,124 @@ class MultiConfusionMatrix:
 
         return
 
-    def plot(self,
+    def plot_single_model(self,
         y_true:np.ndarray, y_pred:np.ndarray,
-        labels:np.ndarray=None, m_labels:np.ndarray=None, score_decimals:int=None,
-        sample_weight:np.ndarray=None,
-        normalize:np.ndarray=None,
-        cmap:Union[str,mcolors.Colormap]=None,
+        labels:np.ndarray, score_decimals:int,
+        cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
+        ):
+
+        return
+
+    def plot_multimodel(self,
+        confmats:np.ndarray,
+        labels:np.ndarray=None, m_labels:Union[np.ndarray,Literal['score']]=None, score_decimals:int=None,
+        cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         subplots_kwargs:dict=None,
         fig_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
-            - method to produce the confusion-matrix plot
+            - method to produce the confusion-matrix plot containing results of multiple models
+
+            Parameters
+            ----------
+                - `confmats`
+                    - np.ndarray
+                    - array containing confusion matrices for the models
+                    - has to be of shape `(nmodels, nclasses, nclasses)`
+                - `labels`
+                    - np.ndarray, optional
+                    - labels to display for different classes present in `y_true` and `y_pred`
+                    - will assign labels in ascending orders for the values present in `y_true` and `y_pred`
+                    - the default is `None`
+                        - will generate labels using `np.arange(confmats.shape[-1])`
+                - `m_labels`
+                    - np.ndarray, Literal['score'], optional
+                    - labels to show for the different models (axis 1 of `y_true` and `y_pred`)
+                    - if `'score'` is passed
+                        - will show the respective model's (normalized) score                    
+                    - the default is `None`
+                        - no labels shown
+                - `score_decimals`
+                    - int, optional
+                    - number of decimals to round each model's `score` to when displaying
+                    - only relevant if `m_labels == 'score'`
+                    - overrides `self.score_decimals` 
+                    - the default is `None`
+                        - will fall back to `self.score_decimals`
+                - `cmap`
+                    - str, mcolors.Colormap, optional
+                    - colormap to use for coloring the different models
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
+                - `vmin`
+                    - float, optional
+                    - minimum value of the colormapping
+                    - used in scaling the colormap
+                    - overrides `self.vmin`
+                    - the default is `None`
+                        - will fall back to `self.vmin`
+                - `vmax`
+                    - float, optional
+                    - maximum value of the colormapping
+                    - used in scaling the colormap
+                    - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                    - overrides `self.vmax`
+                    - the default is `None`
+                        - will fall back to `self.vmax`
+                - `vcenter`
+                    - float, optional
+                    - center value of the colormapping
+                    - used in scaling the colormap
+                    - argument of `astroLuSt.visualization.plotting.generate_colors()`
+                    - overrides `self.vcenter`
+                    - the default is `None`
+                        - will fall back to `self.vcenter`
+                - `subplots_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `plt.subplots()`
+                    - overrides `self.subplots_kwargs`
+                    - the default is `None`
+                        - will fall back to `self.subplots_kwargs`
+                - `fig_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `plt.figure()`
+                    - overrides `self.fig_kwargs`
+                    - the default is `None`
+                        - will fall back to `self.fig_kwargs`
+                        
+            Raises
+            ------
+                - `ValueError`
+                    - if the length of `labels` is to low
+                        - i.e. less than the unique elements in the combined set of `y_true` and `y_pred`
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created matplotlib figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
+                
         """
 
         #default parameters
         if m_labels is None:        m_labels        = []
-        if normalize is None:       normalize       = self.normalize
         if score_decimals is None:  score_decimals  = self.score_decimals
         if cmap is None:            cmap            = self.cmap
         if subplots_kwargs is None: subplots_kwargs = self.subplots_kwargs
         if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
 
-        unique_classes = np.unique([y_true, y_pred])
-        nrowscols = np.max([unique_classes.shape[0], unique_classes.shape[0]])
-        if labels is None: labels = unique_classes
-
-
+        nrowscols = confmats.shape[-1]
+        if labels is None: labels                   = np.arange(nrowscols)
         #catch errors
         if len(labels) < nrowscols: raise ValueError(f'`labels` has to be at least of length equal to the number of unique classes in `y_true` and `y_pred` ({nrowscols}) but has length {len(labels)}!')
 
-        #get confusion matrices for all models (Transpose because sklearn.metric.confusion_matrix is inversely defined to this method)
-        confmats = np.array([confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight).T for yt, yp in zip(y_true.T, y_pred.T)])
 
         #plotting
         fig, axs = plt.subplots(
@@ -2750,7 +2901,7 @@ class MultiConfusionMatrix:
                 self.plot_bar(
                     ax=axs[row,col],
                     score=confmats[:,row,col], m_labels=m_labels, score_decimals=score_decimals,
-                    cmap=cmap,
+                    cmap=cmap, vmin=vmin, vmax=vmax, vcenter=vcenter,
                 )
 
                 #set axis labels
@@ -2766,6 +2917,121 @@ class MultiConfusionMatrix:
         plt.tight_layout()
 
         axs = fig.axes
+
+        return fig, axs
+
+    def plot(self,
+        y_true:np.ndarray=None, y_pred:np.ndarray=None,
+        confmats:np.ndarray=None,
+        labels:np.ndarray=None,
+        sample_weight:np.ndarray=None,
+        normalize:Literal['true','pred','all']=None,
+        plot_multimodel_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to produce the plot
+
+            Parameters
+            ----------
+                - `y_true`
+                    - np.ndarray, optional
+                    - ground truth labels
+                    - has to be 2d
+                        - `shape = (nsamples,nmodels)`
+                    - the default is `None`
+                        - will use `confmats` instead of `y_true` and `y_pred`
+                - `y_pred`
+                    - np.ndarray, optional
+                    - model predictions
+                    - has to be 2d
+                        - `shape = (nsamples,nmodels)`
+                    - the default is `None`
+                        - will use `confmats` instead of `y_true` and `y_pred`
+                - `confmats`
+                    - np.ndarray, optional
+                    - array containing confusion matrices for the models
+                    - has to be of shape `(nmodels, nclasses, nclasses)`            
+                    - if `y_true` and `y_pred` are also not None
+                        - will use `y_true` and `y_pred` instead
+                    - the default is `None`
+                        - will use `y_true` and `y_pred` instead
+                - `labels`
+                    - np.ndarray, optional
+                    - labels to display for different classes present in `y_true` and `y_pred`
+                    - will assign labels in ascending orders for the values present in `y_true` and `y_pred`
+                    - the default is `None`
+                        - will autogenerate labels
+                            - will use the unique values present in `y_true` and `y_pred` if both are not `None`
+                            - will use `np.arange(confmats.shape[-1])` if `y_true` and `y_pred` are both `None`
+                - `sample_weight`
+                    - np.ndarray, optional
+                    - sample weights to use in `sklearn.metrics.confusion_matrix()`
+                    - the default is `None`
+                - `normalize`
+                    -  Literal['true','pred','all'], optinonal
+                    - how to normalize the confusion matrix
+                    - if `'true'` is passed
+                        - normalize w.r.t. `y_true`
+                    - if `'pred'` is passed
+                        - normalize w.r.t. `y_pred`
+                    - if `'all'` is passed
+                        - normalize w.r.t. all confusion matrix cells
+                    - will be passed to `sklearn.metrics.confusion_matrix()`
+                    - the default is `None`
+                        - no normalization
+                - `plot_multimodel_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.plot_multimodel_kwargs()`
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+                - `ValueError`
+                    - if not `y_true`, `y_pred`, and `confmats` are all `None`
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created matplotlib figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+
+            Comments
+            --------            
+        
+        """
+        
+        #default values
+        if plot_multimodel_kwargs is None:  plot_multimodel_kwargs  = dict()
+
+        #get confusion matrices for all models (Transpose because sklearn.metric.confusion_matrix is inversely defined to this method)
+        #initialize labels
+        if y_true is not None and y_pred is not None:
+            if labels is None: labels = np.unique([y_true, y_pred])
+            confmats = np.array([confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight).T for yt, yp in zip(y_true.T, y_pred.T)])
+        elif y_true is None or y_pred is None and confmats is not None:
+            if labels is None: labels = np.arange(confmats.shape[-1])
+            confmats = confmats
+        else:
+            raise ValueError(f'Either `y_true` and `y_pred` have to be not `None` or `confmats` has to be not `None`, but all are `None`!')
+        
+        #reshape confmats if wrong shape has been passed
+        if len(confmats.shape) != 3:
+            confmats = confmats.reshape(1, *confmats.shape)
+
+        #check if all shapes are correct
+        if confmats.shape[1] != confmats.shape[2]: raise ValueError(f'Confusion matrices have to be square matrices but `confmats` has shape {confmats.shape}')
+
+
+        #create plots
+        fig, axs = self.plot_multimodel(
+            confmats=confmats,
+            labels=labels,
+            **plot_multimodel_kwargs
+        )
 
         return fig, axs
 
