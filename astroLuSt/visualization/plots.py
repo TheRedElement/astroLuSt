@@ -2688,7 +2688,7 @@ class MultiConfusionMatrix:
         )
 
     def __pad(self,
-        y_true:np.ndarray, y_pred:np.ndarray,
+        y_true:Union[np.ndarray,list], y_pred:Union[np.ndarray,list],
         ) -> Tuple[np.ndarray,np.ndarray]:
         """
             - private method to pad all arrays in `y_true` and `y_pred` to have the same length
@@ -2696,7 +2696,7 @@ class MultiConfusionMatrix:
             Parameters
             ----------
                 - `y_true`
-                    - np.ndarray, optional
+                    - np.ndarray, list, optional
                     - ground truth labels
                     - has to be 2d
                         - `shape = (nmodels,nsampels)`
@@ -2731,8 +2731,8 @@ class MultiConfusionMatrix:
         
         maxlen = np.max(np.array([[len(yt),len(yp)] for yt, yp in zip(y_true, y_pred)]))
 
-        y_true_pad = np.full((y_true.shape[0], maxlen), np.nan, dtype=np.float64)
-        y_pred_pad = np.full((y_pred.shape[0], maxlen), np.nan, dtype=np.float64)
+        y_true_pad = np.full((len(y_true), maxlen), np.nan, dtype=np.float64)
+        y_pred_pad = np.full((len(y_pred), maxlen), np.nan, dtype=np.float64)
         for idx, (yt, yp) in enumerate(zip(y_true, y_pred)):
             y_true_pad[idx, :yt.shape[0]] = yt
             y_pred_pad[idx, :yp.shape[0]] = yp
@@ -3110,7 +3110,7 @@ class MultiConfusionMatrix:
         return fig, axs
 
     def plot(self,
-        y_true:np.ndarray=None, y_pred:np.ndarray=None,
+        y_true:Union[np.ndarray,list], y_pred:Union[np.ndarray,list],
         confmats:np.ndarray=None,
         labels:np.ndarray=None,
         sample_weight:np.ndarray=None,
@@ -3125,7 +3125,7 @@ class MultiConfusionMatrix:
             Parameters
             ----------
                 - `y_true`
-                    - np.ndarray, optional
+                    - np.ndarray, list, optional
                     - ground truth labels
                     - has to be 2d
                         - `shape = (nmodels,nsampels)`
@@ -3133,7 +3133,7 @@ class MultiConfusionMatrix:
                     - the default is `None`
                         - will use `confmats` instead of `y_true` and `y_pred`
                 - `y_pred`
-                    - np.ndarray, optional
+                    - np.ndarray, list, optional
                     - model predictions
                     - has to be 2d
                         - `shape = (nmodels,nsamples)`
@@ -3223,17 +3223,22 @@ class MultiConfusionMatrix:
         #initialize labels
         if y_true is not None and y_pred is not None:
 
-            #pad if necessary
+            #pad if 2d and necessary
             try:
-                _ = y_true[0], y_pred[0]
+                _ = y_true[0][0], y_pred[0][0]      #check if 2d
                 y_true, y_pred = self.__pad(y_true=y_true, y_pred=y_pred)
             except:
+                #make sure y_true and y_pred have the same length
                 if len(y_true) != len(y_pred):
                     raise ValueError(
                         f'If `y_true` and `y_pred` are 1d, they have to have the same lengths but have {len(y_true)} and {len(y_pred)}!'
                     )
-            else:
-                pass
+                else:
+                    pass
+
+            #convert to numpy array
+            y_true = np.array(y_true)
+            y_pred = np.array(y_pred)
             
             #check if 1d array was passed
             if len(y_true.shape) < 2:
