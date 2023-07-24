@@ -2659,7 +2659,6 @@ class MultiConfusionMatrix:
     def __init__(self,
         score_decimals:int=2,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
-        subplots_kwargs:dict=None,
         verbose:int=0,
         fig_kwargs:dict=None,
         ) -> None:
@@ -2796,7 +2795,7 @@ class MultiConfusionMatrix:
         labels:np.ndarray=None, score_decimals:int=None,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None,
         fig_kwargs:dict=None,
-        imshow_kwargs:dict=None,
+        pcolormesh_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
             - method to produce classic confusion matrix
@@ -2850,9 +2849,9 @@ class MultiConfusionMatrix:
                     - overrides `self.fig_kwargs`
                     - the default is `None`
                         - will fall back to `self.fig_kwargs`
-                - `imshow_kwargs`
+                - `pcolormesh_kwargs`
                     - dict, optional
-                    - kwargs to pass to `ax.imshow()`
+                    - kwargs to pass to `ax.pcolormesh()`
                     - the default is `None`
                         - will be set to `dict()`
 
@@ -2872,10 +2871,10 @@ class MultiConfusionMatrix:
             --------
         """
 
-        if cmap is None:            cmap            = self.cmap
-        if score_decimals is None:  score_decimals  = self.score_decimals
-        if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
-        if imshow_kwargs is None:   imshow_kwargs   = dict()
+        if cmap is None:                cmap                = self.cmap
+        if score_decimals is None:      score_decimals      = self.score_decimals
+        if fig_kwargs is None:          fig_kwargs          = self.fig_kwargs
+        if pcolormesh_kwargs is None:   pcolormesh_kwargs   = dict()
 
         #generate colors for cell text
         colors = generate_colors(confmat.shape[-1], vmin=vmin, vmax=vmax, cmap=cmap)
@@ -2888,7 +2887,7 @@ class MultiConfusionMatrix:
         ax1 = fig.add_subplot(111)
 
         #plot confmat
-        mesh = ax1.pcolormesh(x, x, confmat, cmap=cmap, vmin=vmin, vmax=vmax, **imshow_kwargs)
+        mesh = ax1.pcolormesh(x, x, confmat, cmap=cmap, vmin=vmin, vmax=vmax, **pcolormesh_kwargs)
 
         #add text
         for row in x:
