@@ -2639,6 +2639,7 @@ class MultiConfusionMatrix:
 
         Methods
         -------
+            -`__pad()`
             - `plot_bar()`
             - `plot_singlemodel()`
             - `plot_multimodel()`
@@ -2685,6 +2686,59 @@ class MultiConfusionMatrix:
             f'    fig_kwargs={repr(self.fig_kwargs)},\n'
             f')'
         )
+
+    def __pad(self,
+        y_true:np.ndarray, y_pred:np.ndarray,
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - private method to pad all arrays in `y_true` and `y_pred` to have the same length
+
+            Parameters
+            ----------
+                - `y_true`
+                    - np.ndarray, optional
+                    - ground truth labels
+                    - has to be 2d
+                        - `shape = (nmodels,nsampels)`
+                        - `nsamples` can vary by model
+                    - the default is `None`
+                        - will use `confmats` instead of `y_true` and `y_pred`
+                - `y_pred`
+                    - np.ndarray, optional
+                    - model predictions
+                    - has to be 2d
+                        - `shape = (nmodels,nsamples)`
+                        - `nsamples` can vary by model
+                    - the default is `None`
+                        - will use `confmats` instead of `y_true` and `y_pred`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `y_true_pad`
+                    - np.ndarray, optional
+                    - padded version of `y_true`
+                - `y_pred_pad`
+                    - np.ndarray, optional
+                    - padded version of `y_pred`            
+
+            Comments
+            --------
+                - 
+        """
+        
+        maxlen = np.max(np.array([[len(yt),len(yp)] for yt, yp in zip(y_true, y_pred)]))
+
+        y_true_pad = np.full((y_true.shape[0], maxlen), np.nan, dtype=np.float64)
+        y_pred_pad = np.full((y_pred.shape[0], maxlen), np.nan, dtype=np.float64)
+        for idx, (yt, yp) in enumerate(zip(y_true, y_pred)):
+            y_true_pad[idx, :yt.shape[0]] = yt
+            y_pred_pad[idx, :yp.shape[0]] = yp
+        
+        return y_true_pad, y_pred_pad
+    
 
     def plot_bar(self,
         ax:plt.Axes,
@@ -3074,14 +3128,16 @@ class MultiConfusionMatrix:
                     - np.ndarray, optional
                     - ground truth labels
                     - has to be 2d
-                        - `shape = (nsamples,nmodels)`
+                        - `shape = (nmodels,nsampels)`
+                        - `nsamples` can vary by model
                     - the default is `None`
                         - will use `confmats` instead of `y_true` and `y_pred`
                 - `y_pred`
                     - np.ndarray, optional
                     - model predictions
                     - has to be 2d
-                        - `shape = (nsamples,nmodels)`
+                        - `shape = (nmodels,nsamples)`
+                        - `nsamples` can vary by model
                     - the default is `None`
                         - will use `confmats` instead of `y_true` and `y_pred`
                 - `confmats`
@@ -3142,7 +3198,8 @@ class MultiConfusionMatrix:
             Raises
             ------
                 - `ValueError`
-                    - if not `y_true`, `y_pred`, and `confmats` are all `None`
+                    - if `y_true`, `y_pred`, and `confmats` are all `None`
+                    - if `y_true` and `y_pred` have a different amount of dimensions 
 
             Returns
             -------
@@ -3165,20 +3222,40 @@ class MultiConfusionMatrix:
         #get confusion matrices for all models (Transpose because sklearn.metric.confusion_matrix is inversely defined to this method)
         #initialize labels
         if y_true is not None and y_pred is not None:
+
+            #pad if necessary
+            try:
+                _ = y_true[0], y_pred[0]
+                y_true, y_pred = self.__pad(y_true=y_true, y_pred=y_pred)
+            except:
+                if len(y_true) != len(y_pred):
+                    raise ValueError(
+                        f'If `y_true` and `y_pred` are 1d, they have to have the same lengths but have {len(y_true)} and {len(y_pred)}!'
+                    )
+            else:
+                pass
+            
+            #check if 1d array was passed
             if len(y_true.shape) < 2:
-                y_true = y_true.reshape(-1,1)
+                y_true = y_true.reshape(1,-1)
                 warnings.warn(message=(
                     f'`y_true` has to be two dimensional but has shape {y_true.shape}!\n'
-                    f'    Called `y_true.reshape(-1,1)`. Therefore you might not get the expected result.'
+                    f'    Called `y_true.reshape(1,-1)`. Therefore you might not get the expected result.'
                 ))
             if len(y_pred.shape) < 2:
-                y_pred = y_pred.reshape(-1,1)
+                y_pred = y_pred.reshape(1,-1)
                 warnings.warn(message=(
                     f'`y_pred` has to be two dimensional but has shape {y_pred.shape}!'
-                    f'    Called `y_pred.reshape(-1,1)`. Therefore you might not get the expected result.'
+                    f'    Called `y_pred.reshape(1,-1)`. Therefore you might not get the expected result.'
                 ))
+
             if labels is None: labels = np.unique([y_true, y_pred])
-            confmats = np.array([confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight).T for yt, yp in zip(y_true.T, y_pred.T)])
+            
+            #filter out padded values (np.nan, np.inf, -np.inf)
+            finite_bools = np.array([(np.isfinite(yt)&np.isfinite(yp)) for yt, yp in zip(y_true, y_pred)])
+
+            #generate confusion matrices
+            confmats = np.array([confusion_matrix(y_true=yt[fb], y_pred=yp[fb], normalize=normalize, sample_weight=sample_weight).T for yt, yp, fb in zip(y_true, y_pred, finite_bools)])
         elif y_true is None or y_pred is None and confmats is not None:
             if labels is None: labels = np.arange(confmats.shape[-1])
             confmats = confmats
