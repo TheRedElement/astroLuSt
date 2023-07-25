@@ -2604,6 +2604,24 @@ class MultiConfusionMatrix:
                 - number of decimals to round `score` to when displaying
                 - only relevant if `m_labels == 'score'`
                 - the default is 2
+            - `text_colors` 
+                - str, tuple, list, optional
+                - colors to use for displaying
+                    - model/bar labels in `plot_func='multi'`
+                    - cell-values in `plot_func='single'`
+                - if str
+                    - will use that color for all bars/cells
+                - if tuple
+                    - has to be RGBA tuple
+                    - will use that color for all bars/cells
+                - if list
+                    - for `plot_func='multi'`
+                        - will use entry 0 for bar 0, entry 1 for bar 1 ect.
+                    - for `plot_func='single'`
+                        - length has to be equal to `confmat.size`
+                        - will display colors from top-left to bottom right (in reading direction)                    
+                - the default is `None`
+                    - will autogenerate colors
             - `cmap`
                 - str, mcolors.Colormap, optional
                 - colormap to use for coloring the different models
@@ -2909,7 +2927,8 @@ class MultiConfusionMatrix:
                         - has to be RGBA tuple
                         - will use that color for all cells
                     - list
-                        - CURRENTLY NOT SUPPORTED
+                        - length has to be equal to `confmat.size`
+                        - will display colors from top-left to bottom right (in reading direction)                    
                     - overwrites `self.text_colors`
                     - the default is `None`
                         - will fall back to `self.text_colors`
@@ -2978,13 +2997,14 @@ class MultiConfusionMatrix:
             idxs = np.argsort(confmat.flatten())[::-1]
             text_colors[idxs] = colors
             text_colors = text_colors.reshape(-1,confmat.shape[-1],4)
-        if isinstance(text_colors, str):
+        elif isinstance(text_colors, str):
             text_colors = np.full(confmat.shape, text_colors)
         elif isinstance(text_colors, tuple):
             text_colors = np.full((*confmat.shape,4), text_colors)
         else:
             assert len(text_colors) == confmat.size, f'the length of `text_colors` has to be equal to `confmat.size`!'
-            text_colors = np.array(text_colors).reshape(*confmat.shape,-1)
+            text_colors = np.array(text_colors)
+            text_colors = text_colors.reshape(*confmat.shape,-1)
 
 
         #coordinates for plotting
