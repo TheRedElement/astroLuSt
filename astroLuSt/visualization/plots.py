@@ -2815,7 +2815,7 @@ class MultiConfusionMatrix:
         """
 
         #default parameters
-        if m_labels == 'score': m_labels = score
+        if m_labels == 'score': m_labels = np.round(score, score_decimals)
         elif isinstance(m_labels, (list, np.ndarray)): m_labels = m_labels
         elif m_labels is None:  m_labels = []
         else: raise TypeError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
@@ -2835,7 +2835,7 @@ class MultiConfusionMatrix:
             else:                   sc = colors[0]
             ax.text(
                 x=0.01*max(ax.get_xlim()), y=b.get_y()+b.get_height()/2,
-                s=np.round(mlab, score_decimals),
+                s=mlab,
                 c=sc, va='center',
                 # backgroundcolor='w'
             )
