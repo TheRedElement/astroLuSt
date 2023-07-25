@@ -2659,12 +2659,14 @@ class MultiConfusionMatrix:
 
     def __init__(self,
         score_decimals:int=2,
+        text_colors:Union[str,tuple,list]=None,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         verbose:int=0,
         fig_kwargs:dict=None,
         ) -> None:
 
         self.score_decimals = score_decimals
+        self.text_colors    = text_colors
         if cmap is None:        self.cmap       = 'nipy_spectral'
         else:                   self.cmap       = cmap
         self.vmin       = vmin
@@ -2744,6 +2746,7 @@ class MultiConfusionMatrix:
         ax:plt.Axes,
         score:np.ndarray,
         m_labels:Union[list,Literal['score']]=None, score_decimals:int=None,
+        text_colors:Union[str,tuple,list]=None,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         ) -> None:
         """
@@ -2772,6 +2775,20 @@ class MultiConfusionMatrix:
                     - overrides `self.score_decimals` 
                     - the default is `None`
                         - will fall back to `self.score_decimals`
+                - `text_colors` 
+                    - str, tuple, list, optional
+                    - colors to use for displaying model/bar labels
+                    - if str
+                        - will use that color for all bars
+                    - if tuple
+                        - has to be RGBA tuple
+                        - will use that color for all bars
+                    - if list
+                        - will use entry 0 for bar 0, entry 1 for bar 1 ect.
+                    - the default is `None`
+                        - will autogenerate colors
+                        - will use the the last color of `cmap` for the first half of the bars
+                        - will use the the first color of `cmap` for the bottom half of the bars
                 - `cmap`
                     - str, mcolors.Colormap, optional
                     - colormap to use for coloring the different models
@@ -2820,8 +2837,16 @@ class MultiConfusionMatrix:
         elif m_labels is None:  m_labels = []
         else: raise TypeError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
 
-        #generate colors for the bars
+        #generate colors for the bars and text (m_labels)
         colors = generate_colors(len(score)+1, vmin, vmax, vcenter, cmap=cmap)
+        
+        if text_colors is None:
+            text_colors = colors.copy()
+            text_colors[:len(text_colors)//2] = colors[-1]
+            text_colors[len(text_colors)//2:] = colors[0]
+        elif isinstance(text_colors, (str, tuple)):
+            text_colors = [text_colors]*score.shape[0]
+
         
         #create barplor
         bars = ax.barh(
@@ -2830,13 +2855,11 @@ class MultiConfusionMatrix:
         )
 
         #add model labels if desired
-        for idx, (b, c, mlab) in enumerate(zip(bars, colors[::-1], m_labels)):
-            if idx < len(bars)/2:   sc = colors[-1]
-            else:                   sc = colors[0]
+        for idx, (b, mlab, tc) in enumerate(zip(bars, m_labels, text_colors)):
             ax.text(
                 x=0.01*max(ax.get_xlim()), y=b.get_y()+b.get_height()/2,
                 s=mlab,
-                c=sc, va='center',
+                c=tc, va='center',
                 # backgroundcolor='w'
             )
         
@@ -2847,6 +2870,7 @@ class MultiConfusionMatrix:
     def plot_singlemodel(self,
         confmat:np.ndarray,
         labels:np.ndarray=None, score_decimals:int=None,
+        text_colors:Union[str,tuple,list]=None,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None,
         fig_kwargs:dict=None,
         pcolormesh_kwargs:dict=None,
@@ -2876,6 +2900,21 @@ class MultiConfusionMatrix:
                     - overrides `self.score_decimals` 
                     - the default is `None`
                         - will fall back to `self.score_decimals`
+                - `text_colors` 
+                    - str, tuple, list, optional
+                    - colors to use displaying text in each cell
+                    - if str
+                        - will use that color for all cells
+                    - if tuple
+                        - has to be RGBA tuple
+                        - will use that color for all cells
+                    - list
+                        - CURRENTLY NOT SUPPORTED
+                    - overwrites `self.text_colors`
+                    - the default is `None`
+                        - will fall back to `self.text_colors`
+                        - will autogenerate colors
+                            - inverse to cmap
                 - `cmap`
                     - str, mcolors.Colormap, optional
                     - colormap to use for coloring the different models
@@ -2925,13 +2964,28 @@ class MultiConfusionMatrix:
             --------
         """
 
+        if text_colors is None:         text_colors         = self.text_colors
         if cmap is None:                cmap                = self.cmap
         if score_decimals is None:      score_decimals      = self.score_decimals
         if fig_kwargs is None:          fig_kwargs          = self.fig_kwargs
         if pcolormesh_kwargs is None:   pcolormesh_kwargs   = dict()
 
         #generate colors for cell text
-        colors = generate_colors(confmat.shape[-1], vmin=vmin, vmax=vmax, cmap=cmap)
+        colors = generate_colors(confmat.size, vmin=vmin, vmax=vmax, cmap=cmap)
+
+        if text_colors is None:
+            text_colors = np.empty_like(colors)
+            idxs = np.argsort(confmat.flatten())[::-1]
+            text_colors[idxs] = colors
+            text_colors = text_colors.reshape(-1,confmat.shape[-1],4)
+        if isinstance(text_colors, str):
+            text_colors = np.full(confmat.shape, text_colors)
+        elif isinstance(text_colors, tuple):
+            text_colors = np.full((*confmat.shape,4), text_colors)
+        else:
+            assert len(text_colors) == confmat.size, f'the length of `text_colors` has to be equal to `confmat.size`!'
+            text_colors = np.array(text_colors).reshape(*confmat.shape,-1)
+
 
         #coordinates for plotting
         x = np.arange(confmat.shape[-1])
@@ -2946,8 +3000,11 @@ class MultiConfusionMatrix:
         #add text
         for row in x:
             for col in x:
-                if confmat[row,col] < confmat.max()/2:  c = colors[-1]
-                else:                                   c = colors[0]
+                c = text_colors[row, col]
+                if isinstance(c[0], str):
+                    c = c[0]
+                else:
+                    c = c
                 ax1.text(
                     x=x[col], y=x[row],
                     s=np.round(confmat[row,col], score_decimals),
@@ -2969,6 +3026,7 @@ class MultiConfusionMatrix:
     def plot_multimodel(self,
         confmats:np.ndarray,
         labels:np.ndarray=None, m_labels:Union[np.ndarray,Literal['score']]=None, score_decimals:int=None,
+        text_colors:Union[str,tuple,list]=None,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         subplots_kwargs:dict=None,
         fig_kwargs:dict=None,
@@ -3002,6 +3060,19 @@ class MultiConfusionMatrix:
                     - overrides `self.score_decimals` 
                     - the default is `None`
                         - will fall back to `self.score_decimals`
+                - `text_colors` 
+                    - str, tuple, list, optional
+                    - colors to use for displaying model/bar labels
+                    - if str
+                        - will use that color for all bars
+                    - if tuple
+                        - has to be RGBA tuple
+                        - will use that color for all bars
+                    - if list
+                        - will use entry 0 for bar 0, entry 1 for bar 1 ect.
+                    - overwrites `self.text_colors`
+                    - the default is `None`
+                        - will fall back to `self.text_colors`
                 - `cmap`
                     - str, mcolors.Colormap, optional
                     - colormap to use for coloring the different models
@@ -3066,6 +3137,7 @@ class MultiConfusionMatrix:
         #default parameters
         if m_labels is None:        m_labels        = []
         if score_decimals is None:  score_decimals  = self.score_decimals
+        if text_colors is None:     text_colors     = self.text_colors
         if cmap is None:            cmap            = self.cmap
         if subplots_kwargs is None: subplots_kwargs = dict(sharex='all', sharey='all')
         if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
@@ -3090,6 +3162,7 @@ class MultiConfusionMatrix:
                 self.plot_bar(
                     ax=axs[row,col],
                     score=confmats[:,row,col], m_labels=m_labels, score_decimals=score_decimals,
+                    text_colors=text_colors,
                     cmap=cmap, vmin=vmin, vmax=vmax, vcenter=vcenter,
                 )
 
