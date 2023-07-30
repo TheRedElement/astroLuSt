@@ -2692,6 +2692,7 @@ class MultiConfusionMatrix:
         self.vcenter    = vcenter
         self.verbose    = verbose
         if fig_kwargs is None:  self.fig_kwargs = dict(figsize=(9,9))
+        else:                   self.fig_kwargs = fig_kwargs
         
         
         return
