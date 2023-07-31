@@ -99,3 +99,58 @@ def generate_colors(classes:Union[list,np.ndarray],
     colors = colors(divnorm(np.unique(classes_int)))
     return colors
 
+def generate_categorical_cmap(
+    colors:Union[list,tuple], res:int=256
+    ) -> mcolors.ListedColormap:
+    """
+        - function to generate a custom (categorical) colormap by passing a list of colors
+
+        Parameters
+        ----------
+            - `colors`
+                - list, tuple
+                - colors to use for values in ascending order
+                - will assign each entry (color) to `res//len(colors)` values in the colormap
+                - can contain strings or RGBA tuples
+                    - strings have to be named colors
+            - `res`
+                - int, optional
+                - resolution of the colormap
+                - has to be larger than `len(colors)` to get a good result
+                - the default is 256
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - `cmap`
+                - mcolors.ListedColormap
+                - generated colormap
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+
+        Comments
+        --------
+
+    """
+
+    #create custom color map
+
+    #divide 
+    npercolor = res//(len(colors))
+
+    #template colormap
+    viridis = plt.cm.get_cmap('viridis', res)
+    custom_colors = viridis(np.linspace(0, 1, res))
+    for idx, c in enumerate(colors):
+        #convert to RGBA tuple if named color is passed
+        if isinstance(c, str): c = mcolors.to_rgba(c)
+
+        custom_colors[idx*npercolor:, :] = c
+    cmap = mcolors.ListedColormap(custom_colors)
+
+    return cmap
