@@ -16,8 +16,6 @@ import time
 from typing import Union, Tuple, List, Callable
 import warnings
 
-from astroLuSt.visualization.plotting import generate_colors
-
 
 
 #%%classes
