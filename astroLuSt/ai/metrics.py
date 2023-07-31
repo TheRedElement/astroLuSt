@@ -75,6 +75,11 @@ class MultiConfusionMatrix:
                 - kwargs to pass to `plt.figure()`
                 - the default is `None`
                     - will be set to `dict(figsize=(9,9))`
+            - `text_kwargs`
+                - dict, optional
+                - kwargs to pass to `ax.text()`
+                - the default is `None`
+                    - will be set to `dict()`                
 
         Methods
         -------
@@ -104,6 +109,7 @@ class MultiConfusionMatrix:
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         verbose:int=0,
         fig_kwargs:dict=None,
+        text_kwargs:dict=None,
         ) -> None:
 
         self.score_decimals = score_decimals
@@ -116,7 +122,8 @@ class MultiConfusionMatrix:
         self.verbose    = verbose
         if fig_kwargs is None:  self.fig_kwargs = dict(figsize=(9,9))
         else:                   self.fig_kwargs = fig_kwargs
-        
+        if text_kwargs is None: self.text_kwargs = dict()
+        else:                   self.text_kwargs = text_kwargs
         
         return
 
@@ -325,6 +332,7 @@ class MultiConfusionMatrix:
         m_labels:Union[list,Literal['score']]=None, score_decimals:int=None,
         text_colors:Union[str,tuple,list]=None,
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
+        text_kwargs:dict=None,
         ) -> None:
         """
             - method to create a bar-plot in one panel (`ax`)
@@ -395,6 +403,12 @@ class MultiConfusionMatrix:
                     - overrides `self.vcenter`
                     - the default is `None`
                         - will fall back to `self.vcenter`
+                - `text_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.text()`
+                    - overwrites `self.text_kwargs`
+                    - the default is `None`
+                        - will fall back to `self.text_kwargs`
 
             Raises
             ------
@@ -413,6 +427,7 @@ class MultiConfusionMatrix:
         elif isinstance(m_labels, (list, np.ndarray)): m_labels = m_labels
         elif m_labels is None:  m_labels = []
         else: raise TypeError('`m_labels` has to be either a list, np.ndarray, or `"score"`')
+        if text_kwargs is None: text_kwargs = self.text_kwargs
 
         #generate colors for the bars and text (m_labels)
         colors = generate_colors(len(score)+1, vmin, vmax, vcenter, cmap=cmap)
@@ -437,7 +452,7 @@ class MultiConfusionMatrix:
                 x=0.01*max(ax.get_xlim()), y=b.get_y()+b.get_height()/2,
                 s=mlab,
                 c=tc, va='center',
-                # backgroundcolor='w'
+                **text_kwargs,
             )
         
         ax.grid(visible=True, axis='x')
@@ -609,6 +624,7 @@ class MultiConfusionMatrix:
         cmap:Union[str,mcolors.Colormap]=None, vmin:float=None, vmax:float=None, vcenter:float=None,
         subplots_kwargs:dict=None,
         fig_kwargs:dict=None,
+        text_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
             - method to produce the confusion-matrix plot containing results of multiple models
@@ -692,6 +708,12 @@ class MultiConfusionMatrix:
                     - overrides `self.fig_kwargs`
                     - the default is `None`
                         - will fall back to `self.fig_kwargs`
+                - `text_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.text()`
+                    - overwrites `self.text_kwargs`
+                    - the default is `None`
+                        - will fall back to `self.text_kwargs`
                         
             Raises
             ------
@@ -720,6 +742,7 @@ class MultiConfusionMatrix:
         if cmap is None:            cmap            = self.cmap
         if subplots_kwargs is None: subplots_kwargs = dict(sharex='all', sharey='all')
         if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
+        if text_kwargs is None:     text_kwargs     = self.text_kwargs
 
         nrowscols = confmats.shape[-1]
         if labels is None: labels                   = np.arange(nrowscols)
@@ -743,6 +766,7 @@ class MultiConfusionMatrix:
                     score=confmats[:,row,col], m_labels=m_labels, score_decimals=score_decimals,
                     text_colors=text_colors,
                     cmap=cmap, vmin=vmin, vmax=vmax, vcenter=vcenter,
+                    text_kwargs=text_kwargs
                 )
 
                 #set axis labels
