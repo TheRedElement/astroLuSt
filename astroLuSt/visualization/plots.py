@@ -12,7 +12,7 @@ import re
 from scipy.interpolate import interp1d
 from scipy import stats
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import time
 from typing import Union, Tuple, List, Callable, Literal
 import warnings
@@ -2596,7 +2596,6 @@ class MultiConfusionMatrix:
         - inspired by the Weights&Biases Parallel-Coordinates plot 
             - https://wandb.ai/wandb/plots/reports/Confusion-Matrix-Usage-and-Examples--VmlldzozMDg1NTM (last access: 2023/07/20)
 
-
         Attributes
         ----------
             - `score_decimals`
@@ -2657,7 +2656,8 @@ class MultiConfusionMatrix:
 
         Methods
         -------
-            -`__pad()`
+            - `__pad()`
+            - `get_multi_confmat()`
             - `plot_bar()`
             - `plot_singlemodel()`
             - `plot_multimodel()`
@@ -2760,6 +2760,141 @@ class MultiConfusionMatrix:
         
         return y_true_pad, y_pred_pad
     
+
+    def get_multi_confmat(self,
+        y_true:Union[np.ndarray,list], y_pred:Union[np.ndarray,list],
+        sample_weight:np.ndarray=None,
+        normalize:Literal['true','pred','all']=None,
+        verbose:int=None,
+        ) -> np.ndarray:
+        """
+            - method to generate a multi-confusion matrix
+
+            Parameters
+            ----------
+                - `y_true`
+                    - np.ndarray, list, optional
+                    - ground truth labels
+                    - has to be 2d
+                        - `shape = (nmodels,nsampels)`
+                        - `nsamples` can vary by model
+                    - the default is `None`
+                        - will use `confmats` instead of `y_true` and `y_pred`
+                - `y_pred`
+                    - np.ndarray, list, optional
+                    - model predictions
+                    - has to be 2d
+                        - `shape = (nmodels,nsamples)`
+                        - `nsamples` can vary by model
+                    - the default is `None`
+                        - will use `confmats` instead of `y_true` and `y_pred`
+                - `sample_weight`
+                    - np.ndarray, optional
+                    - sample weights to use in `sklearn.metrics.confusion_matrix()`
+                    - the default is `None`
+                - `normalize`
+                    -  Literal['true','pred','all'], optinonal
+                    - how to normalize the confusion matrix
+                    - if `'true'` is passed
+                        - normalize w.r.t. `y_true`
+                    - if `'pred'` is passed
+                        - normalize w.r.t. `y_pred`
+                    - if `'all'` is passed
+                        - normalize w.r.t. all confusion matrix cells
+                    - will be passed to `sklearn.metrics.confusion_matrix()`
+                    - the default is `None`
+                        - no normalization
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the deafault is `None`
+                        - will fall back to `self.verbose`
+
+            Raises
+            ------
+                - `ValueError`
+                    - if `y_true` and `y_pred` have a different lengths
+
+            Returns
+            -------
+                - `multi_confmat`
+                    - np.ndarray
+                    - 3d of shape `(nmodels,nclasses,nclasses)`
+                    - multi-confusion-matrix for the ensemble of models
+
+            Comments
+            --------
+        """
+
+        #default parameters
+        if verbose is None: verbose = self.verbose
+
+        #pad if 2d and necessary
+        try:
+            _ = y_true[0][0], y_pred[0][0]      #check if 2d
+            y_true, y_pred = self.__pad(y_true=y_true, y_pred=y_pred)
+        except:
+            #make sure y_true and y_pred have the same length
+            if len(y_true) != len(y_pred):
+                raise ValueError(
+                    f'If `y_true` and `y_pred` are 1d, they have to have the same lengths but have {len(y_true)} and {len(y_pred)}!'
+                )
+            else:
+                pass
+
+        #convert to numpy array (if lists got passed)
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+        
+        #check if 1d array was passed
+        if len(y_true.shape) < 2:
+            y_true = y_true.reshape(1,-1)
+            warnings.warn(message=(
+                f'`y_true` has to be two dimensional but has shape {y_true.shape}!\n'
+                f'    Called `y_true.reshape(1,-1)`. Therefore you might not get the expected result.'
+            ))
+        if len(y_pred.shape) < 2:
+            y_pred = y_pred.reshape(1,-1)
+            warnings.warn(message=(
+                f'`y_pred` has to be two dimensional but has shape {y_pred.shape}!'
+                f'    Called `y_pred.reshape(1,-1)`. Therefore you might not get the expected result.'
+            ))
+
+        #get unique labels
+        uniques = np.unique([y_true,y_pred])
+        uniques = uniques[np.isfinite(uniques)]
+
+        #initialize multi-confusion matrix
+        multi_confmat = np.zeros((len(y_true), len(uniques), len(uniques)))
+
+        #get confusion matrix for each model
+        for midx, (yt, yp) in enumerate(zip(y_true, y_pred)):
+            
+            #remove non-finite values (padded values ect.)
+            finite_bool = (np.isfinite(yt)&np.isfinite(yp))
+            yt = yt[finite_bool]
+            yp = yp[finite_bool]
+            
+            #get mapping of current unique labels to indices
+            c_uniques = np.unique([yt,yp])
+            idx_map = {c:np.where(uniques==c)[0][0] for c in c_uniques}
+            
+            #caluculate confusion matrix for current model (inverse definition to sklearn)
+            cm = confusion_matrix(y_true=yt, y_pred=yp, normalize=normalize, sample_weight=sample_weight).T
+            
+            #include calculated confusion matrix in multi-confusion matrix
+            for iidx, cui in enumerate(c_uniques):
+                for jidx, cuj in enumerate(c_uniques):
+                    multi_confmat[midx, idx_map[cui], idx_map[cuj]] = cm[iidx,jidx]
+            
+            #show resulting matrix
+            if verbose > 3:
+                CMD = ConfusionMatrixDisplay(multi_confmat[midx], display_labels=uniques)
+                CMD.plot()
+                plt.show()
+
+        return multi_confmat
 
     def plot_bar(self,
         ax:plt.Axes,
@@ -3210,6 +3345,7 @@ class MultiConfusionMatrix:
         sample_weight:np.ndarray=None,
         normalize:Literal['true','pred','all']=None,
         plot_func:Literal['multi', 'single', 'auto']='auto',
+        verbose:int=None,
         plot_multimodel_kwargs:dict=None,
         plot_singlemodel_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
@@ -3278,6 +3414,12 @@ class MultiConfusionMatrix:
                         - will plot the first entry of confmats even if multiple are passed
                             - i.e. `confmats[0]`
                     - the default is `auto`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the deafault is `None`
+                        - will fall back to `self.verbose`
                 - `plot_multimodel_kwargs`
                     - dict, optional
                     - kwargs to pass to `self.plot_multimodel()`
@@ -3293,7 +3435,8 @@ class MultiConfusionMatrix:
             ------
                 - `ValueError`
                     - if `y_true`, `y_pred`, and `confmats` are all `None`
-                    - if `y_true` and `y_pred` have a different amount of dimensions 
+                    - if `confmats` is not a square matrix
+                    - if a wrong value is passed as `plot_func`
 
             Returns
             -------
@@ -3316,45 +3459,12 @@ class MultiConfusionMatrix:
         #get confusion matrices for all models (Transpose because sklearn.metric.confusion_matrix is inversely defined to this method)
         #initialize labels
         if y_true is not None and y_pred is not None:
-
-            #pad if 2d and necessary
-            try:
-                _ = y_true[0][0], y_pred[0][0]      #check if 2d
-                y_true, y_pred = self.__pad(y_true=y_true, y_pred=y_pred)
-            except:
-                #make sure y_true and y_pred have the same length
-                if len(y_true) != len(y_pred):
-                    raise ValueError(
-                        f'If `y_true` and `y_pred` are 1d, they have to have the same lengths but have {len(y_true)} and {len(y_pred)}!'
-                    )
-                else:
-                    pass
-
-            #convert to numpy array
-            y_true = np.array(y_true)
-            y_pred = np.array(y_pred)
             
-            #check if 1d array was passed
-            if len(y_true.shape) < 2:
-                y_true = y_true.reshape(1,-1)
-                warnings.warn(message=(
-                    f'`y_true` has to be two dimensional but has shape {y_true.shape}!\n'
-                    f'    Called `y_true.reshape(1,-1)`. Therefore you might not get the expected result.'
-                ))
-            if len(y_pred.shape) < 2:
-                y_pred = y_pred.reshape(1,-1)
-                warnings.warn(message=(
-                    f'`y_pred` has to be two dimensional but has shape {y_pred.shape}!'
-                    f'    Called `y_pred.reshape(1,-1)`. Therefore you might not get the expected result.'
-                ))
+            #generate multi-confusion matrix
+            confmats = self.get_multi_confmat(y_true=y_true, y_pred=y_pred, sample_weight=sample_weight, normalize=normalize, verbose=verbose)
 
             if labels is None: labels = np.unique([y_true, y_pred])
             
-            #filter out padded values (np.nan, np.inf, -np.inf)
-            finite_bools = np.array([(np.isfinite(yt)&np.isfinite(yp)) for yt, yp in zip(y_true, y_pred)])
-
-            #generate confusion matrices
-            confmats = np.array([confusion_matrix(y_true=yt[fb], y_pred=yp[fb], normalize=normalize, sample_weight=sample_weight).T for yt, yp, fb in zip(y_true, y_pred, finite_bools)])
         elif y_true is None or y_pred is None and confmats is not None:
             if labels is None: labels = np.arange(confmats.shape[-1])
             confmats = confmats
