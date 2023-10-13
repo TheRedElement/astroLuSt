@@ -202,25 +202,34 @@ class TPF:
                     - if dict
                         - configurations for the generation of random stars
                         - allowed keys
-                            - `nstars`
+                            - `'nstars'`
                                 - int
                                 - number of stars to generate
-                            - `sizex`
+                            - `'sizex'`
                                 - int
                                 - maximum number of pixels in x direction
-                            - `sizey`
+                            - `'sizey'`
                                 - int
                                 - maximum number of pixels in y direction
-                            - `fmin`
+                            - `'fmin'`
                                 - float
                                 - minimum flux value
-                            - `fmax`
+                            - `'fmax'`
                                 - float
                                 - maximum flux value
-                            - `apmin`
+                            - `'mmin'`
+                                - float
+                                - minimum flux value
+                            - `'mmax'`
+                                - float
+                                - maximum flux value
+                            - `'res'`
+                                - int
+                                - number of fluxes/magnitudes to generate
+                            - `'apmin'`
                                 - float
                                 - minimum aperture size
-                            - `apmax`
+                            - `'apmax'`
                                 - float
                                 - maximum aperture size
                 - `pos`
@@ -262,10 +271,13 @@ class TPF:
             'nstars':1,
             'sizex':self.frame.shape[0],
             'sizey':self.frame.shape[1],
-            'fmin':0,
+            'fmin':1,
             'fmax':100,
+            'mmin':alpp.fluxes2mags(f=100,f_ref=self.f_ref,m_ref=self.m_ref),
+            'mmax':alpp.fluxes2mags(f=1,  f_ref=self.f_ref,m_ref=self.m_ref),
             'apmin':1,
             'apmax':10,
+            'res':100,
         }
         if random == False:
             random_config = default_random_config
@@ -296,8 +308,12 @@ class TPF:
             
             #choose random parameters for stars
             pos         = pos[randidxs]
-            f           = np.random.choice(range(random_config['fmin'],  random_config['fmax'], 1), size=(random_config['nstars']))
             aperture    = np.random.choice(range(random_config['apmin'], random_config['apmax'],1), size=(random_config['nstars']))
+            if self.mode == 'flux':
+                f = np.random.choice(np.linspace(random_config['fmin'],  random_config['fmax'], random_config['res']), size=(random_config['nstars']))
+            elif self.mode == 'mag':
+                m = np.random.choice(np.linspace(random_config['mmin'],  random_config['mmax'], random_config['res']), size=(random_config['nstars']))
+                f = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
 
             #report generated parameters
             if verbose > 2:
