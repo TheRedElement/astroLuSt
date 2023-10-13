@@ -26,6 +26,9 @@ class TPF:
                 - if tuple
                     - `size[0]` denotes the number of pixels in x direction
                     - `size[y]` denotes the number of pixels in y direction
+            - `mode`
+            - `f_ref`
+            - `m_ref`
             - `store_stars`
                 - bool, optional
                 - wether to store an array of all generated stars including their apertures
@@ -59,13 +62,19 @@ class TPF:
 
     def __init__(self,
         size:Union[Tuple,int],
+        mode:Literal['flux','mag']=None,
+        f_ref:float=1, m_ref:float=0,
         store_stars:bool=False,
         verbose:int=0,
         ) -> None:
 
         if isinstance(size, int):   self.size   = (size,size)
         else:                       self.size   = size
+        if mode is None:            self.mode   = 'flux'
+        else:                       self.mode   = mode
         self.verbose                            = verbose
+        self.f_ref                              = f_ref
+        self.m_ref                              = m_ref
 
         x = np.arange(self.size[0])
         y = np.arange(self.size[1])
@@ -83,9 +92,11 @@ class TPF:
     def __repr__(self) -> str:
         return (
             f'{self.__class__.__name__}(\n'
-            f'    size          ={repr(self.size)},\n'
-            f'    store_stars   ={repr(self.store_stars)},\n'
-            f'    verbose       ={repr(self.verbose)},\n'
+            f'    size={repr(self.size)},\n'
+            f'    mode={repr(self.mode)},\n'
+            f'    f_ref={repr(self.f_ref)}, m_ref={repr(self.m_ref)},\n'
+            f'    store_stars={repr(self.store_stars)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
     
@@ -113,7 +124,7 @@ class TPF:
                         - implemented as amplitude (scaling factor) to gaussian PSF
                     - used to determine `m` via flux-magnitude relation
                         - calls `astroLuSt.physics.photometry.fluxes2mags()`
-                        - will use `m_ref=0` and `f_ref=1` for the conversion
+                        - will use `self.m_ref` and `self.f_ref` for the conversion
                     - the default is `None`
                         - will be infered from `m`
                 - `m`
@@ -121,7 +132,7 @@ class TPF:
                     - magnitude of the star
                     - used to determine `f` via flux-magnitude relation
                         - calls `astroLuSt.physics.photometry.mags2fluxes()`
-                        - will use `m_ref=0` and `f_ref=1` for the conversion
+                        - will use `self.m_ref` and `self.f_ref` for the conversion
                     - will be ignored if `f` is not `None`
                     - the default is `None`
                         - will be ignored
@@ -150,11 +161,11 @@ class TPF:
         """
 
         if f is None and m is not None:
-            f =  alpp.mags2fluxes(m=m, m_ref=0, f_ref=1)
+            f =  alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
         elif f is not None and m is None:
-            m =  alpp.fluxes2mags(f=f, f_ref=1, m_ref=0)
+            m =  alpp.fluxes2mags(f=f, f_ref=self.f_ref, m_ref=self.m_ref)
         if f is not None and m is not None:
-            m =  alpp.fluxes2mags(f=f, f_ref=1, m_ref=0)
+            m =  alpp.fluxes2mags(f=f, f_ref=self.f_ref, m_ref=self.m_ref)
         else:
             raise ValueError(f'At least one of `f` and `m` has to be not `None` but they have values {f} and {m}.')
 
@@ -259,6 +270,14 @@ class TPF:
         if random == False:
             random_config = default_random_config
         else:
+            rand_keys = np.array(list(random.keys()))
+            invalid_keys = ~np.isin(rand_keys, list(default_random_config.keys()))
+            if np.any(invalid_keys):
+                almf.printf(
+                    msg=f'Some keys ({rand_keys[invalid_keys]}) are not valid and will be ignored. Allowed are {default_random_config.keys()}!',
+                    context=f'{self.__class__.__name__}.add_stars()',
+                    type='WARNING'
+                )
             for k in random.keys():
                 default_random_config[k] = random[k]
             
@@ -445,9 +464,19 @@ class TPF:
 
         if plot_apertures is None: plot_apertures = []
 
+        if self.mode == 'flux':
+            frame2plot = self.frame
+            c_lab = 'Flux [-]'
+            cmap = 'viridis'
+        elif self.mode == 'mag':
+            frame2plot = self.frame
+            frame2plot[:,:,2] = alpp.fluxes2mags(frame2plot[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
+            c_lab = 'Magnitude [mag]'
+            cmap = 'viridis_r'
+
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        mesh = ax1.pcolormesh(self.frame[:,:,0], self.frame[:,:,1], self.frame[:,:,2], cmap='viridis', zorder=0)
+        mesh = ax1.pcolormesh(self.frame[:,:,0], self.frame[:,:,1], self.frame[:,:,2], cmap=cmap, zorder=0)
         if self.store_stars:
             for idx, apidx in enumerate(plot_apertures):
                 try:
@@ -468,7 +497,8 @@ class TPF:
 
         cbar = fig.colorbar(mesh, ax=ax1)
         # cbar = fig.colorbar(cont, ax=ax1)
-        # cbar.ax.invert_yaxis()
+        if self.mode == 'mag':
+            cbar.ax.invert_yaxis()
         # cbar.ax.set_ylim(0-mag_range/2-1)
         cbar.set_label('Flux [-]')
 
