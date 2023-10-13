@@ -27,8 +27,22 @@ class TPF:
                     - `size[0]` denotes the number of pixels in x direction
                     - `size[y]` denotes the number of pixels in y direction
             - `mode`
+                - Literal, optional
+                - whether to generate the frame using magnitudes or fluxes
+                - allowed values are
+                    - `'flux'`
+                        - will use fluxes to generate the frame
+                    - `'mag'`
+                        - will use magnitudes to generate the frame
+                - the default is `None`
+                    - will be set to `'flux'`
             - `f_ref`
+                - float, optional
+                - reference flux to use when converting fluxes to magnitudes
+                - the default is 1
             - `m_ref`
+                - reference magnitude to use when converting magnitudes to fluxes
+                - the default is 0
             - `store_stars`
                 - bool, optional
                 - wether to store an array of all generated stars including their apertures
@@ -205,12 +219,18 @@ class TPF:
                             - `'nstars'`
                                 - int
                                 - number of stars to generate
-                            - `'sizex'`
+                            - `'posx'`
+                                - tuple
+                                - lower and upper bound of the pixel-range in x direction, where the generated star can be located
+                            - `'posy'`
                                 - int
-                                - maximum number of pixels in x direction
-                            - `'sizey'`
+                                - lower and upper bound of the pixel-range in y direction, where the generated star can be located
+                            - `'posx_res'`
                                 - int
-                                - maximum number of pixels in y direction
+                                - number of x-coordinates to generate
+                            - `'posy_res'`
+                                - int
+                                - number of x-coordinates to generate
                             - `'fmin'`
                                 - float
                                 - minimum flux value
@@ -223,7 +243,7 @@ class TPF:
                             - `'mmax'`
                                 - float
                                 - maximum flux value
-                            - `'res'`
+                            - `'mf_res'`
                                 - int
                                 - number of fluxes/magnitudes to generate
                             - `'apmin'`
@@ -232,6 +252,9 @@ class TPF:
                             - `'apmax'`
                                 - float
                                 - maximum aperture size
+                            - `'ap_res'`
+                                - int
+                                - number of apertures to generate
                 - `pos`
                     - np.ndarray, optional
                     - 2d array of shape `(nstars,2)`
@@ -256,7 +279,11 @@ class TPF:
             Raises
             ------
                 - `ValueError`
-                    - if too little information has been provided and `random` is set to `False`
+                    - if to little information has been provided and `random` is set to `False`
+                - `ValueError`
+                    - if to many stars are requested compared to the resolution of the positions
+                    - i.e. `random['nstars']` <= `random['posx_res']*random['posy_res']`
+                    - in that case a random sampling without return is not possible!
 
             Returns
             -------
@@ -269,15 +296,18 @@ class TPF:
         #default parameters
         default_random_config = {
             'nstars':1,
-            'sizex':self.frame.shape[0],
-            'sizey':self.frame.shape[1],
+            'posx':(0,self.frame.shape[0]),
+            'posy':(0,self.frame.shape[1]),
+            'posx_res':100,
+            'posy_res':100,
             'fmin':1,
             'fmax':100,
-            'mmin':alpp.fluxes2mags(f=100,f_ref=self.f_ref,m_ref=self.m_ref),
-            'mmax':alpp.fluxes2mags(f=1,  f_ref=self.f_ref,m_ref=self.m_ref),
+            'mmin':10,
+            'mmax':20,
+            'fm_res':100,
             'apmin':1,
             'apmax':10,
-            'res':100,
+            'ap_res':100,
         }
         if random == False:
             random_config = default_random_config
@@ -299,20 +329,30 @@ class TPF:
         #generate random stars if requested
         if random != False:
             #get all possible combinations of posx and posy
-            posx        = range(random_config['sizex'])
-            posy        = range(random_config['sizey'])
+            posx        = np.linspace(*random_config['posx'],random_config['posx_res'])
+            posy        = np.linspace(*random_config['posy'],random_config['posy_res'])
             pos         = np.array(np.meshgrid(posx, posy)).T.reshape(-1,2)
-            
+
+            #rase error if too main stars requested per coordinates ('nstars' > len(pos))
+            if random_config['nstars'] > pos.shape[0]:
+                raise ValueError(f"`random['nstars']` must be smaller than `random['posx_res']*random['posy_res']` but they are: {random['nstars']} and {random['posx_res']*random['posy_res']}!")
+
+
             #get random indices that each position occurs once
-            randidxs    = np.random.choice(range(random_config['sizex']*random_config['sizey']), size=random_config['nstars'], replace=False)
+            randidxs    = np.random.choice(
+                range(pos.shape[0]),
+                size=random_config['nstars'],
+                replace=False
+            )
             
             #choose random parameters for stars
             pos         = pos[randidxs]
-            aperture    = np.random.choice(range(random_config['apmin'], random_config['apmax'],1), size=(random_config['nstars']))
+            apertures   = np.arange(random_config['apmin'], random_config['apmax'], random_config['ap_res'])
+            aperture    = np.random.choice(apertures, size=(random_config['nstars']))
             if self.mode == 'flux':
-                f = np.random.choice(np.linspace(random_config['fmin'],  random_config['fmax'], random_config['res']), size=(random_config['nstars']))
+                f = np.random.choice(np.linspace(random_config['fmin'],  random_config['fmax'], random_config['fm_res']), size=(random_config['nstars']))
             elif self.mode == 'mag':
-                m = np.random.choice(np.linspace(random_config['mmin'],  random_config['mmax'], random_config['res']), size=(random_config['nstars']))
+                m = np.random.choice(np.linspace(random_config['mmin'],  random_config['mmax'], random_config['fm_res']), size=(random_config['nstars']))
                 f = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
 
             #report generated parameters
@@ -377,12 +417,19 @@ class TPF:
             --------
         """
 
-        if trend == 'lineary':
-            trend = np.linspace(0,np.ones((self.frame.shape[0])), self.frame.shape[1], axis=0)
-        if trend == 'linearx':
-            trend = np.linspace(0,np.ones((self.frame.shape[0])), self.frame.shape[1], axis=1)
+        if trend in ['lineary', 'linearx']:
+            if trend == 'lineary':
+                trend = np.linspace(0,np.ones((self.frame.shape[0])), self.frame.shape[1], axis=0)
+            if trend == 'linearx':
+                trend = np.linspace(0,np.ones((self.frame.shape[0])), self.frame.shape[1], axis=1)
 
-        self.frame[:,:,2] += amplitude*trend
+            #convert to magnitudes            
+            if self.mode == 'mag': trend = alpp.fluxes2mags(amplitude*trend, f_ref=self.f_ref, m_ref=self.m_ref)
+
+            self.frame[:,:,2] += trend
+        
+        else:
+            self.frame[:,:,2] += amplitude*trend
 
         return
 
@@ -414,7 +461,11 @@ class TPF:
             --------
         """
         
-        self.frame[:,:,2] += (amp*np.random.randn(*self.frame.shape[:2]) + bias)
+        noise = amp*np.random.randn(*self.frame.shape[:2]) + bias
+        
+        if self.mode == 'mag': noise = alpp.fluxes2mags(noise, f_ref=self.f_ref, m_ref=self.m_ref)
+
+        self.frame[:,:,2] += noise
 
         return
     
