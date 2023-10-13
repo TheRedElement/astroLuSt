@@ -1,4 +1,4 @@
-#TODO: All calculations in flux, convert to mag in the ned
+#TODO: Allow passing of weights for random.choice
 
 #%%imports
 import matplotlib.pyplot as plt
@@ -522,7 +522,8 @@ class TPF:
         return aperture
 
     def plot_result(self,
-        plot_apertures:List[int]=None
+        plot_apertures:List[int]=None,
+        pcolormesh_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
             - method to visualize the resulting generated TPF
@@ -534,6 +535,11 @@ class TPF:
                     - contains indices of apertures to show in the produced figure
                     - the default is `None`
                         - will not plot any apertures
+                - `pcolormesh_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.pcolormesh()`
+                    - the default is `None`
+                        - will be set to `dict('viridis')`
 
             Raises
             ------
@@ -552,19 +558,22 @@ class TPF:
         """
 
         if plot_apertures is None: plot_apertures = []
+        if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
 
         if self.mode == 'flux':
             frame2plot = self.frame
             c_lab = 'Flux [-]'
-            cmap = 'viridis'
+            if 'cmap' not in pcolormesh_kwargs.keys():
+                pcolormesh_kwargs['cmap'] = 'viridis'
         elif self.mode == 'mag':
             frame2plot = self.frame_mag
             c_lab = 'Magnitude [mag]'
-            cmap = 'viridis_r'
+            if 'cmap' not in pcolormesh_kwargs.keys():
+                pcolormesh_kwargs['cmap'] = 'viridis_r'
 
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        mesh = ax1.pcolormesh(frame2plot[:,:,0], frame2plot[:,:,1], frame2plot[:,:,2], cmap=cmap, zorder=0)
+        mesh = ax1.pcolormesh(frame2plot[:,:,0], frame2plot[:,:,1], frame2plot[:,:,2], zorder=0, **pcolormesh_kwargs)
         if self.store_stars:
             for idx, apidx in enumerate(plot_apertures):
                 try:
