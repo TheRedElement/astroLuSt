@@ -5,7 +5,7 @@ import scipy.stats as sps
 
 from astroLuSt.physics import photometry as alpp
 
-from typing import Union, Tuple, Callable, Literal
+from typing import Union, Tuple, Callable, Literal, List
 
 #%%classes
 class TPF:
@@ -120,13 +120,18 @@ class TPF:
         return star
     
     def plot_result(self,
+        plot_apertures:List[int]=None
         ):
+
+        if plot_apertures is None: plot_apertures = []
 
         print(self.stars.shape)
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         mesh = ax1.pcolormesh(self.frame[:,:,0], self.frame[:,:,1], self.frame[:,:,2], cmap='viridis', zorder=0)
-        cont = ax1.contour(self.stars[-1,:,:,1], levels=[0], colors='r', linewidths=1, zorder=1)
+        if self.store_stars:
+            for idx in plot_apertures:
+                cont = ax1.contour(self.stars[idx,:,:,1], levels=[0], colors='r', linewidths=1, zorder=1)
         # ax1.scatter(*star_targ[:2]+.5, marker='x', c='r', label='Target')
 
         ax1.set_xlabel('Pixel')
