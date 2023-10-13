@@ -371,7 +371,7 @@ class TPF:
         return
 
     def add_noise(self,
-        amp:float=1E-3,
+        amp:float=1E-3, bias:float=1E-1,
         ) -> None:
         #TODO: add different noise parts (photon noise, dead pixels, hot pixels, ...)
         """
@@ -383,6 +383,10 @@ class TPF:
                     - float, optional
                     - amplitude of the added noise
                     - the default is 1E-3
+                - `bias`
+                    - float, optional
+                    - offset of noise from 0 (similar to bias-current)
+                    - the default is 1E-1
 
             Raises
             ------
@@ -394,7 +398,7 @@ class TPF:
             --------
         """
         
-        self.frame[:,:,2] += amp*np.random.randn(*self.frame.shape[:2])
+        self.frame[:,:,2] += (amp*np.random.randn(*self.frame.shape[:2]) + bias)
 
         return
     
@@ -469,14 +473,14 @@ class TPF:
             c_lab = 'Flux [-]'
             cmap = 'viridis'
         elif self.mode == 'mag':
-            frame2plot = self.frame
+            frame2plot = self.frame.copy()
             frame2plot[:,:,2] = alpp.fluxes2mags(frame2plot[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
             c_lab = 'Magnitude [mag]'
             cmap = 'viridis_r'
 
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        mesh = ax1.pcolormesh(self.frame[:,:,0], self.frame[:,:,1], self.frame[:,:,2], cmap=cmap, zorder=0)
+        mesh = ax1.pcolormesh(frame2plot[:,:,0], frame2plot[:,:,1], frame2plot[:,:,2], cmap=cmap, zorder=0)
         if self.store_stars:
             for idx, apidx in enumerate(plot_apertures):
                 try:
@@ -496,11 +500,10 @@ class TPF:
         ax1.set_ylabel('Pixel')
 
         cbar = fig.colorbar(mesh, ax=ax1)
-        # cbar = fig.colorbar(cont, ax=ax1)
         if self.mode == 'mag':
             cbar.ax.invert_yaxis()
-        # cbar.ax.set_ylim(0-mag_range/2-1)
-        cbar.set_label('Flux [-]')
+            # cbar.ax.set_ylim(0-frame2plot.min()/2-1)
+        cbar.set_label(c_lab)
 
         ax1.legend()
 
