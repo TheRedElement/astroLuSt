@@ -12,6 +12,8 @@ class TPF:
 
     def __init__(self,
         size:Union[Tuple,int],
+        store_stars:bool=False,
+        verbose:int=0,
         ) -> None:
 
         if isinstance(size, int): size = (size,size)
@@ -22,6 +24,9 @@ class TPF:
 
         self.frame = np.zeros(shape=(*size,1))
         self.frame = np.concatenate((np.expand_dims(xx,2), np.expand_dims(yy,2), self.frame), axis=2)
+        self.store_stars = store_stars
+
+        self.stars = np.empty((0,size[0],size[1],2))
 
         pass
 
@@ -54,9 +59,10 @@ class TPF:
         if random_config is None:
             random_config = default_random_config
         else:
-            for k in random_config.keys(): 
+            for k in random_config.keys():
                 default_random_config[k] = random_config[k]
-                random_config = default_random_config
+            
+            random_config = default_random_config.copy()
 
 
 
@@ -82,7 +88,7 @@ class TPF:
         for posi, fi, api in zip(pos,f, aperture):
             star = self.star(pos=posi, f=fi, aperture=api)
 
-            self.frame[:,:,2] += star
+            self.frame[:,:,2] += star[:,:,0]
 
         return
     
@@ -104,20 +110,30 @@ class TPF:
             mean=pos, cov=cov, allow_singular=True
         ).pdf(self.frame[:,:,:2])
 
+        b = (np.sum((self.frame[:,:,:2]-pos)**2, axis=2)<aperture)
+        
+        star = np.append(np.expand_dims(star,axis=2), np.expand_dims(b,axis=2), axis=2)
+
+        if self.store_stars:
+            self.stars = np.append(self.stars, np.expand_dims(star,0), axis=0)
+
         return star
     
     def plot_result(self,
         ):
 
+        print(self.stars.shape)
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        mesh = ax1.pcolormesh(self.frame[:,:,0], self.frame[:,:,1], self.frame[:,:,2], cmap='viridis')
+        mesh = ax1.pcolormesh(self.frame[:,:,0], self.frame[:,:,1], self.frame[:,:,2], cmap='viridis', zorder=0)
+        cont = ax1.contour(self.stars[-1,:,:,1], levels=[0], colors='r', linewidths=1, zorder=1)
         # ax1.scatter(*star_targ[:2]+.5, marker='x', c='r', label='Target')
 
         ax1.set_xlabel('Pixel')
         ax1.set_ylabel('Pixel')
 
         cbar = fig.colorbar(mesh, ax=ax1)
+        # cbar = fig.colorbar(cont, ax=ax1)
         # cbar.ax.invert_yaxis()
         # cbar.ax.set_ylim(0-mag_range/2-1)
         cbar.set_label('Flux [-]')
