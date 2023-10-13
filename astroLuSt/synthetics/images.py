@@ -38,6 +38,7 @@ class TPF:
     def add_stars(self,
         pos:Union[np.ndarray,Literal['random']],
         f:np.ndarray=None,
+        aperture:np.ndarray=None,
         random_config:dict=None,
         ):
 
@@ -60,13 +61,22 @@ class TPF:
 
 
         if pos == 'random':
-            posx        = np.random.choice(range(random_config['sizex']), size=(random_config['nstars'],1))
-            posy        = np.random.choice(range(random_config['sizey']), size=(random_config['nstars'],1))
-            pos         = np.append(posx, posy, axis=1)
+            #get all possible combinations of posx and posy
+            posx        = range(random_config['sizex'])
+            posy        = range(random_config['sizey'])
+            pos         = np.array(np.meshgrid(posx, posy)).T.reshape(-1,2)
+            
+            #get random indices that each position occurs once
+            randidxs    = np.random.choice(range(random_config['sizex']*random_config['sizey']), size=random_config['nstars'], replace=False)
+            
+            #choose random parameters for stars
+            pos         = pos[randidxs]
             f           = np.random.choice(range(random_config['fmin'],  random_config['fmax'], 1), size=(random_config['nstars']))
             aperture    = np.random.choice(range(random_config['apmin'], random_config['apmax'],1), size=(random_config['nstars']))
         elif pos != 'random' and f is None:
             raise ValueError("`f` has to be provided is `pos` is not `'random'`")
+        elif pos != 'random' and aperture is None:
+            raise ValueError("`aperture` has to be provided is `pos` is not `'random'`")
             
 
         for posi, fi, api in zip(pos,f, aperture):
@@ -89,7 +99,7 @@ class TPF:
                 raise ValueError(f'At least one of `f` and `m` has to be not `None` but they have values {f} and {m}.')
             
 
-        cov = aperture/2*2.335      #aperture = 2*halfwidth
+        cov = aperture/(2*2*np.sqrt(np.log(2)))     #aperture = 2*halfwidth
         star = f*sps.multivariate_normal(
             mean=pos, cov=cov, allow_singular=True
         ).pdf(self.frame[:,:,:2])
