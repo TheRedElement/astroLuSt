@@ -76,6 +76,7 @@ class TPF:
         self.store_stars = store_stars
 
         self.stars = np.empty((0,self.size[0],self.size[1],2))
+        self.starparams = []
 
         pass
 
@@ -110,6 +111,9 @@ class TPF:
                     - float, optional
                     - flux of the star
                         - implemented as amplitude (scaling factor) to gaussian PSF
+                    - used to determine `m` via flux-magnitude relation
+                        - calls `astroLuSt.physics.photometry.fluxes2mags()`
+                        - will use `m_ref=0` and `f_ref=1` for the conversion
                     - the default is `None`
                         - will be infered from `m`
                 - `m`
@@ -145,12 +149,14 @@ class TPF:
             --------
         """
 
-        if f is None:
-            if m is not None:
-                f =  alpp.mags2fluxes(m=m, m_ref=0, f_ref=1)
-            else:
-                raise ValueError(f'At least one of `f` and `m` has to be not `None` but they have values {f} and {m}.')
-            
+        if f is None and m is not None:
+            f =  alpp.mags2fluxes(m=m, m_ref=0, f_ref=1)
+        elif f is not None and m is None:
+            m =  alpp.fluxes2mags(f=f, f_ref=1, m_ref=0)
+        if f is not None and m is not None:
+            m =  alpp.fluxes2mags(f=f, f_ref=1, m_ref=0)
+        else:
+            raise ValueError(f'At least one of `f` and `m` has to be not `None` but they have values {f} and {m}.')
 
         cov = (aperture/(2*2*np.sqrt(np.log(2))))**2     #aperture = 2*halfwidth = 2* 2*std*sqrt(ln(2))
         star = f*sps.multivariate_normal(
@@ -161,9 +167,10 @@ class TPF:
         
         star = np.append(np.expand_dims(star,axis=2), np.expand_dims(b,axis=2), axis=2)
 
+        #store generated parameters and clean frames
+        self.starparams.append([pos, f, m, aperture])
         if self.store_stars:
             self.stars = np.append(self.stars, np.expand_dims(star,0), axis=0)
-
 
         return star
 
