@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 
 from astroLuSt.synthetics import lightcurves
 from astroLuSt.synthetics import numpy_utils
+from astroLuSt.synthetics import images
 
 
 #%%testing
