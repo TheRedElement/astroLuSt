@@ -1,3 +1,5 @@
+#TODO: All calculations in flux, convert to mag in the ned
+
 #%%imports
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -72,6 +74,8 @@ class TPF:
 
         Comments
         --------
+            - all calculations are executed in fluxes
+                - in parallel a second frame in magnitudes gets calculated by converting the flux result
     """
 
     def __init__(self,
@@ -90,14 +94,24 @@ class TPF:
         self.f_ref                              = f_ref
         self.m_ref                              = m_ref
 
+
+        #frames
         x = np.arange(self.size[0])
         y = np.arange(self.size[1])
         xx, yy = np.meshgrid(x, y)
 
+        #frame in flux
         self.frame = np.zeros(shape=(*self.size,1))
         self.frame = np.concatenate((np.expand_dims(xx,2), np.expand_dims(yy,2), self.frame), axis=2)
+        
+        #frame in mags
+        self.frame_mag = self.frame.copy()
+        self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame_mag[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)           #reset magnitude values
+
+        #intermediate storage
         self.store_stars = store_stars
 
+        #infered attributes
         self.stars = np.empty((0,self.size[0],self.size[1],2))
         self.starparams = []
 
@@ -375,6 +389,10 @@ class TPF:
 
             self.frame[:,:,2] += star[:,:,0]
 
+        #convert to magnitudes            
+        if self.mode == 'mag':
+            self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
+
         return
     
     def add_custom(self,
@@ -419,17 +437,15 @@ class TPF:
 
         if trend in ['lineary', 'linearx']:
             if trend == 'lineary':
-                trend = np.linspace(0,np.ones((self.frame.shape[0])), self.frame.shape[1], axis=0)
+                trend = np.linspace(1,2*np.ones((self.frame.shape[0])), self.frame.shape[1], axis=0)
             if trend == 'linearx':
-                trend = np.linspace(0,np.ones((self.frame.shape[0])), self.frame.shape[1], axis=1)
+                trend = np.linspace(1,2*np.ones((self.frame.shape[0])), self.frame.shape[1], axis=1)
 
-            #convert to magnitudes            
-            if self.mode == 'mag': trend = alpp.fluxes2mags(amplitude*trend, f_ref=self.f_ref, m_ref=self.m_ref)
+        self.frame[:,:,2] += amplitude*trend
 
-            self.frame[:,:,2] += trend
-        
-        else:
-            self.frame[:,:,2] += amplitude*trend
+        #convert to magnitudes            
+        if self.mode == 'mag':
+            self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
 
         return
 
@@ -463,9 +479,11 @@ class TPF:
         
         noise = amp*np.random.randn(*self.frame.shape[:2]) + bias
         
-        if self.mode == 'mag': noise = alpp.fluxes2mags(noise, f_ref=self.f_ref, m_ref=self.m_ref)
-
         self.frame[:,:,2] += noise
+
+        #convert to magnitudes            
+        if self.mode == 'mag':
+            self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
 
         return
     
@@ -540,8 +558,7 @@ class TPF:
             c_lab = 'Flux [-]'
             cmap = 'viridis'
         elif self.mode == 'mag':
-            frame2plot = self.frame.copy()
-            frame2plot[:,:,2] = alpp.fluxes2mags(frame2plot[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
+            frame2plot = self.frame_mag
             c_lab = 'Magnitude [mag]'
             cmap = 'viridis_r'
 
