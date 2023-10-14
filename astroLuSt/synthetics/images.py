@@ -329,46 +329,61 @@ class TPF:
         if aperture is None:    aperture=dict(dist='uniform', params={'low':1,  'high':20})
 
 
-        #generate random positions
-        if isinstance(posx['params'], dict):        
-            posx['params']['size'] = (nstars,1)
-            posx = eval(f"self.rng.{posx['dist']}(**{posx['params']})")
-        else:
-            posx['params'].append((nstars,1))
-            posx = eval(f"self.rng.{posx['dist']}(*{posx['params']})")
-        if isinstance(posy['params'], dict):        
-            posy['params']['size'] = (nstars,1)
-            posy = eval(f"self.rng.{posy['dist']}(**{posy['params']})")
-        else:
-            posy['params'].append((nstars,1))
-            posy = eval(f"self.rng.{posy['dist']}(*{posy['params']})")
+        #generate positions
+        ##for randomly generated
+        if isinstance(posx, dict):
+            if isinstance(posx['params'], dict):        
+                posx['params']['size'] = (nstars,1)
+                posx = eval(f"self.rng.{posx['dist']}(**{posx['params']})")
+            else:
+                posx['params'].append((nstars,1))
+                posx = eval(f"self.rng.{posx['dist']}(*{posx['params']})")
+        if isinstance(posy, dict):
+            if isinstance(posy['params'], dict):        
+                posy['params']['size'] = (nstars,1)
+                posy = eval(f"self.rng.{posy['dist']}(**{posy['params']})")
+            else:
+                posy['params'].append((nstars,1))
+                posy = eval(f"self.rng.{posy['dist']}(*{posy['params']})")
+
+
+        posx = np.array(posx).reshape(-1,1)
+        posy = np.array(posy).reshape(-1,1)
         pos = np.concatenate((posx,posy), axis=1)
 
-        #generate random magnitudes/fluxes
-        print(m)
+        #generate magnitudes/fluxes
         if self.mode == 'flux':
-            if isinstance(f['params'], dict):        
-                f['params']['size'] = (nstars)
-                f = eval(f"self.rng.{f['dist']}(**{f['params']})")
-            else:
-                f['params'].append((nstars))
-                f = eval(f"self.rng.{f['dist']}(*{f['params']})")
+            ##for randomly generated
+            if isinstance(f, dict):
+                if isinstance(f['params'], dict):        
+                    f['params']['size'] = (nstars)
+                    f = eval(f"self.rng.{f['dist']}(**{f['params']})")
+                else:
+                    f['params'].append((nstars))
+                    f = eval(f"self.rng.{f['dist']}(*{f['params']})")
+            f = np.array(f)
         elif self.mode == 'mag':
-            if isinstance(m['params'], dict):        
-                m['params']['size'] = (nstars)
-                m = eval(f"self.rng.{m['dist']}(**{m['params']})")
-            else:
-                m['params'].append((nstars))
-                m = eval(f"self.rng.{m['dist']}(*{m['params']})")
+            ##for randomly generated
+            if isinstance(m, dict):
+                if isinstance(m['params'], dict):        
+                    m['params']['size'] = (nstars)
+                    m = eval(f"self.rng.{m['dist']}(**{m['params']})")
+                else:
+                    m['params'].append((nstars))
+                    m = eval(f"self.rng.{m['dist']}(*{m['params']})")
+            m = np.array(m)
             f = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
 
-        #generate random apertures
-        if isinstance(aperture['params'], dict):        
-            aperture['params']['size'] = (nstars)
-            aperture = eval(f"self.rng.{aperture['dist']}(**{aperture['params']})")
-        else:
-            aperture['params'].append((nstars))
-            aperture = eval(f"self.rng.{aperture['dist']}(*{aperture['params']})")
+        #generate apertures
+        ##for randomly generated
+        if isinstance(aperture, dict):
+            if isinstance(aperture['params'], dict):        
+                aperture['params']['size'] = (nstars)
+                aperture = eval(f"self.rng.{aperture['dist']}(**{aperture['params']})")
+            else:
+                aperture['params'].append((nstars))
+                aperture = eval(f"self.rng.{aperture['dist']}(*{aperture['params']})")
+        aperture = np.array(aperture)
 
         #add stars to TPF
         for posi, fi, api in zip(pos, f, aperture):
