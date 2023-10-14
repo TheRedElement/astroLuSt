@@ -9,7 +9,7 @@ import scipy.stats as sps
 from astroLuSt.physics import photometry as alpp
 from astroLuSt.monitoring import formatting as almf
 
-from typing import Union, Tuple, Callable, Literal, List
+from typing import Union, Tuple, Callable, Literal, List, Dict
 
 #%%classes
 class TPF:
@@ -225,12 +225,16 @@ class TPF:
         return star
 
     def add_stars(self,
-        random:Union[dict,bool],
-        pos:np.ndarray=None,
-        f:np.ndarray=None,
-        aperture:np.ndarray=None,
+        nstars:int=1,
+        posx:Union[dict,np.ndarray]=None,
+        posy:Union[dict,np.ndarray]=None,
+        f:Union[dict,np.ndarray]=None,
+        m:Union[dict,np.ndarray]=None,
+        aperture:Union[dict,np.ndarray]=None,
         verbose:int=None,
         ) -> None:
+        #TODO: documentation
+        #TODO: nonrandom values
         """
             - method to add stars to the on the CCD (TPF)
             
@@ -317,83 +321,55 @@ class TPF:
             --------
         """
 
-
         #default parameters
-        default_random_config = {
-            'nstars':1,
-            'posx':(0,self.frame.shape[0]),
-            'posy':(0,self.frame.shape[1]),
-            'posx_res':100,
-            'posy_res':100,
-            'fmin':1,
-            'fmax':100,
-            'mmin':10,
-            'mmax':20,
-            'fm_res':100,
-            'apmin':1,
-            'apmax':10,
-            'ap_res':100,
-        }
-        if random == False:
-            random_config = default_random_config
+        if posx is None:        posx    =dict(dist='uniform', params={'low':0,  'high':100})
+        if posy is None:        posy    =dict(dist='uniform', params={'low':0,  'high':100})
+        if f is None:           f       =dict(dist='uniform', params={'low':1,  'high':100})
+        if m is None:           m       =dict(dist='uniform', params={'low':-4, 'high':4})
+        if aperture is None:    aperture=dict(dist='uniform', params={'low':1,  'high':20})
+
+
+        #generate random positions
+        if isinstance(posx['params'], dict):        
+            posx['params']['size'] = (nstars,1)
+            posx = eval(f"self.rng.{posx['dist']}(**{posx['params']})")
         else:
-            rand_keys = np.array(list(random.keys()))
-            invalid_keys = ~np.isin(rand_keys, list(default_random_config.keys()))
-            if np.any(invalid_keys):
-                almf.printf(
-                    msg=f'Some keys ({rand_keys[invalid_keys]}) are not valid and will be ignored. Allowed are {default_random_config.keys()}!',
-                    context=f'{self.__class__.__name__}.add_stars()',
-                    type='WARNING'
-                )
-            for k in random.keys():
-                default_random_config[k] = random[k]
-            
-            random_config = default_random_config.copy()
-        if verbose is None: verbose = self.verbose
+            posx['params'].append((nstars,1))
+            posx = eval(f"self.rng.{posx['dist']}(*{posx['params']})")
+        if isinstance(posy['params'], dict):        
+            posy['params']['size'] = (nstars,1)
+            posy = eval(f"self.rng.{posy['dist']}(**{posy['params']})")
+        else:
+            posy['params'].append((nstars,1))
+            posy = eval(f"self.rng.{posy['dist']}(*{posy['params']})")
+        pos = np.concatenate((posx,posy), axis=1)
 
-        #generate random stars if requested
-        if random != False:
-            #get all possible combinations of posx and posy
-            posx        = np.linspace(*random_config['posx'],random_config['posx_res'])
-            posy        = np.linspace(*random_config['posy'],random_config['posy_res'])
-            pos         = np.array(np.meshgrid(posx, posy)).T.reshape(-1,2)
+        #generate random magnitudes/fluxes
+        print(m)
+        if self.mode == 'flux':
+            if isinstance(f['params'], dict):        
+                f['params']['size'] = (nstars)
+                f = eval(f"self.rng.{f['dist']}(**{f['params']})")
+            else:
+                f['params'].append((nstars))
+                f = eval(f"self.rng.{f['dist']}(*{f['params']})")
+        elif self.mode == 'mag':
+            if isinstance(m['params'], dict):        
+                m['params']['size'] = (nstars)
+                m = eval(f"self.rng.{m['dist']}(**{m['params']})")
+            else:
+                m['params'].append((nstars))
+                m = eval(f"self.rng.{m['dist']}(*{m['params']})")
+            f = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
 
-            #rase error if too main stars requested per coordinates ('nstars' > len(pos))
-            if random_config['nstars'] > pos.shape[0]:
-                raise ValueError(f"`random['nstars']` must be smaller than `random['posx_res']*random['posy_res']` but they are: {random['nstars']} and {random['posx_res']*random['posy_res']}!")
+        #generate random apertures
+        if isinstance(aperture['params'], dict):        
+            aperture['params']['size'] = (nstars)
+            aperture = eval(f"self.rng.{aperture['dist']}(**{aperture['params']})")
+        else:
+            aperture['params'].append((nstars))
+            aperture = eval(f"self.rng.{aperture['dist']}(*{aperture['params']})")
 
-
-            #get random indices that each position occurs once
-            randidxs    = self.rng.choice(
-                range(pos.shape[0]),
-                size=random_config['nstars'],
-                replace=False,
-            )
-            
-            #choose random parameters for stars
-            pos         = pos[randidxs]
-            apertures   = np.arange(random_config['apmin'], random_config['apmax'], random_config['ap_res'])
-            aperture    = self.rng.choice(apertures, size=(random_config['nstars']))
-            if self.mode == 'flux':
-                f = self.rng.choice(np.linspace(random_config['fmin'],  random_config['fmax'], random_config['fm_res']), size=(random_config['nstars']))
-            elif self.mode == 'mag':
-                m = self.rng.choice(np.linspace(random_config['mmin'],  random_config['mmax'], random_config['fm_res']), size=(random_config['nstars']))
-                f = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
-
-            #report generated parameters
-            if verbose > 2:
-                almf.printf(
-                    msg=(
-                        f'Generated Parameters:'
-                        f'pos:{pos.tolist()}, f:{f}, aperture:{aperture}'
-                    ),
-                    context=f'{self.__class__.__name__}.add_stars()'
-                )                
-        elif random == False and f is None:
-            raise ValueError("`f` has to be provided if `random` is set to `False`")
-        elif random == False and aperture is None:
-            raise ValueError("`aperture` has to be provided if `random` is set to `False`")
-        
         #add stars to TPF
         for posi, fi, api in zip(pos, f, aperture):
             star = self.star(pos=posi, f=fi, aperture=api)
@@ -488,7 +464,7 @@ class TPF:
             --------
         """
         
-        noise = amp*np.random.randn(*self.frame.shape[:2]) + bias
+        noise = amp*self.rng.standard_normal(size=(self.frame.shape[:2])) + bias
         
         self.frame[:,:,2] += noise
 
