@@ -233,71 +233,100 @@ class TPF:
         aperture:Union[dict,np.ndarray]=None,
         verbose:int=None,
         ) -> None:
-        #TODO: documentation
-        #TODO: nonrandom values
         """
             - method to add stars to the on the CCD (TPF)
             
             Parameters
             ----------
-                - `random`
-                    - dict, bool
+                - `nstars`
+                    - int, optional
+                    - number of stars to generate
+                    - the default is 1 
+                - `posx`
+                    - dict, np.ndarray, optional
+                    - x values of the stars position in pixels
                     - if dict
-                        - configurations for the generation of random stars
-                        - allowed keys
-                            - `'nstars'`
-                                - int
-                                - number of stars to generate
-                            - `'posx'`
-                                - tuple
-                                - lower and upper bound of the pixel-range in x direction, where the generated star can be located
-                            - `'posy'`
-                                - int
-                                - lower and upper bound of the pixel-range in y direction, where the generated star can be located
-                            - `'posx_res'`
-                                - int
-                                - number of x-coordinates to generate
-                            - `'posy_res'`
-                                - int
-                                - number of x-coordinates to generate
-                            - `'fmin'`
-                                - float
-                                - minimum flux value
-                            - `'fmax'`
-                                - float
-                                - maximum flux value
-                            - `'mmin'`
-                                - float
-                                - minimum flux value
-                            - `'mmax'`
-                                - float
-                                - maximum flux value
-                            - `'mf_res'`
-                                - int
-                                - number of fluxes/magnitudes to generate
-                            - `'apmin'`
-                                - float
-                                - minimum aperture size
-                            - `'apmax'`
-                                - float
-                                - maximum aperture size
-                            - `'ap_res'`
-                                - int
-                                - number of apertures to generate
-                - `pos`
-                    - np.ndarray, optional
-                    - 2d array of shape `(nstars,2)`
-                        - element 0 of second axis is the x position in pixels
-                        - element 1 of second axis is the y position in pixels
+                        - has to contain 2 keys
+                            - `'dist'`
+                                - value is a string
+                                - specifies distribution implemented for `np.random.default_rng()`
+                                    - this distribution will be used to generate random positions
+                            - `'params'`
+                                - value is dict or list
+                                - parameters of `'dist'`
+                                    - passed as `key:value`-pairs (kwargs, for dict)
+                                    - passed as list of positional args (for list)
                     - the default is `None`
+                        - will be set to `dict(dist='uniform', params={'low':0,  'high':100})`
+                        - i.e. a uniform distribution from 0 to 100
+                - `posy`
+                    - dict, np.ndarray, optional
+                    - y values of the stars position in pixels
+                    - if dict
+                        - has to contain 2 keys
+                            - `'dist'`
+                                - value is a string
+                                - specifies distribution implemented for `np.random.default_rng()`
+                                    - this distribution will be used to generate random positions
+                            - `'params'`
+                                - value is dict or list
+                                - parameters of `'dist'`
+                                    - passed as `key:value`-pairs (kwargs, for dict)
+                                    - passed as list of positional args (for list)
+                    - the default is `None`
+                        - will be set to `dict(dist='uniform', params={'low':0,  'high':100})`
+                        - i.e. a uniform distribution from 0 to 100
                 - `f`
-                    - np.ndarray, optional
+                    - dict, np.ndarray, optional
                     - fluxes of the stars to generate
+                    - if dict
+                        - has to contain 2 keys
+                            - `'dist'`
+                                - value is a string
+                                - specifies distribution implemented for `np.random.default_rng()`
+                                    - this distribution will be used to generate random flux values
+                            - `'params'`
+                                - value is dict or list
+                                - parameters of `'dist'`
+                                    - passed as `key:value`-pairs (kwargs, for dict)
+                                    - passed as list of positional args (for list)
                     - the default is `None`
+                        - will be set to `dict(dist='uniform', params={'low':1,  'high':100})`
+                        - i.e. a uniform distribution from 1 to 100
+                - `m`
+                    - dict, np.ndarray, optional
+                    - magnitudes of the stars to generate
+                    - if dict
+                        - has to contain 2 keys
+                            - `'dist'`
+                                - value is a string
+                                - specifies distribution implemented for `np.random.default_rng()`
+                                    - this distribution will be used to generate random magnitudes
+                            - `'params'`
+                                - value is dict or list
+                                - parameters of `'dist'`
+                                    - passed as `key:value`-pairs (kwargs, for dict)
+                                    - passed as list of positional args (for list)
+                    - the default is `None`
+                        - will be set to `dict(dist='uniform', params={'low':-4,  'high':4})`
+                        - i.e. a uniform distribution from -4 to 4
                 - `aperture`
-                    - np.ndarray, optional
-                    - apertures of the stars to generate
+                    - dict, np.ndarray, optional
+                    - apertures to use for the stars 
+                    - if dict
+                        - has to contain 2 keys
+                            - `'dist'`
+                                - value is a string
+                                - specifies distribution implemented for `np.random.default_rng()`
+                                    - this distribution will be used to generate random apertures
+                            - `'params'`
+                                - value is dict or list
+                                - parameters of `'dist'`
+                                    - passed as `key:value`-pairs (kwargs, for dict)
+                                    - passed as list of positional args (for list)
                     - the default is `None`
+                        - will be set to `dict(dist='uniform', params={'low':-4,  'high':4})`
+                        - i.e. a uniform distribution from 1 to 20
                 - `verbose`
                     - int, optional
                     - verbosity level
