@@ -82,14 +82,15 @@ class TPF:
                 - has shape `(xpix, ypix, 3)`
                     - the first two entries of the last dimension contain the pixel coordinates
                     - the last entry contains the flux value
-            - `star_params`
+            - `starparams`
                 - list
                 - contains as many entries as stars in the frame
                 - each entry is a list that contains the star specifications
-                    - element 0: position (`pos=(xpos, ypos)`)
-                    - element 1: flux (`f`)
-                    - element 2: magnitude (`m`)
-                    - element 3: aperture (`aperture`)
+                    - element 0: position in x direction (`posx`)
+                    - element 1: position in y direction (`posy`)
+                    - element 2: flux (`f`)
+                    - element 3: magnitude (`m`)
+                    - element 4: aperture (`aperture`)
             - `stars`
                 - np.ndarray
                 - only stored if `store_stars=True`
@@ -163,7 +164,7 @@ class TPF:
 
         #infered attributes
         self.stars = np.empty((0,self.size[0],self.size[1],3))
-        self.starparams = []
+        self.starparams = np.empty((0,5))
 
         pass
 
@@ -299,7 +300,7 @@ class TPF:
         )
 
         #store generated parameters and clean frames
-        self.starparams.append([pos, f, m, aperture])
+        self.starparams = np.append(self.starparams, np.array([[pos[0], pos[1], f, m, aperture]]), axis=0)
         if self.store_stars:
             self.stars = np.append(self.stars, np.expand_dims(star,0), axis=0)
 
@@ -722,6 +723,7 @@ class TPF_Series:
         size:Union[Tuple,int],
         mode:Literal['flux','mag']=None,
         f_ref:float=1, m_ref:float=0,
+        store_stars:bool=False,
         rng:Union[int,np.random.default_rng]=None,
         verbose:int=0,
         ) -> None:
@@ -737,10 +739,11 @@ class TPF_Series:
         self.f_ref                              = f_ref
         self.m_ref                              = m_ref
         
-
+        #intermediate storage
+        self.store_stars = store_stars
+        
+        #infered attributes
         self.tpf_s = np.empty((0,*self.size,3))
-
-        print(self.tpf_s.shape)
 
         pass
 
@@ -767,30 +770,52 @@ class TPF_Series:
             size=self.size,
             mode=self.mode,
             f_ref=self.f_ref, m_ref=self.m_ref,
-            store_stars=False,
-            rng=int(self.rng.integers(low=0, high=int(1E12))),
+            store_stars=self.store_stars,
+            rng=self.rng,
             verbose=verbose,
         )
 
+        params = {}
         for idx, t in enumerate(times):
-            
+            print(idx, t)
 
-            tpf.add_stars(
-                nstars=1,
-                posx={'dist':'chisquare', 'params':[50]},
-                posy={'dist':'chisquare', 'params':[30]},
-                # f={'dist':'uniform', 'params':[1,10]},
-                m={'dist':'uniform', 'params':[-4,4]},
-                aperture={'dist':'poisson', 'params':[5]},
+            if idx == 0:
+                tpf.add_stars(
+                    nstars=1,
+                    posx={'dist':'chisquare', 'params':[50]},
+                    posy={'dist':'chisquare', 'params':[30]},
+                    # f={'dist':'uniform', 'params':[1,10]},
+                    m={'dist':'uniform', 'params':[-4,4]},
+                    aperture={'dist':'poisson', 'params':[5]},
+                )
+                # params = {
+                #     'posx':[p for p]
+                # }
+                print(params)
+            else:
+                tpf.add_stars(
+                    nstars=1,
+                    posx=params[0],
+                    posy=params[1],
+                    f=params[2],
+                    m=params[3],
+                    aperture=params[4],
+                )
+
+            fig = plt.figure()
+            plt.pcolormesh(
+                tpf.frame[:,:,0],
+                tpf.frame[:,:,1],
+                tpf.frame[:,:,2],
             )
+            plt.show()
 
             if self.mode == 'flux':
                 self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
             elif self.mode == 'mag':
                 self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
         
-
-            tpf.clean_frame(cleanparams=False)
+            tpf.clean_frame(cleanparams=True)
 
         print(self.tpf_s.shape)
 
