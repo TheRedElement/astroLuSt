@@ -64,6 +64,43 @@ class TPF:
                 - verbosity level
                 - the default is 0
 
+        Infered Attributes
+        ------------------
+            - `frame`
+                - np.ndarray
+                - final frame when all contributions are added up
+                - contains values in flux
+                - has shape `(xpix, ypix, 3)`
+                    - the first two entries of the last dimension contain the pixel coordinates
+                    - the last entry contains the flux value
+            - `frame_mag`
+                - np.ndarray
+                - final frame when all contributions are added up
+                - contains values in magnitudes (infered from `frame`)
+                - has shape `(xpix, ypix, 3)`
+                    - the first two entries of the last dimension contain the pixel coordinates
+                    - the last entry contains the flux value
+            - `star_params`
+                - list
+                - contains as many entries as stars in the frame
+                - each entry is a list that contains the star specifications
+                    - element 0: position (`pos=(xpos, ypos)`)
+                    - element 1: flux (`f`)
+                    - element 2: magnitude (`m`)
+                    - element 3: aperture (`aperture`)
+            - `stars`
+                - np.ndarray
+                - only stored if `store_stars=True`
+                - array of frames of each individual star including its aperture mask
+                - has shape `(nstars,xpix,ypix,2)`
+                    - first dimension denotes the star
+                    - second dimension are the pixels in x direction
+                    - third dimension are the pixels in y direction
+                    - last dimension contains
+                        - as element 0: flux values
+                        - as element 1: magnitude values
+                        - as element 2: aperture  mask
+
         Methods
         -------
             - `star()`
@@ -123,7 +160,7 @@ class TPF:
         self.store_stars = store_stars
 
         #infered attributes
-        self.stars = np.empty((0,self.size[0],self.size[1],2))
+        self.stars = np.empty((0,self.size[0],self.size[1],3))
         self.starparams = []
 
         pass
@@ -213,9 +250,21 @@ class TPF:
             mean=pos, cov=cov, allow_singular=True
         ).pdf(self.frame[:,:,:2])
 
-        b = (np.sqrt(np.sum((self.frame[:,:,:2]-pos)**2, axis=2))<aperture)
+        #star in magnitudes
+        star_mag = alpp.fluxes2mags(star, f_ref=self.f_ref, m_ref=self.m_ref)
         
-        star = np.append(np.expand_dims(star,axis=2), np.expand_dims(b,axis=2), axis=2)
+        #aperture mask
+        aperture_mask = (np.sqrt(np.sum((self.frame[:,:,:2]-pos)**2, axis=2))<aperture)
+        
+        #add both to star
+        star = np.concatenate(
+            (
+                np.expand_dims(star, axis=2),
+                np.expand_dims(star_mag, axis=2),
+                np.expand_dims(aperture_mask, axis=2)
+            ),
+            axis=2,
+        )
 
         #store generated parameters and clean frames
         self.starparams.append([pos, f, m, aperture])
@@ -374,7 +423,6 @@ class TPF:
             else:
                 posy['params'].append((nstars,1))
                 posy = eval(f"self.rng.{posy['dist']}(*{posy['params']})")
-
 
         posx = np.array(posx).reshape(-1,1)
         posy = np.array(posy).reshape(-1,1)
