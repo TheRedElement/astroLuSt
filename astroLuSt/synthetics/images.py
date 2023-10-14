@@ -179,6 +179,30 @@ class TPF:
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
+    def clean_frame(self,
+        ) -> None:
+        """
+            - function to clean the created frames to their initial configuration
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+        self.frame[:,:,2]       = 0
+        self.frame_mag[:,:,2]   = 0
+        self.stars              = np.empty((0,self.size[0],self.size[1],3))
+        self.starparams         = []
+        
+        return
+
     def star(self,
         pos:np.ndarray,
         f:float=None, m:float=None,
@@ -686,8 +710,87 @@ class TPF:
 
 class TPF_Series:
 
-    def __init__(self) -> None:
+    def __init__(self,
+        size:Union[Tuple,int],
+        mode:Literal['flux','mag']=None,
+        f_ref:float=1, m_ref:float=0,
+        rng:Union[int,np.random.default_rng]=None,
+        verbose:int=0,
+        ) -> None:
+
+        if isinstance(size, int):   self.size   = (size,size)
+        else:                       self.size   = size
+        if mode is None:            self.mode   = 'flux'
+        else:                       self.mode   = mode
+        if rng is None:             self.rng    = np.random.default_rng(seed=None)
+        elif isinstance(rng, int):  self.rng    = np.random.default_rng(seed=rng)
+        else:                       self.rng    = rng
+        self.verbose                            = verbose
+        self.f_ref                              = f_ref
+        self.m_ref                              = m_ref
+        
+
+        self.tpf_s = np.empty((0,*self.size,3))
+
+        print(self.tpf_s.shape)
+
         pass
 
+    def __repr__(self) -> str:
+        return (
+            f'{self.__class__.__name__}(\n'
+            f'\n'
+            f')\n'
+        )
+    
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+    
+    def make_frames(self,
+        times:np.ndarray,
+        verbose:int=None,
+        ) -> np.ndarray:
+
+        #default values
+        if verbose is None: verbose = self.verbose
+        # seed = 
+
+        tpf = TPF(
+            size=self.size,
+            mode=self.mode,
+            f_ref=self.f_ref, m_ref=self.m_ref,
+            store_stars=False,
+            rng=int(self.rng.integers(low=0, high=int(1E12))),
+            verbose=verbose,
+        )
+
+        for t in times:
+            
+
+            tpf.add_stars(
+                nstars=1,
+                posx={'dist':'chisquare', 'params':[50]},
+                posy={'dist':'chisquare', 'params':[30]},
+                # f={'dist':'uniform', 'params':[1,10]},
+                m={'dist':'uniform', 'params':[-4,4]},
+                aperture={'dist':'poisson', 'params':[5]},
+            )
+
+            if self.mode == 'flux':
+                self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
+            elif self.mode == 'mag':
+                self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
+        
+
+
+        print(self.tpf_s.shape)
+
+        return
+    
+    def plot_result(self,
+        ):
+
+        return
+    
 
 #%%definitions
