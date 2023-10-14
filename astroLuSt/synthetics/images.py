@@ -51,6 +51,14 @@ class TPF:
                 - if False
                     - will only store the final (composite) frame
                 - the default is False
+            - `rng`
+                - np.random.default_rng, int, optional
+                - if int
+                    - random seed to use in the random number generator
+                - if np.random.default_rng instance
+                    - random number gnerator to use for random generation
+                - the default is `None`
+                    - will use `np.random.default_rng(seed=None)`
             - `verbose`
                 - int, optional
                 - verbosity level
@@ -83,6 +91,7 @@ class TPF:
         mode:Literal['flux','mag']=None,
         f_ref:float=1, m_ref:float=0,
         store_stars:bool=False,
+        rng:Union[int,np.random.default_rng]=None,
         verbose:int=0,
         ) -> None:
 
@@ -90,10 +99,12 @@ class TPF:
         else:                       self.size   = size
         if mode is None:            self.mode   = 'flux'
         else:                       self.mode   = mode
+        if rng is None:             self.rng    = np.random.default_rng(seed=None)
+        elif isinstance(rng, int):  self.rng    = np.random.default_rng(seed=rng)
+        else:                       self.rng    = rng
         self.verbose                            = verbose
         self.f_ref                              = f_ref
         self.m_ref                              = m_ref
-
 
         #frames
         x = np.arange(self.size[0])
@@ -353,20 +364,20 @@ class TPF:
 
 
             #get random indices that each position occurs once
-            randidxs    = np.random.choice(
+            randidxs    = self.rng.choice(
                 range(pos.shape[0]),
                 size=random_config['nstars'],
-                replace=False
+                replace=False,
             )
             
             #choose random parameters for stars
             pos         = pos[randidxs]
             apertures   = np.arange(random_config['apmin'], random_config['apmax'], random_config['ap_res'])
-            aperture    = np.random.choice(apertures, size=(random_config['nstars']))
+            aperture    = self.rng.choice(apertures, size=(random_config['nstars']))
             if self.mode == 'flux':
-                f = np.random.choice(np.linspace(random_config['fmin'],  random_config['fmax'], random_config['fm_res']), size=(random_config['nstars']))
+                f = self.rng.choice(np.linspace(random_config['fmin'],  random_config['fmax'], random_config['fm_res']), size=(random_config['nstars']))
             elif self.mode == 'mag':
-                m = np.random.choice(np.linspace(random_config['mmin'],  random_config['mmax'], random_config['fm_res']), size=(random_config['nstars']))
+                m = self.rng.choice(np.linspace(random_config['mmin'],  random_config['mmax'], random_config['fm_res']), size=(random_config['nstars']))
                 f = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
 
             #report generated parameters
