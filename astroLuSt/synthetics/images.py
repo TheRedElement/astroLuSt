@@ -207,8 +207,8 @@ class TPF:
         self.frame[:,:,2]       = 0
         self.frame_mag[:,:,2]   = 0
         if cleanparams:
-            self.stars              = np.empty((0,self.size[0],self.size[1],3))
-            self.starparams         = []
+            self.stars          = np.empty((0,self.size[0],self.size[1],3))
+            self.starparams     = np.empty((0,5))
         
         return
 
@@ -323,7 +323,9 @@ class TPF:
                 - `nstars`
                     - int, optional
                     - number of stars to generate
-                    - the default is 1 
+                    - will be ignored if all other parameters are specified
+                        - i.e., the stars will be generated according to specific parameters and not randomly
+                    - the default is 1
                 - `posx`
                     - dict, np.ndarray, optional
                     - x values of the stars position in pixels
@@ -562,7 +564,7 @@ class TPF:
         return
 
     def add_noise(self,
-        amp:float=1E-3, bias:float=1E-1,
+        amplitude:float=1E-3, bias:float=1E-1,
         ) -> None:
         #TODO: add different noise parts (photon noise, dead pixels, hot pixels, ...)
         """
@@ -570,7 +572,7 @@ class TPF:
 
             Parameters
             ----------
-                - `amp`
+                - `amplitude`
                     - float, optional
                     - amplitude of the added noise
                     - the default is 1E-3
@@ -589,7 +591,7 @@ class TPF:
             --------
         """
         
-        noise = amp*self.rng.standard_normal(size=(self.frame.shape[:2])) + bias
+        noise = amplitude*self.rng.standard_normal(size=(self.frame.shape[:2])) + bias
         
         self.frame[:,:,2] += noise
 
@@ -723,7 +725,7 @@ class TPF_Series:
         size:Union[Tuple,int],
         mode:Literal['flux','mag']=None,
         f_ref:float=1, m_ref:float=0,
-        store_stars:bool=False,
+        # store_stars:bool=False,
         rng:Union[int,np.random.default_rng]=None,
         verbose:int=0,
         ) -> None:
@@ -739,8 +741,8 @@ class TPF_Series:
         self.f_ref                              = f_ref
         self.m_ref                              = m_ref
         
-        #intermediate storage
-        self.store_stars = store_stars
+        # #intermediate storage
+        # self.store_stars = store_stars
         
         #infered attributes
         self.tpf_s = np.empty((0,*self.size,3))
@@ -759,84 +761,86 @@ class TPF_Series:
     
     def make_frames(self,
         times:np.ndarray,
+        add_stars_kwargs:dict=None,
+        add_noise_kwargs:dict=None,
+        add_custom_kwargs:dict=None,
         verbose:int=None,
         ) -> np.ndarray:
 
         #default values
+        if add_stars_kwargs is None:  add_stars_kwargs = dict()
+        if add_noise_kwargs is None:  add_noise_kwargs = dict(amplitude=0, bias=0)
+        if add_custom_kwargs is None: add_custom_kwargs = dict(trend='linearx', amplitude=0)
         if verbose is None: verbose = self.verbose
-        # seed = 
+
+        #store times
+        self.times = times
 
         tpf = TPF(
             size=self.size,
             mode=self.mode,
             f_ref=self.f_ref, m_ref=self.m_ref,
-            store_stars=self.store_stars,
+            # store_stars=self.store_stars,
             rng=self.rng,
             verbose=verbose,
         )
 
-        params = {}
-        for idx, t in enumerate(times):
-            print(idx, t)
 
+        for idx, t in enumerate(times):
+
+            #add stars
             if idx == 0:
+                ##generate new instance for first added objects
                 tpf.add_stars(
-                    nstars=1,
-                    posx={'dist':'chisquare', 'params':[50]},
-                    posy={'dist':'chisquare', 'params':[30]},
-                    # f={'dist':'uniform', 'params':[1,10]},
-                    m={'dist':'uniform', 'params':[-4,4]},
-                    aperture={'dist':'poisson', 'params':[5]},
+                    **add_stars_kwargs
                 )
-                # params = {
-                #     'posx':[p for p]
-                # }
-                print(params)
+                params = tpf.starparams.T
             else:
+                ##simply copy-paste (and modify) from previous iterations (simulates reference magnitude)
                 tpf.add_stars(
-                    nstars=1,
+                    nstars=-1,
                     posx=params[0],
                     posy=params[1],
-                    f=params[2],
-                    m=params[3],
+                    f=params[2]*np.sin(t),
+                    m=params[3]*np.sin(t),
                     aperture=params[4],
                 )
+            #noise and trends will be regenerated every frame
+            tpf.add_noise(**add_noise_kwargs)
+            tpf.add_custom(**add_custom_kwargs)
 
-            fig = plt.figure()
-            plt.pcolormesh(
-                tpf.frame[:,:,0],
-                tpf.frame[:,:,1],
-                tpf.frame[:,:,2],
-            )
-            plt.show()
 
+            #add new frame
             if self.mode == 'flux':
                 self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
             elif self.mode == 'mag':
                 self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
-        
-            tpf.clean_frame(cleanparams=True)
 
-        print(self.tpf_s.shape)
+            #clean the frame for next timestamp ("readout")
+            tpf.clean_frame(cleanparams=True)
 
         return
     
     def plot_result(self,
-        plot_apertures:List[int]=None,
+        save:str=False,
         pcolormesh_kwargs:dict=None,
+        funcanim_kwargs:dict=None,
         ):
 
         def init(mesh):
-            mesh.set_array(self.tpf_s[0,:,:,-1])
+            mesh.set_array(self.tpf_s[0,:,:,2])
             return
         
         def animate(frame, mesh, title):
-            mesh.set_array(self.tpf_s[frame,:,:,-1])
+            mesh.set_array(self.tpf_s[frame,:,:,2])
+            
+            title.set_text(f'Frame {frame+1:.0f}')
             return
 
-        if plot_apertures is None: plot_apertures = []
+        #default parameters
         if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
-
+        if funcanim_kwargs is None: funcanim_kwargs = dict()
+        if 'frames' not in funcanim_kwargs.keys(): funcanim_kwargs['frames'] = len(self.tpf_s)
         if self.mode == 'flux':
             c_lab = 'Flux [-]'
             if 'cmap' not in pcolormesh_kwargs.keys():
@@ -848,6 +852,11 @@ class TPF_Series:
 
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
+        title = fig.suptitle(f'Frame 0')
+        
+        #labelling
+        ax1.set_xlabel('Pixel')
+        ax1.set_ylabel('Pixel')
 
         mesh = ax1.pcolormesh(
             self.tpf_s[0,:,:,0],
@@ -855,44 +864,28 @@ class TPF_Series:
             self.tpf_s[0,:,:,2],
             zorder=0, **pcolormesh_kwargs
         )
-        # if self.store_stars:
-        #     for idx, apidx in enumerate(plot_apertures):
-        #         try:
-        #             cont = ax1.contour(self.stars[apidx,:,:,1], levels=[0], colors='r', linewidths=1, zorder=1)
-        #         except IndexError:
-        #             almf.printf(
-        #                 msg=f'Ignoring `plot_apertures[{idx}]` because the index is out of bounds!',
-        #                 context=f'{self.__class__.__name__}.plot_result()',
-        #                 type='WARNING'
-        #             )
-        title = ''
-        plot_every = 1
 
-        print(len(self.tpf_s))
+        cbar = fig.colorbar(mesh, ax=ax1)
+        if self.mode == 'mag':
+            cbar.ax.invert_yaxis()
+        cbar.set_label(c_lab)
+
+
         anim = FuncAnimation(
             fig,
             partial(animate, mesh=mesh, title=title),
             init_func=partial(init, mesh=mesh),
-            # frames=range(len(self.tpf_s))[::plot_every],
-            frames=len(self.tpf_s),
-            interval=100,   
+            **funcanim_kwargs,   
         )
 
 
-        save = 'test.gif'
-        # fps = tps * fluxes.shape[0]/(np.nanmax(times)-np.nanmin(times))
-        # fps = tps * 1/(np.nanmedian(np.diff(times)))
-
         if isinstance(save, str):
-            # writergif = PillowWriter(fps=fps)
-            writergif = PillowWriter(fps=1)
-            # anim.save(save, fps=20, extra_args=['-vcodec', 'libx264'])
-            anim.save(save, writer=writergif)#, extra_args=['-vcodec', 'libx264'])
+            anim.save(save, fps=20)#, extra_args=['-vcodec', 'libx264'])
         plt.show()
         
+        axs = fig.axes
 
-
-        return
+        return fig, axs, anim
     
 
 #%%definitions
