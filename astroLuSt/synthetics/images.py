@@ -22,7 +22,7 @@ class TPF:
         Attributes
         ----------
             - `size`
-                - tuple, int
+                - tuple, int, optional
                 - size of the TPF to generate
                 - if int
                     - will be interpreted as `(size,size)`
@@ -30,6 +30,7 @@ class TPF:
                 - if tuple
                     - `size[0]` denotes the number of pixels in x direction
                     - `size[1]` denotes the number of pixels in y direction
+                - the default is 15
             - `mode`
                 - Literal, optional
                 - whether to generate the frame using magnitudes or fluxes
@@ -52,7 +53,7 @@ class TPF:
                 - wether to store an array of all generated stars including their apertures
                 - if False
                     - will only store the final (composite) frame
-                - the default is False
+                - the default is True
             - `rng`
                 - np.random.default_rng, int, optional
                 - if int
@@ -127,10 +128,10 @@ class TPF:
     """
 
     def __init__(self,
-        size:Union[Tuple,int],
+        size:Union[Tuple,int]=15,
         mode:Literal['flux','mag']=None,
         f_ref:float=1, m_ref:float=0,
-        store_stars:bool=False,
+        store_stars:bool=True,
         rng:Union[int,np.random.default_rng]=None,
         verbose:int=0,
         ) -> None:
@@ -289,7 +290,7 @@ class TPF:
         
         #aperture mask
         aperture_mask = (np.sqrt(np.sum((self.frame[:,:,:2]-pos)**2, axis=2))<aperture)
-        
+
         #add both to star
         star = np.concatenate(
             (
@@ -342,8 +343,8 @@ class TPF:
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
                     - the default is `None`
-                        - will be set to `dict(dist='uniform', params={'low':0,  'high':100})`
-                        - i.e. a uniform distribution from 0 to 100
+                        - will be set to `dict(dist='uniform', params={'low':0,  'high':self.size[0]})`
+                        - i.e. a uniform distribution in the whole range of the frame
                 - `posy`
                     - dict, np.ndarray, optional
                     - y values of the stars position in pixels
@@ -359,8 +360,8 @@ class TPF:
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
                     - the default is `None`
-                        - will be set to `dict(dist='uniform', params={'low':0,  'high':100})`
-                        - i.e. a uniform distribution from 0 to 100
+                        - will be set to `dict(dist='uniform', params={'low':0,  'high':self.size[1]})`
+                        - i.e. a uniform distribution in the whole range of the frame
                 - `f`
                     - dict, np.ndarray, optional
                     - fluxes of the stars to generate
@@ -376,8 +377,8 @@ class TPF:
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
                     - the default is `None`
-                        - will be set to `dict(dist='uniform', params={'low':1,  'high':100})`
-                        - i.e. a uniform distribution from 1 to 100
+                        - will be set to `dict(dist='uniform', params={'low':0.1,  'high':1})`
+                        - i.e. a uniform distribution from 0.1 to 1
                 - `m`
                     - dict, np.ndarray, optional
                     - magnitudes of the stars to generate
@@ -393,8 +394,8 @@ class TPF:
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
                     - the default is `None`
-                        - will be set to `dict(dist='uniform', params={'low':-4,  'high':4})`
-                        - i.e. a uniform distribution from -4 to 4
+                        - will be set to `dict(dist='uniform', params={'low':-2.5,  'high':0})`
+                        - i.e. a uniform distribution from -2.5 to 0
                 - `aperture`
                     - dict, np.ndarray, optional
                     - apertures to use for the stars 
@@ -411,7 +412,7 @@ class TPF:
                                     - passed as list of positional args (for list)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':-4,  'high':4})`
-                        - i.e. a uniform distribution from 1 to 20
+                        - i.e. a uniform distribution from 0.1 to 1
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -436,11 +437,11 @@ class TPF:
         """
 
         #default parameters
-        if posx is None:        posx    =dict(dist='uniform', params={'low':0,  'high':100})
-        if posy is None:        posy    =dict(dist='uniform', params={'low':0,  'high':100})
-        if f is None:           f       =dict(dist='uniform', params={'low':1,  'high':100})
-        if m is None:           m       =dict(dist='uniform', params={'low':-4, 'high':4})
-        if aperture is None:    aperture=dict(dist='uniform', params={'low':1,  'high':20})
+        if posx is None:        posx    =dict(dist='uniform', params={'low':0,  'high':self.size[0]})
+        if posy is None:        posy    =dict(dist='uniform', params={'low':0,  'high':self.size[1]})
+        if f is None:           f       =dict(dist='uniform', params={'low':0.1,'high':1})
+        if m is None:           m       =dict(dist='uniform', params={'low':0,  'high':2.5})
+        if aperture is None:    aperture=dict(dist='uniform', params={'low':0.1,'high':1})
 
 
         #generate positions
@@ -565,7 +566,7 @@ class TPF:
         return
 
     def add_noise(self,
-        amplitude:float=1E-3, bias:float=1E-1,
+        amplitude:float=1, bias:float=1,
         ) -> None:
         #TODO: add different noise parts (photon noise, dead pixels, hot pixels, ...)
         """
@@ -576,11 +577,14 @@ class TPF:
                 - `amplitude`
                     - float, optional
                     - amplitude of the added noise
-                    - the default is 1E-3
+                    - scaled such that `m=0` and `f=1` are likely to give good results for `aperture=1`,  `m_ref=0`, `f_ref=1`
+                    - the default is 1
                 - `bias`
                     - float, optional
                     - offset of noise from 0 (similar to bias-current)
-                    - the default is 1E-1
+                    - measured in flux
+                    - the default is 1
+                        - such that also for magnitudes are at least 0 for the default `m_ref` and `f_ref`
 
             Raises
             ------
@@ -592,7 +596,7 @@ class TPF:
             --------
         """
         
-        noise = amplitude*self.rng.standard_normal(size=(self.frame.shape[:2])) + bias
+        noise = amplitude*1E-2*self.rng.standard_normal(size=(self.frame.shape[:2])) + bias
         
         self.frame[:,:,2] += noise
 
@@ -637,7 +641,7 @@ class TPF:
         return aperture
 
     def plot_result(self,
-        plot_apertures:List[int]=None,
+        plot_apertures:Union[List[int],Literal['all']]=None,
         pcolormesh_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
@@ -646,8 +650,12 @@ class TPF:
             Parameters
             ----------
                 - `plot_apertures`
-                    - list, optional
-                    - contains indices of apertures to show in the produced figure
+                    - list, Literal, optional
+                    - if list
+                        - contains indices of apertures to show in the produced figure
+                    - options for Literal
+                        - `'all'`
+                            - plots all apertures
                     - the default is `None`
                         - will not plot any apertures
                 - `pcolormesh_kwargs`
@@ -673,6 +681,7 @@ class TPF:
         """
 
         if plot_apertures is None: plot_apertures = []
+        elif plot_apertures == 'all': plot_apertures = range(len(self.starparams))
         if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
 
         if self.mode == 'flux':
@@ -692,7 +701,7 @@ class TPF:
         if self.store_stars:
             for idx, apidx in enumerate(plot_apertures):
                 try:
-                    cont = ax1.contour(self.stars[apidx,:,:,1], levels=[0], colors='r', linewidths=1, zorder=1)
+                    cont = ax1.contour(self.stars[apidx,:,:,2], levels=[0], colors='r', linewidths=1, zorder=1)
                 except IndexError:
                     almf.printf(
                         msg=f'Ignoring `plot_apertures[{idx}]` because the index is out of bounds!',
@@ -700,8 +709,8 @@ class TPF:
                         type='WARNING'
                     )
 
-        #legend entries
-        ax1.plot(np.nan, np.nan,  'r-', label='Aperture')
+            #legend entries
+            ax1.plot(np.nan, np.nan,  'r-', label='Aperture')
 
         #labelling
         ax1.set_xlabel('Pixel')
@@ -718,6 +727,7 @@ class TPF:
         axs = fig.axes
 
         return fig, axs
+
 
 class TPF_Series:
     """
@@ -736,6 +746,7 @@ class TPF_Series:
                 - if tuple
                     - `size[0]` denotes the number of pixels in x direction
                     - `size[1]` denotes the number of pixels in y direction
+                - the default is 15
             - `mode`
                 - Literal, optional
                 - whether to generate the frames using magnitudes or fluxes
@@ -786,7 +797,7 @@ class TPF_Series:
     """
 
     def __init__(self,
-        size:Union[Tuple,int],
+        size:Union[Tuple,int]=15,
         mode:Literal['flux','mag']=None,
         f_ref:float=1, m_ref:float=0,
         rng:Union[int,np.random.default_rng]=None,
