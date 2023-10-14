@@ -1,4 +1,4 @@
-#TODO: Allow passing of weights for random.choice
+#TODO: Documentation TPF_Series
 
 #%%imports
 from functools import partial
@@ -725,7 +725,6 @@ class TPF_Series:
         size:Union[Tuple,int],
         mode:Literal['flux','mag']=None,
         f_ref:float=1, m_ref:float=0,
-        # store_stars:bool=False,
         rng:Union[int,np.random.default_rng]=None,
         verbose:int=0,
         ) -> None:
@@ -741,11 +740,9 @@ class TPF_Series:
         self.f_ref                              = f_ref
         self.m_ref                              = m_ref
         
-        # #intermediate storage
-        # self.store_stars = store_stars
-        
         #infered attributes
         self.tpf_s = np.empty((0,*self.size,3))
+        self.starparams_s = np.empty((0,0,7))
 
         pass
 
@@ -761,6 +758,7 @@ class TPF_Series:
     
     def make_frames(self,
         times:np.ndarray,
+        variability:Callable=None,
         add_stars_kwargs:dict=None,
         add_noise_kwargs:dict=None,
         add_custom_kwargs:dict=None,
@@ -768,56 +766,65 @@ class TPF_Series:
         ) -> np.ndarray:
 
         #default values
+        if variability is None: variability = lambda t, fm: fm
         if add_stars_kwargs is None:  add_stars_kwargs = dict()
         if add_noise_kwargs is None:  add_noise_kwargs = dict(amplitude=0, bias=0)
         if add_custom_kwargs is None: add_custom_kwargs = dict(trend='linearx', amplitude=0)
         if verbose is None: verbose = self.verbose
 
         #store times
-        self.times = times
+        self.times = np.append(times, 0)    #append zero-timestamp for rest frame
 
         tpf = TPF(
             size=self.size,
             mode=self.mode,
             f_ref=self.f_ref, m_ref=self.m_ref,
-            # store_stars=self.store_stars,
             rng=self.rng,
             verbose=verbose,
         )
 
+        for idx, t in enumerate(self.times):
 
-        for idx, t in enumerate(times):
-
-            #add stars
+            #initial (rest) frame (will be ignored in the end)
             if idx == 0:
-                ##generate new instance for first added objects
+                ##generate new instance for first added objects (rest frame)
                 tpf.add_stars(
                     **add_stars_kwargs
                 )
+
+                ##set rest params for next frames
                 params = tpf.starparams.T
+                
+                ##clean the frame for next timestamp ("readout")
+                tpf.clean_frame(cleanparams=True)
             else:
-                ##simply copy-paste (and modify) from previous iterations (simulates reference magnitude)
+                ##modify rest params (simulates reference luminosities)
                 tpf.add_stars(
-                    nstars=-1,
+                    nstars=-1,  #will be ignored anyways
                     posx=params[0],
                     posy=params[1],
-                    f=params[2]*np.sin(t),
-                    m=params[3]*np.sin(t),
+                    f=variability(t, params[2].copy()),
+                    m=variability(t, params[3].copy()),
                     aperture=params[4],
                 )
-            #noise and trends will be regenerated every frame
-            tpf.add_noise(**add_noise_kwargs)
-            tpf.add_custom(**add_custom_kwargs)
+                ##noise and trends will be regenerated every frame
+                tpf.add_noise(**add_noise_kwargs)
+                tpf.add_custom(**add_custom_kwargs)
 
+                ##add new frame to array of frames
+                if self.mode == 'flux':
+                    self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
+                elif self.mode == 'mag':
+                    self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
+                
+                ##add physical params to array of params (adding time, frame,)
+                tpf_starparams = np.append(tpf.starparams,[[t,idx]]*len(tpf.starparams),axis=1)
+                tpf_starparams = np.expand_dims(tpf_starparams,0)   #reshaping for concatenation
+                self.starparams_s = self.starparams_s.reshape(-1,tpf_starparams.shape[1],7) #reshaping for concatenation
+                self.starparams_s = np.append(self.starparams_s, tpf_starparams, axis=0)    #appending
 
-            #add new frame
-            if self.mode == 'flux':
-                self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
-            elif self.mode == 'mag':
-                self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
-
-            #clean the frame for next timestamp ("readout")
-            tpf.clean_frame(cleanparams=True)
+                ##clean the frame for next timestamp ("readout")
+                tpf.clean_frame(cleanparams=True)
 
         return
     
@@ -825,6 +832,7 @@ class TPF_Series:
         save:str=False,
         pcolormesh_kwargs:dict=None,
         funcanim_kwargs:dict=None,
+        save_kwargs:dict=None,
         ):
 
         def init(mesh):
@@ -834,13 +842,15 @@ class TPF_Series:
         def animate(frame, mesh, title):
             mesh.set_array(self.tpf_s[frame,:,:,2])
             
-            title.set_text(f'Frame {frame+1:.0f}')
+            title.set_text(f'Frame {frame:.0f}')
             return
 
         #default parameters
-        if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
-        if funcanim_kwargs is None: funcanim_kwargs = dict()
+        if pcolormesh_kwargs is None:   pcolormesh_kwargs = dict()
+        if funcanim_kwargs is None:     funcanim_kwargs = dict()
         if 'frames' not in funcanim_kwargs.keys(): funcanim_kwargs['frames'] = len(self.tpf_s)
+        if save_kwargs is None:         save_kwargs = dict()
+        if 'fps' not in save_kwargs.keys(): save_kwargs['fps'] = 15
         if self.mode == 'flux':
             c_lab = 'Flux [-]'
             if 'cmap' not in pcolormesh_kwargs.keys():
@@ -862,6 +872,8 @@ class TPF_Series:
             self.tpf_s[0,:,:,0],
             self.tpf_s[0,:,:,1],
             self.tpf_s[0,:,:,2],
+            # vmin=self.tpf_s[:,:,:,2].min(),
+            # vmax=self.tpf_s[:,:,:,2].max(),
             zorder=0, **pcolormesh_kwargs
         )
 
@@ -880,8 +892,7 @@ class TPF_Series:
 
 
         if isinstance(save, str):
-            anim.save(save, fps=20)#, extra_args=['-vcodec', 'libx264'])
-        plt.show()
+            anim.save(save, **save_kwargs)
         
         axs = fig.axes
 
