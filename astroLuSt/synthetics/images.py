@@ -1,8 +1,10 @@
 #TODO: Allow passing of weights for random.choice
 
 #%%imports
+from functools import partial
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from matplotlib.animation import FuncAnimation, PillowWriter
 import numpy as np
 import scipy.stats as sps
 
@@ -180,12 +182,17 @@ class TPF:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def clean_frame(self,
+        cleanparams:bool=True,
         ) -> None:
         """
             - function to clean the created frames to their initial configuration
 
             Parameters
             ----------
+                - `cleanparams`
+                    - bool, optional
+                    - whether to also clean the parameters (`self.stars`, `self.starparams`)
+                    - the default is True
 
             Raises
             ------
@@ -198,8 +205,9 @@ class TPF:
         """
         self.frame[:,:,2]       = 0
         self.frame_mag[:,:,2]   = 0
-        self.stars              = np.empty((0,self.size[0],self.size[1],3))
-        self.starparams         = []
+        if cleanparams:
+            self.stars              = np.empty((0,self.size[0],self.size[1],3))
+            self.starparams         = []
         
         return
 
@@ -764,7 +772,7 @@ class TPF_Series:
             verbose=verbose,
         )
 
-        for t in times:
+        for idx, t in enumerate(times):
             
 
             tpf.add_stars(
@@ -782,13 +790,82 @@ class TPF_Series:
                 self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
         
 
+            tpf.clean_frame(cleanparams=False)
 
         print(self.tpf_s.shape)
 
         return
     
     def plot_result(self,
+        plot_apertures:List[int]=None,
+        pcolormesh_kwargs:dict=None,
         ):
+
+        def init(mesh):
+            mesh.set_array(self.tpf_s[0,:,:,-1])
+            return
+        
+        def animate(frame, mesh, title):
+            mesh.set_array(self.tpf_s[frame,:,:,-1])
+            return
+
+        if plot_apertures is None: plot_apertures = []
+        if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
+
+        if self.mode == 'flux':
+            c_lab = 'Flux [-]'
+            if 'cmap' not in pcolormesh_kwargs.keys():
+                pcolormesh_kwargs['cmap'] = 'viridis'
+        elif self.mode == 'mag':
+            c_lab = 'Magnitude [mag]'
+            if 'cmap' not in pcolormesh_kwargs.keys():
+                pcolormesh_kwargs['cmap'] = 'viridis_r'
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+
+        mesh = ax1.pcolormesh(
+            self.tpf_s[0,:,:,0],
+            self.tpf_s[0,:,:,1],
+            self.tpf_s[0,:,:,2],
+            zorder=0, **pcolormesh_kwargs
+        )
+        # if self.store_stars:
+        #     for idx, apidx in enumerate(plot_apertures):
+        #         try:
+        #             cont = ax1.contour(self.stars[apidx,:,:,1], levels=[0], colors='r', linewidths=1, zorder=1)
+        #         except IndexError:
+        #             almf.printf(
+        #                 msg=f'Ignoring `plot_apertures[{idx}]` because the index is out of bounds!',
+        #                 context=f'{self.__class__.__name__}.plot_result()',
+        #                 type='WARNING'
+        #             )
+        title = ''
+        plot_every = 1
+
+        print(len(self.tpf_s))
+        anim = FuncAnimation(
+            fig,
+            partial(animate, mesh=mesh, title=title),
+            init_func=partial(init, mesh=mesh),
+            # frames=range(len(self.tpf_s))[::plot_every],
+            frames=len(self.tpf_s),
+            interval=100,   
+        )
+
+
+        save = 'test.gif'
+        # fps = tps * fluxes.shape[0]/(np.nanmax(times)-np.nanmin(times))
+        # fps = tps * 1/(np.nanmedian(np.diff(times)))
+
+        if isinstance(save, str):
+            # writergif = PillowWriter(fps=fps)
+            writergif = PillowWriter(fps=1)
+            # anim.save(save, fps=20, extra_args=['-vcodec', 'libx264'])
+            anim.save(save, writer=writergif)#, extra_args=['-vcodec', 'libx264'])
+        plt.show()
+        
+
 
         return
     
