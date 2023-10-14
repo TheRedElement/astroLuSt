@@ -359,7 +359,7 @@ def wesenheit_magnitude(
 
     return w
 
-def mags_sum(m:np.ndarray, w:np.ndarray=None):
+def mags_sum(m:np.ndarray, w:np.ndarray=None, axis:int=None):
     """
         - function to calculate the total magnitude of a set of magnitudes
 
@@ -367,13 +367,27 @@ def mags_sum(m:np.ndarray, w:np.ndarray=None):
         ----------
             - `m`
                 - np.ndarray
+                - 3d array of shape (nframes,xpix,ypix)
+                    - nframes denotes the number of frames passed
+                    - xpix is the number of pixels in x direction
+                    - ypix is the number of pixels in y direction
                 - contains magnitudes to add up
             - `w`
                 - np.ndarray, optional
-                - weight for each passed magnitude
+                - weight for each passed pixel
                     - for example some distance measure
+                - has to be of shape `(1,*m.shape[1:])`
                 - the default is `None`
                     - will be set to 1 for all elements in `m`
+            - `axis`
+                - int, optional
+                - axis along which to add up magnitudes
+                    - 0     ... pixel wise
+                    - 1     ... row wise
+                    - 2     ... column wise
+                    - (1,2) ... frame wise
+                - the default is `None`
+                    - will flatten before adding up magnitudes
 
         Raises
         ------
@@ -394,15 +408,11 @@ def mags_sum(m:np.ndarray, w:np.ndarray=None):
 
     """
 
-    if w is None: w = np.ones_like(m)
-
-    if m.shape != w.shape:  
-        raise ValueError(
-            f'`m` and `w` have to have same shape but are of shapes {m.shape}, {w.shape}'
-        )
+    if w is None: w = np.ones(m.shape[1:])
 
     m_exp = 10**(-0.4*m)
-    m_tot = -2.5*np.log10(w.T@m_exp)
+    m_sum = np.sum(w*m_exp, axis=axis)
+    m_tot = -2.5*np.log10(m_sum)
 
     return m_tot
 
