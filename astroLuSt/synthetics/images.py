@@ -29,7 +29,7 @@ class TPF:
                     - i.e., square frame with `size` pixels in x and y direction
                 - if tuple
                     - `size[0]` denotes the number of pixels in x direction
-                    - `size[y]` denotes the number of pixels in y direction
+                    - `size[1]` denotes the number of pixels in y direction
             - `mode`
                 - Literal, optional
                 - whether to generate the frame using magnitudes or fluxes
@@ -175,6 +175,7 @@ class TPF:
             f'    mode={repr(self.mode)},\n'
             f'    f_ref={repr(self.f_ref)}, m_ref={repr(self.m_ref)},\n'
             f'    store_stars={repr(self.store_stars)},\n'
+            f'    rng={repr(self.rng.__class__.__name__)},\n'
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
@@ -653,7 +654,7 @@ class TPF:
                     - dict, optional
                     - kwargs to pass to `ax.pcolormesh()`
                     - the default is `None`
-                        - will be set to `dict('viridis')`
+                        - will be set to `dict(cmap='viridis')`
 
             Raises
             ------
@@ -718,8 +719,71 @@ class TPF:
 
         return fig, axs
 
-
 class TPF_Series:
+    """
+        - class to generate a series TPFs essentially simulating photometric data
+        - assumes stars to have a gaussian Point Spread Function (PSF)
+        - uses `astroLuSt.synthetic.images.TPF()` to generate individual frames
+
+        Attributes
+        ----------
+            - `size`
+                - tuple, int
+                - size of the TPFs to generate
+                - if int
+                    - will be interpreted as `(size,size)`
+                    - i.e., square frame with `size` pixels in x and y direction
+                - if tuple
+                    - `size[0]` denotes the number of pixels in x direction
+                    - `size[1]` denotes the number of pixels in y direction
+            - `mode`
+                - Literal, optional
+                - whether to generate the frames using magnitudes or fluxes
+                - allowed values are
+                    - `'flux'`
+                        - will use fluxes to generate the frames
+                    - `'mag'`
+                        - will use magnitudes to generate the frames
+                - the default is `None`
+                    - will be set to `'flux'`
+            - `f_ref`
+                - float, optional
+                - reference flux to use when converting fluxes to magnitudes
+                - the default is 1
+            - `m_ref`
+                - reference magnitude to use when converting magnitudes to fluxes
+                - the default is 0
+            - `rng`
+                - np.random.default_rng, int, optional
+                - if int
+                    - random seed to use in the random number generator
+                - if np.random.default_rng instance
+                    - random number gnerator to use for random generation
+                - the default is `None`
+                    - will use `np.random.default_rng(seed=None)`
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+        Methods
+        -------
+            - `make_frames()`
+            - `plot_result()`
+                - `init()`
+                - `animate()`
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+
+        Comments
+        --------
+            - all calculations are executed in fluxes
+                - in parallel a second frame in magnitudes gets calculated by converting the flux result
+    """
 
     def __init__(self,
         size:Union[Tuple,int],
@@ -749,7 +813,11 @@ class TPF_Series:
     def __repr__(self) -> str:
         return (
             f'{self.__class__.__name__}(\n'
-            f'\n'
+            f'    size={repr(self.size)},\n'
+            f'    mode={repr(self.mode)},\n'
+            f'    f_ref={repr(self.f_ref)}, m_ref={repr(self.m_ref)},\n'
+            f'    rng={repr(self.rng.__class__.__name__)},\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')\n'
         )
     
@@ -763,18 +831,109 @@ class TPF_Series:
         add_noise_kwargs:dict=None,
         add_custom_kwargs:dict=None,
         verbose:int=None,
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to generate a series of frames given `times`
+            
+            Parameters
+            ----------
+                - `times`
+                    - np.ndarray
+                    - timestamps encoding time of each frame
+                    - ideally a sorted array
+                    - also phases can be passed
+                        - then, `variability` has to be adjusted accordingly
+                - `variability`
+                    - Callable
+                    - function encoding the variability for every generated star
+                    - the function has to take two arguments
+                        - `tp`
+                            - float
+                            - a time/phasestamp
+                        - `fm`
+                            - np.ndarray
+                            - fluxes/magnitudes for all generated stars
+                    - the function shall return one value
+                        - `fm`
+                            - np.ndarray
+                            - the flux/magnitude value for the current time/phasestamp
+                    - the function can implement variability for every single star separately
+                    - an example for strong sinusoidal variability of the last generated star and weak sinusoidal variability (with random periods) of all other stars can be found below
+                        >>> def mf_var(tp, fm):
+                        >>>     period = 100
+                        >>>     amp    = 7
+                        >>>     rperiods = np.random.uniform(40, 50, size=fm[:-1].shape)
+                        >>>     ramps    = np.random.uniform(.1, 2,  size=rperiods.shape)
+                        >>>     fm[-1]  *= amp*(np.sin(2*np.pi*tp/period)+3) + 2E-3*np.random.randn(1)
+                        >>>     fm[:-1] *= ramps*(np.sin(2*np.pi*tp/rperiods)+2) + 1E-3*np.random.randn(*fm[:-1].shape)
+                        >>>     return fm
+                    - the default is `None`
+                        - will be implemented as `lambda tp, fm: fm`
+                        - i.e., no variability at all
+                - `add_stars_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_stars()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `add_noise_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_noise()`
+                    - the default is `None`
+                        - will be set to `dict(amplitude=0, bias=0)`
+                - `add_custom_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_custom()`
+                    - the default is `None`
+                        - will be set to `dict(trend='linearx', amplitude=0)`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `tpf_s`
+                    - np.ndarray
+                    - target pixel file series
+                    - i.e. series of generated frames
+                    - has shape `(nframes,self.size[0],self.size[1],3)`
+                        - the last dimension contains
+                            element 0: pixel coordinate in x direction
+                            element 1: pixel coordinate in y direction
+                            element 2: pixel flux/magnitude values
+                - `starparams_s`
+                    - np.ndarray
+                    - contains for every frame for physical parameters for all targets
+                    - has shape `(nframes,nstars,7)`
+                        - the last dimension contains
+                            - element 0: position in x direction (`posx`)
+                            - element 1: position in y direction (`posy`)
+                            - element 2: flux (`f`)
+                            - element 3: magnitude (`m`)
+                            - element 4: aperture (`aperture`)
+                            - element 5: time/phase (`tp`)
+                            - element 6: frame number (`idx`)
+                             
+            Comments
+            --------
+        """
 
         #default values
-        if variability is None: variability = lambda t, fm: fm
-        if add_stars_kwargs is None:  add_stars_kwargs = dict()
-        if add_noise_kwargs is None:  add_noise_kwargs = dict(amplitude=0, bias=0)
-        if add_custom_kwargs is None: add_custom_kwargs = dict(trend='linearx', amplitude=0)
-        if verbose is None: verbose = self.verbose
+        if variability is None: variability = lambda tp, fm: fm
+        if add_stars_kwargs is None:    add_stars_kwargs    = dict()
+        if add_noise_kwargs is None:    add_noise_kwargs    = dict(amplitude=0, bias=0)
+        if add_custom_kwargs is None:   add_custom_kwargs   = dict(trend='linearx', amplitude=0)
+        if verbose is None:             verbose             = self.verbose
 
         #store times
-        self.times = np.append(times, 0)    #append zero-timestamp for rest frame
+        self.times = np.insert(times, 0, 0) #append zero-timestamp for rest frame
 
+        #initialize TPF generator
         tpf = TPF(
             size=self.size,
             mode=self.mode,
@@ -783,63 +942,116 @@ class TPF_Series:
             verbose=verbose,
         )
 
-        for idx, t in enumerate(self.times):
+        #generate one frame for each timestamp
+        for idx, tp in enumerate(self.times):
 
             #initial (rest) frame (will be ignored in the end)
             if idx == 0:
-                ##generate new instance for first added objects (rest frame)
+                #generate new instance for first added objects (rest frame)
                 tpf.add_stars(
                     **add_stars_kwargs
                 )
 
-                ##set rest params for next frames
+                #set rest params for next frames
                 params = tpf.starparams.T
                 
-                ##clean the frame for next timestamp ("readout")
+                #clean the frame for next timestamp ("readout")
                 tpf.clean_frame(cleanparams=True)
             else:
-                ##modify rest params (simulates reference luminosities)
+                #modify rest params (simulates reference luminosities)
                 tpf.add_stars(
                     nstars=-1,  #will be ignored anyways
                     posx=params[0],
                     posy=params[1],
-                    f=variability(t, params[2].copy()),
-                    m=variability(t, params[3].copy()),
+                    f=variability(tp, params[2].copy()),
+                    m=variability(tp, params[3].copy()),
                     aperture=params[4],
                 )
-                ##noise and trends will be regenerated every frame
+                #noise and trends will be regenerated every frame
                 tpf.add_noise(**add_noise_kwargs)
                 tpf.add_custom(**add_custom_kwargs)
 
-                ##add new frame to array of frames
+                #add new frame to array of frames
                 if self.mode == 'flux':
                     self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
                 elif self.mode == 'mag':
                     self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
                 
-                ##add physical params to array of params (adding time, frame,)
-                tpf_starparams = np.append(tpf.starparams,[[t,idx]]*len(tpf.starparams),axis=1)
+                #add physical params to array of params (adding time, frame,)
+                tpf_starparams = np.append(tpf.starparams,[[tp,idx]]*len(tpf.starparams),axis=1)
                 tpf_starparams = np.expand_dims(tpf_starparams,0)   #reshaping for concatenation
                 self.starparams_s = self.starparams_s.reshape(-1,tpf_starparams.shape[1],7) #reshaping for concatenation
                 self.starparams_s = np.append(self.starparams_s, tpf_starparams, axis=0)    #appending
 
-                ##clean the frame for next timestamp ("readout")
+                #clean the frame for next timestamp ("readout")
                 tpf.clean_frame(cleanparams=True)
 
-        return
+        return self.tpf_s, self.starparams_s
     
     def plot_result(self,
         save:str=False,
         pcolormesh_kwargs:dict=None,
         funcanim_kwargs:dict=None,
         save_kwargs:dict=None,
-        ):
+        ) -> Tuple[Figure,plt.Axes,FuncAnimation]:
+        """
+            - method to render the animation resulting from the generated frames
+
+            Parameters
+            ----------
+                - `save`
+                    - str, optional
+                    - path to the location of where to save the created animation
+                    - if str
+                        - will be interpreted as savepath
+                    - the default is False
+                        - will not save the animation
+                - `pcolormesh_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.pcolormesh()`
+                    - the default is `None`
+                        - will be set to `dict(cmap='viridis')`
+                - `funcanim_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `matplotlib.animation.FuncAnimation()`
+                    - the default is `None`
+                        - will be set to `dict(frames=len(self.tpf_s))`
+                - `save_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `matplotlib.animation.FuncAnimation().save()`
+                    - the default is `None`
+                        - will be set to `dict(fps=15)`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created matplotlib figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+                - `anim`
+                    - `matplotlib.animation.FuncAnimation()`
+                    - created animation
+
+            Comments
+            --------
+        """
 
         def init(mesh):
+            """
+                - function to initialize the animation
+            """
             mesh.set_array(self.tpf_s[0,:,:,2])
             return
         
         def animate(frame, mesh, title):
+            """
+                - function to be executed at every new frame
+            """
             mesh.set_array(self.tpf_s[frame,:,:,2])
             
             title.set_text(f'Frame {frame:.0f}')
@@ -860,6 +1072,7 @@ class TPF_Series:
             if 'cmap' not in pcolormesh_kwargs.keys():
                 pcolormesh_kwargs['cmap'] = 'viridis_r'
 
+        #initialize figure
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         title = fig.suptitle(f'Frame 0')
@@ -868,21 +1081,21 @@ class TPF_Series:
         ax1.set_xlabel('Pixel')
         ax1.set_ylabel('Pixel')
 
+        #plot first frame
         mesh = ax1.pcolormesh(
             self.tpf_s[0,:,:,0],
             self.tpf_s[0,:,:,1],
             self.tpf_s[0,:,:,2],
-            # vmin=self.tpf_s[:,:,:,2].min(),
-            # vmax=self.tpf_s[:,:,:,2].max(),
             zorder=0, **pcolormesh_kwargs
         )
 
+        #add colorbar
         cbar = fig.colorbar(mesh, ax=ax1)
         if self.mode == 'mag':
             cbar.ax.invert_yaxis()
         cbar.set_label(c_lab)
 
-
+        #animate plot (call init() at the start and animate() for every frame)
         anim = FuncAnimation(
             fig,
             partial(animate, mesh=mesh, title=title),
@@ -890,7 +1103,7 @@ class TPF_Series:
             **funcanim_kwargs,   
         )
 
-
+        #save if desired
         if isinstance(save, str):
             anim.save(save, **save_kwargs)
         
