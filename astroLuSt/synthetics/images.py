@@ -1,4 +1,3 @@
-#TODO: Documentation TPF_Series
 
 #%%imports
 from functools import partial
@@ -411,7 +410,7 @@ class TPF:
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
                     - the default is `None`
-                        - will be set to `dict(dist='uniform', params={'low':-4,  'high':4})`
+                        - will be set to `dict(dist='uniform', params={'low':0.1, 'high':1})`
                         - i.e. a uniform distribution from 0.1 to 1
                 - `verbose`
                     - int, optional
