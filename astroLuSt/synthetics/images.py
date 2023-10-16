@@ -667,6 +667,7 @@ class TPF:
 
     def plot_result(self,
         plot_apertures:Union[List[int],Literal['all']]=None,
+        fig:Figure=None,
         pcolormesh_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
@@ -683,6 +684,11 @@ class TPF:
                             - plots all apertures
                     - the default is `None`
                         - will not plot any apertures
+                - `fig`
+                    - Figure, optional
+                    - matplotlib figure to place plots into
+                    - the default is `None`
+                        - will generate a new figure                        
                 - `pcolormesh_kwargs`
                     - dict, optional
                     - kwargs to pass to `ax.pcolormesh()`
@@ -720,7 +726,7 @@ class TPF:
             if 'cmap' not in pcolormesh_kwargs.keys():
                 pcolormesh_kwargs['cmap'] = 'viridis_r'
 
-        fig = plt.figure()
+        if fig is None: fig = plt.figure(figsize=(6,5))
         ax1 = fig.add_subplot(111)
         mesh = ax1.pcolormesh(frame2plot[:,:,0], frame2plot[:,:,1], frame2plot[:,:,2], zorder=0, **pcolormesh_kwargs)
         if self.store_stars:
@@ -1027,6 +1033,7 @@ class TPF_Series:
     
     def plot_result(self,
         save:str=False,
+        fig:Figure=None,
         pcolormesh_kwargs:dict=None,
         funcanim_kwargs:dict=None,
         save_kwargs:dict=None,
@@ -1043,6 +1050,11 @@ class TPF_Series:
                         - will be interpreted as savepath
                     - the default is False
                         - will not save the animation
+                - `fig`
+                    - Figure, optional
+                    - matplotlib figure to place plots into
+                    - the default is `None`
+                        - will generate a new figure
                 - `pcolormesh_kwargs`
                     - dict, optional
                     - kwargs to pass to `ax.pcolormesh()`
@@ -1110,7 +1122,7 @@ class TPF_Series:
                 pcolormesh_kwargs['cmap'] = 'viridis_r'
 
         #initialize figure
-        fig = plt.figure()
+        if fig is None: fig = plt.figure(figsize=(6,5))
         ax1 = fig.add_subplot(111)
         title = fig.suptitle(f'Frame 0')
         

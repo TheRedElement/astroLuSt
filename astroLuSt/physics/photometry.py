@@ -339,9 +339,9 @@ class BestAperture:
         plot_sky_rings_w:np.ndarray=None,
         aperture_cmap:str=None,
         sky_rings_cmap:str=None,
+        fig:Figure=None,
         plot_kwargs:dict=None,
         scatter_kwargs:dict=None,
-        figure_kwargs:dict=None,
         ) -> Union[Figure,plt.Axes]:
 
         #default values
@@ -352,7 +352,6 @@ class BestAperture:
         if aperture_cmap is None:     aperture_cmap     = 'winter'
         if plot_kwargs is None:       plot_kwargs       = dict(lw=1)
         if scatter_kwargs is None:    scatter_kwargs    = dict(s=5, cmap='viridis')
-        if figure_kwargs is None:     figure_kwargs     = dict(figsize=(16,9))
 
         #kwargs of outline for star aperture plot
         outline_kwargs = plot_kwargs.copy()
@@ -360,7 +359,8 @@ class BestAperture:
         outline_kwargs['color'] = 'w'
 
 
-        fig = plt.figure(**figure_kwargs)
+        #plotting
+        if fig is None: fig = plt.figure(figsize=(14,6))
         ax1 = fig.add_subplot(121)
         ax2 = fig.add_subplot(122)
 
