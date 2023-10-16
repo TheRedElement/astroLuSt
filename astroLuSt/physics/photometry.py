@@ -4,6 +4,8 @@ import numpy as np
 
 from typing import Union, Tuple, Callable
 
+from astroLuSt.monitoring import errorlogging as alme
+
 #%%classes
 class DistanceModule:
     """
@@ -204,7 +206,204 @@ class DistanceModule:
 
         return
 
+from joblib import Parallel, delayed
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import numpy as np
+from typing import Union, Literal
+
+from astroLuSt.visualization import plotting as alvp
+
+class BestAperture:
+
+    def __init__(self,
+        frames:np.ndarray,
+        mode:Literal['flux','mag']=None,
+        store_ring_masks:bool=True,
+        store_aperture_masks:bool=True,
+        verbose:int=0,
+        ) ->  None:
+
+        if len(frames.shape) == 4:
+            self.frames                 = frames
+        elif len(frames.shape) == 3:
+            self.frames                 = np.expand_dims(frames,0)
+        else:
+            raise ValueError(f'`frames` has to be 4d but has shape {frames.shape}!')
+        if mode is None:    self.mode   = 'flux'
+        else:               self.mode   = mode
+        self.store_ring_masks           = store_ring_masks
+        self.store_aperture_masks       = store_aperture_masks
+        self.verbose                    = verbose
+        
+        self.get_sum_frame()
+
+
+        #infered attributes
+        self.aperture_res   = np.empty((0,2))
+        self.ring_res       = np.empty((0,3))
+        self.aperture_masks = np.empty((0,*self.frames.shape[1:3]))
+        self.ring_masks     = np.empty((0,*self.frames.shape[1:3]))
+        
+
+        pass
+
+    def __repr__(self) -> str:
+        return
+
+    def __dict__(self) -> dict:
+        return
     
+    def get_sum_frame(self,
+        ) -> np.ndarray:
+
+        self.sum_frame = self.frames[0].copy()
+        self.sum_frame[:,:,2] = np.nansum(self.frames[:,:,:,2], axis=0)
+
+        """
+        fig = plt.figure()
+        m = plt.pcolormesh(self.sum_frame[:,:,-1])
+        plt.colorbar(m)
+        plt.show()
+        """
+
+        return self.sum_frame
+
+    def get_star(self,
+        posx:float, posy:float,
+        r_star:np.ndarray,
+        ):
+
+        pos = np.array([posx,posy])
+
+        for r in r_star:
+            aperture_mask = (np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) < r)
+
+            aperture_flux = np.sum(self.sum_frame[aperture_mask,2])#/np.sum(aperture_mask)**2
+            # print(aperture_flux)
+            
+            self.aperture_res = np.append(self.aperture_res, np.array([[r, aperture_flux]]), axis=0)
+
+            # fig = plt.figure()
+            # plt.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], aperture_mask)
+            # plt.scatter(*pos)
+            # plt.show()
+
+
+
+        return
+    
+    def get_background(self,
+        posx:float, posy:float,
+        r_sky:np.ndarray,
+        w_sky:np.ndarray,
+        ):
+
+        pos = np.array([posx,posy])
+
+
+        
+        for r in r_sky:
+            for w in w_sky:
+    
+                ring_mask = \
+                     (np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) >r)\
+                    &(np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) < r+w)
+
+                ring_flux = np.sum(self.sum_frame[ring_mask,2])#/np.sum(ring_mask)**2
+                # print(ring_flux)
+
+                self.ring_res = np.append(self.ring_res, np.array([[r, w, ring_flux]]), axis=0)
+                
+
+                #store ring_mask for current w
+                if self.store_ring_masks:
+                    self.ring_masks = np.append(self.ring_masks, np.expand_dims(ring_mask,0), axis=0)
+
+                # fig = plt.figure()
+                # plt.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], ring_mask)
+                # plt.scatter(*pos)
+                # plt.show()
+
+
+        return
+    
+    
+    def plot_result(self,
+        plot_sky_rings_r:np.ndarray=None,
+        plot_sky_rings_w:np.ndarray=None,
+        plot_kwargs:dict=None,
+        scatter_kwargs:dict=None,
+        figure_kwargs:dict=None,
+        ) -> Union[Figure,plt.Axes]:
+
+        #default values
+        if plot_sky_rings_r is None:  plot_sky_rings_r  = np.empty((0))
+        if plot_sky_rings_w is None:  plot_sky_rings_w  = np.empty((0))
+        if plot_kwargs is None:     plot_kwargs         = dict(lw=1)
+        if scatter_kwargs is None:  scatter_kwargs      = dict(s=5, cmap='viridis')
+        if figure_kwargs is None:   figure_kwargs       = dict(figsize=(10,5))
+
+        #kwargs of outline for star aperture plot
+        outline_kwargs = plot_kwargs.copy()
+        outline_kwargs['lw'] = plot_kwargs['lw']*4
+        outline_kwargs['color'] = 'w'
+
+
+        fig = plt.figure(**figure_kwargs)
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+
+        #plot sum frame
+        mesh = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.sum_frame[:,:,2], zorder=0)
+        
+        #plot some selected sky rings
+        for idx, (r, w) in enumerate(zip(plot_sky_rings_r, plot_sky_rings_w)):
+            br = (r==self.ring_res[:,0])
+            bw = (w==self.ring_res[:,1])
+            try:
+                ax1.contour(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.ring_masks[bw&br][0], levels=0, colors='r', zorder=2)
+            except IndexError as i:
+                alme.LogErrors().print_exc(
+                    e=i,
+                    prefix=f'{self.__class__.__name__}.plot_results()'
+                )
+                
+
+
+        #plot star aperture and sky ring
+        ax2.plot(self.aperture_res[:,0], self.aperture_res[:,1], label=None,            **outline_kwargs)
+        ax2.plot(self.aperture_res[:,0], self.aperture_res[:,1], label='Star Aperture', **plot_kwargs)
+        sctr = ax2.scatter(self.ring_res[:,:1], self.ring_res[:,2], c=self.ring_res[:,1], label='Sky Ring', **scatter_kwargs)
+
+        #show which sky rings are plotted
+        ax2
+
+        #add colorbars
+        cmap1 = fig.colorbar(mesh, ax=ax1)
+        cmap2 = fig.colorbar(sctr, ax=ax2)
+        cmap2.set_label('Sky Ring Width')
+
+        ax2.legend()
+
+
+        #labelling
+        ax1.set_xlabel('Pixel')
+        ax1.set_ylabel('Pixel')
+
+        ax2.set_xlabel('Radius')
+        if self.mode == 'flux':
+            ax2.set_ylabel('Aperture Flux')
+        elif self.mode == 'mag':
+            ax2.set_ylabel('Aperture Magnitude')
+
+        plt.show()
+
+        axs = fig.axes
+        
+        return fig, axs
+    
+
 #%%definitions
 
 def mags2fluxes(
