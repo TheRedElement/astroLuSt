@@ -726,7 +726,7 @@ class TPF:
         if self.store_stars:
             for idx, apidx in enumerate(plot_apertures):
                 try:
-                    cont = ax1.contour(self.stars[apidx,:,:,2], levels=[0], colors='r', linewidths=1, zorder=1)
+                    cont = ax1.contour(self.stars[apidx,:,:,2], levels=0, colors='r', linewidths=1, zorder=1)
                 except IndexError:
                     almf.printf(
                         msg=f'Ignoring `plot_apertures[{idx}]` because the index is out of bounds!',
@@ -978,6 +978,7 @@ class TPF_Series:
             verbose=verbose,
         )
 
+        #TODO: Parallelize
         #generate one frame for each timestamp
         for idx, tp in enumerate(self.times):
 
