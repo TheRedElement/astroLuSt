@@ -289,6 +289,10 @@ class BestAperture:
             # plt.scatter(*pos)
             # plt.show()
 
+            #store aperture_mask for current r
+            if self.store_aperture_masks:
+                self.aperture_masks = np.append(self.aperture_masks, np.expand_dims(aperture_mask,0), axis=0)
+
 
 
         return
@@ -330,19 +334,25 @@ class BestAperture:
     
     
     def plot_result(self,
+        plot_aperture_r:np.ndarray=None,
         plot_sky_rings_r:np.ndarray=None,
         plot_sky_rings_w:np.ndarray=None,
+        aperture_cmap:str=None,
+        sky_rings_cmap:str=None,
         plot_kwargs:dict=None,
         scatter_kwargs:dict=None,
         figure_kwargs:dict=None,
         ) -> Union[Figure,plt.Axes]:
 
         #default values
+        if plot_aperture_r is None:   plot_aperture_r   = np.empty((0))
         if plot_sky_rings_r is None:  plot_sky_rings_r  = np.empty((0))
         if plot_sky_rings_w is None:  plot_sky_rings_w  = np.empty((0))
-        if plot_kwargs is None:     plot_kwargs         = dict(lw=1)
-        if scatter_kwargs is None:  scatter_kwargs      = dict(s=5, cmap='viridis')
-        if figure_kwargs is None:   figure_kwargs       = dict(figsize=(10,5))
+        if sky_rings_cmap is None:    sky_rings_cmap    = 'autumn'
+        if aperture_cmap is None:     aperture_cmap     = 'winter'
+        if plot_kwargs is None:       plot_kwargs       = dict(lw=1)
+        if scatter_kwargs is None:    scatter_kwargs    = dict(s=5, cmap='viridis')
+        if figure_kwargs is None:     figure_kwargs     = dict(figsize=(16,9))
 
         #kwargs of outline for star aperture plot
         outline_kwargs = plot_kwargs.copy()
@@ -358,43 +368,75 @@ class BestAperture:
         mesh = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.sum_frame[:,:,2], zorder=0)
         
         #plot some selected sky rings
-        for idx, (r, w) in enumerate(zip(plot_sky_rings_r, plot_sky_rings_w)):
-            br = (r==self.ring_res[:,0])
-            bw = (w==self.ring_res[:,1])
+        colors_sky_ring = alvp.generate_colors(len(plot_sky_rings_w), cmap=sky_rings_cmap)
+        for idx, (rsr, wsr) in enumerate(zip(plot_sky_rings_r, plot_sky_rings_w)):
+            br = (rsr==self.ring_res[:,0])
+            bw = (wsr==self.ring_res[:,1])
             try:
-                ax1.contour(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.ring_masks[bw&br][0], levels=0, colors='r', zorder=2)
+                mesh_sr = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.ring_masks[bw&br][0], zorder=2, edgecolor=colors_sky_ring[idx], facecolors='none')
+                mesh_sr.set_alpha(self.ring_masks[bw&br][0])
             except IndexError as i:
                 alme.LogErrors().print_exc(
                     e=i,
-                    prefix=f'{self.__class__.__name__}.plot_results()'
+                    prefix=(
+                        f'EXCEPTION({self.__class__.__name__}.plot_results()).\n'
+                        f'    Ignoring plotting of aperture...\n'
+                        f'    Original ERROR:'
+                    )
                 )
+            
+            if idx == 0: lab = 'Radius Skyring'
+            else: lab = None
+            ax2.axvline(rsr, color=colors_sky_ring[idx], linestyle='--', label=lab)
+        
+        #plot some selected apertures
+        colors_aperture = alvp.generate_colors(len(plot_aperture_r), cmap=aperture_cmap)
+        for idx, ra in enumerate(plot_aperture_r):
+            br = (ra==self.aperture_res[:,0])
+            try:
+                mesh_a = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.aperture_masks[br][0], zorder=2, edgecolor=colors_aperture[idx], facecolors='none')
+                mesh_a.set_alpha(self.aperture_masks[br][0])
+            except IndexError as i:
+                alme.LogErrors().print_exc(
+                    e=i,
+                    prefix=(
+                        f'EXCEPTION({self.__class__.__name__}.plot_results()).\n'
+                        f'    Ignoring plotting of aperture...\n'
+                        f'    Original ERROR:'
+                    )
+                )
+
+            #show which apertures are plotted
+            if idx == 0: lab = 'Radius Aperture'
+            else: lab = None
+            ax2.axvline(ra, color=colors_aperture[idx], label=lab)
                 
 
 
         #plot star aperture and sky ring
         ax2.plot(self.aperture_res[:,0], self.aperture_res[:,1], label=None,            **outline_kwargs)
-        ax2.plot(self.aperture_res[:,0], self.aperture_res[:,1], label='Star Aperture', **plot_kwargs)
-        sctr = ax2.scatter(self.ring_res[:,:1], self.ring_res[:,2], c=self.ring_res[:,1], label='Sky Ring', **scatter_kwargs)
+        ax2.plot(self.aperture_res[:,0], self.aperture_res[:,1], label='Aperture Curve Growth', **plot_kwargs)
+        sctr = ax2.scatter(self.ring_res[:,:1], self.ring_res[:,2], c=self.ring_res[:,1], label='Sky Ring Curve Growth', **scatter_kwargs)
 
-        #show which sky rings are plotted
-        ax2
 
         #add colorbars
         cmap1 = fig.colorbar(mesh, ax=ax1)
         cmap2 = fig.colorbar(sctr, ax=ax2)
-        cmap2.set_label('Sky Ring Width')
 
-        ax2.legend()
+        ax2.legend(loc='upper right')
 
 
         #labelling
+        cmap2.set_label('Sky Ring Width')
+
         ax1.set_xlabel('Pixel')
         ax1.set_ylabel('Pixel')
-
         ax2.set_xlabel('Radius')
         if self.mode == 'flux':
+            cmap1.set_label('Flux')
             ax2.set_ylabel('Aperture Flux')
         elif self.mode == 'mag':
+            cmap1.set_label('Magnitude')
             ax2.set_ylabel('Aperture Magnitude')
 
         plt.show()
