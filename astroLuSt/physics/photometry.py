@@ -1,3 +1,4 @@
+#TODO: Documentation
 
 #%%imports
 import numpy as np
@@ -332,7 +333,14 @@ class BestAperture:
 
         return
     
-    
+    def exec_analysis(self,
+        get_star_kwargs:dict=None,
+        get_background_kwargs:dict=None,
+        ):
+        #TODO: implement
+
+        return
+
     def plot_result(self,
         plot_aperture_r:np.ndarray=None,
         plot_sky_rings_r:np.ndarray=None,
