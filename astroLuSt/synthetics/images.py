@@ -309,11 +309,11 @@ class TPF:
 
     def add_stars(self,
         nstars:int=1,
-        posx:Union[dict,np.ndarray]=None,
-        posy:Union[dict,np.ndarray]=None,
-        f:Union[dict,np.ndarray]=None,
-        m:Union[dict,np.ndarray]=None,
-        aperture:Union[dict,np.ndarray]=None,
+        posx:Union[dict,np.ndarray,float,int]=None,
+        posy:Union[dict,np.ndarray,float,int]=None,
+        f:Union[dict,np.ndarray,float,int]=None,
+        m:Union[dict,np.ndarray,float,int]=None,
+        aperture:Union[dict,np.ndarray,float,int]=None,
         verbose:int=None,
         ) -> None:
         """
@@ -328,7 +328,7 @@ class TPF:
                         - i.e., the stars will be generated according to specific parameters and not randomly
                     - the default is 1
                 - `posx`
-                    - dict, np.ndarray, optional
+                    - dict, np.ndarray, float, int, optional
                     - x values of the stars position in pixels
                     - if dict
                         - has to contain 2 keys
@@ -341,11 +341,15 @@ class TPF:
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
+                    - if int
+                        - will be interpreted as list of length 1 (i.e. one star)
+                    - if float
+                        - will be interpreted as list of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0,  'high':self.size[0]})`
                         - i.e. a uniform distribution in the whole range of the frame
                 - `posy`
-                    - dict, np.ndarray, optional
+                    - dict, np.ndarray, float, int, optional
                     - y values of the stars position in pixels
                     - if dict
                         - has to contain 2 keys
@@ -358,11 +362,15 @@ class TPF:
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
+                    - if int
+                        - will be interpreted as list of length 1 (i.e. one star)
+                    - if float
+                        - will be interpreted as list of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0,  'high':self.size[1]})`
                         - i.e. a uniform distribution in the whole range of the frame
                 - `f`
-                    - dict, np.ndarray, optional
+                    - dict, np.ndarray, float, int, optional
                     - fluxes of the stars to generate
                     - if dict
                         - has to contain 2 keys
@@ -375,11 +383,15 @@ class TPF:
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
+                    - if int
+                        - will be interpreted as list of length 1 (i.e. one star)
+                    - if float
+                        - will be interpreted as list of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0.1,  'high':1})`
                         - i.e. a uniform distribution from 0.1 to 1
                 - `m`
-                    - dict, np.ndarray, optional
+                    - dict, np.ndarray, float, int, optional
                     - magnitudes of the stars to generate
                     - if dict
                         - has to contain 2 keys
@@ -392,11 +404,15 @@ class TPF:
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
+                    - if int
+                        - will be interpreted as list of length 1 (i.e. one star)
+                    - if float
+                        - will be interpreted as list of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':-2.5,  'high':0})`
                         - i.e. a uniform distribution from -2.5 to 0
                 - `aperture`
-                    - dict, np.ndarray, optional
+                    - dict, np.ndarray, float, int, optional
                     - apertures to use for the stars 
                     - if dict
                         - has to contain 2 keys
@@ -409,6 +425,10 @@ class TPF:
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
                                     - passed as list of positional args (for list)
+                    - if int
+                        - will be interpreted as list of length 1 (i.e. one star)
+                    - if float
+                        - will be interpreted as list of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0.1, 'high':1})`
                         - i.e. a uniform distribution from 0.1 to 1
@@ -442,6 +462,12 @@ class TPF:
         if m is None:           m       =dict(dist='uniform', params={'low':0,  'high':2.5})
         if aperture is None:    aperture=dict(dist='uniform', params={'low':0.1,'high':1})
 
+        #for single value
+        if isinstance(posx, (int,float)):     posx     = np.array([posx])
+        if isinstance(posy, (int,float)):     posy     = np.array([posy])
+        if isinstance(f, (int,float)):        f        = np.array([f])
+        if isinstance(m, (int,float)):        m        = np.array([m])
+        if isinstance(aperture, (int,float)): aperture = np.array([aperture])
 
         #generate positions
         ##for randomly generated
