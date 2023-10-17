@@ -211,6 +211,7 @@ class DistanceModule:
 
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from matplotlib.figure import Figure
 import numpy as np
 from typing import Union, Literal
@@ -595,18 +596,59 @@ class BestAperture:
         r_aperture:np.ndarray,
         rw_sky:np.ndarray,
         y:np.ndarray=None,
-        # frames:np.ndarray,
         test_aperture_kwargs:dict=None,
         test_background_kwargs:dict=None,
-        ):
+        ) -> None:
         """
             - method to fit the estimator
             
             Parameters
             ----------
                 - `x`
+                    - np.ndarray
+                    - input values to apply estimator on
+                    - i.e. frames of the timeseries
                 - `posx`
-                
+                    - float
+                    - position of aperture and sky-ring in x direction
+                - `posy`
+                    - float
+                    - position of aperture and sky-ring in y direction
+                - `r_aperture`
+                    - np.ndarray
+                    - test radii of the aperture
+                    - will test every radius and calculate total flux/magnitude contained within that radius
+                - `rw_sky`
+                    - np.ndarray
+                    - test specifications for sky-rings to test
+                    - has to have shape `(nrings,2)`
+                        - element 0: radii of the sky-rings
+                        - element 1: widths of the sky-rings
+                - `y`
+                    - np.ndarray, optional
+                    - y values
+                    - just here for consistency
+                    - not used in calculation
+                    - the default is `None`
+                - `test_aperture_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.test_aperture()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `test_background_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.test_background()`
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
         """
         #TODO: Add alternate background estimate options
 
@@ -632,7 +674,23 @@ class BestAperture:
         return
     
     def predict(self,
-        ):
+        ) -> None:
+        """
+            - NOT IMPLEMENTED
+            - method to predict with the fitted estimator
+
+            Parameters
+            ----------
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
 
         almf.printf(
             msg=f'Not implemented yet. Call `{self.__class__.__name__}.{self.plot_result.__name__}()` to visualize the executed analysis.',
@@ -652,7 +710,59 @@ class BestAperture:
         # w_sky:np.ndarray,
         fit_kwargs:dict=None,
         predict_kwargs:dict=None,
-        ):
+        ) -> None:
+        """
+            - method to fit the estimator and and predict with it
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - input values to apply estimator on
+                    - i.e. frames of the timeseries
+                - `posx`
+                    - float
+                    - position of aperture and sky-ring in x direction
+                - `posy`
+                    - float
+                    - position of aperture and sky-ring in y direction
+                - `r_aperture`
+                    - np.ndarray
+                    - test radii of the aperture
+                    - will test every radius and calculate total flux/magnitude contained within that radius
+                - `rw_sky`
+                    - np.ndarray
+                    - test specifications for sky-rings to test
+                    - has to have shape `(nrings,2)`
+                        - element 0: radii of the sky-rings
+                        - element 1: widths of the sky-rings
+                - `y`
+                    - np.ndarray, optional
+                    - y values
+                    - just here for consistency
+                    - not used in calculation
+                    - the default is `None`
+                - `test_aperture_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.test_aperture()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `test_background_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.test_background()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                        
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        
+        """
 
         if fit_kwargs is None:      fit_kwargs      = dict()
         if predict_kwargs is None:  predict_kwargs  = dict()
@@ -665,7 +775,7 @@ class BestAperture:
             rw_sky=rw_sky
             **fit_kwargs
         )
-        self.predict(**predict_kwargs)
+        # self.predict(**predict_kwargs)
 
         return
 
@@ -673,12 +783,76 @@ class BestAperture:
         plot_aperture_r:np.ndarray=None,
         plot_sky_rings_rw:np.ndarray=None,
         aperture_cmap:str=None,
-        sky_rings_cmap:str=None,
+        sky_rings_cmap:Union[str,mcolors.Colormap]=None,
         fig:Figure=None,
         sort_rings_apertures:bool=True,
         plot_kwargs:dict=None,
         scatter_kwargs:dict=None,
         ) -> Union[Figure,plt.Axes]:
+        """
+            - mathod to visualize the result
+
+            Parameters
+            ----------
+                - `plot_aperture_r`
+                    - np.ndarray, optional
+                    - radii to visualize the aperture for in the frame of total magnitudes/fluxes
+                    - the default is `None`
+                        - will be set to `[]`
+                - `plot_sky_rings_rw`
+                    - np.ndarray, optional
+                    - radii-width combinations to visualize the sky-ring for in the frame of total magnitudes/fluxes
+                    - has to have shape `(n2plot,2)`
+                        - element 0: sky-ring radius
+                        - emement 1: sky-ring width
+                    - the default is `None`
+                        - will be set to `[]`
+                - `aperture_cmap`
+                    - str, mcolors.Colormap, optional
+                    - colormap to use for colorcoding apertures
+                    - the default is `None`
+                        - will be set to `autumn`
+                - `sky_rings_cmap`
+                    - str, mcolors.Colormap, optional
+                    - colormap to use for colorcoding apertures
+                    - the default is `None`
+                        - will be set to `winter`
+                - `fig`
+                    - Figure, optional
+                    - figure to plot into
+                    - the default is `None`
+                        - will create a new figure
+                - `sort_rings_apertures`
+                    - bool, optional
+                    - whether to sort the passed rings and apertures before plotting
+                    - recommended because then it is more likely that all requested apertures/sky-rings are visible
+                        - if they are not sorted, it could be that a large aperture is plot on top of a smaller one, essentially covering it
+                - `plot_kwargs`
+                    - dict, optional
+                    - kwargs to pass to ´ax.plot()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `scatter_kwargs`
+                    - dict, optional
+                    - kwargs to pass to ´ax.scatter()`
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
+        """
 
         #default values
         if plot_aperture_r is None:   plot_aperture_r   = np.empty((0))
