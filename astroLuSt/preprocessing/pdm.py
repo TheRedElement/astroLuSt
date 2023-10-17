@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 from typing import Union, Tuple, Callable
+import warnings
 
 from astroLuSt.preprocessing.binning import Binning
 from astroLuSt.preprocessing.dataseries_manipulation import fold
@@ -212,6 +213,9 @@ class PDM:
         verbose:int=0,
         binning_kwargs:dict=None,   
         ) -> None:
+
+        warnings.warn('THIS FUNCTION HAS BEEN MOVED TO `astroLuSt.preprocessing.periodanalysis` AND WILL ONLY BE ACCESSIBLE FROM THERE IN THE FUTURE!')
+
 
         self.period_start   = period_start
         self.period_stop    = period_stop

@@ -976,6 +976,7 @@ class HPS:
         else:
             self.pdm_kwargs = pdm_kwargs
             self.pdm_kwargs['n_retries'] = 0    #set n_retries to 0 because it does not work yet
+            self.pdm_kwargs['n_jobs']    = 1    #set n_jobs to 1 because it does not work otherwise
         
         if ls_kwargs is None:
             self.ls_kwargs = {}

@@ -6,8 +6,11 @@ from matplotlib.figure import Figure
 import numpy as np
 from typing import Union, Literal
 
+from astroLuSt.monitoring import errorlogging as alme, formatting as almf
+from astroLuSt.physics import photometry as alpp
 from astroLuSt.visualization import plotting as alvp
 
+#%%classes
 class BestAperture:
     """
         - class to exectue an analysis for the determination of the best aperture
@@ -240,7 +243,7 @@ class BestAperture:
         if self.mode == 'flux':
             self.sum_frame[:,:,2] = np.nansum(self.frames[:,:,:,2], axis=0)
         elif self.mode == 'mag':
-            self.sum_frame[:,:,2] = mags_sum(self.frames[:,:,:,2], axis=0)
+            self.sum_frame[:,:,2] = alpp.mags_sum(self.frames[:,:,:,2], axis=0)
 
         return self.sum_frame
 
@@ -312,7 +315,7 @@ class BestAperture:
     def test_background_skyring(self,
         frames:np.ndarray,
         posx:float, posy:float,
-        rw_sky:np.ndarray,# w_sky:np.ndarray,
+        rw_sky:np.ndarray,
         ) -> None:
         """
             - method to test various sky-rings for background determination

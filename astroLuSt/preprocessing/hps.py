@@ -176,6 +176,8 @@ class HPS:
         pdm_kwargs:dict=None, ls_kwargs:dict=None, lsfit_kwargs:dict=None
         ) -> None:
 
+        warnings.warn('THIS FUNCTION HAS BEEN MOVED TO `astroLuSt.preprocessing.periodanalysis` AND WILL ONLY BE ACCESSIBLE FROM THERE IN THE FUTURE!')
+
         self.period_start = period_start
         self.period_stop = period_stop
         self.nperiods = nperiods
