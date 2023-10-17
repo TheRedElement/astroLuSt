@@ -223,14 +223,6 @@ class BestAperture:
 
         Attributes
         ----------
-            - `frames`
-                - np.ndarray
-                - series of frames to consider for the analysis
-                - has to have shape `(nframes,npixels,npixels,3)`
-                    - the last axis contains
-                        - element 0: posistion in x direction
-                        - element 1: posistion in y direction
-                        - element 2: flux/magnitude values
             - `mode`
                 - Literal, optional
                 - mode to use
@@ -285,12 +277,15 @@ class BestAperture:
 
         Methods
         -------
+            - `__check_frames_shape()`
+            - `__store_frames()`
             - `get_sum_frame()`
-            - `get_star()`
-            - `get_background()`
+            - `test_aperture()`
+            - `test_background_skyring()`
             - `fit()`
             - `predict()`
             - `fit_predict()`
+            - `plot_results()`
 
         Dependencies
         ------------
@@ -339,7 +334,33 @@ class BestAperture:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
     
     def __check_frames_shape(self,
-        frames) -> None:
+        frames
+        ) -> None:
+        """
+            - private method to check if `frames` is of the correct shape
+
+            Parameters
+            ----------
+                - `frames`
+                    - np.ndarray
+                    - series of frames to consider for the analysis
+                    - has to have shape `(nframes,npixels,npixels,3)`
+                        - the last axis contains
+                            - element 0: posistion in x direction
+                            - element 1: posistion in y direction
+                            - element 2: flux/magnitude values
+
+            Raises
+            ------
+                - `ValueError`
+                    - if `frames` has a wrong shape
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
 
         if len(frames.shape) == 4:
             self.frames                 = frames
@@ -354,6 +375,39 @@ class BestAperture:
         frames:np.ndarray,
         context:Literal['aperture','skyring']
         ) -> None:
+        """
+            - private method to store passed frames
+            - also initializes storage arrays for aperture and sky-ring masks
+
+            Parameters
+            ----------
+                - `frames`
+                    - np.ndarray
+                    - series of frames to consider for the analysis
+                    - has to have shape `(nframes,npixels,npixels,3)`
+                        - the last axis contains
+                            - element 0: posistion in x direction
+                            - element 1: posistion in y direction
+                            - element 2: flux/magnitude values
+                - `context`
+                    - Literal
+                    - context on where the method was called
+                        - necessary to know to not override some previously initialized infered attribute
+                    - options are
+                        - `'aperture'`
+                            - if apertures gets tested
+                        - `'skyring'`
+                            - if sky-rings gets tested (for background)
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+
+        """
 
         self.frames = frames
 
@@ -382,6 +436,7 @@ class BestAperture:
 
             Returns
             -------
+                #TODO: Continue
 
             Comments
             --------
@@ -401,6 +456,20 @@ class BestAperture:
         posx:float, posy:float,
         r_aperture:np.ndarray,
         ):
+        """
+        
+            Parameters
+            ----------
+                - `frames`
+                    - np.ndarray
+                    - series of frames to consider for the analysis
+                    - has to have shape `(nframes,npixels,npixels,3)`
+                        - the last axis contains
+                            - element 0: posistion in x direction
+                            - element 1: posistion in y direction
+                            - element 2: flux/magnitude values
+        
+        """
 
         #initial checks and saves
         self.__check_frames_shape(frames)
@@ -471,6 +540,7 @@ class BestAperture:
         test_aperture_kwargs:dict=None,
         test_background_kwargs:dict=None,
         ):
+        #TODO: Add alternate background estimate options
 
         if test_aperture_kwargs is None:    test_aperture_kwargs    = dict()
         if test_background_kwargs is None:  test_background_kwargs  = dict()
