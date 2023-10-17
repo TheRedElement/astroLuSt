@@ -1,4 +1,4 @@
-#TODO: convert to sklearn scheme
+
 #%%imports
 from functools import partial
 import matplotlib.pyplot as plt
@@ -111,6 +111,7 @@ class TPF:
             - `add_custom()`
             - `add_noise()`
             - `aperture_from_mask()`
+            - `rvs()`
             - `plot_result()`
 
         Dependencies
@@ -683,7 +684,6 @@ class TPF:
                     - NOT USED BECAUSE DEFINED BY `self.size`
                     - number of samples to generate
                     - the default is `None`
-                        - will generate a single sample
                 - `add_stars_kwargs`
                     - dict, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_stars()`
@@ -864,7 +864,7 @@ class TPF_Series:
 
         Methods
         -------
-            - `make_frames()`
+            - `rvs()`
             - `plot_result()`
                 - `init()`
                 - `animate()`
@@ -920,9 +920,10 @@ class TPF_Series:
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
     
-    def make_frames(self,
+    def rvs(self,
         times:np.ndarray,
         variability:Callable=None,
+        shape:Union[int,tuple]=None,
         add_stars_kwargs:dict=None,
         add_noise_kwargs:dict=None,
         add_custom_kwargs:dict=None,
@@ -930,7 +931,10 @@ class TPF_Series:
         ) -> Tuple[np.ndarray,np.ndarray]:
         """
             - method to generate a series of frames given `times`
-            
+            - similar to the `scipy.stats` `rvs()` method
+            - rvs ... random variates
+            - will generate a series of random (or nonrandom) frames   
+
             Parameters
             ----------
                 - `times`
@@ -966,6 +970,11 @@ class TPF_Series:
                     - the default is `None`
                         - will be implemented as `lambda tp, fm: fm`
                         - i.e., no variability at all
+                - `shape`
+                    - int, tuple optional
+                    - NOT USED BECAUSE DEFINED BY `self.size`
+                    - number of samples to generate
+                    - the default is `None`
                 - `add_stars_kwargs`
                     - dict, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_stars()`
