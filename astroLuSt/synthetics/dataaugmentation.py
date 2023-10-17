@@ -184,22 +184,21 @@ class AugmentAxis:
 
         Methods
         -------
+            - `get_transformations()`
+            - `class_weights2sample_weights()`
+            - `shift_features_t()`
+            - `flip_axis_t()`
+            - `obscure_observations_t()`
+            - `crop_t()`
+            - `rescale_t()`
             - `add_noise_t()`
             - `apply_transform()`
-            - `crop_t()`
-            - `flip_axis_t()`
-            - `get_transformations()`
-            - `obscure_observations_t()`
-            - `rescale_t()`
-            - `shift_features()`
-            
+            - `fit()`
+            - `flow()`
+            - `get_random_transform()`
+            - `random_transform()`
 
             
-            - generate_random_parameters()
-            - shift_indices()
-            - add_noise()
-            - fit_transform()
-        
         Dependencies
         ------------
             - numpy
