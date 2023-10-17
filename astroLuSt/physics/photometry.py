@@ -327,7 +327,7 @@ class BestAperture:
             f'store_ring_mask={repr(self.store_ring_masks)}),\n'
             f'store_aperture_masks={repr(self.store_aperture_masks)}),\n'
             f'verbose={self.verbose},\n'
-            f'\n)'
+            f')'
         )
 
     def __dict__(self) -> dict:
@@ -589,11 +589,13 @@ class BestAperture:
         return
     
     def fit(self,
-        frames:np.ndarray,
+        x:np.ndarray,
         posx:float,
         posy:float,
         r_aperture:np.ndarray,
         rw_sky:np.ndarray,
+        y:np.ndarray=None,
+        # frames:np.ndarray,
         test_aperture_kwargs:dict=None,
         test_background_kwargs:dict=None,
         ):
@@ -602,7 +604,9 @@ class BestAperture:
             
             Parameters
             ----------
-                - 
+                - `x`
+                - `posx`
+                
         """
         #TODO: Add alternate background estimate options
 
@@ -610,7 +614,7 @@ class BestAperture:
         if test_background_kwargs is None:  test_background_kwargs  = dict()
 
         self.test_aperture(
-            frames=frames,
+            frames=x,
             posx=posx,
             posy=posy,
             r_aperture=r_aperture,
@@ -618,7 +622,7 @@ class BestAperture:
         )
 
         self.test_background_skyring(
-            frames=frames,
+            frames=x,
             posx=posx,
             posy=posy,
             rw_sky=rw_sky,
@@ -691,8 +695,9 @@ class BestAperture:
 
         #sorting
         if sort_rings_apertures:
+            sortidxs_skyring = np.argsort(plot_sky_rings_rw[:,1])
             plot_aperture_r   = np.sort(plot_aperture_r)[::-1]
-            plot_sky_rings_rw = np.sort(plot_sky_rings_rw)[::-1]
+            plot_sky_rings_rw = plot_sky_rings_rw[sortidxs_skyring][::-1]
 
         #plotting
         if fig is None: fig = plt.figure(figsize=(14,6))
@@ -705,7 +710,7 @@ class BestAperture:
         #plot some selected sky rings
         if len(plot_sky_rings_rw) > 0:
             colors_sky_ring = alvp.generate_colors(len(plot_sky_rings_rw), cmap=sky_rings_cmap)
-            for idx, (wsr, rsr) in enumerate(plot_sky_rings_rw):
+            for idx, (rsr, wsr) in enumerate(plot_sky_rings_rw):
 
                 br = (rsr==self.ring_res[:,0])
                 bw = (wsr==self.ring_res[:,1])
@@ -717,7 +722,7 @@ class BestAperture:
                         e=i,
                         prefix=(
                             f'EXCEPTION({self.__class__.__name__}.plot_results()).\n'
-                            f'    Ignoring plotting of sky-ring...\n'
+                            f'    Ignoring plotting of sky-ring for combination `(r,w)={rsr,wsr}`.\n'
                             f'    Original ERROR:'
                         )
                     )
