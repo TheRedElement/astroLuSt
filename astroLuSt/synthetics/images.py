@@ -1,4 +1,4 @@
-
+#TODO: convert to sklearn scheme
 #%%imports
 from functools import partial
 import matplotlib.pyplot as plt
@@ -664,6 +664,60 @@ class TPF:
         aperture = np.sqrt(aperture_mask.sum()/np.pi)
 
         return aperture
+
+    def rvs(self,
+        shape:Union[int,tuple]=None,
+        add_stars_kwargs:dict=None,
+        add_noise_kwargs:dict=None,
+        add_custom_kwargs:dict=None,        
+        ):
+        """
+            - method similar to the `scipy.stats` `rvs()` method
+            - rvs ... random variates
+            - will generate a random frame
+            
+            Parameters
+            ----------
+                - `shape`
+                    - int, tuple optional
+                    - NOT USED BECAUSE DEFINED BY `self.size`
+                    - number of samples to generate
+                    - the default is `None`
+                        - will generate a single sample
+                - `add_stars_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_stars()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `add_noise_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_noise()`
+                    - the default is `None`
+                        - will be set to `dict(amplitude=0, bias=0)`
+                - `add_custom_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_custom()`
+                    - the default is `None`
+                        - will be set to `dict(trend='linearx', amplitude=0)`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `self.frame`
+                    - np.ndarray
+                    - generated frame
+            
+            Comments
+            --------
+        """
+
+        self.add_stars(**add_stars_kwargs)
+        self.add_noise(**add_noise_kwargs)
+        self.add_custom(**add_custom_kwargs)
+
+        return self.frame
 
     def plot_result(self,
         plot_apertures:Union[List[int],Literal['all']]=None,

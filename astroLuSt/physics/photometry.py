@@ -1,5 +1,3 @@
-#TODO: Documentation
-#TODO: Calculation with Magnitudes
 
 #%%imports
 import numpy as np
