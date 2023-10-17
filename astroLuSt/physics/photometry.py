@@ -1,4 +1,5 @@
 #TODO: Documentation
+#TODO: Calculation with Magnitudes
 
 #%%imports
 import numpy as np
@@ -6,6 +7,7 @@ import numpy as np
 from typing import Union, Tuple, Callable
 
 from astroLuSt.monitoring import errorlogging as alme
+from astroLuSt.monitoring import formatting as almf
 
 #%%classes
 class DistanceModule:
@@ -216,14 +218,128 @@ from typing import Union, Literal
 from astroLuSt.visualization import plotting as alvp
 
 class BestAperture:
+    """
+        - class to exectue an analysis for the determination of the best aperture
+
+        Attributes
+        ----------
+            - `frames`
+                - np.ndarray
+                - series of frames to consider for the analysis
+                - has to have shape `(nframes,npixels,npixels,3)`
+                    - the last axis contains
+                        - element 0: posistion in x direction
+                        - element 1: posistion in y direction
+                        - element 2: flux/magnitude values
+            - `mode`
+                - Literal, optional
+                - mode to use
+                - can be one of
+                    - `'flux'`
+                        - will consider equations for fluxes to execute calculations
+                    - `'mag'`
+                        - will consider equations for magnitudes to execute calculations
+            - `store_ring_masks`
+                - bool, optional
+                - whether to store all sky-ring masks created during calculations
+                    - those will be used during i.e., plotting
+                - the default is True
+            - `store_aperture_masks`
+                - bool, optional
+                - whether to store all aperture masks created during calculations
+                    - those will be used during i.e., plotting
+                - the default is True
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+        Infered Attributes
+        ------------------
+            - `aperture_res`
+                - np.ndarray
+                - contains results for the analysis of the aperture
+                - has shape `(nradii,3)`
+                    - `nradii` is the number of tested radii
+                    - the last axis contains
+                        - element 0: tested radius
+                        - element 1: total flux within aperture
+                        - element 2: number of enclosed pixels
+            - `ring_res`
+                - np.ndarray
+                - contains results for the analysis of the sky-ring
+                - has shape `(nradii*nwidths,4)`
+                    - `nradii` is the number of tested radii
+                    - `nwidths` is the number of tested widths for the sky-ring
+                    - the last axis contains
+                        - element 0: tested radius
+                        - element 1: tested width
+                        - element 2: total flux within aperture
+                        - element 3: number of enclosed pixels
+            - `aperture_masks`
+                - np.ndarray
+                - contains boolean arrays of all tested apertures
+            - `ring_masks`
+                - np.ndarray
+                - contains boolean arrays of all tested sky-rings
+
+        Methods
+        -------
+            - `get_sum_frame()`
+            - `get_star()`
+            - `get_background()`
+            - `fit()`
+            - `predict()`
+            - `fit_predict()`
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+
+        Comments
+        --------
+
+    """
 
     def __init__(self,
-        frames:np.ndarray,
         mode:Literal['flux','mag']=None,
-        store_ring_masks:bool=True,
         store_aperture_masks:bool=True,
+        store_ring_masks:bool=True,
         verbose:int=0,
         ) ->  None:
+
+        if mode is None:    self.mode   = 'flux'
+        else:               self.mode   = mode
+        self.store_aperture_masks       = store_aperture_masks
+        self.store_ring_masks           = store_ring_masks
+        self.verbose                    = verbose
+        
+        #infered attributes
+        self.aperture_res   = np.empty((0,3))
+        self.ring_res       = np.empty((0,4))
+        self.aperture_masks = np.empty((0,0,0))
+        self.ring_masks     = np.empty((0,0,0))
+        
+
+        pass
+
+    def __repr__(self) -> str:
+        return (
+            f'{self.__class__.__name__}(\n'
+            f'mode={repr(self.mode)}),\n'
+            f'store_ring_mask={repr(self.store_ring_masks)}),\n'
+            f'store_aperture_masks={repr(self.store_aperture_masks)}),\n'
+            f'verbose={self.verbose},\n'
+            f'\n)'
+        )
+
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+    
+    def __check_frames_shape(self,
+        frames) -> None:
 
         if len(frames.shape) == 4:
             self.frames                 = frames
@@ -231,82 +347,94 @@ class BestAperture:
             self.frames                 = np.expand_dims(frames,0)
         else:
             raise ValueError(f'`frames` has to be 4d but has shape {frames.shape}!')
-        if mode is None:    self.mode   = 'flux'
-        else:               self.mode   = mode
-        self.store_ring_masks           = store_ring_masks
-        self.store_aperture_masks       = store_aperture_masks
-        self.verbose                    = verbose
         
+        return
+
+    def __store_frames(self,
+        frames:np.ndarray,
+        context:Literal['aperture','skyring']
+        ) -> None:
+
+        self.frames = frames
+
+        #get frame of pixel-wise sum
         self.get_sum_frame()
 
+        #update frame-dependent attributes (only when in respective functions)
+        if context == 'aperture':
+            self.aperture_masks = np.empty((0,*self.frames.shape[1:3]))
+        elif context == 'skyring':
+            self.ring_masks     = np.empty((0,*self.frames.shape[1:3]))
 
-        #infered attributes
-        self.aperture_res   = np.empty((0,2))
-        self.ring_res       = np.empty((0,3))
-        self.aperture_masks = np.empty((0,*self.frames.shape[1:3]))
-        self.ring_masks     = np.empty((0,*self.frames.shape[1:3]))
-        
-
-        pass
-
-    def __repr__(self) -> str:
         return
 
-    def __dict__(self) -> dict:
-        return
-    
     def get_sum_frame(self,
         ) -> np.ndarray:
+        """
+            - method to get the pixel-wise sum of all frames `self.frames`
+            - used to visually determine location and size of aperture
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
 
         self.sum_frame = self.frames[0].copy()
-        self.sum_frame[:,:,2] = np.nansum(self.frames[:,:,:,2], axis=0)
-
-        """
-        fig = plt.figure()
-        m = plt.pcolormesh(self.sum_frame[:,:,-1])
-        plt.colorbar(m)
-        plt.show()
-        """
+        
+        if self.mode == 'flux':
+            self.sum_frame[:,:,2] = np.nansum(self.frames[:,:,:,2], axis=0)
+        elif self.mode == 'mag':
+            self.sum_frame[:,:,2] = mags_sum(self.frames[:,:,:,2], axis=0)
 
         return self.sum_frame
 
-    def get_star(self,
+    def test_aperture(self,
+        frames:np.ndarray,
         posx:float, posy:float,
-        r_star:np.ndarray,
+        r_aperture:np.ndarray,
         ):
 
+        #initial checks and saves
+        self.__check_frames_shape(frames)
+        self.__store_frames(frames, context='aperture')
+
+        #construct position array
         pos = np.array([posx,posy])
 
-        for r in r_star:
+        for r in r_aperture:
             aperture_mask = (np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) < r)
 
             aperture_flux = np.sum(self.sum_frame[aperture_mask,2])#/np.sum(aperture_mask)**2
             # print(aperture_flux)
             
-            self.aperture_res = np.append(self.aperture_res, np.array([[r, aperture_flux]]), axis=0)
-
-            # fig = plt.figure()
-            # plt.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], aperture_mask)
-            # plt.scatter(*pos)
-            # plt.show()
+            self.aperture_res = np.append(self.aperture_res, np.array([[r, aperture_flux, aperture_mask.sum()]]), axis=0)
 
             #store aperture_mask for current r
             if self.store_aperture_masks:
                 self.aperture_masks = np.append(self.aperture_masks, np.expand_dims(aperture_mask,0), axis=0)
 
-
-
         return
     
-    def get_background(self,
+    def test_background_skyring(self,
+        frames:np.ndarray,
         posx:float, posy:float,
         r_sky:np.ndarray,
         w_sky:np.ndarray,
         ):
 
+        #initial checks and saves
+        self.__check_frames_shape(frames)
+        self.__store_frames(frames, context='skyring')
+
         pos = np.array([posx,posy])
-
-
         
         for r in r_sky:
             for w in w_sky:
@@ -318,7 +446,7 @@ class BestAperture:
                 ring_flux = np.sum(self.sum_frame[ring_mask,2])#/np.sum(ring_mask)**2
                 # print(ring_flux)
 
-                self.ring_res = np.append(self.ring_res, np.array([[r, w, ring_flux]]), axis=0)
+                self.ring_res = np.append(self.ring_res, np.array([[r, w, ring_flux, ring_mask.sum()]]), axis=0)
                 
 
                 #store ring_mask for current w
@@ -333,11 +461,74 @@ class BestAperture:
 
         return
     
-    def exec_analysis(self,
-        get_star_kwargs:dict=None,
-        get_background_kwargs:dict=None,
+    def fit(self,
+        frames:np.ndarray,
+        posx:float,
+        posy:float,
+        r_aperture:np.ndarray,
+        r_sky:np.ndarray,
+        w_sky:np.ndarray,
+        test_aperture_kwargs:dict=None,
+        test_background_kwargs:dict=None,
         ):
-        #TODO: implement
+
+        if test_aperture_kwargs is None:    test_aperture_kwargs    = dict()
+        if test_background_kwargs is None:  test_background_kwargs  = dict()
+
+        self.test_aperture(
+            frames=frames,
+            posx=posx,
+            posy=posy,
+            r_aperture=r_aperture,
+            **test_aperture_kwargs
+        )
+
+        self.test_background_skyring(
+            frames=frames,
+            posx=posx,
+            posy=posy,
+            r_sky=r_sky,
+            w_sky=w_sky,
+            **test_background_kwargs
+        )
+
+        return
+    
+    def predict(self,
+        ):
+
+        almf.printf(
+            msg=f'Not implemented yet. Call `{self.__class__.__name__}.{self.plot_result.__name__}()` to visualize the executed analysis.',
+            context=f'{self.__class__.__name__}.{self.predict.__name__}()',
+            type='WARNING',
+        )
+
+        return
+
+    def fit_predict(self,
+        frames:np.ndarray,
+        posx:float,
+        posy:float,
+        r_aperture:np.ndarray,
+        r_sky:np.ndarray,
+        w_sky:np.ndarray,
+        fit_kwargs:dict=None,
+        predict_kwargs:dict=None,
+        ):
+
+        if fit_kwargs is None:      fit_kwargs      = dict()
+        if predict_kwargs is None:  predict_kwargs  = dict()
+
+        self.fit(
+            frames=frames,
+            posx=posx,
+            posy=posy,
+            r_aperture=r_aperture,
+            r_sky=r_sky,
+            w_sky=w_sky,
+            **fit_kwargs
+        )
+        self.predict(**predict_kwargs)
 
         return
 
@@ -348,6 +539,7 @@ class BestAperture:
         aperture_cmap:str=None,
         sky_rings_cmap:str=None,
         fig:Figure=None,
+        sort_rings_apertures:bool=True,
         plot_kwargs:dict=None,
         scatter_kwargs:dict=None,
         ) -> Union[Figure,plt.Axes]:
@@ -366,6 +558,11 @@ class BestAperture:
         outline_kwargs['lw'] = plot_kwargs['lw']*4
         outline_kwargs['color'] = 'w'
 
+        #sorting
+        if sort_rings_apertures:
+            plot_aperture_r  = np.sort(plot_aperture_r)[::-1]
+            plot_sky_rings_r = np.sort(plot_sky_rings_r)[::-1]
+            plot_sky_rings_w = np.sort(plot_sky_rings_w)[::-1]
 
         #plotting
         if fig is None: fig = plt.figure(figsize=(14,6))
@@ -441,10 +638,10 @@ class BestAperture:
         ax1.set_ylabel('Pixel')
         ax2.set_xlabel('Radius')
         if self.mode == 'flux':
-            cmap1.set_label('Flux')
+            cmap1.set_label('Total Flux (Pixel-Wise)')
             ax2.set_ylabel('Aperture Flux')
         elif self.mode == 'mag':
-            cmap1.set_label('Magnitude')
+            cmap1.set_label('Total Magnitude (Pixel-Wise)')
             ax2.set_ylabel('Aperture Magnitude')
 
         plt.show()
