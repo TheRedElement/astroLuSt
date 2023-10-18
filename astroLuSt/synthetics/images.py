@@ -111,6 +111,7 @@ class TPF:
             - `add_custom()`
             - `add_noise()`
             - `aperture_from_mask()`
+            - `get_frame()`
             - `rvs()`
             - `plot_result()`
 
@@ -666,6 +667,36 @@ class TPF:
 
         return aperture
 
+    def get_frame(self,
+        ) -> np.ndarray:
+        """
+            - method that returns the frame at its current state
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `self.frame`
+                    - np.ndarray
+                    - generated frame in fluxes
+                    - returned if `self.mode=='flux'`
+                - `self.frame_mag`
+                    - np.ndarray
+                    - generated frame in magnitudes
+                    - returned if `self.mode=='mag'`
+            Comments
+            --------
+        """
+
+        if self.mode == 'flux':
+            return self.frame
+        elif self.mode == 'mag':
+            return self.frame_mag
+
     def rvs(self,
         shape:Union[int,tuple]=None,
         add_stars_kwargs:dict=None,
@@ -707,7 +738,12 @@ class TPF:
             -------
                 - `self.frame`
                     - np.ndarray
-                    - generated frame
+                    - generated frame in fluxes
+                    - returned if `self.mode=='flux'`
+                - `self.frame_mag`
+                    - np.ndarray
+                    - generated frame in magnitudes
+                    - returned if `self.mode=='mag'`
             
             Comments
             --------
@@ -717,7 +753,10 @@ class TPF:
         self.add_noise(**add_noise_kwargs)
         self.add_custom(**add_custom_kwargs)
 
-        return self.frame
+        if self.mode == 'flux':
+            return self.frame
+        elif self.mode == 'mag':
+            return self.frame_mag
 
     def plot_result(self,
         plot_apertures:Union[List[int],Literal['all']]=None,
