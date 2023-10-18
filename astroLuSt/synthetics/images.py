@@ -688,6 +688,7 @@ class TPF:
                     - np.ndarray
                     - generated frame in magnitudes
                     - returned if `self.mode=='mag'`
+                    
             Comments
             --------
         """
@@ -953,6 +954,32 @@ class TPF_Series:
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
     
+    def get_frames(self,
+        ) -> np.ndarray:
+        """
+            - method that returns the generated frames
+
+            Parameters
+            ----------
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `frames`
+                    - np.ndarray
+                    - generated frames
+                    - in fluxes/magnitudes according to `self.mode`
+                    
+            Comments
+            --------
+        """
+        frames = self.tpf_s
+
+        return frames
+    
+
     def rvs(self,
         times:np.ndarray,
         variability:Callable=None,
@@ -1111,10 +1138,12 @@ class TPF_Series:
                 tpf.add_custom(**add_custom_kwargs)
 
                 #add new frame to array of frames
-                if self.mode == 'flux':
-                    self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
-                elif self.mode == 'mag':
-                    self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
+                frame = tpf.get_frame() #automaticall returns correct frame according to tpf.mode
+                self.tpf_s = np.append(self.tpf_s, np.expand_dims(frame,0), axis=0)
+                # if self.mode == 'flux':
+                #     self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame,0), axis=0)
+                # elif self.mode == 'mag':
+                #     self.tpf_s = np.append(self.tpf_s, np.expand_dims(tpf.frame_mag,0), axis=0)
                 
                 #add physical params to array of params (adding time, frame,)
                 tpf_starparams = np.append(tpf.starparams,[[tp,idx]]*len(tpf.starparams),axis=1)
