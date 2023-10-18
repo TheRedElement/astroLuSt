@@ -736,14 +736,9 @@ class TPF:
 
             Returns
             -------
-                - `self.frame`
+                - `frame`
                     - np.ndarray
-                    - generated frame in fluxes
-                    - returned if `self.mode=='flux'`
-                - `self.frame_mag`
-                    - np.ndarray
-                    - generated frame in magnitudes
-                    - returned if `self.mode=='mag'`
+                    - generated frame
             
             Comments
             --------
@@ -753,10 +748,9 @@ class TPF:
         self.add_noise(**add_noise_kwargs)
         self.add_custom(**add_custom_kwargs)
 
-        if self.mode == 'flux':
-            return self.frame
-        elif self.mode == 'mag':
-            return self.frame_mag
+        frame = self.get_frame()
+        
+        return frame
 
     def plot_result(self,
         plot_apertures:Union[List[int],Literal['all']]=None,
