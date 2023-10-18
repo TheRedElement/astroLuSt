@@ -573,6 +573,7 @@ class BestAperture:
         sky_rings_cmap:Union[str,mcolors.Colormap]=None,
         fig:Figure=None,
         sort_rings_apertures:bool=True,
+        pcolormesh_kwargs:dict=None,
         plot_kwargs:dict=None,
         scatter_kwargs:dict=None,
         ) -> Union[Figure,plt.Axes]:
@@ -646,11 +647,14 @@ class BestAperture:
         if plot_sky_rings_rw is None: plot_sky_rings_rw = np.empty((0,2))
         if sky_rings_cmap is None:    sky_rings_cmap    = 'autumn'
         if aperture_cmap is None:     aperture_cmap     = 'winter'
+        if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
         if plot_kwargs is None:       plot_kwargs       = dict(lw=1)
         if scatter_kwargs is None:    scatter_kwargs    = dict(s=5, cmap=sky_rings_cmap)
 
         #set some fixed kwargs
         scatter_kwargs['cmap'] = sky_rings_cmap     #to ensure that cmap of scatter and skyrings matches
+        if 'cmap' not in pcolormesh_kwargs.keys():
+            pcolormesh_kwargs['cmap'] = 'viridis' + '_r'*(self.mode=='mag')
 
         #kwargs of outline for star aperture plot
         outline_kwargs = plot_kwargs.copy()
@@ -669,7 +673,7 @@ class BestAperture:
         ax2 = fig.add_subplot(122)
 
         #plot sum frame
-        mesh = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.sum_frame[:,:,2], zorder=0)
+        mesh = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.sum_frame[:,:,2], **pcolormesh_kwargs)
         
         #plot some selected sky rings
         if len(plot_sky_rings_rw) > 0:
@@ -727,23 +731,25 @@ class BestAperture:
 
 
         #add colorbars
-        cmap1 = fig.colorbar(mesh, ax=ax1)
-        cmap2 = fig.colorbar(sctr, ax=ax2)
+        cbar1 = fig.colorbar(mesh, ax=ax1)
+        cbar2 = fig.colorbar(sctr, ax=ax2)
 
-        ax2.legend(loc='upper right')
+        ax2.legend()
 
 
         #labelling
-        cmap2.set_label('Sky Ring Width')
+        cbar2.set_label('Sky Ring Width')
 
         ax1.set_xlabel('Pixel')
         ax1.set_ylabel('Pixel')
         ax2.set_xlabel('Radius')
         if self.mode == 'flux':
-            cmap1.set_label('Total Flux (Pixel-Wise)')
+            cbar1.set_label('Total Flux (Pixel-Wise)')
             ax2.set_ylabel('Aperture Flux')
         elif self.mode == 'mag':
-            cmap1.set_label('Total Magnitude (Pixel-Wise)')
+            ax2.invert_yaxis()
+            cbar1.ax.invert_yaxis()
+            cbar1.set_label('Total Magnitude (Pixel-Wise)')
             ax2.set_ylabel('Aperture Magnitude')
 
         plt.show()
