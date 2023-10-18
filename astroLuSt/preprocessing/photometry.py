@@ -647,7 +647,10 @@ class BestAperture:
         if sky_rings_cmap is None:    sky_rings_cmap    = 'autumn'
         if aperture_cmap is None:     aperture_cmap     = 'winter'
         if plot_kwargs is None:       plot_kwargs       = dict(lw=1)
-        if scatter_kwargs is None:    scatter_kwargs    = dict(s=5, cmap='viridis')
+        if scatter_kwargs is None:    scatter_kwargs    = dict(s=5, cmap=sky_rings_cmap)
+
+        #set some fixed kwargs
+        scatter_kwargs['cmap'] = sky_rings_cmap     #to ensure that cmap of scatter and skyrings matches
 
         #kwargs of outline for star aperture plot
         outline_kwargs = plot_kwargs.copy()
