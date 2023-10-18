@@ -118,10 +118,10 @@ class BestAperture:
     def __repr__(self) -> str:
         return (
             f'{self.__class__.__name__}(\n'
-            f'mode={repr(self.mode)}),\n'
-            f'store_ring_mask={repr(self.store_ring_masks)}),\n'
-            f'store_aperture_masks={repr(self.store_aperture_masks)}),\n'
-            f'verbose={self.verbose},\n'
+            f'    mode={repr(self.mode)},\n'
+            f'    store_ring_mask={repr(self.store_ring_masks)},\n'
+            f'    store_aperture_masks={repr(self.store_aperture_masks)},\n'
+            f'    verbose={self.verbose},\n'
             f')'
         )
 
