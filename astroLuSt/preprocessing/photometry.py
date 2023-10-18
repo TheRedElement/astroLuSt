@@ -106,6 +106,7 @@ class BestAperture:
         self.verbose                    = verbose
         
         #infered attributes
+        self.frames         = None          
         self.aperture_res   = np.empty((0,3))
         self.ring_res       = np.empty((0,4))
         self.aperture_masks = np.empty((0,0,0))
@@ -140,9 +141,10 @@ class BestAperture:
                     - series of frames to consider for the analysis
                     - has to have shape `(nframes,npixels,npixels,3)`
                         - the last axis contains
-                            - element 0: posistion in x direction
-                            - element 1: posistion in y direction
-                            - element 2: flux/magnitude values
+                            - element 0: number of frames
+                            - element 1: posistion in x direction
+                            - element 2: posistion in y direction
+                            - element 3: flux/magnitude values
 
             Raises
             ------
@@ -167,7 +169,6 @@ class BestAperture:
 
     def __store_frames(self,
         frames:np.ndarray,
-        context:Literal['aperture','skyring']
         ) -> None:
         """
             - private method to store passed frames
@@ -180,18 +181,11 @@ class BestAperture:
                     - series of frames to consider for the analysis
                     - has to have shape `(nframes,npixels,npixels,3)`
                         - the last axis contains
-                            - element 0: posistion in x direction
-                            - element 1: posistion in y direction
-                            - element 2: flux/magnitude values
-                - `context`
-                    - Literal
-                    - context on where the method was called
-                        - necessary to know to not override some previously initialized infered attribute
-                    - options are
-                        - `'aperture'`
-                            - if apertures gets tested
-                        - `'skyring'`
-                            - if sky-rings gets tested (for background)
+                            - element 0: number of frames
+                            - element 1: posistion in x direction
+                            - element 2: posistion in y direction
+                            - element 3: flux/magnitude values
+
             Raises
             ------
 
@@ -209,10 +203,8 @@ class BestAperture:
         self.get_sum_frame()
 
         #update frame-dependent attributes (only when in respective functions)
-        if context == 'aperture':
-            self.aperture_masks = np.empty((0,*self.frames.shape[1:3]))
-        elif context == 'skyring':
-            self.ring_masks     = np.empty((0,*self.frames.shape[1:3]))
+        self.aperture_masks = np.empty((0,*self.frames.shape[1:3]))
+        self.ring_masks     = np.empty((0,*self.frames.shape[1:3]))
 
         return
 
@@ -288,8 +280,9 @@ class BestAperture:
         """
 
         #initial checks and saves
-        self.__check_frames_shape(frames)
-        self.__store_frames(frames, context='aperture')
+        if self.frames is None:
+            self.__check_frames_shape(frames)
+            self.__store_frames(self.frames)
 
         #construct position array
         pos = np.array([posx,posy])
@@ -356,8 +349,9 @@ class BestAperture:
         """
 
         #initial checks and saves
-        self.__check_frames_shape(frames)
-        self.__store_frames(frames, context='skyring')
+        if self.frames is None:
+            self.__check_frames_shape(frames)
+            self.__store_frames(self.frames)
             
         #generate position array
         pos = np.array([posx,posy])
