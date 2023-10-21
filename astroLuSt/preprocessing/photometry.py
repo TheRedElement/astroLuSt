@@ -744,11 +744,11 @@ class BestAperture:
         ax2.legend()
 
         #labelling
-        cbar2.set_label('Sky Ring Width')
+        cbar2.set_label('Sky Ring Width [pixel]')
 
         ax1.set_xlabel('Pixel')
         ax1.set_ylabel('Pixel')
-        ax2.set_xlabel('Radius')
+        ax2.set_xlabel('Radius [pixel]')
         if self.mode == 'flux':
             cbar1.set_label('Total Flux (Pixel-Wise)')
             ax2.set_ylabel('Aperture Flux')
