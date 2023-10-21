@@ -49,7 +49,7 @@ class BestAperture:
                     - `nradii` is the number of tested radii
                     - the last axis contains
                         - element 0: tested radius
-                        - element 1: total flux within aperture
+                        - element 1: total flux/magnitude within aperture
                         - element 2: number of enclosed pixels
             - `ring_res`
                 - np.ndarray
@@ -60,7 +60,7 @@ class BestAperture:
                     - the last axis contains
                         - element 0: tested radius
                         - element 1: tested width
-                        - element 2: total flux within aperture
+                        - element 2: total flux/magnitude within aperture (dependent on `self.mode`)
                         - element 3: number of enclosed pixels
             - `aperture_masks`
                 - np.ndarray
@@ -224,7 +224,7 @@ class BestAperture:
             -------
                 - `sum_frame`
                     - np.ndarray
-                    - frame consisting of the pixel wise total flux/brightness
+                    - frame consisting of the pixel wise total flux/magnitude
 
             Comments
             --------
@@ -293,11 +293,14 @@ class BestAperture:
             #create aperture mask (boolean array)
             aperture_mask = (np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) < r)
 
-            #get flux contained in aperture
-            aperture_flux = np.sum(self.sum_frame[aperture_mask,2])#/np.sum(aperture_mask)**2
+            #get total flux/magnitude contained in aperture
+            if self.mode == 'flux':
+                aperture_brightness = np.sum(self.sum_frame[aperture_mask,2])#/np.sum(aperture_mask)**2
+            elif self.mode == 'mag':
+                aperture_brightness = alpp.mags_sum(self.sum_frame[aperture_mask,2])
             
             #store result
-            self.aperture_res = np.append(self.aperture_res, np.array([[r, aperture_flux, aperture_mask.sum()]]), axis=0)
+            self.aperture_res = np.append(self.aperture_res, np.array([[r, aperture_brightness, aperture_mask.sum()]]), axis=0)
 
             #store aperture_mask for current r
             if self.store_aperture_masks:
@@ -365,10 +368,14 @@ class BestAperture:
                 &(np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) < r+w)
 
             #calculate flux within sky-ring
-            ring_flux = np.sum(self.sum_frame[ring_mask,2])#/np.sum(ring_mask)**2
+            if self.mode == 'flux':
+                ring_brightness = np.sum(self.sum_frame[ring_mask,2])#/np.sum(ring_mask)**2
+            elif self.mode == 'mag':
+                ring_brightness = alpp.mags_sum(self.sum_frame[ring_mask,2])
+            
 
             #get sky-ring results
-            self.ring_res = np.append(self.ring_res, np.array([[r, w, ring_flux, ring_mask.sum()]]), axis=0)
+            self.ring_res = np.append(self.ring_res, np.array([[r, w, ring_brightness, ring_mask.sum()]]), axis=0)
             
             #store ring_mask for current w
             if self.store_ring_masks:
