@@ -736,7 +736,6 @@ class BestAperture:
 
         ax2.legend()
 
-
         #labelling
         cbar2.set_label('Sky Ring Width')
 
@@ -751,8 +750,6 @@ class BestAperture:
             cbar1.ax.invert_yaxis()
             cbar1.set_label('Total Magnitude (Pixel-Wise)')
             ax2.set_ylabel('Aperture Magnitude')
-
-        plt.show()
 
         axs = fig.axes
         
