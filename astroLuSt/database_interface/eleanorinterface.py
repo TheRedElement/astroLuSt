@@ -1,5 +1,4 @@
 #TODO: clear metadata
-#TODO: redownload
 #%%imports
 import eleanor
 from joblib import Parallel, delayed
@@ -28,6 +27,7 @@ class EleanorDatabaseInterface:
     def __init__(self,
         sleep:float=0,
         n_jobs:int=-1,
+        metadata_path:str=None,
         clear_metadata:bool=False,
         redownload:bool=False,
         verbose:int=0,
@@ -38,6 +38,8 @@ class EleanorDatabaseInterface:
         self.clear_metadata = clear_metadata
         self.redownload     = redownload
         self.verbose        = verbose
+
+        if metadata_path is None: self.metadata_path = "./mastDownload/HLSP"
 
         #infered attributes
         self.LE = alme.LogErrors()
@@ -58,6 +60,7 @@ class EleanorDatabaseInterface:
     def extract_source(self,
         sectors:Union[str,List]=None,
         source_id:dict=None,
+        store_tpfs:bool=True, store_aperture_masks:bool=True,
         verbose:int=None,
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
@@ -70,7 +73,9 @@ class EleanorDatabaseInterface:
         if multi_sectors_kwargs is None:    multi_sectors_kwargs    = dict()
         if targetdata_kwargs is None:       targetdata_kwargs       = dict()
         
-        save_kwargs_use = save_kwargs.copy()
+        if save_kwargs is None: save_kwargs_use = None
+        else:
+            save_kwargs_use = save_kwargs.copy()
         if save_kwargs_use is not None:
             if 'filename' not in save_kwargs_use.keys():
                 save_kwargs_use['filename'] = '_'.join([''.join(item) for item in source_id.items()])
@@ -95,10 +100,10 @@ class EleanorDatabaseInterface:
                 type='INFO',
                 verbose=verbose
             )
-            
+
             #return nothing
             lcs = np.empty((0,len(headers)))
-            return lcs
+            return lcs, headers, tpfs, aperture_masks
 
 
         #extract data
@@ -133,8 +138,8 @@ class EleanorDatabaseInterface:
                         lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
 
                     lcs.append(lc)
-                    tpfs.append(datum.tpf[0])
-                    aperture_masks.append(datum.aperture)
+                    if store_tpfs:              tpfs.append(datum.tpf[0])
+                    if store_aperture_masks:    aperture_masks.append(datum.aperture)
 
                 except Exception as e:
                     #log and try next sector
@@ -150,18 +155,6 @@ class EleanorDatabaseInterface:
                     **save_kwargs_use,
                 )
 
-            #plot result (if requested)
-
-            fig, axs = self.plot_result(
-                lcs=lcs,
-                headers=headers,
-                tpfs=tpfs,
-                aperture_masks=aperture_masks,
-                fig=None,
-                sctr_kwargs=None,
-            )
-            fig.suptitle(f'{source_id}')
-
             #sleep to prevent server timeout
             time.sleep(self.sleep)
         
@@ -172,11 +165,12 @@ class EleanorDatabaseInterface:
             self.LE.print_exc(e, prefix=f'{source_id}', suffix=None,)
             self.LE.exc2df(e, prefix=f'{source_id}', suffix=None,)
 
-        return lcs
+        return lcs, headers, tpfs, aperture_masks
     
     def download(self,
         sectors:Union[str,list]=None,
         source_ids:List[dict]=None,
+        store_tpfs:bool=True, store_aperture_masks:bool=True,
         n_chunks:int=1,
         parallel_kwargs:dict=None,
         multi_sectors_kwargs:dict=None,
@@ -208,16 +202,36 @@ class EleanorDatabaseInterface:
                 delayed(self.extract_source)(
                     sectors=sectors,
                     source_id=source_id,
+                    store_tpfs=store_tpfs, store_aperture_masks=store_aperture_masks,
                     multi_sectors_kwargs=multi_sectors_kwargs,
                     targetdata_kwargs=targetdata_kwargs,
                     save_kwargs=save_kwargs,
                 ) for idx, source_id in enumerate(chunk)
             )
 
-        #TODO: clear metadata
-        #TODO: redownload
+            #delete metadata after extraction of each chunck
+            if self.clear_metadata:
+                try:
+                    almf.printf(
+                        msg='Removing Metadata...',
+                        context=f'{self.__class__.__name__}.{self.download.__name__}()',
+                        type='INFO',
+                        verbose=verbose,
+                    )
+                    shutil.rmtree(self.metadata_path)
+                except FileNotFoundError as e:                    
+                    self.LE.print_exc(e=e, prefix='No Metadata to clear!')
+                    self.LE.exc2df(e=e, prefix='No Metadata to clear!')
 
-        return
+
+        lcs             = np.array([r[0] for r in res])
+        headers         = np.array([r[1] for r in res])
+        tpfs            = np.array([r[2] for r in res])
+        aperture_masks  = np.array([r[3] for r in res])
+
+
+
+        return lcs, headers, tpfs, aperture_masks
     
     def save(self,
         df:pd.DataFrame,
