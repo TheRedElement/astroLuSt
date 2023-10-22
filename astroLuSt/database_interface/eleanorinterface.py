@@ -13,7 +13,8 @@ import time
 from typing import Union, Tuple, Callable, List
 import warnings
 
-from astroLuSt.monitoring.timers import ExecTimer
+from astroLuSt.monitoring import timers as almt
+from astroLuSt.monitoring import errorlogging as alme
 from astroLuSt.monitoring import formatting as almf
 
 #%%catch problematic warnings and convert them to exceptions
@@ -33,6 +34,10 @@ class EleanorDatabaseInterface:
         self.n_jobs         = n_jobs
         self.clear_metadata = clear_metadata
         self.verbose        = verbose
+
+        #infered attributes
+        self.LE = alme.LogErrors()
+
 
         pass
 
@@ -64,50 +69,67 @@ class EleanorDatabaseInterface:
             if 'filename' not in save_kwargs_use.keys():
                 save_kwargs_use['filename'] = '_'.join([''.join(item) for item in source_id.items()])
         
-        #obtain sources
-        star = eleanor.multi_sectors(
-            sectors=sectors,
-            **source_id,
-            **multi_sectors_kwargs
-        )
-
-        #extract data
+        
+        #define storage structures
         lcs = []
         headers = ['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size']
         if 'do_pca' in targetdata_kwargs.keys(): headers += ["pca_flux"]*targetdata_kwargs['do_pca']
         if 'do_psf' in targetdata_kwargs.keys(): headers += ["psf_flux"]*targetdata_kwargs['do_psf']
         
-        for idx, s in enumerate(star):
-            datum = eleanor.TargetData(source=s, **targetdata_kwargs)
-
-            lc = np.array([
-                datum.time,
-                datum.raw_flux, datum.flux_err,
-                datum.corr_flux,
-                datum.quality,
-                [s.sector]*datum.time.shape[0],
-                [s.tess_mag]*datum.time.shape[0],
-                [datum.aperture_size]*datum.time.shape[0],
-            ]).T
-
-            if datum.pca_flux is not None:
-                lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
-            if datum.psf_flux is not None:
-                lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
-
-            lcs.append(lc)
-
-        
-        lcs = np.concatenate(lcs, axis=0)
-
-        if save_kwargs_use is not None:
-            self.save(
-                df=pd.DataFrame(data=lcs, columns=headers),
-                **save_kwargs_use,
+        #extract data
+        try:
+            #obtain sources
+            star = eleanor.multi_sectors(
+                sectors=sectors,
+                **source_id,
+                **multi_sectors_kwargs,
             )
 
-        #sleep to prevent server timeout
-        time.sleep(self.sleep)
+            for idx, s in enumerate(star):
+                datum = eleanor.TargetData(source=s, **targetdata_kwargs)
+
+                lc = np.array([
+                    datum.time,
+                    datum.raw_flux, datum.flux_err,
+                    datum.corr_flux,
+                    datum.quality,
+                    [s.sector]*datum.time.shape[0],
+                    [s.tess_mag]*datum.time.shape[0],
+                    [datum.aperture_size]*datum.time.shape[0],
+                ]).T
+
+                if datum.pca_flux is not None:
+                    lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
+                if datum.psf_flux is not None:
+                    lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
+
+                lcs.append(lc)
+
+                if idx > 0: 
+                    _ = 1/0
+
+            
+            lcs = np.concatenate(lcs, axis=0)
+
+            if save_kwargs_use is not None:
+                self.save(
+                    df=pd.DataFrame(data=lcs, columns=headers),
+                    **save_kwargs_use,
+                )
+
+            #sleep to prevent server timeout
+            time.sleep(self.sleep)
+        
+        except Exception as e:
+            lcs = np.empty((0,len(headers)))
+
+            self.LE.print_exc(
+                e,
+                prefix=f'{source_id}',
+                suffix=None,
+            )
+
+        print(self.LE.df_errorlog)
 
         return lcs
     
@@ -115,6 +137,7 @@ class EleanorDatabaseInterface:
         sectors:Union[str,list]=None,
         source_ids:List[dict]=None,
         n_chunks:int=1,
+        parallel_kwargs:dict=None,
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
@@ -123,11 +146,14 @@ class EleanorDatabaseInterface:
 
         #default parameters
         if verbose is None: verbose = self.verbose
+        if parallel_kwargs is None:
+            parallel_kwargs = dict(n_jobs=self.n_jobs, backend='threading', verbose=verbose)
 
         #split into chunks
         chunks = np.array_split(source_ids, n_chunks)
 
 
+        #iterate over chunks
         for cidx, chunk in enumerate(chunks):
             almf.printf(
                 msg=f'Extracting chunk {cidx+1}/{len(chunks)}',
@@ -136,21 +162,19 @@ class EleanorDatabaseInterface:
                 verbose=verbose,
             )
 
-            for idx, source_id in enumerate(chunk):
-                almf.printf(
-                    msg=f'Extracting {source_id} (source {idx+1}/{len(chunk)}, chunk {cidx+1}/{len(chunks)})',
-                    context=f'{self.__class__.__name__}.{self.download.__name__}()',
-                    type='INFO',
-                    verbose=verbose,
-                )
-                print(save_kwargs, source_id)
-                lc = self.extract_source(
+            #extract targets (in parallel)
+            res = Parallel(**parallel_kwargs)(
+                delayed(self.extract_source)(
                     sectors=sectors,
                     source_id=source_id,
                     multi_sectors_kwargs=multi_sectors_kwargs,
                     targetdata_kwargs=targetdata_kwargs,
                     save_kwargs=save_kwargs,
-                )
+                ) for idx, source_id in enumerate(chunk)
+            )
+
+            print(res)
+
 
         return
     

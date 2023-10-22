@@ -48,10 +48,9 @@ class LogErrors:
         pass
 
     def __repr__(self) -> str:
-        
         return (
-            f'LogErrors(\n'
-            f'    verbose={repr(self.verbose)},n'
+            f'{self.__class__.__name__}(\n'
+            f'    verbose={repr(self.verbose)},\n'
             f')'
         )
     
