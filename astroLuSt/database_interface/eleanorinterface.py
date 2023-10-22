@@ -115,9 +115,13 @@ class EleanorDatabaseInterface:
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
+        verbose:int=None,
         ):
 
-        # #split into chunks
+        #default parameters
+        if verbose is None: verbose = self.verbose
+
+        #split into chunks
         chunks = np.array_split(source_ids, n_chunks)
 
 
@@ -126,6 +130,7 @@ class EleanorDatabaseInterface:
                 msg=f'Extracting chunk {cidx+1}/{len(chunks)}',
                 context=f'{self.__class__.__name__}.{self.download.__name__}()',
                 type='INFO',
+                verbose=verbose,
             )
 
             for idx, source_id in enumerate(chunk):
@@ -133,6 +138,7 @@ class EleanorDatabaseInterface:
                     msg=f'Extracting {source_id} (source {idx+1}/{len(chunk)}, chunk {cidx+1}/{len(chunks)})',
                     context=f'{self.__class__.__name__}.{self.download.__name__}()',
                     type='INFO',
+                    verbose=verbose,
                 )
                 lc = self.extract_source(
                     sectors=sectors,
