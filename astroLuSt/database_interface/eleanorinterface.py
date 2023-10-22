@@ -156,7 +156,7 @@ class EleanorDatabaseInterface:
                         - will be set to `dict()`
                 - `tpfs2store`
                     - slice, optional
-                    - whether which target-pixel-files to store
+                    - which target-pixel-files to store
                     - if you want to store all pass `slice(None)`
                     - the default is `None`
                         - will be set to `slice(0)`
@@ -344,15 +344,136 @@ class EleanorDatabaseInterface:
         source_ids:List[dict]=None,
         tpfs2store:slice=None, store_aperture_masks:bool=True,
         n_chunks:int=1,
+        verbose:int=None,
         parallel_kwargs:dict=None,
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
-        verbose:int=None,
-        ) -> None:
+        ) -> Tuple[list,list,list,list]:
+        """
+            - method to execute a parallel download of a list of targets
+
+            Parameters
+            ----------
+                - `sectors`
+                    - str, list, optional
+                    - TESS sectors to extract data from
+                    - the default is `None`
+                        - will be set to `'all'`
+                        - i.e. all available sectors will be extracted
+                - `source_ids`
+                    - list, optional
+                    - contains dicts
+                        - dicts contain mission and keys available in `eleanor.multi_sectors()`
+                        - keys of the dict have to be one of
+                            - `'tic'`
+                            - `'gaia'`
+                            - `'coords'`
+                            - `'name'`
+                        - values of the dict has to be the corresponding identifier
+                    - the default is `None`
+                        - will be set to `[]`
+                - `tpfs2store`
+                    - slice, optional
+                    - which target-pixel-files to store
+                    - if you want to store all pass `slice(None)`
+                    - the default is `None`
+                        - will be set to `slice(0)`
+                        - no tpf extracted
+                - `store_aperture_masks`
+                    - bool, optional
+                    - whether to also store aperture-masks
+                    - the default is True
+                - `n_chunks`
+                    - int, optional
+                    - number of chuks to divide the data into
+                    - similar to batch-size in machine learning
+                    - the default is 1
+                        - all data processed in one go
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `parallel_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `joblib.Parallel()`
+                    - the default is `None`
+                        - will be set to `dict(n_jobs=self.n_jobs, backend='threading', verbose=verbose)`
+                - `multi_sectors_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `eleanor.multi_sectors()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                            - done within `self.extract_source()`
+                - `targetdata_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `eleanor.TargetData()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                            - done within `self.extract_source()`
+                - `save_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.save()`
+                    - the default is `None`
+                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory='./')`
+                            - done within `self.extract_source()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `lcs`
+                    - list
+                    - contains np.ndarray for every extracted source
+                        - contain lightcurve related quantities that got extracted
+                        - will be of shape `(nobservations,nparameters)`
+                            - axis 1: contains extracted parameters
+                                - `'time'`
+                                - `'raw_flux'`
+                                - `'flux_err'`
+                                - `'corr_flux'`
+                                - `'quality'`
+                                - `'sector'`
+                                - `'tess_mag'`
+                                - `'aperture_size'`
+                                - `'do_pca'`
+                                    - only if specified within `targetdata_kwargs`
+                                - `'do_psf'`
+                                    - only if specified within `targetdata_kwargs`
+                - `headers`
+                    - list
+                    - contains np.ndarray for every extracted source
+                        - contain headers (column names) corresponding to entries of `lcs`
+                - `tpfs`
+                    - list
+                        - contains np.ndarray for every extracted source
+                        - contain tpfs that got extracted
+                        - will have shape `(ntpfs,xpix,ypix,1)`
+                            - `ntpfs` denotes the number of tpfs that got extracted
+                            - `xpix` is the pixel coordinate in x direction
+                            - `ypix` is the pixel coordinate in y direction
+                            - last dimension contains flux values
+                - `aperture_masks`
+                    - list
+                        - contains np.ndarray for every extracted source
+                        - boolean arrays
+                        - contain aperture-masks for every sector
+                        - will have shape `(nsectors,xpix,ypix,1)`
+                            - `nsectors` denotes the number of sectors that got extracted
+                            - `xpix` is the pixel coordinate in x direction
+                            - `ypix` is the pixel coordinate in y direction
+                            - last dimension contains boolean values
+            
+            Comments
+            --------
+        """
 
         #default parameters
-        if verbose is None: verbose = self.verbose
+        if source_ids is None:  source_ids = []
+        if verbose is None:     verbose = self.verbose
         if parallel_kwargs is None:
             parallel_kwargs = dict(n_jobs=self.n_jobs, backend='threading', verbose=verbose)
 
@@ -414,6 +535,46 @@ class EleanorDatabaseInterface:
         pd_savefunc:str=None,
         save_kwargs:dict=None,
         ) -> None:
+        """
+            - method to save the extracted data
+
+            Parameters
+            ----------
+                - `df`
+                    - pd.DataFrame
+                    - dataframe of extracted lc-data (`lcs` from `self.extract_source()`)
+                - `filename`
+                    - str
+                    - name of the file in which the data gets stored
+                    - NO FILE EXTENSION!
+                - `directory`
+                    - str, optional
+                    - directory of where the data will be stored
+                    - the default is `None`
+                        - will be set to `'./'`
+                - `pd_savefunc`
+                    - str, optional
+                    - pandas saving function to use
+                        - i.e., methods of pd.DataFrames
+                        - examples
+                            - `'to_csv'`
+                            - `'to_parquet'`
+                    - the default is `None`
+                        - will be set to `'to_csv'`
+                - `save_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `pd_savefunc`
+                    - the default is `None`
+                        - will be set to `dict()`
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
 
         if directory is None:   directory   = './'
         if pd_savefunc is None: pd_savefunc = 'to_csv'
@@ -439,11 +600,64 @@ class EleanorDatabaseInterface:
         fig:Figure=None,
         sctr_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
-        
-        #default parameters
-        sctr_kwargs = dict(cmap='nipy_spectral')
+        """
+            - method to plot the result for one particular target
+            
+            Parameters
+            ----------
+                - `lcs`
+                    - np.ndarray
+                    - extracted data corresponding to the lightcurve
+                    - has to be of shape `(nobservations,nquantities)`
+                    - output from `self.extract_source`
+                - `headers`
+                    - np.ndarray
+                    - headers/column names corresponding to `lcs` as output by `self.extract_source`
+                - `tpfs`
+                    - np.ndarray, optional
+                    - exemplary target pixel files for each sector
+                    - has to be of shape `(nsectors,xpix,ypix,1)`
+                    - the default is `None`
+                        - will be ignored in the plot
+                - `aperture_masks`
+                    - np.ndarray, optional
+                    - aperture masks for each sector
+                    - has to be of shape `(nsectors,xpix,ypix,1)`
+                    - the default is `None`
+                        - will be ignored in the plot
+                - `fig`
+                    - Figure, optional
+                    - figure to plot into
+                    - the default is `None`
+                        - will create a new figure
+                - `sctr_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.scatter()`
+                    - the default is `None`
+                        - will be set to `dict(cmap='nipy_spectral')`
 
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created figure
+                - `axs`
+                    - plt.Axes
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
+        """
+
+        #default parameters
         sectors = np.unique(lcs[:,(headers=='sector')])
+        if tpfs is None:            tpfs            = [None]*len(sectors)
+        if aperture_masks is None:  aperture_masks  = [None]*len(sectors)
+        if sctr_kwargs is None:     sctr_kwargs     = dict(cmap='nipy_spectral')
+
 
         if fig is None: fig = plt.figure(figsize=(16,16))
 
@@ -452,12 +666,40 @@ class EleanorDatabaseInterface:
             #boolean of current sector
             s_bool = (lcs[:,(headers=='sector')] == s).flatten()
             
-            #add axes
-            ax1 = fig.add_subplot(len(sectors)+1, 2, 2*idx+1)
-            ax2 = fig.add_subplot(len(sectors)+1, 2, 2*idx+2)
 
-            #plot tpf and LCs
-            mesh = ax1.pcolormesh(tpf[:,:,0])
+            #plot tpf and aperture (only if one of them is provided)
+            ##add ax
+            if tpf is not None or ap is not None:
+                ax1 = fig.add_subplot(len(sectors)+1, 2, 2*idx+1)
+                if tpf is not None: 
+                    mesh = ax1.pcolormesh(tpf[:,:,0])
+                    #add colorbar
+                    cbar = fig.colorbar(mesh, ax=ax1)
+                    cbar.set_label(r'Flux $\left[\frac{e^-}{s}\right]$')
+                #plot aperture
+                if ap is not None:
+                    mesh_ap = ax1.pcolormesh(ap[:,:,0], zorder=2, edgecolor='r', facecolors='none')
+                    mesh_ap.set_alpha(ap)
+                    ax1.plot(np.nan, np.nan, '-r', label='Aperture')
+                
+                #force square plot for tpf
+                ax1.set_aspect('equal', adjustable='box')
+
+                if idx == 0:
+                    ax1.legend()
+                ax1.set_ylabel('Pixel')
+                if idx == len(sectors)-1:
+                    ax1.set_xlabel('Pixel')
+            else:
+                pass
+
+            
+            #plot lc
+            ##add ax
+            if tpf is None and ap is None:
+                ax2 = fig.add_subplot(len(sectors)+1, 1, idx+1)
+            else:
+                ax2 = fig.add_subplot(len(sectors)+1, 2, 2*idx+2)
             sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='raw_flux')]/np.nanmedian(lcs[s_bool,(headers=='raw_flux')]), label='Raw Flux'*(idx==0))
             try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='corr_flux')]/np.nanmedian(lcs[s_bool,(headers=='corr_flux')]), label='Corr Flux'*(idx==0))
             except: pass
@@ -466,28 +708,14 @@ class EleanorDatabaseInterface:
             try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='psf_flux')]/np.nanmedian(lcs[s_bool,(headers=='psf_flux')]), label='PSF Flux'*(idx==0))
             except: pass
         
-            #plot aperture
-            mesh_ap = ax1.pcolormesh(ap[:,:,0], zorder=2, edgecolor='r', facecolors='none')
-            mesh_ap.set_alpha(ap)
-            ax1.plot(np.nan, np.nan, '-r', label='Aperture')
             
-            #force square plot for tpf
-            ax1.set_aspect('equal', adjustable='box')
-
-            #add colorbar
-            cbar = fig.colorbar(mesh, ax=ax1)
 
             #labelling
-            cbar.set_label(r'Flux $\left[\frac{e^-}{s}\right]$')
-            ax1.set_ylabel('Pixel')
             ax2.legend(title=f'Sector {s:.0f}')
-            if idx == 0:
-                ax1.legend()
+
             if idx == len(sectors)-1:
                 ax2.set_xlabel('Time [BJD - 2457000]')
-                ax1.set_xlabel('Pixel')
-            if idx == len(sectors)//2:
-                ax2.set_ylabel('Normalized Flux')
+            ax2.set_ylabel('Normalized Flux')
             
 
         #add scatter of all sectors
@@ -507,9 +735,6 @@ class EleanorDatabaseInterface:
             
 
         axs = fig.axes
-
-        
-
 
         return fig, axs
 
