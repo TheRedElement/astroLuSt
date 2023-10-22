@@ -24,11 +24,13 @@ class EleanorDatabaseInterface:
 
     def __init__(self,
         sleep:float=0,
+        n_jobs:int=-1,
         clear_metadata:bool=False,
         verbose:int=0,
         ) -> None:
         
         self.sleep          = sleep
+        self.n_jobs         = n_jobs
         self.clear_metadata = clear_metadata
         self.verbose        = verbose
 
@@ -57,10 +59,11 @@ class EleanorDatabaseInterface:
         if multi_sectors_kwargs is None:    multi_sectors_kwargs    = dict()
         if targetdata_kwargs is None:       targetdata_kwargs       = dict()
         
-        if save_kwargs is not None:
-            if 'filename' not in save_kwargs.keys():
-                save_kwargs['filename'] = '_'.join([''.join(item) for item in source_id.items()])
-
+        save_kwargs_use = save_kwargs.copy()
+        if save_kwargs_use is not None:
+            if 'filename' not in save_kwargs_use.keys():
+                save_kwargs_use['filename'] = '_'.join([''.join(item) for item in source_id.items()])
+        
         #obtain sources
         star = eleanor.multi_sectors(
             sectors=sectors,
@@ -97,10 +100,10 @@ class EleanorDatabaseInterface:
         
         lcs = np.concatenate(lcs, axis=0)
 
-        if save_kwargs is not None:
+        if save_kwargs_use is not None:
             self.save(
                 df=pd.DataFrame(data=lcs, columns=headers),
-                **save_kwargs,
+                **save_kwargs_use,
             )
 
         #sleep to prevent server timeout
@@ -140,6 +143,7 @@ class EleanorDatabaseInterface:
                     type='INFO',
                     verbose=verbose,
                 )
+                print(save_kwargs, source_id)
                 lc = self.extract_source(
                     sectors=sectors,
                     source_id=source_id,
