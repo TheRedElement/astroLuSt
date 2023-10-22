@@ -42,7 +42,6 @@ class EleanorDatabaseInterface:
         if metadata_path is None: self.metadata_path = "./mastDownload/HLSP"
 
         #infered attributes
-        self.ET = almt.ExecTimer()
         self.LE = alme.LogErrors()
 
 
@@ -66,7 +65,7 @@ class EleanorDatabaseInterface:
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
-        ) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
+        ) -> np.ndarray:
 
         if sectors is None:                 sectors                 = 'all'
         if source_id is None:               source_id               = dict()
@@ -178,7 +177,7 @@ class EleanorDatabaseInterface:
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
         verbose:int=None,
-        ) -> List[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
+        ) -> None:
 
         #default parameters
         if verbose is None: verbose = self.verbose
@@ -188,47 +187,26 @@ class EleanorDatabaseInterface:
         #split into chunks
         chunks = np.array_split(source_ids, n_chunks)
 
-        def inner_func(
-            sectors,
-            source_id,
-            store_tpfs, store_aperture_masks,
-            multi_sectors_kwargs,
-            targetdata_kwargs,
-            save_kwargs,
-            cidx, n_chunks, idx, ntargetsperchunk
-            ) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
-
-            taskname = f'Extracting {source_id} (chunk {cidx+1}/{n_chunks} - target {idx}/{ntargetsperchunk})'
-            
-            self.ET.checkpoint_start(taskname=taskname)
-
-            lcs, headers, tpfs, aperture_masks = self.extract_source(
-                    sectors=sectors,
-                    source_id=source_id,
-                    store_tpfs=store_tpfs, store_aperture_masks=store_aperture_masks,
-                    multi_sectors_kwargs=multi_sectors_kwargs,
-                    targetdata_kwargs=targetdata_kwargs,
-                    save_kwargs=save_kwargs,
-            )
-            
-            self.ET.checkpoint_end(taskname=taskname)
-            self.ET.estimate_runtime(taskname_pat=r'Extracting', nrepeats=ntargetsperchunk, ndone=idx+1)
-
-            return lcs, headers, tpfs, aperture_masks
 
         #iterate over chunks
+        extracted = 0
         for cidx, chunk in enumerate(chunks):
+            almf.printf(
+                msg=f'Extracting chunk {cidx+1}/{len(chunks)} ({extracted}/{len(source_ids)})',
+                context=f'{self.__class__.__name__}.{self.download.__name__}()',
+                type='INFO',
+                verbose=verbose,
+            )
 
             #extract targets (in parallel)
             res = Parallel(**parallel_kwargs)(
-                delayed(inner_func)(
+                delayed(self.extract_source)(
                     sectors=sectors,
                     source_id=source_id,
                     store_tpfs=store_tpfs, store_aperture_masks=store_aperture_masks,
                     multi_sectors_kwargs=multi_sectors_kwargs,
                     targetdata_kwargs=targetdata_kwargs,
                     save_kwargs=save_kwargs,
-                    cidx=cidx, n_chunks=n_chunks, idx=idx, ntargetsperchunk=len(chunk),
                 ) for idx, source_id in enumerate(chunk)
             )
 
@@ -252,6 +230,8 @@ class EleanorDatabaseInterface:
         tpfs            = [np.array(r[2]) for r in res]
         aperture_masks  = [np.array(r[3]) for r in res]
 
+        #update number of extracted targets
+        extracted += len(chunk)
 
         return lcs, headers, tpfs, aperture_masks
     
