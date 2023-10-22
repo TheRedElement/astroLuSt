@@ -111,29 +111,36 @@ class EleanorDatabaseInterface:
     def download(self,
         sectors:Union[str,list]=None,
         source_ids:List[dict]=None,
+        n_chunks:int=1,
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
         ):
 
         # #split into chunks
-        # chunks = np.array_split(self.tics, n_chunks)
+        chunks = np.array_split(source_ids, n_chunks)
 
 
-
-        for idx, source_id in enumerate(source_ids):
+        for cidx, chunk in enumerate(chunks):
             almf.printf(
-                msg=f'Extracting {source_id} (#{idx+1}/{len(source_ids)})',
+                msg=f'Extracting chunk {cidx+1}/{len(chunks)}',
                 context=f'{self.__class__.__name__}.{self.download.__name__}()',
                 type='INFO',
             )
-            lc = self.extract_source(
-                sectors=sectors,
-                source_id=source_id,
-                multi_sectors_kwargs=multi_sectors_kwargs,
-                targetdata_kwargs=targetdata_kwargs,
-                save_kwargs=save_kwargs,
-            )
+
+            for idx, source_id in enumerate(chunk):
+                almf.printf(
+                    msg=f'Extracting {source_id} (source {idx+1}/{len(chunk)}, chunk {cidx+1}/{len(chunks)})',
+                    context=f'{self.__class__.__name__}.{self.download.__name__}()',
+                    type='INFO',
+                )
+                lc = self.extract_source(
+                    sectors=sectors,
+                    source_id=source_id,
+                    multi_sectors_kwargs=multi_sectors_kwargs,
+                    targetdata_kwargs=targetdata_kwargs,
+                    save_kwargs=save_kwargs,
+                )
 
         return
     
