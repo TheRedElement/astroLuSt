@@ -1,4 +1,5 @@
-
+#TODO: clear metadata
+#TODO: redownload
 #%%imports
 import eleanor
 from joblib import Parallel, delayed
@@ -6,7 +7,8 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.figure import Figure
 import numpy as np
-import os
+# import os
+import glob
 import pandas as pd
 import shutil
 import time
@@ -27,12 +29,14 @@ class EleanorDatabaseInterface:
         sleep:float=0,
         n_jobs:int=-1,
         clear_metadata:bool=False,
+        redownload:bool=False,
         verbose:int=0,
         ) -> None:
         
         self.sleep          = sleep
         self.n_jobs         = n_jobs
         self.clear_metadata = clear_metadata
+        self.redownload     = redownload
         self.verbose        = verbose
 
         #infered attributes
@@ -54,6 +58,7 @@ class EleanorDatabaseInterface:
     def extract_source(self,
         sectors:Union[str,List]=None,
         source_id:dict=None,
+        verbose:int=None,
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
@@ -61,6 +66,7 @@ class EleanorDatabaseInterface:
 
         if sectors is None:                 sectors                 = 'all'
         if source_id is None:               source_id               = dict()
+        if verbose is None:                 verbose                 = self.verbose
         if multi_sectors_kwargs is None:    multi_sectors_kwargs    = dict()
         if targetdata_kwargs is None:       targetdata_kwargs       = dict()
         
@@ -68,13 +74,31 @@ class EleanorDatabaseInterface:
         if save_kwargs_use is not None:
             if 'filename' not in save_kwargs_use.keys():
                 save_kwargs_use['filename'] = '_'.join([''.join(item) for item in source_id.items()])
+            if 'directory' not in save_kwargs_use.keys():
+                save_kwargs_use['directory'] = './'
         
+
         
         #define storage structures
         lcs = []
-        headers = ['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size']
-        if 'do_pca' in targetdata_kwargs.keys(): headers += ["pca_flux"]*targetdata_kwargs['do_pca']
-        if 'do_psf' in targetdata_kwargs.keys(): headers += ["psf_flux"]*targetdata_kwargs['do_psf']
+        tpfs = []
+        aperture_masks = []
+        headers = np.array(['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size'])
+        if 'do_pca' in targetdata_kwargs.keys(): headers = np.append(headers, ["pca_flux"]*targetdata_kwargs['do_pca'])
+        if 'do_psf' in targetdata_kwargs.keys(): headers = np.append(headers, ["psf_flux"]*targetdata_kwargs['do_psf'])
+
+        #check if redownload is wished and target alread got extracted in the past
+        if not self.redownload and len(glob.glob(f"{save_kwargs_use['directory']}{save_kwargs_use['filename']}.*")) > 0:
+            almf.printf(
+                msg=f'Ignoring {source_id} because found in {save_kwargs_use["directory"]} and `self.redownload==False`!',
+                context=f'{self.__class__.__name__}.{self.extract_source.__name__}()',
+                type='INFO',
+                verbose=verbose
+            )
+            
+            #return nothing
+            lcs = np.empty((0,len(headers)))
+            return lcs
 
 
         #extract data
@@ -109,6 +133,8 @@ class EleanorDatabaseInterface:
                         lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
 
                     lcs.append(lc)
+                    tpfs.append(datum.tpf[0])
+                    aperture_masks.append(datum.aperture)
 
                 except Exception as e:
                     #log and try next sector
@@ -124,6 +150,18 @@ class EleanorDatabaseInterface:
                     **save_kwargs_use,
                 )
 
+            #plot result (if requested)
+
+            fig, axs = self.plot_result(
+                lcs=lcs,
+                headers=headers,
+                tpfs=tpfs,
+                aperture_masks=aperture_masks,
+                fig=None,
+                sctr_kwargs=None,
+            )
+            fig.suptitle(f'{source_id}')
+
             #sleep to prevent server timeout
             time.sleep(self.sleep)
         
@@ -133,9 +171,6 @@ class EleanorDatabaseInterface:
 
             self.LE.print_exc(e, prefix=f'{source_id}', suffix=None,)
             self.LE.exc2df(e, prefix=f'{source_id}', suffix=None,)
-
-        from IPython.display import display
-        display(self.LE.df_errorlog)
 
         return lcs
     
@@ -148,7 +183,7 @@ class EleanorDatabaseInterface:
         targetdata_kwargs:dict=None,
         save_kwargs:dict=None,
         verbose:int=None,
-        ):
+        ) -> None:
 
         #default parameters
         if verbose is None: verbose = self.verbose
@@ -179,6 +214,9 @@ class EleanorDatabaseInterface:
                 ) for idx, source_id in enumerate(chunk)
             )
 
+        #TODO: clear metadata
+        #TODO: redownload
+
         return
     
     def save(self,
@@ -206,9 +244,92 @@ class EleanorDatabaseInterface:
         return
 
     def plot_result(self,
+        lcs:np.ndarray,
+        headers:np.ndarray,
+        tpfs:np.ndarray=None,
+        aperture_masks:np.ndarray=None,
+        fig:Figure=None,
+        sctr_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         
-        return
+        #default parameters
+        sctr_kwargs = dict(cmap='nipy_spectral')
+
+        sectors = np.unique(lcs[:,(headers=='sector')])
+
+        if fig is None: fig = plt.figure(figsize=(16,16))
+
+        for idx, (s, tpf, ap) in enumerate(zip(sectors, tpfs, aperture_masks)):
+            
+            #boolean of current sector
+            s_bool = (lcs[:,(headers=='sector')] == s).flatten()
+            
+            #add axes
+            ax1 = fig.add_subplot(len(sectors)+1, 2, 2*idx+1)
+            ax2 = fig.add_subplot(len(sectors)+1, 2, 2*idx+2)
+
+            #plot tpf and LCs
+            mesh = ax1.pcolormesh(tpf)
+            sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='raw_flux')]/np.nanmedian(lcs[s_bool,(headers=='raw_flux')]), label='Raw Flux'*(idx==0))
+            try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='corr_flux')]/np.nanmedian(lcs[s_bool,(headers=='corr_flux')]), label='Corr Flux'*(idx==0))
+            except: pass
+            try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='pca_flux')]/np.nanmedian(lcs[s_bool,(headers=='pca_flux')]), label='PCA Flux'*(idx==0))
+            except: pass
+            try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='psf_flux')]/np.nanmedian(lcs[s_bool,(headers=='psf_flux')]), label='PSF Flux'*(idx==0))
+            except: pass
+        
+            #plot aperture
+            mesh_ap = ax1.pcolormesh(ap, zorder=2, edgecolor='r', facecolors='none')
+            mesh_ap.set_alpha(ap)
+            ax1.plot(np.nan, np.nan, '-r', label='Aperture')
+            
+            #force square plot for tpf
+            ax1.set_aspect('equal', adjustable='box')
+
+            #add colorbar
+            cbar = fig.colorbar(mesh, ax=ax1)
+
+            #labelling
+            cbar.set_label(r'Flux $\left[\frac{e^-}{s}\right]$')
+            ax1.set_ylabel('Pixel')
+            ax2.legend(title=f'Sector {s:.0f}')
+            if idx == 0:
+                ax1.legend()
+            if idx == len(sectors)-1:
+                ax2.set_xlabel('Time [BJD - 2457000]')
+                ax1.set_xlabel('Pixel')
+            if idx == len(sectors)//2:
+                ax2.set_ylabel('Normalized Flux')
+            
+
+        #add scatter of all sectors
+        ax0 = fig.add_subplot(len(sectors)+1, 1, len(sectors)+1)
+        try: 
+            sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='corr_flux')]/np.nanmedian(lcs[:,(headers=='corr_flux')]), c=lcs[:,(headers=='sector')], **sctr_kwargs)
+        except:
+            sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='raw_flux')]/np.nanmedian(lcs[:,(headers=='raw_flux')]),   c=lcs[:,(headers=='sector')], **sctr_kwargs)
+        cbar = fig.colorbar(sctr, ax=ax0)
+        
+        cbar.set_label('Sector')
+        ax0.set_xlabel('Time [BJD - 2457000]')
+        ax0.set_ylabel('Normalized Flux')
+
+
+        fig.tight_layout()
+            
+
+        axs = fig.axes
+
+        
+
+
+        return fig, axs
+
+    # def animate(self,
+    #     ):
+    #     #TODO
+
+    #     return
 
 # #ELEANOR
 # class EleanorDatabaseInterface:
