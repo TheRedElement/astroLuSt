@@ -75,8 +75,10 @@ class EleanorDatabaseInterface:
         headers = ['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size']
         if 'do_pca' in targetdata_kwargs.keys(): headers += ["pca_flux"]*targetdata_kwargs['do_pca']
         if 'do_psf' in targetdata_kwargs.keys(): headers += ["psf_flux"]*targetdata_kwargs['do_psf']
-        
+
+
         #extract data
+        ##test if overall failure
         try:
             #obtain sources
             star = eleanor.multi_sectors(
@@ -86,27 +88,32 @@ class EleanorDatabaseInterface:
             )
 
             for idx, s in enumerate(star):
-                datum = eleanor.TargetData(source=s, **targetdata_kwargs)
+                
+                #test if failure in sector
+                try:
+                    datum = eleanor.TargetData(source=s, **targetdata_kwargs)
 
-                lc = np.array([
-                    datum.time,
-                    datum.raw_flux, datum.flux_err,
-                    datum.corr_flux,
-                    datum.quality,
-                    [s.sector]*datum.time.shape[0],
-                    [s.tess_mag]*datum.time.shape[0],
-                    [datum.aperture_size]*datum.time.shape[0],
-                ]).T
+                    lc = np.array([
+                        datum.time,
+                        datum.raw_flux, datum.flux_err,
+                        datum.corr_flux,
+                        datum.quality,
+                        [s.sector]*datum.time.shape[0],
+                        [s.tess_mag]*datum.time.shape[0],
+                        [datum.aperture_size]*datum.time.shape[0],
+                    ]).T
 
-                if datum.pca_flux is not None:
-                    lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
-                if datum.psf_flux is not None:
-                    lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
+                    if datum.pca_flux is not None:
+                        lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
+                    if datum.psf_flux is not None:
+                        lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
 
-                lcs.append(lc)
+                    lcs.append(lc)
 
-                if idx > 0: 
-                    _ = 1/0
+                except Exception as e:
+                    #log and try next sector
+                    self.LE.print_exc(e, prefix=f'{source_id}', suffix=f'sector {s.sector}')
+                    self.LE.exc2df(e, prefix=f'{source_id}', suffix=f'sector {s.sector}')
 
             
             lcs = np.concatenate(lcs, axis=0)
@@ -121,15 +128,14 @@ class EleanorDatabaseInterface:
             time.sleep(self.sleep)
         
         except Exception as e:
+            #log and return empty result
             lcs = np.empty((0,len(headers)))
 
-            self.LE.print_exc(
-                e,
-                prefix=f'{source_id}',
-                suffix=None,
-            )
+            self.LE.print_exc(e, prefix=f'{source_id}', suffix=None,)
+            self.LE.exc2df(e, prefix=f'{source_id}', suffix=None,)
 
-        print(self.LE.df_errorlog)
+        from IPython.display import display
+        display(self.LE.df_errorlog)
 
         return lcs
     
@@ -172,9 +178,6 @@ class EleanorDatabaseInterface:
                     save_kwargs=save_kwargs,
                 ) for idx, source_id in enumerate(chunk)
             )
-
-            print(res)
-
 
         return
     
