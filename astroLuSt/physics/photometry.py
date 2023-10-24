@@ -421,7 +421,7 @@ def mags_sum(m:np.ndarray, w:np.ndarray=None, axis:int=None):
 def mags_contribution(
     m:Union[float,np.ndarray], m_cont:Union[float,np.ndarray],
     w:np.ndarray=None,
-    ) -> Union[float,np.ndarray]:
+    ) ->Union[float,np.ndarray]:
     """
         - function that estimates the contribution in magnitude of target star (m) to a total magnitude
         
@@ -460,8 +460,8 @@ def mags_contribution(
                 - float, np.ndarray
                 - fractional contribution of `m` to `m_cont`
                 - float if `m` is float
-                - np.ndarray if `m` is a np.ndarray
-        
+                - np.ndarray if `m` is a np.ndarray  
+
         Dependencies
         ------------
             - numpy
@@ -471,13 +471,22 @@ def mags_contribution(
         --------
     """
     
+    #convert to np.ndarray
+    m_cont = np.array([m_cont]).flatten()
+
+
+    #handle arrays of len() == 0
+    if len(m_cont) == 0:
+        m_cont = np.append(m_cont, [np.inf])    #set m_cont = inf i.e., infinitely faint object
+
     #calculate total contaminant magnitude if array of magnitudes is provided
-    if isinstance(m_cont, np.ndarray):
-        if len(m_cont) > 1:
-            m_cont = mags_sum(m_cont, w=w)
+    if len(m_cont) > 1:
+        m_cont = mags_sum(m_cont, w=w)
 
     ffrac = mags2fluxes(m=m_cont, m_ref=m)
     p = 1/(1 + ffrac)
+
+    if isinstance(m, float): p = float(p)
 
     return p
 
