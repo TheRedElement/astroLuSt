@@ -20,6 +20,11 @@ class ExecTimer:
                 - verbosity level
                 - the higher the more information will be displayed
                 - the default is 1
+            - `print_kwargs`
+                - dict, optional
+                - kwargs to pass to `print()`
+                - the default is `None`
+                    - will be set to `dict()`
 
         Infered Attributes
         ------------------
@@ -49,17 +54,21 @@ class ExecTimer:
     """
 
     def __init__(self,
-        verbose:int=1
+        verbose:int=1,
+        print_kwargs:dict=None,
         ) -> None:
 
         self.verbose = verbose
+        if print_kwargs is None:    self.print_kwargs = dict()
+        else:                       self.print_kwargs = print_kwargs
+
         self.df_protocoll = pd.DataFrame(
-            columns=["Task", "Start", "End", "Duration", 'Start_Seconds', 'End_Seconds', 'Duration_Seconds', "Comment_Start", 'Comment_End'],
+            columns=['Task', 'Start', 'End', 'Duration', 'Start_Seconds', 'End_Seconds', 'Duration_Seconds', 'Comment_Start', 'Comment_End'],
         )
         
-        self.df_protocoll["Start"] = pd.to_datetime(self.df_protocoll["Start"])
-        self.df_protocoll["End"] = pd.to_datetime(self.df_protocoll["End"])
-        self.df_protocoll["Duration"] = pd.to_timedelta(self.df_protocoll["Duration"])
+        self.df_protocoll['Start'] = pd.to_datetime(self.df_protocoll['Start'])
+        self.df_protocoll['End'] = pd.to_datetime(self.df_protocoll['End'])
+        self.df_protocoll['Duration'] = pd.to_timedelta(self.df_protocoll['Duration'])
         
         return
     
@@ -102,7 +111,7 @@ class ExecTimer:
 
         #make sure to only have unique tasknames
         addon = 1
-        while taskname in self.df_protocoll["Task"].values:
+        while taskname in self.df_protocoll['Task'].values:
             taskname = taskname.replace(str(addon-1),'')
             taskname += str(addon)
             addon += 1
@@ -156,8 +165,8 @@ class ExecTimer:
         ]
 
         if self.verbose > 0:
-            print("\n"+"#"*70)
-            print(f"INFO: Started {taskname} at {start_timestamp}")
+            print('\n'+'#'*70, **self.print_kwargs)
+            print(f'INFO: Started {taskname} at {start_timestamp}', **self.print_kwargs)
 
 
         return
@@ -197,36 +206,37 @@ class ExecTimer:
         end_timestamp = np.datetime64('now')
 
         try:
-            start_time      = self.df_protocoll[(self.df_protocoll["Task"]==taskname)]["Start_Seconds"].values[0]
-            start_timestamp = self.df_protocoll[(self.df_protocoll["Task"]==taskname)]["Start"].values[0]
+            start_time      = self.df_protocoll[(self.df_protocoll['Task']==taskname)]['Start_Seconds'].values[0]
+            start_timestamp = self.df_protocoll[(self.df_protocoll['Task']==taskname)]['Start'].values[0]
         except IndexError as ie:
             msg = (
-                f"IndexError occured. Probably your provided 'taskname' has never been initialized."
-                f"Make sure to initialize a 'taskname' before calling 'checkpoint_end()!\n"
-                f"Original Error: {ie}."
+                f'IndexError occured. Probably your provided `taskname` has never been initialized.'
+                f'Make sure to initialize a `taskname` before calling `checkpoint_end()`!\n'
+                f'Original Error: {ie}.'
             )
             raise LookupError(msg)
 
         duration = end_time-start_time
         duration_timedelta = pd.to_timedelta(end_timestamp-start_timestamp)
 
-        cur_task = np.where(self.df_protocoll["Task"]==taskname)[0][0]
+        cur_task = np.where(self.df_protocoll['Task']==taskname)[0][0]
 
 
-        self.df_protocoll.at[cur_task, "End"] = pd.to_datetime(end_timestamp)
-        self.df_protocoll.at[cur_task, "Duration"] = duration_timedelta
-        self.df_protocoll.at[cur_task, "Duration_Seconds"] = duration
-        self.df_protocoll.at[cur_task, "End_Seconds"] = end_time
-        self.df_protocoll.at[cur_task, "Comment_End"] = comment
+        self.df_protocoll.at[cur_task, 'End'] = pd.to_datetime(end_timestamp)
+        self.df_protocoll.at[cur_task, 'Duration'] = duration_timedelta
+        self.df_protocoll.at[cur_task, 'Duration_Seconds'] = duration
+        self.df_protocoll.at[cur_task, 'End_Seconds'] = end_time
+        self.df_protocoll.at[cur_task, 'Comment_End'] = comment
 
 
         if self.verbose > 0:
             print(
                 f'\n'
                 f'INFO: Finished {taskname} at {end_timestamp}\n'
-                f'Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, "Duration"])}'
+                f'Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, "Duration"])}',
+                **self.print_kwargs
             )
-            print("#"*70)
+            print('#'*70, **self.print_kwargs)
         return
 
     def estimate_runtime(self,
@@ -266,7 +276,7 @@ class ExecTimer:
 
         runtime_estimate = cur_runtime*nrepeats/ndone
 
-        print(f"INFO: Total estimated runtime for {nrepeats} repeats: {runtime_estimate}")        
+        print(f'INFO: Total estimated runtime for {nrepeats} repeats: {runtime_estimate}', **self.print_kwargs)        
 
 
         return
