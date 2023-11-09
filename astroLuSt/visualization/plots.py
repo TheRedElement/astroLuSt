@@ -2949,7 +2949,6 @@ class VennDiagram:
         ##background mask
         mesh = ax.pcolormesh(
             query_array[:,:,0], query_array[:,:,1], query_array[:,:,2],
-            # np.ma.masked_where(query_array[:,:,2]==0,query_array[:,:,2]),   #masked array for pcolormesh
             **pcolormesh_kwargs,
         )
         
