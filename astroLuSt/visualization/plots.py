@@ -16,6 +16,7 @@ import time
 from typing import Union, Tuple, List, Callable
 import warnings
 
+from astroLuSt.visualization import plotting as alvp
 
 
 #%%classes
@@ -2594,40 +2595,96 @@ class VennDiagram:
         
         return
     
-    def get_circles(self,
-        x0:np.ndarray, r:np.ndarray=1,
-        res:int=360,
+    def get_positions(self,
+        x0:np.ndarray,
+        n:int,
+        r:np.ndarray=1,
         ) -> np.ndarray:
 
-        phi = np.linspace(0,2*np.pi, res, endpoint=False)
+        phi = np.linspace(0,2*np.pi, n, endpoint=False)
 
         #array of base-circles (base_circles.shape[0] = x0.shape[0])
         base_circle = r*np.array([np.cos(phi),np.sin(phi)])
 
-        xy = (x0 + base_circle).T
+        xy = (x0.reshape(-1,1) + base_circle).T
 
         return xy
     
     def plot(self,
+        n:int=1, r:float=1
         ):
 
         #number of circles to draw
         n = 4
 
-        #get positions relative to x0
-        x0 = np.array([0,0]).reshape(1,2,1)
-        pos = self.get_circles(x0, r=1, res=n)
-        
-        #generate circles at defined positions
-        circles = self.get_circles(pos, r=np.sqrt(2), res=360)
+        #radius of whole diagram
+        r = 1
 
-        #plot circles
+        res = 300
+
+
+        #get positions relative to x0
+        x0 = np.array([0,0])
+        pos = self.get_positions(x0, n=n, r=1)
+
+        xy = np.linspace(-1.1*r*(1+np.sqrt(2)), 1.1*r*(1+np.sqrt(2)), res)
+        xx, yy = np.meshgrid(xy, xy)
+        xx = np.expand_dims(xx, -1)
+        yy = np.expand_dims(yy, -1)
+        
+        #initialize masking for the total query
+        vennmask = np.zeros_like(xx)
+        vennmask[:] = np.nan
+
+        #initialize query array
+        query = np.concatenate(
+            (xx, yy, vennmask), axis=-1
+        )
+
+        #add masks for individual keywords/circles
+        for idx, p in enumerate(pos):
+            b = (((xx-p[0])**2+(yy-p[1])**2) <= 2*r) #essentially (x-x0)**2 + (y-y0)**2 <= r**2
+            query = np.append(query, b, axis=-1)
+            
+
+        #apply query
+        #NOTE: Example: 3 ^ (4 v 5 v !6)
+        #NOTE: or -> +, and -> *, not -> (1-...)
+        # _ = query[:,:,3] | (query[:,:,4] & query[:,:,5] & ~query[:,:,6])
+        # query[:,:,2] = query[:,:,3] + (query[:,:,4]*query[:,:,5]*(1-query[:,:,6]))
+        query[:,:,2] = query[:,:,3] + query[:,:,4] + query[:,:,5] + query[:,:,6]
+
+
+
+        #plot diagram
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1.scatter(*pos[:,:,0].T)
-        for c in circles.T:
-            ax1.plot(*c)
         
+
+        #background mask
+        ax1.pcolormesh(
+            query[:,:,0], query[:,:,1], query[:,:,2],
+            alpha=0.2
+        )
+
+        
+        #actual circles (outlines)
+        colors = alvp.generate_colors(len(pos))
+        for idx, (p, c) in enumerate(zip(pos,colors)):
+            circle = plt.Circle(
+                p.flatten(), r*np.sqrt(2),
+                color=c, fill=False,
+                label=idx+1,
+            )
+            ax1.add_artist(circle)
+
+        # #circle origins
+        # ax1.scatter(*pos.T)
+
+        ax1.legend()
+
+        ax1.set_aspect('equal')
+
         axs = fig.axes
         
         return fig, axs
