@@ -2933,7 +2933,8 @@ class VennDiagram:
         query_array[:,:,2] = eval(query)
 
         #plot diagram
-        if fig is None:
+        #create figure if neither fig nor ax are provided
+        if fig is None and ax is None:
             fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111)
