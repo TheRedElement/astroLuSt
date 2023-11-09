@@ -2623,23 +2623,31 @@ class VennDiagram:
 
         query = re.sub(r'\|', '+', query)
         query = re.sub(r'\&', '*', query)
+        query = re.sub(r'<', '(1-', query)
+        query = re.sub(r'>', ')', query)
 
         for idx, k in enumerate(kwrds):
-            query = re.sub(k, f'query_ary[:,:{3+idx}]', query)
+            query = re.sub(k, f'query_ary[:,:,{3+idx}]', query)
 
         return query, n
 
     def plot(self,
         query:str=None,
-        n:int=1, r:float=1,
+        n:int=None, r:float=1,
         res:int=300,
         ):
 
         #radius of circles
         r_circ = r*np.sqrt(2)   #a little larger than `r` such that they overlap
 
-        query, n = self.apply_query(query)
-        print(query, n)
+        if query is not None:
+            query, n_q = self.apply_query(query)
+        else:
+            query = 'TODO'
+        if n is None:
+            n = n_q
+
+        print(query)
 
 
         #get positions relative to x0
@@ -2674,7 +2682,7 @@ class VennDiagram:
         # query[:,:,2] = query[:,:,3] + (query[:,:,4]*query[:,:,5]*(1-query[:,:,6]))
         
 
-        query_ary[:,:,2] = np.sum(query_ary[:,:,3:], axis=-1)
+        query_ary[:,:,2] = eval(query)
         # query[:,:,2] = query[:,:,3]
 
 
