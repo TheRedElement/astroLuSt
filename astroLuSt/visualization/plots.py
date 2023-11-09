@@ -2589,6 +2589,29 @@ class CornerPlot:
         return fig, axs
 
 class VennDiagram:
+    """
+        - class to create a Venn diagram
+
+        Attributes
+        ----------
+
+        Methods
+        -------
+            - `get_positions()`
+            - `parse_query()`
+            - `plot()`
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - re
+            - typing
+
+        Comments
+        --------
+
+    """
 
     def __init__(self,
         ) -> None:
@@ -2596,11 +2619,46 @@ class VennDiagram:
         return
     
     def get_positions(self,
-        x0:np.ndarray,
         n:int,
-        r:np.ndarray=1,
+        x0:np.ndarray=None,
+        r:float=1,
         ) -> np.ndarray:
+        """
+            - method to obtain positions for the individual query keywords
 
+            Parameters
+            ----------
+                - `n`
+                    - int
+                    - number of positions to generate
+                    - will generate `n` equidistant points on a circle with
+                        - origin `x0`
+                        - radius `r`
+                - `x0`
+                    - np.ndarray, optional
+                    - origin of the diagram
+                    - the default is `None`
+                    - will be set to `np.array([0,0])`
+                - `r`
+                    - float, optinal
+                    - radius of the circle to position the queries on
+                    - the default is `1`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `pos`
+                    - np.ndarray
+                    - generated positions in carthesian coordinates
+
+            Comments
+            --------
+
+        """
+
+        if x0 is None: x0 = np.array([0,0])
 
         if n > 1:
             phi = np.linspace(0,2*np.pi, n, endpoint=False)
@@ -2608,50 +2666,211 @@ class VennDiagram:
             #array of base-circles (base_circles.shape[0] = x0.shape[0])
             base_circle = r*np.array([np.cos(phi),np.sin(phi)])
 
-            xy = (x0.reshape(-1,1) + base_circle).T
+            pos = (x0.reshape(-1,1) + base_circle).T
         else:
-            xy = x0.reshape(-1,1).T
+            pos = x0.reshape(-1,1).T
 
-        return xy
+        return pos
     
-    def apply_query(self,
+    def parse_query(self,
         query:str,
-        ) -> np.ndarray:
+        array_name:str=None,
+        idx_offset:int=3,
+        axis:int=2,
+        ) -> Tuple[str,int]:
+        """
+            - method to parse the `query` and substitue relevant parts for evaluation
 
+            Parameters
+            ----------
+                - `query`
+                    - str
+                    - query to be parsed
+                    - has to follow the following syntax
+                        - any keyword is represented by `'@\d+'`
+                            - where `'\d+'` can be substituted with any integer
+                            - i.e., `'@1'`
+                        - logical or is represented by `'|'`
+                        - logical and is represented by `'&'`
+                        - negation (not) is represented by `'<@\d+>'`
+                            - where `'\d+'` can be substituted with any integer
+                            - i.e., `'<@1>'` means `not '@1'`
+                        - make sure to set parenthesis correctly!
+                    - the query can then be evaluated by means of mathematical operations due to the substitutions made
+                        - `'|'` --> `'+'`
+                        - `'&'` --> `'*'`
+                        - `'<@\d+>'` --> `'(1-@\d+)'`
+                - `array_name`
+                    - str, optional
+                    - name of the array the query will be applied to
+                    - the default is `None`
+                        - will be set to `'query_array'`
+                            - required for `self.plot()`
+                - `idx_offset`
+                    - int, optional
+                    - offset of the actual index where the boolean mask is found
+                    - the default is 3
+                            - required for `self.plot()`
+                - `axis`
+                    - int, optional
+                    - axis that contains the individual masks
+                    - the default is 2
+                            - required for `self.plot()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `query`
+                    - str
+                    - parsed query with replacements
+                - `n`
+                    - int
+                    - number of unique keywords in the query
+
+            Comments
+            --------
+        """
+
+        #default parameters
+        if array_name is None:
+            array_name = 'query_array'
+
+        #get 
+
+        #obtain number of unique keywords
         kwrds = re.findall(r'@\d+', query)
-        n = len(kwrds)
+        n = len(np.unique(kwrds))
 
+        #make substitutions
         query = re.sub(r'\|', '+', query)
         query = re.sub(r'\&', '*', query)
-        query = re.sub(r'<', '(1-', query)
-        query = re.sub(r'>', ')', query)
+        query = re.sub(r'\~', '1-', query)
 
+        #determine which axis to fill with ':,' and ',:'
+        axisfill = ':,'*axis
         for idx, k in enumerate(kwrds):
-            query = re.sub(k, f'query_ary[:,:,{3+idx}]', query)
+            query = re.sub(k, f'{array_name}[{axisfill}{idx_offset+idx}]', query)
 
         return query, n
 
     def plot(self,
         query:str=None,
-        n:int=None, r:float=1,
-        res:int=300,
-        ):
+        n:int=None, x0:np.ndarray=None, r:float=1,
+        res:int=250,
+        fig:Figure=None,
+        ax:plt.Axes=None,
+        circle_cmap:Union[str,mcolors.Colormap]=None,
+        pcolormesh_kwargs:dict=None,
+        circle_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to create the Venn diagram
 
-        #radius of circles
-        r_circ = r*np.sqrt(2)   #a little larger than `r` such that they overlap
+            Parameters
+            ----------
+                - `query`
+                    - str, optional
+                    - query to be displayed in the diagram
+                    - will be passed to `self.parse_query()`
+                    - has to follow the following syntax
+                        - any keyword is represented by `'@\d+'`
+                            - where `'\d+'` can be substituted with any integer
+                            - i.e., `'@1'`
+                        - logical or is represented by `'|'`
+                        - logical and is represented by `'&'`
+                        - negation (not) is represented by `'<@\d+>'`
+                            - where `'\d+'` can be substituted with any integer
+                            - i.e., `'<@1>'` means `not '@1'`
+                        - make sure to set parenthesis correctly!
+                    - the default is `None`
+                        - will only display the outlines of the circles in the diagram
+                - `n`
+                    - int, optional
+                    - how many circles to show in the diagram
+                    - if `None` or smaller than the number of unique keywords in `query`
+                        - will use the number of unique keywords in `query` to determine the number of circles
+                    - the default is `None`
+                        - infer from `query`
+                - `x0`
+                    - np.ndarray, optional
+                    - origin of the diagram
+                    - 1d array containing
+                        - x coordinate of the origin
+                        - y coordinate of the origin
+                    - the default is `None`
+                        - will be set to `np.array([0,0])`
+                - `r`
+                    - float, optional
+                    - radius of the diagram
+                        - i.e. how far the centers of the individual circles are away from `x0`
+                    - the default is 1
+                - `res`
+                    - int, optional
+                    - resolution of the colormap in the background
+                    - the default is 250
+                - `fig`
+                    - Figure
+                    - figure to plot the diagram into
+                    - the default is `None`
+                        - will generate a new figure
+                - `ax`
+                    - plt.Axes
+                    - axis to plot the diagram into
+                    - the default is `None`
+                        - will create a new axis via `fig.add_subplot(111)`
+                - circle_cmap
+                    - str, mcolors.Colormap, optional
+                    - colormap to use for plotting the circle outlines
+                    - the default is `None`
+                        - will be set to `'tab10'`
+                - pcolormesh_kwargs
+                    - dict, optional
+                    - kwargs to pass to `ax.pcolormesh()`
+                    - the default is `None`
+                        - will be set to `dict(cmap='binary')`
+                - circle_kwargs
+                    - dict, optional
+                    - kwargs to pass to `plt.Circle()`
+                    - the default is `None`
+                        - will be set to `dict()`
 
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - Figure
+                    - created figure
+                - `axs`
+                    - plt.Axes
+                    - axes correspoding to `fig`
+
+            Comments
+            --------
+
+        """
+
+        #default parameters
         if query is not None:
-            query, n_q = self.apply_query(query)
+            query, n_q = self.parse_query(query, idx_offset=3, array_name=None, axis=2)
         else:
-            query = 'query_ary[:,:,2]'  #no query
+            query = 'query_array[:,:,2]'  #no query
             n_q = 1
         if n is None or n < n_q:
             n = n_q
+        if circle_cmap is None:                         circle_cmap                 = 'tab10'
+        if pcolormesh_kwargs is None:                   pcolormesh_kwargs           = dict(cmap='binary')
+        elif 'cmap' not in pcolormesh_kwargs.keys():    pcolormesh_kwargs['cmap']   = 'binary'
+        if circle_kwargs is None:                       circle_kwargs               = dict()
 
+        #radius of circles
+        r_circ = r*np.sqrt(2)   #a little larger than `r` such that they overlap in the center
 
         #get positions relative to x0
-        x0 = np.array([0,0])
-        pos = self.get_positions(x0, n=n, r=r)
+        pos = self.get_positions(n=n, x0=x0, r=r)
 
         #x and y values for pcolormesh (venn-colormap)
         xy = np.linspace(-(r+r_circ), r+r_circ, res)
@@ -2664,47 +2883,56 @@ class VennDiagram:
         vennmask[:] = np.nan
 
         #initialize query array (contains xcoords, ycoords, venn-mask, masks for individual query parts)
-        query_ary = np.concatenate(
+        query_array = np.concatenate(
             (xx, yy, vennmask), axis=-1
         )
 
         #add masks for individual keywords/circles (query parts)
         for idx, p in enumerate(pos):
             b = (((xx-p[0])**2+(yy-p[1])**2) <= r_circ**2) #essentially (x-x0)**2 + (y-y0)**2 <= r**2
-            query_ary = np.append(query_ary, b, axis=-1)
+            query_array = np.append(query_array, b, axis=-1)
             
 
         #apply query
-        query_ary[:,:,2] = eval(query)
+        query_array[:,:,2] = eval(query)
 
         #plot diagram
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
+        if fig is None:
+            fig = plt.figure()
+        if ax is None:
+            ax = fig.add_subplot(111)
         
         ##background mask
-        mesh = ax1.pcolormesh(
-            query_ary[:,:,0], query_ary[:,:,1],
-            np.ma.masked_where(query_ary[:,:,2]==0,query_ary[:,:,2]),   #masked array for pcolormesh
-            alpha=1
+        mesh = ax.pcolormesh(
+            query_array[:,:,0], query_array[:,:,1], query_array[:,:,2],
+            # np.ma.masked_where(query_array[:,:,2]==0,query_array[:,:,2]),   #masked array for pcolormesh
+            **pcolormesh_kwargs,
         )
         
         ##actual circles (outlines)
-        colors = alvp.generate_colors(len(pos), cmap='autumn')
+        colors = alvp.generate_colors(len(pos), cmap=circle_cmap)
         for idx, (p, c) in enumerate(zip(pos,colors)):
             circle = plt.Circle(
                 p.flatten(), r_circ,
                 color=c, fill=False,
                 label=idx+1,
+                **circle_kwargs,
             )
-            ax1.add_artist(circle)
+            ax.add_artist(circle)
 
         ##add colorbar
-        cbar = fig.colorbar(mesh, ax=ax1)
-        cbar.set_label('Masked')
+        cbar = fig.colorbar(mesh, ax=ax)
+        cbar.set_label('Query Result')
+        cbar.ax.set_yticks(range(query_array[:,:,2].max().astype(int)+1))
 
-        ax1.legend()
+        #hide labels
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
 
-        ax1.set_aspect('equal')
+        #add legend(
+        ax.legend()
+
+        ax.set_aspect('equal')
 
         axs = fig.axes
         
