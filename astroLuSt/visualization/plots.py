@@ -2759,6 +2759,7 @@ class VennDiagram:
         query:str=None,
         n:int=None, x0:np.ndarray=None, r:float=1,
         res:int=250,
+        labels:List[str]=None,
         fig:Figure=None,
         ax:plt.Axes=None,
         circle_cmap:Union[str,mcolors.Colormap]=None,
@@ -2810,6 +2811,14 @@ class VennDiagram:
                     - int, optional
                     - resolution of the colormap in the background
                     - the default is 250
+                - `labels`
+                    - list, optional
+                    - list of labels to assign to the individual queries
+                    - will be shown in the legend
+                    - if the less labels than unique keywords (circles) have been passed
+                        - will generate artificial labels of the form `'[\d+]'`
+                    - the default is `None`
+                        - will index all keywords starting from 1
                 - `fig`
                     - Figure
                     - figure to plot the diagram into
@@ -2865,6 +2874,8 @@ class VennDiagram:
         if pcolormesh_kwargs is None:                   pcolormesh_kwargs           = dict(cmap='binary')
         elif 'cmap' not in pcolormesh_kwargs.keys():    pcolormesh_kwargs['cmap']   = 'binary'
         if circle_kwargs is None:                       circle_kwargs               = dict()
+        if labels is None:                              labels = range(1,n+1)
+        else:                                           labels = np.append(labels, [f'[{i}]' for i in range(1,(n+1)-len(labels))])
 
         #radius of circles
         r_circ = r*np.sqrt(2)   #a little larger than `r` such that they overlap in the center
@@ -2911,11 +2922,11 @@ class VennDiagram:
         
         ##actual circles (outlines)
         colors = alvp.generate_colors(len(pos), cmap=circle_cmap)
-        for idx, (p, c) in enumerate(zip(pos,colors)):
+        for idx, (p, c, l) in enumerate(zip(pos, colors, labels)):
             circle = plt.Circle(
                 p.flatten(), r_circ,
                 color=c, fill=False,
-                label=idx+1,
+                label=l,
                 **circle_kwargs,
             )
             ax.add_artist(circle)
@@ -2923,7 +2934,15 @@ class VennDiagram:
         ##add colorbar
         cbar = fig.colorbar(mesh, ax=ax)
         cbar.set_label('Query Result')
-        cbar.ax.set_yticks(range(query_array[:,:,2].max().astype(int)+1))
+        if 'vmax' in pcolormesh_kwargs.keys():
+            cmax = pcolormesh_kwargs['vmax']
+        else:
+            cmax = query_array[:,:,2].max().astype(int)
+        if 'vmin' in pcolormesh_kwargs.keys():
+            cmin = pcolormesh_kwargs['vmin']
+        else:
+            cmin = query_array[:,:,2].min().astype(int)
+        cbar.ax.set_yticks(range(cmin, cmax+1))
 
         #hide labels
         ax.get_xaxis().set_visible(False)
