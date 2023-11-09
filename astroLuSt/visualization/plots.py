@@ -2943,6 +2943,8 @@ class VennDiagram:
             fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111)
+        else:
+            fig = ax.axes.get_figure()
         
         ##background mask
         mesh = ax.pcolormesh(
