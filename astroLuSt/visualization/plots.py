@@ -2614,41 +2614,57 @@ class VennDiagram:
 
         return xy
     
+    def apply_query(self,
+        query:str,
+        ) -> np.ndarray:
+
+        kwrds = re.findall(r'@\d+', query)
+        n = len(kwrds)
+
+        query = re.sub(r'\|', '+', query)
+        query = re.sub(r'\&', '*', query)
+
+        for idx, k in enumerate(kwrds):
+            query = re.sub(k, f'query_ary[:,:{3+idx}]', query)
+
+        return query, n
+
     def plot(self,
-        n:int=1, r:float=1
+        query:str=None,
+        n:int=1, r:float=1,
+        res:int=300,
         ):
 
-        #number of circles to draw
-        n = 1
+        #radius of circles
+        r_circ = r*np.sqrt(2)   #a little larger than `r` such that they overlap
 
-        #radius of whole diagram
-        r = 1
-
-        res = 300
+        query, n = self.apply_query(query)
+        print(query, n)
 
 
         #get positions relative to x0
         x0 = np.array([0,0])
-        pos = self.get_positions(x0, n=n, r=1)
+        pos = self.get_positions(x0, n=n, r=r)
 
-        xy = np.linspace(-1.1*r*(1+np.sqrt(2)), 1.1*r*(1+np.sqrt(2)), res)
+        #x and y values for pcolormesh (venn-colormap)
+        xy = np.linspace(-(r+r_circ), r+r_circ, res)
         xx, yy = np.meshgrid(xy, xy)
         xx = np.expand_dims(xx, -1)
         yy = np.expand_dims(yy, -1)
         
-        #initialize masking for the total query
+        #initialize masking for the total query (venn-colormap)
         vennmask = np.zeros_like(xx)
         vennmask[:] = np.nan
 
-        #initialize query array
-        query = np.concatenate(
+        #initialize query array (contains xcoords, ycoords, venn-mask, masks for individual query parts)
+        query_ary = np.concatenate(
             (xx, yy, vennmask), axis=-1
         )
 
-        #add masks for individual keywords/circles
+        #add masks for individual keywords/circles (query parts)
         for idx, p in enumerate(pos):
-            b = (((xx-p[0])**2+(yy-p[1])**2) <= 2*r) #essentially (x-x0)**2 + (y-y0)**2 <= r**2
-            query = np.append(query, b, axis=-1)
+            b = (((xx-p[0])**2+(yy-p[1])**2) <= r_circ**2) #essentially (x-x0)**2 + (y-y0)**2 <= r**2
+            query_ary = np.append(query_ary, b, axis=-1)
             
 
         #apply query
@@ -2656,8 +2672,10 @@ class VennDiagram:
         #NOTE: or -> +, and -> *, not -> (1-...)
         # _ = query[:,:,3] | (query[:,:,4] & query[:,:,5] & ~query[:,:,6])
         # query[:,:,2] = query[:,:,3] + (query[:,:,4]*query[:,:,5]*(1-query[:,:,6]))
-        # query[:,:,2] = query[:,:,3] + query[:,:,4] + query[:,:,5] + query[:,:,6]
-        query[:,:,2] = query[:,:,3]
+        
+
+        query_ary[:,:,2] = np.sum(query_ary[:,:,3:], axis=-1)
+        # query[:,:,2] = query[:,:,3]
 
 
 
@@ -2668,7 +2686,7 @@ class VennDiagram:
 
         #background mask
         ax1.pcolormesh(
-            query[:,:,0], query[:,:,1], query[:,:,2],
+            query_ary[:,:,0], query_ary[:,:,1], query_ary[:,:,2],
             alpha=0.2
         )
 
@@ -2677,7 +2695,7 @@ class VennDiagram:
         colors = alvp.generate_colors(len(pos), cmap='hot')
         for idx, (p, c) in enumerate(zip(pos,colors)):
             circle = plt.Circle(
-                p.flatten(), r*np.sqrt(2),
+                p.flatten(), r_circ,
                 color=c, fill=False,
                 label=idx+1,
             )
