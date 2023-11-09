@@ -2601,12 +2601,16 @@ class VennDiagram:
         r:np.ndarray=1,
         ) -> np.ndarray:
 
-        phi = np.linspace(0,2*np.pi, n, endpoint=False)
 
-        #array of base-circles (base_circles.shape[0] = x0.shape[0])
-        base_circle = r*np.array([np.cos(phi),np.sin(phi)])
+        if n > 1:
+            phi = np.linspace(0,2*np.pi, n, endpoint=False)
 
-        xy = (x0.reshape(-1,1) + base_circle).T
+            #array of base-circles (base_circles.shape[0] = x0.shape[0])
+            base_circle = r*np.array([np.cos(phi),np.sin(phi)])
+
+            xy = (x0.reshape(-1,1) + base_circle).T
+        else:
+            xy = x0.reshape(-1,1).T
 
         return xy
     
@@ -2615,7 +2619,7 @@ class VennDiagram:
         ):
 
         #number of circles to draw
-        n = 4
+        n = 1
 
         #radius of whole diagram
         r = 1
@@ -2652,7 +2656,8 @@ class VennDiagram:
         #NOTE: or -> +, and -> *, not -> (1-...)
         # _ = query[:,:,3] | (query[:,:,4] & query[:,:,5] & ~query[:,:,6])
         # query[:,:,2] = query[:,:,3] + (query[:,:,4]*query[:,:,5]*(1-query[:,:,6]))
-        query[:,:,2] = query[:,:,3] + query[:,:,4] + query[:,:,5] + query[:,:,6]
+        # query[:,:,2] = query[:,:,3] + query[:,:,4] + query[:,:,5] + query[:,:,6]
+        query[:,:,2] = query[:,:,3]
 
 
 
@@ -2669,7 +2674,7 @@ class VennDiagram:
 
         
         #actual circles (outlines)
-        colors = alvp.generate_colors(len(pos))
+        colors = alvp.generate_colors(len(pos), cmap='hot')
         for idx, (p, c) in enumerate(zip(pos,colors)):
             circle = plt.Circle(
                 p.flatten(), r*np.sqrt(2),
