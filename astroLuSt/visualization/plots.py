@@ -2781,6 +2781,7 @@ class VennDiagram:
         fig:Figure=None,
         ax:plt.Axes=None,
         circle_cmap:Union[str,mcolors.Colormap]=None,
+        show_cbar:bool=True,
         pcolormesh_kwargs:dict=None,
         circle_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
@@ -2852,6 +2853,10 @@ class VennDiagram:
                     - colormap to use for plotting the circle outlines
                     - the default is `None`
                         - will be set to `'tab10'`
+                - `show_cbar`
+                    - bool, optional
+                    - whether to plot a colorbar or not
+                    - the default is True
                 - pcolormesh_kwargs
                     - dict, optional
                     - kwargs to pass to `ax.pcolormesh()`
@@ -2938,8 +2943,6 @@ class VennDiagram:
             fig = plt.figure()
         if ax is None:
             ax = fig.add_subplot(111)
-        else:
-            fig = ax.axes.get_figure()
         
         ##background mask
         mesh = ax.pcolormesh(
@@ -2960,17 +2963,18 @@ class VennDiagram:
             ax.add_artist(circle)
 
         ##add colorbar
-        cbar = fig.colorbar(mesh, ax=ax)
-        cbar.set_label('Query Result')
-        if 'vmax' in pcolormesh_kwargs.keys():
-            cmax = pcolormesh_kwargs['vmax']
-        else:
-            cmax = query_array[:,:,2].max().astype(int)
-        if 'vmin' in pcolormesh_kwargs.keys():
-            cmin = pcolormesh_kwargs['vmin']
-        else:
-            cmin = query_array[:,:,2].min().astype(int)
-        cbar.ax.set_yticks(range(cmin, cmax+1))
+        if show_cbar:
+            cbar = fig.colorbar(mesh, ax=ax)
+            cbar.set_label('Query Result')
+            if 'vmax' in pcolormesh_kwargs.keys():
+                cmax = pcolormesh_kwargs['vmax']
+            else:
+                cmax = query_array[:,:,2].max().astype(int)
+            if 'vmin' in pcolormesh_kwargs.keys():
+                cmin = pcolormesh_kwargs['vmin']
+            else:
+                cmin = query_array[:,:,2].min().astype(int)
+            cbar.ax.set_yticks(range(cmin, cmax+1))
 
         #hide labels
         ax.get_xaxis().set_visible(False)
