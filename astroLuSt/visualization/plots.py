@@ -17,6 +17,7 @@ from typing import Union, Tuple, List, Callable
 import warnings
 
 from astroLuSt.visualization import plotting as alvp
+from astroLuSt.monitoring import formatting as almf
 
 
 #%%classes
@@ -2594,6 +2595,10 @@ class VennDiagram:
 
         Attributes
         ----------
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
 
         Methods
         -------
@@ -2614,9 +2619,22 @@ class VennDiagram:
     """
 
     def __init__(self,
+        verbose:int=0
         ) -> None:
         
+        self.verbose = verbose
+
         return
+    
+    def __repr__(self) -> str:
+        return (
+            f'{self.__class__.__name__}(\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
+    
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
     
     def get_positions(self,
         n:int,
@@ -2740,8 +2758,8 @@ class VennDiagram:
         #get 
 
         #obtain number of unique keywords
-        kwrds = re.findall(r'@\d+', query)
-        n = len(np.unique(kwrds))
+        kwrds = np.unique(re.findall(r'@\d+', query))
+        n = len(kwrds)
 
         #make substitutions
         query = re.sub(r'\|', '+', query)
@@ -2876,6 +2894,13 @@ class VennDiagram:
         if circle_kwargs is None:                       circle_kwargs               = dict()
         if labels is None:                              labels = range(1,n+1)
         else:                                           labels = np.append(labels, [f'[{i}]' for i in range(1,(n+1)-len(labels))])
+
+        almf.printf(
+            msg=f'Parsed `query`: {query}',
+            type=f'INFO',
+            context=f'{self.__class__.__name__}.{self.plot.__name__}',
+            verbose=self.verbose
+        )
 
         #radius of circles
         r_circ = r*np.sqrt(2)   #a little larger than `r` such that they overlap in the center
