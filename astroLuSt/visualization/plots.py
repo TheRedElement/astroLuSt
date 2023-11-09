@@ -2586,7 +2586,53 @@ class CornerPlot:
         axs = fig.axes
 
         return fig, axs
-   
+
+class VennDiagram:
+
+    def __init__(self,
+        ) -> None:
+        
+        return
+    
+    def get_circles(self,
+        x0:np.ndarray, r:np.ndarray=1,
+        res:int=360,
+        ) -> np.ndarray:
+
+        phi = np.linspace(0,2*np.pi, res, endpoint=False)
+
+        #array of base-circles (base_circles.shape[0] = x0.shape[0])
+        base_circle = r*np.array([np.cos(phi),np.sin(phi)])
+
+        xy = (x0 + base_circle).T
+
+        return xy
+    
+    def plot(self,
+        ):
+
+        #number of circles to draw
+        n = 4
+
+        #get positions relative to x0
+        x0 = np.array([0,0]).reshape(1,2,1)
+        pos = self.get_circles(x0, r=1, res=n)
+        
+        #generate circles at defined positions
+        circles = self.get_circles(pos, r=np.sqrt(2), res=360)
+
+        #plot circles
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.scatter(*pos[:,:,0].T)
+        for c in circles.T:
+            ax1.plot(*c)
+        
+        axs = fig.axes
+        
+        return fig, axs
+    
+
 #%%functions
 def plot_predictioneval(
     y_true:np.ndarray, y_pred:np.ndarray,
