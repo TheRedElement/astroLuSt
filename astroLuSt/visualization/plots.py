@@ -2643,11 +2643,10 @@ class VennDiagram:
         if query is not None:
             query, n_q = self.apply_query(query)
         else:
-            query = 'TODO'
-        if n is None:
+            query = 'query_ary[:,:,2]'  #no query
+            n_q = 1
+        if n is None or n < n_q:
             n = n_q
-
-        print(query)
 
 
         #get positions relative to x0
@@ -2676,31 +2675,21 @@ class VennDiagram:
             
 
         #apply query
-        #NOTE: Example: 3 ^ (4 v 5 v !6)
-        #NOTE: or -> +, and -> *, not -> (1-...)
-        # _ = query[:,:,3] | (query[:,:,4] & query[:,:,5] & ~query[:,:,6])
-        # query[:,:,2] = query[:,:,3] + (query[:,:,4]*query[:,:,5]*(1-query[:,:,6]))
-        
-
         query_ary[:,:,2] = eval(query)
-        # query[:,:,2] = query[:,:,3]
-
-
 
         #plot diagram
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
         
-
-        #background mask
-        ax1.pcolormesh(
-            query_ary[:,:,0], query_ary[:,:,1], query_ary[:,:,2],
-            alpha=0.2
+        ##background mask
+        mesh = ax1.pcolormesh(
+            query_ary[:,:,0], query_ary[:,:,1],
+            np.ma.masked_where(query_ary[:,:,2]==0,query_ary[:,:,2]),   #masked array for pcolormesh
+            alpha=1
         )
-
         
-        #actual circles (outlines)
-        colors = alvp.generate_colors(len(pos), cmap='hot')
+        ##actual circles (outlines)
+        colors = alvp.generate_colors(len(pos), cmap='autumn')
         for idx, (p, c) in enumerate(zip(pos,colors)):
             circle = plt.Circle(
                 p.flatten(), r_circ,
@@ -2709,8 +2698,9 @@ class VennDiagram:
             )
             ax1.add_artist(circle)
 
-        # #circle origins
-        # ax1.scatter(*pos.T)
+        ##add colorbar
+        cbar = fig.colorbar(mesh, ax=ax1)
+        cbar.set_label('Masked')
 
         ax1.legend()
 
