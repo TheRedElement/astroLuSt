@@ -60,6 +60,7 @@ def train_val_test_split(
             - `ValueError`
                 - if `train_size+validation_size+test_size > 1`
                 - if at least one of the entries of `arrays` has a different length than the rest
+                - if both `validation_size` and `test_size` are passed
 
         Returns
         -------
@@ -67,16 +68,19 @@ def train_val_test_split(
                 - list
                     - has length of `len(arrays)*nsplits`
                         - `nsplits` is the number of requested splits i.e.,
-                            - 1 if `train_size == 1`, `validation_size == 0`, `test_size == 0`
-                            - 2 if `train_size < 1`, `validation_size == 1 - train_size`, `test_size == 0`
-                            - 2 if `train_size < 1`, `validation_size == 0`, `test_size == 1 - train_size`
-                            - 3 if `train_size < 1`, `validation_size < 1`, `test_size < 1`
+                            - 1 if `train_size == 1` & `validation_size is None` & `test_size is None`
+                            - 2 if `train_size < 1`  & `validation_size is None` & `test_size is None`
+                                - `list(train_split, test_split)`
+                            - 3 if `train_size < 1`  & `validation_size < 1`     & `test_size is None`
+                                - `list(train_split, validation_split, test_split)`
+                            - 3 if `train_size < 1`  & `validation_size is None` & `test_size < 1`
+                                - `list(train_split, test_split, validation_split)`
                 - contains train-, validation-, test-splits of inputs (`arrays`)
+                    - order depends on set parameters
 
         Dependencies
         ------------
             - numpy
-            - typing
         
         Comments
         --------
@@ -84,6 +88,9 @@ def train_val_test_split(
 
 
     #default values
+    if test_size is not None and validation_size is not None:
+        raise ValueError(f'you shall only pass one of `test_size` and `validation_size`, the other one will get infered!')
+    
     if test_size is None:       test_size       = 0
     if validation_size is None: validation_size = 0
     
