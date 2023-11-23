@@ -4,17 +4,16 @@ import numpy as np
 from typing import List
 
 #%%definitions
-def train_val_test_split(
+def data_split(
     arrays:List[np.ndarray],
-    train_size:float=0.6,
-    validation_size:float=None,
-    test_size:float=None,
+    split_fractions:np.ndarray,
     shuffle:bool=True,
     random_state:int=None,
     verbose:int=0,
     ) -> List:
     """
-        - function to split a dataset into train, validation, and test partitions
+        - function to split a dataset into several partitions
+            - i.e., train-, validation-, test-set
         
         Parameters
         ----------
@@ -23,6 +22,12 @@ def train_val_test_split(
                 - contains np.ndarrays
                     - have to have the same length
                     - will get split according to specification
+            - split_fractions
+                - list
+                - fraction of the total dataset each partition shall have
+                - all entries have to be smaller than 1
+                - the total (`np.sum(split_fractions)`) has to be smaller than 1
+                - the remainder (`1 - np.sum(split_fractions)`) will get assigned to the last created partition
             - `train_size`
                 - float
                 - has to be between 0 and 1
@@ -58,25 +63,16 @@ def train_val_test_split(
         Raises
         ------
             - `ValueError`
-                - if `train_size+validation_size+test_size > 1`
+                - if the total of `split_fractions` (`np.sum(split_fractions)`) is greater or equal to 1
+                - if any entry of `split_fractions`  is greater or equal to 1
                 - if at least one of the entries of `arrays` has a different length than the rest
-                - if both `validation_size` and `test_size` are passed
 
         Returns
         -------
             - `splits`
                 - list
-                    - has length of `len(arrays)*nsplits`
-                        - `nsplits` is the number of requested splits i.e.,
-                            - 1 if `train_size == 1` & `validation_size is None` & `test_size is None`
-                            - 2 if `train_size < 1`  & `validation_size is None` & `test_size is None`
-                                - `list(train_split, test_split)`
-                            - 3 if `train_size < 1`  & `validation_size < 1`     & `test_size is None`
-                                - `list(train_split, validation_split, test_split)`
-                            - 3 if `train_size < 1`  & `validation_size is None` & `test_size < 1`
-                                - `list(train_split, test_split, validation_split)`
-                - contains train-, validation-, test-splits of inputs (`arrays`)
-                    - order depends on set parameters
+                    - has length of `len(arrays)*(len(split_fractions)+1)`
+                - contains splits of input data with elements according to `split_fractions`
 
         Dependencies
         ------------
@@ -86,21 +82,19 @@ def train_val_test_split(
         --------
     """
 
+    #convert to correct types
+    split_fractions = np.array(split_fractions)
 
-    #default values
-    if test_size is not None and validation_size is not None:
-        raise ValueError(f'you shall only pass one of `test_size` and `validation_size`, the other one will get infered!')
-    
-    if test_size is None:       test_size       = 0
-    if validation_size is None: validation_size = 0
-    
-    #check feasibility
-    if train_size+validation_size+test_size > 1:
-        raise ValueError('`train_size+validation_size+test_size` has to be less or equal to 1!')
     #check shapes
     lengths = [len(a) for a in arrays]
     if not np.all(np.isclose(lengths, lengths)):
         raise ValueError('all entries of `arrays` have to have the same length!')
+    # #check feasibility
+    if np.sum(split_fractions) >= 1:
+        raise ValueError('`np.sum(split_fractions)` has to be less than 1!')
+    if np.any(split_fractions >= 1):
+        raise ValueError('all entries of `split_fractions` have to be less than 1!')
+
 
     
 
@@ -113,22 +107,22 @@ def train_val_test_split(
         
         #shuffle indices
         np.random.shuffle(rand_idxs)
-        
+
         #reset random seed
         np.random.set_state(cur_state)
 
     #partition random indices according to specified fractions
-    idx_train = int(train_size*len(rand_idxs))
-    idx_val   = idx_train + int(validation_size*len(rand_idxs))
-    idx_test  = idx_val + int(test_size*len(rand_idxs))
+    split_idxs = np.zeros(len(split_fractions)+1, dtype=int) #one longer than `split_fractions` to have an initialization index (0)
+    for idx, sf in enumerate(split_fractions):
+        split_idxs[idx+1] = split_idxs[idx] + int(sf*len(rand_idxs))
+    
+    #remove first (pseudo-)entry of split indices
+    split_idxs = split_idxs[1:]
 
-    #get unique indices for partitioning (remove if `*_size==0`)
-    idxs = sorted(set((idx_train,idx_val,idx_test)))
-
-    #generate splits of `arrays``
+    #generate splits of `arrays`
     splits = []
     for a in arrays:
-        splits += np.split(a, indices_or_sections=idxs, axis=0)
+        splits += np.split(a[rand_idxs], indices_or_sections=split_idxs, axis=0)
 
     return splits
 
