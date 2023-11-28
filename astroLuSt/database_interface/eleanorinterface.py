@@ -1,4 +1,6 @@
 
+#TODO: document custom_aperture_kwargs
+
 #%%imports
 import eleanor
 import glob
@@ -130,6 +132,7 @@ class EleanorDatabaseInterface:
         verbose:int=None,
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
+        custom_aperture_kwargs:dict=None,
         save_kwargs:dict=None,
         ) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
         """
@@ -181,6 +184,15 @@ class EleanorDatabaseInterface:
                     - kwargs to pass to `eleanor.TargetData()`
                     - the default is `None`
                         - will be set to `dict()`
+                - `custom_aperture_kwargs`
+                    - dict, optional
+                    - kwargs if one wants to use a custom aperture
+                    - will override the automatically determined aperture
+                    - for the source of the `custom_aperture` method within eleanor see
+                        - https://github.com/afeinstein20/eleanor/blob/4a5eceb71cffb9a3d1b44aa24db0c1aa0524df41/eleanor/targetdata.py#L1090
+                        - last accessed: 2023/11/28
+                    - the default is `None`
+                        - will not use a custom aperture
                 - `save_kwargs`
                     - dict, optional
                     - kwargs to pass to `self.save()`
@@ -290,6 +302,10 @@ class EleanorDatabaseInterface:
                 try:
                     datum = eleanor.TargetData(source=s, **targetdata_kwargs)
 
+                    #use custom aperture
+                    if custom_aperture_kwargs is not None:
+                        eleanor.TargetData.custom_aperture(datum, **custom_aperture_kwargs)
+
                     lc = np.array([
                         datum.time,
                         datum.raw_flux, datum.flux_err,
@@ -348,6 +364,7 @@ class EleanorDatabaseInterface:
         parallel_kwargs:dict=None,
         multi_sectors_kwargs:dict=None,
         targetdata_kwargs:dict=None,
+        custom_aperture_kwargs:dict=None,
         save_kwargs:dict=None,
         ) -> Tuple[list,list,list,list]:
         """
@@ -413,6 +430,15 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - will be set to `dict()`
                             - done within `self.extract_source()`
+                - `custom_aperture_kwargs`
+                    - dict, optional
+                    - kwargs if one wants to use a custom aperture
+                    - will override the automatically determined aperture
+                    - for the source of the `custom_aperture` method within eleanor see
+                        - https://github.com/afeinstein20/eleanor/blob/4a5eceb71cffb9a3d1b44aa24db0c1aa0524df41/eleanor/targetdata.py#L1090
+                        - last accessed: 2023/11/28
+                    - the default is `None`
+                        - will not use a custom aperture                            
                 - `save_kwargs`
                     - dict, optional
                     - kwargs to pass to `self.save()`
@@ -499,6 +525,7 @@ class EleanorDatabaseInterface:
                     tpfs2store=tpfs2store, store_aperture_masks=store_aperture_masks,
                     multi_sectors_kwargs=multi_sectors_kwargs,
                     targetdata_kwargs=targetdata_kwargs,
+                    custom_aperture_kwargs=custom_aperture_kwargs,
                     save_kwargs=save_kwargs,
                 ) for idx, source_id in enumerate(chunk)
             )
