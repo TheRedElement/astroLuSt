@@ -587,7 +587,7 @@ class EleanorDatabaseInterface:
                             - `'to_csv'`
                             - `'to_parquet'`
                     - the default is `None`
-                        - will be set to `'to_csv'`
+                        - will be set to `'to_parquet'`
                 - `save_kwargs`
                     - dict, optional
                     - kwargs to pass to `pd_savefunc`
@@ -604,7 +604,7 @@ class EleanorDatabaseInterface:
         """
 
         if directory is None:   directory   = './'
-        if pd_savefunc is None: pd_savefunc = 'to_csv'
+        if pd_savefunc is None: pd_savefunc = 'to_parquet'
         if save_kwargs is None: save_kwargs = dict()
 
         #get correct extension
