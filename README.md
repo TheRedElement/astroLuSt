@@ -1,5 +1,5 @@
 # astroLuSt
-- TEST
+
 A collection of functions useful for dataprocessing especially in astronomy.
 
 Author: Lukas Steinwender
