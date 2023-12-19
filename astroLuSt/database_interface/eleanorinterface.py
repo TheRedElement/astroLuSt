@@ -306,6 +306,8 @@ class EleanorDatabaseInterface:
                     if custom_aperture_kwargs is not None:
                         eleanor.TargetData.custom_aperture(datum, **custom_aperture_kwargs)
 
+                    aperture_size = datum.aperture.sum()
+
                     lc = np.array([
                         datum.time,
                         datum.raw_flux, datum.flux_err,
@@ -313,7 +315,8 @@ class EleanorDatabaseInterface:
                         datum.quality,
                         [s.sector]*datum.time.shape[0],
                         [s.tess_mag]*datum.time.shape[0],
-                        [datum.aperture_size]*datum.time.shape[0],
+                        # [datum.aperture_size]*datum.time.shape[0],
+                        [aperture_size]*datum.time.shape[0],
                     ]).T
 
                     if datum.pca_flux is not None:
