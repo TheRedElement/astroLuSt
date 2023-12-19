@@ -290,10 +290,10 @@ class EleanorDatabaseInterface:
             headers = np.append(headers, ['raw_flux_normalized', 'corr_flux_normalized'])
         if 'do_pca' in targetdata_kwargs.keys():
             headers = np.append(headers, ['pca_flux']*targetdata_kwargs['do_pca'])
-            headers = np.append(headers, ['pca_flux_normlized']*targetdata_kwargs['do_pca']*get_normalized_flux)
+            headers = np.append(headers, ['pca_flux_normalized']*targetdata_kwargs['do_pca']*get_normalized_flux)
         if 'do_psf' in targetdata_kwargs.keys():
             headers = np.append(headers, ['psf_flux']*targetdata_kwargs['do_psf'])
-            headers = np.append(headers, ['psf_flux_normlized']*targetdata_kwargs['do_psf']*get_normalized_flux)
+            headers = np.append(headers, ['psf_flux_normalized']*targetdata_kwargs['do_psf']*get_normalized_flux)
 
         #check if redownload is wished and target alread got extracted in the past
         if not self.redownload and len(glob.glob(f"{save_kwargs_use['directory']}{save_kwargs_use['filename']}.*")) > 0:
@@ -342,17 +342,21 @@ class EleanorDatabaseInterface:
                         [aperture_size]*datum.time.shape[0],
                     ]).T
 
+                    if get_normalized_flux:
+                        raw_flux_norm   = datum.raw_flux/np.nanmedian(datum.raw_flux)
+                        corr_flux_norm  = datum.corr_flux/np.nanmedian(datum.corr_flux)
+                        lc = np.append(lc, np.expand_dims(raw_flux_norm, 1), axis=1)
+                        lc = np.append(lc, np.expand_dims(corr_flux_norm,1), axis=1)
                     if datum.pca_flux is not None:
                         lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
+                        if get_normalized_flux:
+                            pca_flux_norm = datum.pca_flux/np.nanmedian(datum.pca_flux)
+                            lc = np.append(lc, np.expand_dims(pca_flux_norm,1), axis=1)
                     if datum.psf_flux is not None:
                         lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
-                    if get_normalized_flux:
-                        lc = np.append(lc, np.expand_dims(datum.raw_flux/np.nanmedian(datum.raw_flux),1),     axis=1)
-                        lc = np.append(lc, np.expand_dims(datum.corr_flux/np.nanmedian(datum.corr_flux),1),   axis=1)
-                        if datum.pca_flux is not None:
-                            lc = np.append(lc, np.expand_dims(datum.pca_flux/np.nanmedian(datum.pca_flux),1), axis=1)
-                        if datum.psf_flux is not None:
-                            lc = np.append(lc, np.expand_dims(datum.psf_flux/np.nanmedian(datum.psf_flux),1), axis=1)
+                        if get_normalized_flux:
+                            psf_flux_norm = datum.psf_flux/np.nanmedian(datum.psf_flux)
+                            lc = np.append(lc, np.expand_dims(psf_flux_norm,1), axis=1)
 
                     lcs.append(lc)
                     # if tpfs2store is not None: tpfs.append(datum.tpf[tpfs2store])
@@ -741,6 +745,8 @@ class EleanorDatabaseInterface:
         if aperture_masks is None:  aperture_masks  = [None]*len(sectors)
         if sctr_kwargs is None:     sctr_kwargs     = dict(cmap='nipy_spectral')
 
+        #check if normalized entries exist
+        normalized = 'raw_flux_normalized' in headers
 
         if fig is None: fig = plt.figure(figsize=(16,16))
 
@@ -783,13 +789,23 @@ class EleanorDatabaseInterface:
                 ax2 = fig.add_subplot(len(sectors)+1, 1, idx+1)
             else:
                 ax2 = fig.add_subplot(len(sectors)+1, 2, 2*idx+2)
-            sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='raw_flux')]/np.nanmedian(lcs[s_bool,(headers=='raw_flux')]), label='Raw Flux'*(idx==0))
-            try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='corr_flux')]/np.nanmedian(lcs[s_bool,(headers=='corr_flux')]), label='Corr Flux'*(idx==0))
-            except: pass
-            try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='pca_flux')]/np.nanmedian(lcs[s_bool,(headers=='pca_flux')]), label='PCA Flux'*(idx==0))
-            except: pass
-            try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='psf_flux')]/np.nanmedian(lcs[s_bool,(headers=='psf_flux')]), label='PSF Flux'*(idx==0))
-            except: pass
+                
+            if normalized:
+                sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='raw_flux_normalized')], label='Raw Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='corr_flux_normalized')], label='Corr Flux'*(idx==0))
+                except: pass
+                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='pca_flux_normalized')], label='PCA Flux'*(idx==0))
+                except Exception as e: pass
+                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='psf_flux_normalized')], label='PSF Flux'*(idx==0))
+                except: pass
+            else:
+                sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='raw_flux')], label='Raw Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='corr_flux')], label='Corr Flux'*(idx==0))
+                except: pass
+                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='pca_flux')], label='PCA Flux'*(idx==0))
+                except: pass
+                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='psf_flux')], label='PSF Flux'*(idx==0))
+                except: pass
         
             
 
@@ -798,20 +814,32 @@ class EleanorDatabaseInterface:
 
             if idx == len(sectors)-1:
                 ax2.set_xlabel('Time [BJD - 2457000]')
-            ax2.set_ylabel('Normalized Flux')
-            
+            if normalized:
+                ax2.set_ylabel('Normalized Flux')
+            else:
+                ax2.set_ylabel(r'Flux $\left[\frac{e^-}{s}\right]$')
+
 
         #add scatter of all sectors
         ax0 = fig.add_subplot(len(sectors)+1, 1, len(sectors)+1)
-        try: 
-            sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='corr_flux')]/np.nanmedian(lcs[:,(headers=='corr_flux')]), c=lcs[:,(headers=='sector')], **sctr_kwargs)
-        except:
-            sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='raw_flux')]/np.nanmedian(lcs[:,(headers=='raw_flux')]),   c=lcs[:,(headers=='sector')], **sctr_kwargs)
+        if normalized:
+            try:
+                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='corr_flux_normalized')], c=lcs[:,(headers=='sector')], **sctr_kwargs)
+            except:
+                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='raw_flux_normalized')],  c=lcs[:,(headers=='sector')], **sctr_kwargs)
+            ax0.set_ylabel('Normalized Flux')
+        else:
+            try:
+                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='corr_flux')], c=lcs[:,(headers=='sector')], **sctr_kwargs)
+            except:
+                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='raw_flux')],  c=lcs[:,(headers=='sector')], **sctr_kwargs)
+            
+            ax0.set_ylabel(r'Flux $\left[\frac{e^-}{s}\right]$')
+        
         cbar = fig.colorbar(sctr, ax=ax0)
         
         cbar.set_label('Sector')
         ax0.set_xlabel('Time [BJD - 2457000]')
-        ax0.set_ylabel('Normalized Flux')
 
 
         fig.tight_layout()
