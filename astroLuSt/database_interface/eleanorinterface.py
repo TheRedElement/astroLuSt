@@ -128,6 +128,7 @@ class EleanorDatabaseInterface:
     def extract_source(self,
         sectors:Union[str,List]=None,
         source_id:dict=None,
+        get_normalized_flux:bool=True,
         tpfs2store:slice=None, store_aperture_masks:bool=True,
         verbose:int=None,
         multi_sectors_kwargs:dict=None,
@@ -157,6 +158,10 @@ class EleanorDatabaseInterface:
                     - values of the dict has to be the corresponding identifier
                     - the default is `None`
                         - will be set to `dict()`
+                - `get_normalized_flux`
+                    - bool, optional
+                    - whether to also extract the (sector-wise) normalized versions of the extracted fluxes
+                    - the default is True
                 - `tpfs2store`
                     - slice, optional
                     - which target-pixel-files to store
@@ -217,10 +222,22 @@ class EleanorDatabaseInterface:
                             - `'sector'`
                             - `'tess_mag'`
                             - `'aperture_size'`
-                            - `'do_pca'`
+                            - `'raw_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                            - `'corr_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                            - `'pca_flux'`
                                 - only if specified within `targetdata_kwargs`
-                            - `'do_psf'`
+                                    - `do_pca=True`
+                            - `'pca_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                            - `'psf_flux'`
                                 - only if specified within `targetdata_kwargs`
+                                    - `do_psf=True`
+                                - only if '`pca_flux'` also got extracted
+                            - `'psf_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                                - only if '`psf_flux'` also got extracted
                 - `headers`
                     - np.ndarray
                     - contains headers (column names) corresponding to `lcs`
@@ -269,8 +286,14 @@ class EleanorDatabaseInterface:
         tpfs = []
         aperture_masks = []
         headers = np.array(['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size'])
-        if 'do_pca' in targetdata_kwargs.keys(): headers = np.append(headers, ["pca_flux"]*targetdata_kwargs['do_pca'])
-        if 'do_psf' in targetdata_kwargs.keys(): headers = np.append(headers, ["psf_flux"]*targetdata_kwargs['do_psf'])
+        if get_normalized_flux:
+            headers = np.append(headers, ['raw_flux_normalized', 'corr_flux_normalized'])
+        if 'do_pca' in targetdata_kwargs.keys():
+            headers = np.append(headers, ['pca_flux']*targetdata_kwargs['do_pca'])
+            headers = np.append(headers, ['pca_flux_normlized']*targetdata_kwargs['do_pca']*get_normalized_flux)
+        if 'do_psf' in targetdata_kwargs.keys():
+            headers = np.append(headers, ['psf_flux']*targetdata_kwargs['do_psf'])
+            headers = np.append(headers, ['psf_flux_normlized']*targetdata_kwargs['do_psf']*get_normalized_flux)
 
         #check if redownload is wished and target alread got extracted in the past
         if not self.redownload and len(glob.glob(f"{save_kwargs_use['directory']}{save_kwargs_use['filename']}.*")) > 0:
@@ -323,6 +346,13 @@ class EleanorDatabaseInterface:
                         lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
                     if datum.psf_flux is not None:
                         lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
+                    if get_normalized_flux:
+                        lc = np.append(lc, np.expand_dims(datum.raw_flux/np.nanmedian(datum.raw_flux),1),     axis=1)
+                        lc = np.append(lc, np.expand_dims(datum.corr_flux/np.nanmedian(datum.corr_flux),1),   axis=1)
+                        if datum.pca_flux is not None:
+                            lc = np.append(lc, np.expand_dims(datum.pca_flux/np.nanmedian(datum.pca_flux),1), axis=1)
+                        if datum.psf_flux is not None:
+                            lc = np.append(lc, np.expand_dims(datum.psf_flux/np.nanmedian(datum.psf_flux),1), axis=1)
 
                     lcs.append(lc)
                     # if tpfs2store is not None: tpfs.append(datum.tpf[tpfs2store])
@@ -361,6 +391,7 @@ class EleanorDatabaseInterface:
     def download(self,
         sectors:Union[str,list]=None,
         source_ids:List[dict]=None,
+        get_normalized_flux:bool=True,
         tpfs2store:slice=None, store_aperture_masks:bool=True,
         n_chunks:int=1,
         verbose:int=None,
@@ -393,6 +424,10 @@ class EleanorDatabaseInterface:
                         - values of the dict has to be the corresponding identifier
                     - the default is `None`
                         - will be set to `[]`
+                - `get_normalized_flux`
+                    - bool, optional
+                    - whether to also extract the (sector-wise) normalized versions of the extracted fluxes
+                    - the default is True                   
                 - `tpfs2store`
                     - slice, optional
                     - which target-pixel-files to store
@@ -460,18 +495,30 @@ class EleanorDatabaseInterface:
                         - contain lightcurve related quantities that got extracted
                         - will be of shape `(nobservations,nparameters)`
                             - axis 1: contains extracted parameters
-                                - `'time'`
-                                - `'raw_flux'`
-                                - `'flux_err'`
-                                - `'corr_flux'`
-                                - `'quality'`
-                                - `'sector'`
-                                - `'tess_mag'`
-                                - `'aperture_size'`
-                                - `'do_pca'`
-                                    - only if specified within `targetdata_kwargs`
-                                - `'do_psf'`
-                                    - only if specified within `targetdata_kwargs`
+                            - `'time'`
+                            - `'raw_flux'`
+                            - `'flux_err'`
+                            - `'corr_flux'`
+                            - `'quality'`
+                            - `'sector'`
+                            - `'tess_mag'`
+                            - `'aperture_size'`
+                            - `'raw_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                            - `'corr_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                            - `'pca_flux'`
+                                - only if specified within `targetdata_kwargs`
+                                    - `do_pca=True`
+                            - `'pca_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                            - `'psf_flux'`
+                                - only if specified within `targetdata_kwargs`
+                                    - `do_psf=True`
+                                - only if '`pca_flux'` also got extracted
+                            - `'psf_flux_normalized'`
+                                - only if `get_normalized_flux == True`
+                                - only if '`psf_flux'` also got extracted
                 - `headers`
                     - list
                     - contains np.ndarray for every extracted source
@@ -530,6 +577,7 @@ class EleanorDatabaseInterface:
                 delayed(self.extract_source)(
                     sectors=sectors,
                     source_id=source_id,
+                    get_normalized_flux=get_normalized_flux,
                     tpfs2store=tpfs2store, store_aperture_masks=store_aperture_masks,
                     multi_sectors_kwargs=multi_sectors_kwargs,
                     targetdata_kwargs=targetdata_kwargs,
