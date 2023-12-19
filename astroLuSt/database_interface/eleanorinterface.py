@@ -128,7 +128,7 @@ class EleanorDatabaseInterface:
     def extract_source(self,
         sectors:Union[str,List]=None,
         source_id:dict=None,
-        get_normalized_flux:bool=True,
+        get_normalized_flux:bool=True, normfunc:Callable=None,
         tpfs2store:slice=None, store_aperture_masks:bool=True,
         verbose:int=None,
         multi_sectors_kwargs:dict=None,
@@ -162,6 +162,13 @@ class EleanorDatabaseInterface:
                     - bool, optional
                     - whether to also extract the (sector-wise) normalized versions of the extracted fluxes
                     - the default is True
+                - `normfunc`
+                    - Callable, optional
+                    - function to execute the normalization
+                    - has to take exactly one argument
+                        - `flux`
+                    - the default is `None`
+                        - will be set to `lambda x: x/np.nanmedian(x)`
                 - `tpfs2store`
                     - slice, optional
                     - which target-pixel-files to store
@@ -265,6 +272,7 @@ class EleanorDatabaseInterface:
 
         if sectors is None:                 sectors                 = 'all'
         if source_id is None:               source_id               = dict()
+        if normfunc is None:                normfunc                = lambda x: x/np.nanmedian(x)
         if tpfs2store is None:              tpfs2store              = slice(0) 
         if verbose is None:                 verbose                 = self.verbose
         if multi_sectors_kwargs is None:    multi_sectors_kwargs    = dict()
@@ -343,19 +351,19 @@ class EleanorDatabaseInterface:
                     ]).T
 
                     if get_normalized_flux:
-                        raw_flux_norm   = datum.raw_flux/np.nanmedian(datum.raw_flux)
-                        corr_flux_norm  = datum.corr_flux/np.nanmedian(datum.corr_flux)
+                        raw_flux_norm   = normfunc(datum.raw_flux)
+                        corr_flux_norm  = normfunc(datum.corr_flux)
                         lc = np.append(lc, np.expand_dims(raw_flux_norm, 1), axis=1)
                         lc = np.append(lc, np.expand_dims(corr_flux_norm,1), axis=1)
                     if datum.pca_flux is not None:
                         lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
                         if get_normalized_flux:
-                            pca_flux_norm = datum.pca_flux/np.nanmedian(datum.pca_flux)
+                            pca_flux_norm = normfunc(datum.pca_flux)
                             lc = np.append(lc, np.expand_dims(pca_flux_norm,1), axis=1)
                     if datum.psf_flux is not None:
                         lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
                         if get_normalized_flux:
-                            psf_flux_norm = datum.psf_flux/np.nanmedian(datum.psf_flux)
+                            psf_flux_norm = normfunc(datum.psf_flux)
                             lc = np.append(lc, np.expand_dims(psf_flux_norm,1), axis=1)
 
                     lcs.append(lc)
@@ -395,7 +403,7 @@ class EleanorDatabaseInterface:
     def download(self,
         sectors:Union[str,list]=None,
         source_ids:List[dict]=None,
-        get_normalized_flux:bool=True,
+        get_normalized_flux:bool=True, normfunc:Callable=None,
         tpfs2store:slice=None, store_aperture_masks:bool=True,
         n_chunks:int=1,
         verbose:int=None,
@@ -431,7 +439,14 @@ class EleanorDatabaseInterface:
                 - `get_normalized_flux`
                     - bool, optional
                     - whether to also extract the (sector-wise) normalized versions of the extracted fluxes
-                    - the default is True                   
+                    - the default is True
+                - `normfunc`
+                    - Callable, optional
+                    - function to execute the normalization
+                    - has to take exactly one argument
+                        - `flux`
+                    - the default is `None`
+                        - will be set to `lambda x: x/np.nanmedian(x)`
                 - `tpfs2store`
                     - slice, optional
                     - which target-pixel-files to store
@@ -581,7 +596,7 @@ class EleanorDatabaseInterface:
                 delayed(self.extract_source)(
                     sectors=sectors,
                     source_id=source_id,
-                    get_normalized_flux=get_normalized_flux,
+                    get_normalized_flux=get_normalized_flux, normfunc=normfunc,
                     tpfs2store=tpfs2store, store_aperture_masks=store_aperture_masks,
                     multi_sectors_kwargs=multi_sectors_kwargs,
                     targetdata_kwargs=targetdata_kwargs,
