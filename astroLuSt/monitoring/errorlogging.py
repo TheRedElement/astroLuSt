@@ -155,7 +155,8 @@ class LogErrors:
         files = re.findall(r'(?<=File ").+(?=")', format_exc)        
         lines = re.findall(r'(?<=line )\d+(?=,)', format_exc)
         problem_lines = re.findall(r'(?<=<module>\n).+', format_exc)
-        error_msgs = re.findall(r'\w+Error: [\w ]+', format_exc)
+        # error_msgs = re.findall(r'\w+Error: [\w ]+', format_exc)
+        error_msgs = re.findall(r'\w+Error[:\w ]+', format_exc)
 
         df_temp = pd.DataFrame({
             'exception':[format_exc]*len(files),
