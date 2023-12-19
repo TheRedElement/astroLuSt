@@ -509,6 +509,11 @@ class EleanorDatabaseInterface:
         #split into chunks
         chunks = np.array_split(source_ids, n_chunks)
 
+        #init output lists
+        lcs             = []
+        headers         = []
+        tpfs            = []
+        aperture_masks  = []
 
         #iterate over chunks
         extracted = 0
@@ -547,11 +552,11 @@ class EleanorDatabaseInterface:
                     self.LE.print_exc(e=e, prefix='No Metadata to clear!')
                     self.LE.exc2df(e=e, prefix='No Metadata to clear!')
 
-
-        lcs             = [r[0] for r in res]
-        headers         = [r[1] for r in res]
-        tpfs            = [r[2] for r in res]
-        aperture_masks  = [r[3] for r in res]
+            #append to output lists
+            lcs             += [r[0] for r in res]
+            headers         += [r[1] for r in res]
+            tpfs            += [r[2] for r in res]
+            aperture_masks  += [r[3] for r in res]
 
         #update number of extracted targets
         extracted += len(chunk)
