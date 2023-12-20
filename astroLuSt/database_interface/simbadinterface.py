@@ -56,7 +56,8 @@ class SimbadDatabaseInterface:
         input_ids:list,
         nparallelrequests:int=1000, simbad_timeout:int=120,
         show_scanned_strings_at:list=[],
-        verbose:int=0) -> None:
+        verbose:int=0
+        ) -> None:
         """
             - method to query the SIMBAD database for additional identifiers
 
@@ -107,8 +108,8 @@ class SimbadDatabaseInterface:
         #setup SIMBAD
         my_Simbad = Simbad()
         my_Simbad.TIMEOUT = simbad_timeout
-        my_Simbad.add_votable_fields("ids")
-        my_Simbad.add_votable_fields("typed_id")
+        my_Simbad.add_votable_fields('ids')
+        my_Simbad.add_votable_fields('typed_id')
         # print(my_Simbad.list_votable_fields())
 
         #split the query into chuncks for big queries
@@ -118,7 +119,7 @@ class SimbadDatabaseInterface:
         for idx, (start, end) in enumerate(zip(intervals[:-1], intervals[1:])):
             
             if verbose > 0:
-                print(f"Working on partition {idx+1}/{len(intervals)-1}")
+                print(f'Working on partition {idx+1}/{len(intervals)-1}')
 
             cur_unique_ids = [uid for uid in unique_ids[start:end]]
 
@@ -126,30 +127,30 @@ class SimbadDatabaseInterface:
             id_table = my_Simbad.query_objects(cur_unique_ids)
 
             # print(id_table.keys())
-            main_ids = id_table["MAIN_ID"]
-            ras = id_table["RA"]
-            decs = id_table["DEC"]
+            main_ids = id_table['MAIN_ID']
+            ras = id_table['RA']
+            decs = id_table['DEC']
 
             #extract IDs out of the query result
-            simbad_result = Parallel(n_jobs=3)(delayed(re.findall)(pattern=r"[^|]+", string=str(id)) for id in id_table["IDS"])
+            simbad_result = Parallel(n_jobs=3)(delayed(re.findall)(pattern=r'[^|]+', string=str(id)) for id in id_table['IDS'])
             
             # print(simbad_result)
 
             for iid, ids, mid, ra, dec in zip(cur_unique_ids, simbad_result, main_ids, ras, decs):
                 df_temp = pd.DataFrame()
-                df_temp["input_id"] = [iid]
-                df_temp["main_id"] = [mid]
-                df_temp["ra"] = [ra]
-                df_temp["dec"] = [dec]
+                df_temp['input_id'] = [iid]
+                df_temp['main_id'] = [mid]
+                df_temp['ra'] = [ra]
+                df_temp['dec'] = [dec]
                 for id in ids:
                     
                     if id != mid:
-                        catalogue = re.match(r"^.+[^\ ](?=\ )|NPM\d|CSI", id)
+                        catalogue = re.match(r'^.+[^\ ](?=\ )|NPM\d|CSI', id)
                         if catalogue is None:
                             print(f'INFO: catalog is None. Corresponding id: {id}')
                             pass
                         else:
-                            id_in_cat = id.replace(catalogue[0], "")
+                            id_in_cat = id.replace(catalogue[0], '')
                             df_temp[catalogue[0]] = [id_in_cat]
                             df_temp[catalogue[0]] = df_temp[catalogue[0]].str.strip()
 
@@ -160,16 +161,16 @@ class SimbadDatabaseInterface:
             
             #some verbosity
             if len(show_scanned_strings_at) != 0 and verbose > 1:
-                print("Scanned strings:")
-                print("----------------")
+                print('Scanned strings:')
+                print('----------------')
                 for idx in show_scanned_strings_at:
-                    print(f"    Scanned Target: {id_table['TYPED_ID'][idx]}")
-                    print(f"        Query Result: {id_table['IDS'][idx]}\n")
+                    print(f'    Scanned Target: {id_table["TYPED_ID"][idx]}')
+                    print(f'        Query Result: {id_table["IDS"][idx]}\n')
                 print()            
         
         #sort self.df_id alphabetically
         self.df_ids.sort_index(axis=1, inplace=True)
-        self.df_ids.insert(0, "input_id", self.df_ids.pop("input_id"))
+        self.df_ids.insert(0, 'input_id', self.df_ids.pop('input_id'))
         
         #some verbosity
         if verbose > 2:
