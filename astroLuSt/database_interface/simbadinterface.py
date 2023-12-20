@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 import re
 
+from astroLuSt.monitoring import formatting as almofo
+
+#%%classes
 #SIMBAD
 class SimbadDatabaseInterface:
     """
@@ -13,17 +16,25 @@ class SimbadDatabaseInterface:
 
         Attributes
         ----------
-
-        Infered Attributes
-        ------------------
-            - `df_ids`
-                - pd.DataFrame
-                - contains all IDs listed in SIMBAD for the queried objects (`input_ids`)
+            - `npartitions`
+                - int, optional
+                - into how many partitions to split the `input_ids` into
+                - useful for large queries
+                - the default is 1      
+            - `simbad_timeout`
+                - int, optional
+                - the timeout to allow for the SIMBAD database before an error is raised
+                - the default is 120 (seconds)
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
 
         Methods
         -------
-            - `get_ids()`
-
+            - `extract_ids()`
+            - `match_ids_()`
+            
         Dependencies
         ------------
             - numpy
@@ -39,25 +50,140 @@ class SimbadDatabaseInterface:
 
     
     def __init__(self,
+        npartitions:int=1, simbad_timeout:int=120,
+        verbose:int=0,
         ) -> None:
 
-        self.df_ids = pd.DataFrame()
+        self.npartitions    = npartitions
+        self.simbad_timeout = simbad_timeout
+        self.verbose        = verbose
 
         return
 
     def __repr__(self) -> str:
         return (
-            f'SimbadDatabaseInterface(\n'
+            f'{self.__class__.__name__}(\n'
+            f'    npartitions={self.npartitions},\n'
+            f'    simbad_timeout={self.simbad_timeout},\n'
+            f'    verbose={self.verbose},\n'
             f')'
         )
         
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
-    def get_ids(self,
+    def match_ids_(self,
+        input_id:str,
+        simbad_ids:str, main_id:str,
+        ra:str, dec:str,
+        show_scanned_strings_at:list=None,
+        verbose:int=None
+        ) -> dict:
+        """
+            - method
+
+            Parameters
+            ----------
+             - `input_id`
+                - str
+                - id queried in SIMBAD
+                    - i.e., id to get other ids of
+             - `simbda_ids`
+                - str
+                - `'IDS'` column in a response of a SIMBAD query
+                    - contains ids separated by `'|'`
+             - `main_id`
+                - str
+                - main id returned in the response of a SIMBAD query
+                    - in column `'MAIN_ID'`
+             - `ra`
+                - str
+                - `'RA'` column in a response of a SIMBAD query
+                - contains right ascension
+             - `dec`
+                - str
+                - `'DEC'` column in a response of a SIMBAD query
+                - contains declination
+             - `verbose`
+                - int, optional
+                - verbosity level
+                - overrides `self.verbose`
+                - the default is `None`
+                    - will fall back to `self.verbose`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `res`
+                    - dict
+                    - processed response of the SIMBAD query
+                    - keys are the
+                        - input id
+                        - main id
+                        - ra
+                        - dec
+                        - catalogs
+                    - values are the corresponding ids
+
+            Comments
+            --------
+        """
+
+        if show_scanned_strings_at is None: show_scanned_strings_at = []
+        if verbose is None: verbose = self.verbose
+
+        #some verbosity
+        if len(show_scanned_strings_at):
+            almofo.printf(
+                msg=f'Scanned Target: {input_id}',
+                context=self.match_ids_v.__name__,
+                type='INFO',
+                level=1,
+                verbose=verbose
+            )
+            almofo.printf(
+                msg=f'Query Result: {input_id}',
+                context=self.match_ids_.__name__,
+                type='INFO',
+                level=1,
+                verbose=verbose
+            )
+
+        #extract individual ids from string returned by SIMBAD
+        simbad_ids = re.findall(pattern=r'[^|]+', string=simbad_ids)
+
+        #init results dict
+        res = dict(
+            input_id = input_id,
+            main_id = main_id,
+            ra=ra, dec=dec,
+        )
+
+        for id in simbad_ids:
+            catalogue = re.match(r'^.+[^\ ](?=\ )|NPM\d|CSI', id)
+            if catalogue is None:
+                almofo.printf(
+                    msg=f'Catalog is `None`. Corresponding id: `"{id}"`',
+                    context=f'{self.match_ids_.__name__}',
+                    type='INFO',
+                    level=0,
+                    verbose=verbose,
+                )
+            else:
+                id_in_cat = id.replace(catalogue[0], '')
+                res[catalogue[0]] = id_in_cat.strip()
+
+        return res
+
+    def extract_ids(self,
         input_ids:list,
-        nparallelrequests:int=1000, simbad_timeout:int=120,
-        show_scanned_strings_at:list=[],
-        verbose:int=0
-        ) -> None:
+        npartitions:int=None, simbad_timeout:int=None,
+        show_scanned_strings_at:list=None,
+        verbose:int=None,
+        parallel_kwargs:dict=None,
+        ) -> pd.DataFrame:
         """
             - method to query the SIMBAD database for additional identifiers
 
@@ -65,30 +191,40 @@ class SimbadDatabaseInterface:
             ----------
                 - `input_ids`
                     - list
-                    - list containing all the ids to query for
+                    - list containing strings
+                        - all the ids to query for
                     - each entry has to be of the same syntax as the SIMBAD query i.e.
                         - `'tic 114886928'`
                         - `'gaia dr3 6681944303315818624'`
-                - `nparallelrequests`
+                - `npartitions`
                     - int, optional
-                    - how many requests to run in parallel
-                        - i.e. if your DataFrame has N columns the query will be subdivided into n partitions such that `nparallelrequest` queries will be executed in parallel
+                    - into how many partitions to split the `input_ids` into
                     - useful for large queries
-                    - the default is 1000
+                    - overrides `self.npartitions`
+                    - the default is `None`
+                        - will fall back to `self.npartitions`
                 - `simbad_timeout`
                     - int, optional
                     - the timeout to allow for the SIMBAD database before an error is raised
-                    - the default is 120 (seconds)
+                    - overrides `self.simbad_timeout`
+                    - the default is `None`
+                        - will fall back to `self.simbad_timeout`
                 - `show_scanned_strings_at`
-                    - list
+                    - list, optional
                     - list of indices to display the strings that get scanned with a regular expression to extract the different identifiers and catalogues
                     - the default is `None`
                         - will be set to `[]`
                 - `verbose`
                     - int, optional
                     - verbosity level
-                    - how much additional information to display while executing the method
-                    - the default is 0
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `parallel_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `joblib.Parallel`
+                    - the default is `None`
+                        - will be set to `dict(backend='threading')`
             
             Raises
             ------
@@ -101,9 +237,16 @@ class SimbadDatabaseInterface:
 
         """
 
+        #default parameters
+        if npartitions is None:             npartitions             = self.npartitions
+        if simbad_timeout is None:          simbad_timeout          = self.simbad_timeout
         if show_scanned_strings_at is None: show_scanned_strings_at = []
+        if verbose is None:                 verbose                 = self.verbose
+        if parallel_kwargs is None:         parallel_kwargs         = dict(backend='threading')
+        elif 'backend' not in parallel_kwargs.keys():
+            parallel_kwargs['backend'] = 'threading'
 
-        unique_ids = pd.unique(input_ids)
+        unique_ids = np.unique(input_ids)
 
         #setup SIMBAD
         my_Simbad = Simbad()
@@ -113,70 +256,43 @@ class SimbadDatabaseInterface:
         # print(my_Simbad.list_votable_fields())
 
         #split the query into chuncks for big queries
-        intervals = np.arange(0, unique_ids.shape[0], nparallelrequests)
-        if intervals[-1] < unique_ids.shape[0]: intervals = np.append(intervals, unique_ids.shape[0])
+        ids_partitioned = np.split(unique_ids, npartitions)
         
-        for idx, (start, end) in enumerate(zip(intervals[:-1], intervals[1:])):
+        result = []
+        for idx, ids in enumerate(ids_partitioned):
             
             if verbose > 0:
-                print(f'Working on partition {idx+1}/{len(intervals)-1}')
-
-            cur_unique_ids = [uid for uid in unique_ids[start:end]]
+                almofo.printf(
+                    msg=f'Working on partition {idx+1}/{len(ids_partitioned)}',
+                    context=self.extract_ids.__name__,
+                    level=0,
+                    verbose=verbose,
+                )
 
             #query SIMBAD
-            id_table = my_Simbad.query_objects(cur_unique_ids)
+            id_table = my_Simbad.query_objects(ids)
 
             # print(id_table.keys())
-            main_ids = id_table['MAIN_ID']
-            ras = id_table['RA']
-            decs = id_table['DEC']
+            main_ids    = id_table['MAIN_ID']
+            ras         = id_table['RA']
+            decs        = id_table['DEC']
 
-            #extract IDs out of the query result
-            simbad_result = Parallel(n_jobs=3)(delayed(re.findall)(pattern=r'[^|]+', string=str(id)) for id in id_table['IDS'])
-            
-            # print(simbad_result)
 
-            for iid, ids, mid, ra, dec in zip(cur_unique_ids, simbad_result, main_ids, ras, decs):
-                df_temp = pd.DataFrame()
-                df_temp['input_id'] = [iid]
-                df_temp['main_id'] = [mid]
-                df_temp['ra'] = [ra]
-                df_temp['dec'] = [dec]
-                for id in ids:
-                    
-                    if id != mid:
-                        catalogue = re.match(r'^.+[^\ ](?=\ )|NPM\d|CSI', id)
-                        if catalogue is None:
-                            print(f'INFO: catalog is None. Corresponding id: {id}')
-                            pass
-                        else:
-                            id_in_cat = id.replace(catalogue[0], '')
-                            df_temp[catalogue[0]] = [id_in_cat]
-                            df_temp[catalogue[0]] = df_temp[catalogue[0]].str.strip()
+            res = Parallel(**parallel_kwargs)(
+                delayed(self.match_ids_)(
+                    input_id=input_id,
+                    simbad_ids=simbad_ids, main_id=main_id,
+                    ra=ra, dec=dec,
+                    verbose=verbose,
+                ) for input_id, simbad_ids, main_id, ra, dec in zip(ids, id_table['IDS'], main_ids, ras, decs)
+            )
 
-                #update main dataframe
-                self.df_ids = pd.concat([self.df_ids, df_temp], ignore_index=True)
-            
-            
-            
-            #some verbosity
-            if len(show_scanned_strings_at) != 0 and verbose > 1:
-                print('Scanned strings:')
-                print('----------------')
-                for idx in show_scanned_strings_at:
-                    print(f'    Scanned Target: {id_table["TYPED_ID"][idx]}')
-                    print(f'        Query Result: {id_table["IDS"][idx]}\n')
-                print()            
-        
-        #sort self.df_id alphabetically
-        self.df_ids.sort_index(axis=1, inplace=True)
-        self.df_ids.insert(0, 'input_id', self.df_ids.pop('input_id'))
-        
-        #some verbosity
-        if verbose > 2:
-            print(self.df_ids)
+            #append to output result
+            result += res
 
-        return 
+        df_ids = pd.DataFrame.from_dict(result)
+            
+        return df_ids
 
     # def get_ids_coords(self,
     #     input_coords=[],
