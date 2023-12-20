@@ -266,8 +266,8 @@ class SimbadDatabaseInterface:
         show_scanned_strings_bool[show_scanned_strings_at] = 1
         
         #split the query into chuncks for big queries
-        ids_partitioned = np.split(unique_ids, npartitions)
-        show_scanned_strings_bool = np.split(show_scanned_strings_bool, npartitions)
+        ids_partitioned = np.array_split(unique_ids, npartitions)
+        show_scanned_strings_bool = np.array_split(show_scanned_strings_bool, npartitions)
         
         result = []
         for idx, (ids, show_scanned_strings) in enumerate(zip(ids_partitioned, show_scanned_strings_bool)):
