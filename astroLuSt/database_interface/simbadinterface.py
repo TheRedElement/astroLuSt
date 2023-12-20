@@ -76,7 +76,7 @@ class SimbadDatabaseInterface:
         input_id:str,
         simbad_ids:str, main_id:str,
         ra:str, dec:str,
-        show_scanned_strings_at:list=None,
+        show_scanned_string:bool=False,
         verbose:int=None
         ) -> dict:
         """
@@ -104,6 +104,10 @@ class SimbadDatabaseInterface:
                 - str
                 - `'DEC'` column in a response of a SIMBAD query
                 - contains declination
+            - `show_scanned_string`
+                - bool, optional
+                - whether to display the string that got scanned with a regular expression to extract the different identifiers and catalogues
+                - the default is False
              - `verbose`
                 - int, optional
                 - verbosity level
@@ -131,20 +135,19 @@ class SimbadDatabaseInterface:
             --------
         """
 
-        if show_scanned_strings_at is None: show_scanned_strings_at = []
         if verbose is None: verbose = self.verbose
 
         #some verbosity
-        if len(show_scanned_strings_at):
+        if show_scanned_string:
             almofo.printf(
                 msg=f'Scanned Target: {input_id}',
-                context=self.match_ids_v.__name__,
+                context=self.match_ids_.__name__,
                 type='INFO',
                 level=1,
                 verbose=verbose
             )
             almofo.printf(
-                msg=f'Query Result: {input_id}',
+                msg=f'Query Result: {simbad_ids}',
                 context=self.match_ids_.__name__,
                 type='INFO',
                 level=1,
@@ -255,11 +258,16 @@ class SimbadDatabaseInterface:
         my_Simbad.add_votable_fields('typed_id')
         # print(my_Simbad.list_votable_fields())
 
+        #create boolean to decide which scanned strings to display
+        show_scanned_strings_bool = np.zeros(len(unique_ids))
+        show_scanned_strings_bool[show_scanned_strings_at] = 1
+        
         #split the query into chuncks for big queries
         ids_partitioned = np.split(unique_ids, npartitions)
+        show_scanned_strings_bool = np.split(show_scanned_strings_bool, npartitions)
         
         result = []
-        for idx, ids in enumerate(ids_partitioned):
+        for idx, (ids, show_scanned_strings) in enumerate(zip(ids_partitioned, show_scanned_strings_bool)):
             
             if verbose > 0:
                 almofo.printf(
@@ -283,8 +291,9 @@ class SimbadDatabaseInterface:
                     input_id=input_id,
                     simbad_ids=simbad_ids, main_id=main_id,
                     ra=ra, dec=dec,
+                    show_scanned_string=show_scanned_string,
                     verbose=verbose,
-                ) for input_id, simbad_ids, main_id, ra, dec in zip(ids, id_table['IDS'], main_ids, ras, decs)
+                ) for input_id, simbad_ids, main_id, ra, dec, show_scanned_string in zip(ids, id_table['IDS'], main_ids, ras, decs, show_scanned_strings)
             )
 
             #append to output result
