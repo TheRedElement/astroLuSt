@@ -246,8 +246,11 @@ class SimbadDatabaseInterface:
         if show_scanned_strings_at is None: show_scanned_strings_at = []
         if verbose is None:                 verbose                 = self.verbose
         if parallel_kwargs is None:         parallel_kwargs         = dict(backend='threading')
-        elif 'backend' not in parallel_kwargs.keys():
+        if 'backend' not in parallel_kwargs.keys():
             parallel_kwargs['backend'] = 'threading'
+        if 'verbose' not in parallel_kwargs.keys():
+            parallel_kwargs['verbose'] = verbose
+        
 
         unique_ids = np.unique(input_ids)
 
