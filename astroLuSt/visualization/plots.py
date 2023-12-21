@@ -2094,7 +2094,6 @@ class CornerPlot:
         cmap:Union[str,mcolors.Colormap],
         bins:int,
         fig:Figure, nrowscols:int,
-        equal_range:bool,
         sctr_kwargs:dict,
         ) -> plt.Axes:
         """
@@ -2153,9 +2152,6 @@ class CornerPlot:
                 - `nrowscols`
                     - int
                     - number of rows and columns of the corner-plot
-                - `equal_range`
-                    - bool
-                    - whether to display equal ranges in all subplots
                 - `sctr_kwargs`
                     - dict, optional
                     - kwargs to pass to `ax.scatter()`
@@ -2217,9 +2213,8 @@ class CornerPlot:
             ax.set_yticklabels([])
         ax.tick_params()
 
-        if not equal_range:
-            ax.set_xlim(np.nanmin(d2), np.nanmax(d2))
-            ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
+        ax.set_xlim(np.nanmin(d2), np.nanmax(d2))
+        ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
 
         #add corrcoeff in legend
         ax.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
@@ -2235,7 +2230,6 @@ class CornerPlot:
         cmap:Union[str,mcolors.Colormap],
         bins:int,
         fig:Figure, nrowscols:int,
-        equal_range:bool,
         hist_kwargs:dict,
         sctr_kwargs:dict,
         ) -> plt.Axes:
@@ -2271,9 +2265,6 @@ class CornerPlot:
                 - `nrowscols`
                     - int
                     - number of rows and columns of the corner-plot
-                - `equal_range`
-                    - bool
-                    - whether to display equal ranges in all subplots
                 - `hist_kwargs`
                     - dict, optional
                     - kwargs to pass to `ax.hist()`
@@ -2347,25 +2338,23 @@ class CornerPlot:
             xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
             normal = stats.norm.pdf(xvals, mu1, sigma1)
             
-            if orientation == "horizontal":
-                ax.axhline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
+            if orientation == 'horizontal':
+                ax.axhline(mu1, color='tab:orange', linestyle='--', label=r'$\mu=%.2f$'%(mu1))
                 ax.plot(normal, xvals)
-                if not equal_range:
-                    ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
+                ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
                 
-                ax.xaxis.set_ticks_position("top")
+                ax.xaxis.set_ticks_position('top')
                 ax.set_yticklabels([])
             
-            elif orientation == "vertical":
+            elif orientation == 'vertical':
                 ax.plot(xvals, normal)
-                ax.axvline(mu1, color="tab:orange", linestyle="--", label=r"$\mu=%.2f$"%(mu1))
-                if not equal_range:
-                    ax.set_xlim(np.nanmin(d1), np.nanmax(d1))
+                ax.axvline(mu1, color='tab:orange', linestyle='--', label=r'$\mu=%.2f$'%(mu1))
+                ax.set_xlim(np.nanmin(d1), np.nanmax(d1))
                 
-                ax.yaxis.set_ticks_position("right")
+                ax.yaxis.set_ticks_position('right')
                 ax.set_xticklabels([])
         
-            ax.errorbar(np.nan, np.nan, color="none", label=r"$\sigma=%.2f$"%(sigma1))
+            ax.errorbar(np.nan, np.nan, color='none', label=r'$\sigma=%.2f$'%(sigma1))
             ax.legend()
         
 
@@ -2375,6 +2364,7 @@ class CornerPlot:
     
     def __make_equalrange(self,
         fig:Figure, nrowscols:int,
+        xymin:float=None, xymax:float=None,
         ) -> None:
         """
             - method to redefine the x- and y-limits to display an equal range in both directions
@@ -2387,6 +2377,20 @@ class CornerPlot:
                 - `nrowscols`
                     - int
                     - number of rows and columns in the figure
+                - `xymin`
+                    - float, optional
+                    - minimum of x- and y-axis limits
+                    - will be set for all axes
+                        - will exclude Counts of 1D histograms in the limit enforcement
+                    - the default is `None`
+                        - no modifications to minimum limit
+                - `xymax`
+                    - float, optional
+                    - maximum of x- and y-axis limits
+                    - will be set for all axes
+                        - will exclude Counts of 1D histograms in the limit enforcement
+                    - the default is `None`
+                        - no modifications to maximum limit
 
             Raises
             ------
@@ -2399,37 +2403,34 @@ class CornerPlot:
 
         """
 
+        #indices of lower triangular part of matrix (~corner plot)
+        ti = np.array(np.tril_indices(nrowscols))   #obtain all indices of tril
+        ti_diag = np.where(ti[0]==ti[1])[0]         #obtain indices of diagonal elements
+        
 
         for idx, ax in enumerate(fig.axes):
             
-            #first 1D histogram
-            if idx == 0:
-                xymin = np.nanmin([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
-                xymax = np.nanmax([fig.axes[idx+1].get_xlim(), fig.axes[idx+1].get_ylim()])
+            #first 1D histogram (0-th entry)
+            if idx == 0:            
                 ax.set_xlim(xymin, xymax)
-
-            #all other 1D histograms
-            elif idx > 0 and (idx+1)%nrowscols == 0:
-                xymin = np.nanmin([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
-                xymax = np.nanmax([fig.axes[idx-1].get_xlim(), fig.axes[idx-1].get_ylim()])
+            #all other 1D histograms (diagonal entries != 0)
+            elif idx in ti_diag:
+                ax.set_ylim(xymin, xymax)
+            #2D histograms (off-diagonal entries)
+            else:
+                ax.set_xlim(xymin, xymax)
                 ax.set_ylim(xymin, xymax)
 
-            #2D histograms
-            else:
-                xymin = np.nanmin([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
-                xymax = np.nanmax([fig.axes[idx].get_xlim(), fig.axes[idx].get_ylim()])
 
-                ax.set_xlim(xymin, xymax)
-                ax.set_ylim(xymin, xymax)   
-
-            return     
+        return
 
     def plot(self,
         X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
         mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
         bins:int=100,
         cmap:Union[str,mcolors.Colormap]='viridis',
-        equal_range:bool=False, asstandardnormal:bool=False,
+        xymin:float=None, xymax:float=None,
+        asstandardnormal:bool=False,
         fig:Figure=None,
         sctr_kwargs:dict=None,
         hist_kwargs:dict=None,
@@ -2483,10 +2484,20 @@ class CornerPlot:
                     - name of the colormap to use or Colormap instance
                     - used to color the 1d and 2d distributions according to `y`
                     - the default is `'viridis'`
-                - `equal_range`
-                    - bool, optional
-                    - whether to plot the data with equal x- and y-limits
-                    - the default is `False`
+                - `xymin`
+                    - float, optional
+                    - minimum of x- and y-axis limits
+                    - will be set for all axes
+                        - will exclude Counts of 1D histograms in the limit enforcement
+                    - the default is `None`
+                        - no modifications to minimum limit
+                - `xymax`
+                    - float, optional
+                    - maximum of x- and y-axis limits
+                    - will be set for all axes
+                        - will exclude Counts of 1D histograms in the limit enforcement
+                    - the default is `None`
+                        - no modifications to maximum limit                    
                 - `asstandardnormal`
                     - bool, optional
                     - whether to plot the data rescaled to zero mean and unit variance
@@ -2516,7 +2527,7 @@ class CornerPlot:
         #initialize correctly
         if y is None:
             y = 'tab:blue'
-        if featurenames is None: featurenames = [f"Feature {i}" for i in np.arange(X.shape[1])]
+        if featurenames is None: featurenames = [f'Feature {i}' for i in np.arange(X.shape[1])]
 
         if mus is None:
             mus = [None]*len(X)
@@ -2558,7 +2569,6 @@ class CornerPlot:
                         cmap,
                         bins,
                         fig, nrowscols,
-                        equal_range,
                         sctr_kwargs,                        
                     )
 
@@ -2572,15 +2582,15 @@ class CornerPlot:
                         cmap,
                         bins,
                         fig, nrowscols,
-                        equal_range,
                         hist_kwargs,
                         sctr_kwargs,
                     )            
         
         #make x and y limits equal if requested
-        if equal_range and not asstandardnormal:        
+        if not asstandardnormal:
             self.__make_equalrange(
-                fig, nrowscols
+                fig, nrowscols,
+                xymin, xymax,
             )
 
 
