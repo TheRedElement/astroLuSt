@@ -2534,7 +2534,7 @@ class CornerPlot:
         if sigmas is None:
             sigmas = [None]*len(X)
         if corrmat is None:
-            corrmat = np.corrcoef(X)
+            corrmat = np.corrcoef(X.T)
         if sctr_kwargs is None:
             sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
         if hist_kwargs is None:
