@@ -1,4 +1,5 @@
 #TODO: make PC work with exclusively numpy (https://stackoverflow.com/questions/8230638/parallel-coordinates-plot-in-matplotlib)
+#TODO: categorical for PC
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -1448,6 +1449,7 @@ class ParallelCoordinates:
         coordnames:list=None,
         nancolor=None, nanfrac=None,
         base_cmap=None,
+        y_margin:float=0.2,
         ax:plt.Axes=None,
         verbose:int=None,
         n_jobs:int=None, sleep:float=None,
@@ -1510,6 +1512,7 @@ class ParallelCoordinates:
         mins = np.nanmin(X, axis=0)
         maxs = np.nanmax(X, axis=0)
         X_scaled = ((X - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
+        #TODO: y_margin
 
         for idx, line in enumerate(X_scaled):
             self.plot_line(
