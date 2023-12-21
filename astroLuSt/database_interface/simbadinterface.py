@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 import re
+from typing import Union, Literal
 
 from astroLuSt.monitoring import formatting as almofo
 
@@ -183,7 +184,7 @@ class SimbadDatabaseInterface:
     def extract_ids(self,
         input_ids:list,
         npartitions:int=None, simbad_timeout:int=None,
-        show_scanned_strings_at:list=None,
+        show_scanned_strings_at:Union[list,Literal['all']]=None,
         verbose:int=None,
         parallel_kwargs:dict=None,
         ) -> pd.DataFrame:
@@ -213,8 +214,9 @@ class SimbadDatabaseInterface:
                     - the default is `None`
                         - will fall back to `self.simbad_timeout`
                 - `show_scanned_strings_at`
-                    - list, optional
+                    - list, Literal['all'], optional
                     - list of indices to display the strings that get scanned with a regular expression to extract the different identifiers and catalogues
+                    - if `'all'` will display scanned strings for all `input_ids`
                     - the default is `None`
                         - will be set to `[]`
                 - `verbose`
@@ -262,8 +264,11 @@ class SimbadDatabaseInterface:
         # print(my_Simbad.list_votable_fields())
 
         #create boolean to decide which scanned strings to display
-        show_scanned_strings_bool = np.zeros(len(unique_ids))
-        show_scanned_strings_bool[show_scanned_strings_at] = 1
+        if show_scanned_strings_at == 'all':
+            show_scanned_strings_bool = np.ones(len(unique_ids))
+        else:
+            show_scanned_strings_bool = np.zeros(len(unique_ids))
+            show_scanned_strings_bool[show_scanned_strings_at] = 1
         
         #split the query into chuncks for big queries
         ids_partitioned = np.array_split(unique_ids, npartitions)
