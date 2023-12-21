@@ -1511,8 +1511,13 @@ class ParallelCoordinates:
         ##scale to make features compatible
         mins = np.nanmin(X, axis=0)
         maxs = np.nanmax(X, axis=0)
-        X_scaled = ((X - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
         #TODO: y_margin
+        X_scaled = ((X - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
+        print(X_scaled.min(), X_scaled.max())
+        mins += y_margin * mins
+        maxs += y_margin * maxs
+        X_scaled = ((X - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
+        print(X_scaled.min(), X_scaled.max())
 
         for idx, line in enumerate(X_scaled):
             self.plot_line(
