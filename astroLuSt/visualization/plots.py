@@ -1140,7 +1140,7 @@ class ParallelCoordinates:
         line,
         nabool:bool,
         ax:plt.Axes,
-        cmap:mcolors.Colormap, nancolor:Tuple[str,tuple]='tab:grey',
+        linecolor:Tuple[str,tuple], nancolor:Union[str,tuple]='tab:grey',
         sleep=0,
         pathpatch_kwargs:dict=None,
         ) -> None:
@@ -1200,7 +1200,7 @@ class ParallelCoordinates:
             patch = mpatches.PathPatch(path, facecolor='none', edgecolor=nancolor, **pathpatch_kwargs)
         ##completely valid runs
         else:
-            patch = mpatches.PathPatch(path, facecolor='none', edgecolor=cmap(line[-1]), **pathpatch_kwargs)
+            patch = mpatches.PathPatch(path, facecolor='none', edgecolor=linecolor, **pathpatch_kwargs)
         
         #add line to plot        
         ax.add_patch(patch)
@@ -1209,6 +1209,101 @@ class ParallelCoordinates:
         time.sleep(sleep)
 
         return
+
+    def plot_score_distribution(self,
+        X:np.ndarray,
+        ax:plt.Axes,
+        nanfrac:float=4/256,
+        lab:str=None, ticklabcolor:Union[str,tuple]='tab:grey',
+        cmap:Union[mcolors.Colormap,str]='plasma',
+        ) -> None:
+        """
+            - method to add a distribution of scores into the figure
+            - the distribution will be colorcoded to match the colormapping of the different runs/models
+
+            Parameters
+            ----------
+                - `score_col_map`
+                    - pl.Series
+                    - series containing some score mapped onto the interval [0,1]
+                - `nanfrac`
+                    - float, optional
+                    - the fraction of the colormap to use for `nan`-values (i.e. failed runs)
+                        - fraction of 256 (resolution of the colormap)
+                    - will also influence the number of bins/binsize used in the performance-histogram
+                    - a value between 0 and 1
+                    - the default is 4/256
+                - `lab`
+                    - str, optional
+                    - label to use for the y-axis of the plot
+                    - the default is `None`
+                - `ticklabcolor`
+                    - str, tuple, optional
+                    - color to draw ticks, ticklabels and axis labels in
+                    - if a tuple is passed it has to be a RGBA-tuple
+                    - the default is `'tab:grey'`
+                - `cmap`
+                    - mcolor.Colormap, str
+                    - colormap to apply to the plot for encoding the score
+                    - the default is `'plasma'`
+                - `fig`
+                    - Figure, optional
+                    - figure to plot into
+                    - the default is `None`
+                        - will create a new figure
+                - `axpos`
+                    - tuplple, int
+                    - axis position in standard matplotlib convention
+                    - will be passed to `fig.add_subplot()`
+                    - the default is `None`
+                        - will use 111
+                
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+        
+        x = np.linspace(0,1,10)
+        y = x
+        ax.plot(x,y)
+
+        # #initialize new axis
+
+        # ax.set_zorder(0)
+        # ax.set_ymargin(0)
+
+        # #adjust bins to colorbar
+        # bins = np.linspace(score_col_map.min().item(), score_col_map.max().item(), int(1//nanfrac))
+
+        # #get colors for bins
+        # if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
+        # colors = cmap(bins)
+        
+        # #get histogram
+        # hist, bin_edges = np.histogram(score_col_map, bins)
+
+        # #plot and colormap hostogram
+        # ax.barh(bin_edges[:-1], hist, height=nanfrac, color=colors)
+        # ax.set_xscale('symlog')
+
+        # #labelling
+        # ax.set_ylabel(lab, rotation=270, labelpad=15, va='bottom', ha='center', color=ticklabcolor)
+        # ax.yaxis.set_label_position("right")
+        
+        # ax.tick_params(axis='x', colors=ticklabcolor)
+        # ax.spines[['top', 'left', 'right']].set_visible(False)
+        # ax.spines['bottom'].set_color(ticklabcolor)
+        # ax.set_yticks([])
+        # ax.set_xlabel('Counts', color=ticklabcolor)
+        
+
+        return
+ 
 
     def plot(self,
         X:np.ndarray,
@@ -1305,18 +1400,23 @@ class ParallelCoordinates:
 
         #actual plotting
         ##plot lines
+        norm_scores = (X_plot[:,-1] - X_plot[:,-1].min())/(X_plot[:,-1].max() - X_plot.min())   #normalize scores
+        linecolors = cmap(norm_scores)  #get line colors from normalized scores
         for idx, line in enumerate(X_plot):
             self.plot_line(
                 line,
                 nabool=np.any(namask, axis=1)[idx],
-                ax=ax, cmap=cmap,
+                ax=ax,
+                linecolor=linecolors[idx],
                 nancolor=nancolor,
                 pathpatch_kwargs=pathpatch_kwargs,
             )
 
         ##plot score distribution
-        self.add_score_distribution(
+        
+        self.plot_score_distribution(
             X_plot,
+            ax=axs[-1],
             nanfrac=nanfrac,
         )
 
