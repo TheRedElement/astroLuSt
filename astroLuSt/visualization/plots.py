@@ -1,6 +1,9 @@
 #TODO: make PC work with exclusively numpy (https://stackoverflow.com/questions/8230638/parallel-coordinates-plot-in-matplotlib)
 #TODO: 2 nan in categorical!
 #TODO: score distribution
+#TODO: score-scaling (log, custom fct., ...)
+#TODO: Coloring score_dist nan
+#TODO: separate function "scale to range" -> apply where needed
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
