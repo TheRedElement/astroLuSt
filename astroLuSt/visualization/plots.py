@@ -1,5 +1,6 @@
 #TODO: make PC work with exclusively numpy (https://stackoverflow.com/questions/8230638/parallel-coordinates-plot-in-matplotlib)
-#TODO: categorical for PC
+#TODO: 2 nan in categorical!
+#TODO: score distribution
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -1268,27 +1269,31 @@ class ParallelCoordinates:
             --------
         """
         
-        x = np.linspace(0,1,10)
-        y = x
-        ax.plot(x,y)
+        print(ax.get_ylim())
+        # x = np.linspace(3,5,10)
+        # y = x
+        # ax.plot(x,y)
 
         # #initialize new axis
 
         # ax.set_zorder(0)
         # ax.set_ymargin(0)
 
-        # #adjust bins to colorbar
-        # bins = np.linspace(score_col_map.min().item(), score_col_map.max().item(), int(1//nanfrac))
+        #adjust bins to colorbar
+        print(X.shape)
+        bins = np.linspace(X[:,-1].min(), X[:,-1].max(), int(1//nanfrac))
 
         # #get colors for bins
         # if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
         # colors = cmap(bins)
         
-        # #get histogram
-        # hist, bin_edges = np.histogram(score_col_map, bins)
+        #get histogram
+        hist, bin_edges = np.histogram(X[:,-1], bins)
+        print(bin_edges, hist)
+        ax.plot(bin_edges[:-1], hist)
 
-        # #plot and colormap hostogram
-        # ax.barh(bin_edges[:-1], hist, height=nanfrac, color=colors)
+        #plot and colormap hostogram
+        ax.barh(bin_edges[:-1], hist, height=nanfrac, color='lime')#, color=colors)
         # ax.set_xscale('symlog')
 
         # #labelling
@@ -1372,7 +1377,7 @@ class ParallelCoordinates:
             if idx > 0:
                 axi.spines['left'].set_visible(False)
                 axi.yaxis.set_ticks_position('right')
-                axi.spines['right'].set_position(('axes', idx / (X_plot.shape[1]-1)))
+                axi.spines['right'].set_position(('axes', idx / (X_plot.shape[1])))
             if iscatbools[idx]:
                 axi.set_yticks(
                     ticks=list(mappings[idx].values()),
@@ -1390,7 +1395,7 @@ class ParallelCoordinates:
 
 
         ##correct labelling
-        ax.set_xlim(0, X_plot.shape[1]-1)
+        ax.set_xlim(0, X_plot.shape[1])
         ax.set_xticks(range(X_plot.shape[1]))
         ax.set_xticklabels(coordnames, **set_xticklabels_kwargs)
         ax.tick_params(axis='x', which='major', pad=7)
@@ -1413,10 +1418,10 @@ class ParallelCoordinates:
             )
 
         ##plot score distribution
-        
+        print(ax.get_xlim())
         self.plot_score_distribution(
             X_plot,
-            ax=axs[-1],
+            ax=ax,
             nanfrac=nanfrac,
         )
 
