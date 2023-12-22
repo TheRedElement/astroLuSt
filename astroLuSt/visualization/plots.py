@@ -1286,7 +1286,11 @@ class ParallelCoordinates:
             --------
         """
         
-        print(ax.get_ylim())
+        fig = ax.figure
+
+        # ax = fig.add_axes([1,0,0.2,1])
+
+        # print(ax.get_ylim())
         # x = np.linspace(3,5,10)
         # y = x
         # ax.plot(x,y)
@@ -1300,18 +1304,19 @@ class ParallelCoordinates:
         print(X.shape)
         bins = np.linspace(X[:,-1].min(), X[:,-1].max(), int(1//nanfrac))
 
-        # #get colors for bins
-        # if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
-        # colors = cmap(bins)
+        #get colors for bins
+        if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
+        colors = cmap((bins - bins.min())/(bins.max()-bins.min()))
         
         #get histogram
         hist, bin_edges = np.histogram(X[:,-1], bins)
-        print(bin_edges, hist)
-        ax.plot(bin_edges[:-1], hist)
+        hist = hist/X.shape[1]      #rescale to fit into axis
 
         #plot and colormap hostogram
-        ax.barh(bin_edges[:-1], hist, height=nanfrac, color='lime')#, color=colors)
+        binheight = nanfrac*(X.max()-X.min())    #rescale binheight to match axis limits
+        ax.barh(bin_edges[:-1], hist, height=binheight, left=X.shape[1]-1, color=colors)#, color=colors)
         # ax.set_xscale('symlog')
+        # ax.set_ylim(bin_edges.min(), bin_edges.max())
 
         # #labelling
         # ax.set_ylabel(lab, rotation=270, labelpad=15, va='bottom', ha='center', color=ticklabcolor)
