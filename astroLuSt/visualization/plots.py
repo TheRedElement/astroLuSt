@@ -341,93 +341,6 @@ class ParallelCoordinates:
         
         return df
 
-    def plot_model(self,
-        coordinates:Union[tuple,list], coordinates_map:Union[tuple,list],
-        fill_value:float,
-        ax:plt.Axes,
-        cmap:mcolors.Colormap, nancolor:Tuple[str,tuple]='tab:grey',
-        interpkind:str='quadratic', res:int=1000,
-        linealpha:float=1, linewidth:float=1,
-        sleep=0,
-        ) -> None:
-        """
-            - method to add aline into the plot representing an individual run/model
-
-            Parameters
-            ----------
-                - `coordinates`
-                    - tuple, list
-                    - iterable of coordinates specifying this particular run/model
-                - `coordinates_map`
-                    - tuple, list
-                    - iterable of coordinates specifying this particular run/model mapped to the interval [0,1]
-                - `fill_value`
-                    - float
-                    - value to use for plotting instead of nan
-                    - i.e. value representing failed runs
-                - `ax`
-                    - plt.Axes
-                    - axis to plot the line onto
-                - `cmap`
-                    - mcolor.Colormap
-                    - colormap to use for coloring the lines
-                - `nancolor`
-                    - str, tuple, optional
-                    - color to draw failed runs (evaluate to nan) in
-                    - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is `'tab:grey'`
-                - `interpkind`
-                    - str, optional
-                    - function to use for the interpolation between the different coordinates
-                    - argument passed as `kind` to `scipy.interpolate.interp1d()`
-                    - the default is `'quadratic'`                
-                - `res`
-                    - int, optional
-                    - res of the interpolated line
-                        - i.e. the number of points used to plot each run/model
-                    - the default is 1000
-                - `linealpha`
-                    - float, optional
-                    - alpha value of the lines representing runs/models
-                    - the default is 1
-                - `linewidth`
-                    - float, optional
-                    - linewidth of the lines representing runs/models
-                    - the default is 1    
-                - `sleep`
-                    - float, optional
-                    - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - the default is 0.1 (seconds)
-
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-        """
-
-        #interpolate using a spline to make everything look nice and neat (also ensures that the lines are separable by eye)
-        xvals  = np.linspace(0,1,len(coordinates))
-        x_plot = np.linspace(0,1,res)
-        yvals_func = interp1d(xvals, coordinates_map, kind=interpkind)
-        y_plot = yvals_func(x_plot)
-        
-        #cutoff at upper/lower boundary to have no values out of bounds due to the interpolation
-        y_plot[(y_plot>1)] = 1
-        y_plot[(y_plot<0)] = 0
-        
-        #actually plot the line for current model (colomap according to cmap)
-        if coordinates[-1] == fill_value:
-            line, = ax.plot(x_plot, y_plot, alpha=linealpha, lw=linewidth, color=nancolor)
-        else:
-            line, = ax.plot(x_plot, y_plot, alpha=linealpha, lw=linewidth, color=cmap(coordinates_map[-1]))
-
-        time.sleep(sleep)
-
-        return
 
     def add_coordax(self,
         ax:plt.Axes,
@@ -515,69 +428,7 @@ class ParallelCoordinates:
             --------
         """
 
-        if lab is None: lab = coordinate.name
-        if text_kwargs is None: text_kwargs = {}
-
-        #initialize new axis
-        axp = ax.twinx()
-        
-        #hide all spines but one (the one that will show the chosen values)
-        axp.spines[['right','top','bottom']].set_visible(False)
-        #position the axis to be aligned with the respective coordinate
-        axp.spines['left'].set_position(('axes', (idx/n_coords)))
-        axp.yaxis.set_ticks_position('left')
-        axp.yaxis.set_label_position('left')
-        
-        #hide xaxis because not needed in the plot
-        axp.xaxis.set_visible(False)
-        axp.set_xticks([])
-        
-        #additional formatting
-        axp.spines['left'].set_color(tickcolor)
-        axp.tick_params(axis='y', colors=tickcolor)
-        
-        #format the ticks differently depending on the datatype of the coordinate (i.e. is it numeric or not)
-        
-        ##numeric coordinate
-        ###make sure to label the original nan values with nan
-        if coordinate.is_numeric():
-
-            #if only one value got tried, show a single tick of that value
-            if len(coordinate_map.unique()) == 1:
-                axp.set_yticks([fill_value])
-                axp.set_yticklabels(
-                    [lab if lab != fill_value else 'nan' for lab in coordinate.unique().to_numpy().flatten()],
-                    rotation=ticklabelrotation
-                )
-            #'ticks2display' equidistant ticks for the whole value range
-            else:
-                axp.set_yticks(np.linspace(0, 1, ticks2display, endpoint=True))
-                labs = np.linspace(np.nanmin(coordinate.to_numpy()), np.nanmax(coordinate.to_numpy()), ticks2display, endpoint=True)
-                axp.set_yticklabels(
-                    [tickformat%lab if lab != fill_value else 'nan' for lab in labs],
-                    rotation=ticklabelrotation
-                )
-
-        ##non-numeric coordinate
-        else:
-            #get ticks
-            axp.set_yticks(coordinate_map.unique().to_numpy().flatten())
-            #set labels to categories
-            # axp.set_yticklabels(ylabs, rotation=ticklabelrotation)
-            axp.set_yticklabels(coordinate.unique().sort().to_numpy().flatten(), rotation=ticklabelrotation)
-        
-        # print(ylabs)
-        # print(coordinate.unique().to_numpy().flatten())
-        
-        #add spine labels (ylabs) on top  of each additional axis
-        ax.text(
-            x=(idx/n_coords), y=1.01,
-            s=lab,
-            transform=ax.transAxes,
-            color=tickcolor,
-            **text_kwargs
-        )
-
+        #TODO
         time.sleep(sleep)
 
         return axp
@@ -677,155 +528,39 @@ class ParallelCoordinates:
         
 
         return
-
-    def __init_scorecol(self,
-        df:pl.DataFrame,
-        score_col:Union[str,int]=None, score_scaling:str='pl.col(score_col)',
-        min_score:float=None, max_score:float=None,
-        remove_nanscore:bool=False,
-        verbose:int=0
-        ) -> Tuple[pl.DataFrame,str]:
-        """
-            - private method to inizialize the score column
-            - will be called in `self.plot()`
-
-            Parameters
-            ----------
-                - `df`
-                    - pl.DataFrame
-                    - input dataframe containing the score column/coordinate columns
-                    - this dataframe will be modified
-                - `score_col`
-                    - str, int, optional
-                    - if str
-                        - name of the column to use for scoring
-                    - if int
-                        - interpreted as index of the column
-                    - the default is `None`
-                        - will generate a placeholder column
-                - `score_scaling`
-                    - str, optional
-                    - a polars expression
-                    - scaling to apply to the (generated) score column
-                    - the default is `'pl.col(score_col)'`
-                - `min_score`
-                    - float, optional
-                    - minimum score to plot
-                    - everything below will be dropped from `df`
-                    - the default is `None`
-                        - will be set to `-np.inf`
-                - `max_score`
-                    - float, optional
-                    - maximum score to plot
-                    - everything above will be dropped from `df`
-                    - the default is `None`
-                        - will be set to `np.inf`
-                - `remove_nanscore`
-                    - bool, optional
-                    - whether to drop all rows that have a score evaluating to `np.nan`
-                    - the default is `False`
-                - `verbose`
-                    - int
-                    - verbosity level
-                    - the default is 0
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `df`
-                    - pl.DataFrame
-                    - dataframe modified according to the specifications
-                    - if `score_col` is `None` will contain one additional column
-                        - this is a placeholder for score-col
-                        - this column has only 0 as entries
-                - `score_col_use`
-                    - str
-                    - modified version of the input `score_col`
-
-            Comments
-            --------
-        """
+    
+    def __deal_with_categorical(self,
+        X:np.ndarray,
+        ):
+        X_num = X.T.copy()  #init numerical version of X
+        mappings = []
+        iscatbools = []
+        for idx, xi in enumerate(X_num):
+            #continuous
+            try:
+                xi.astype(np.float64)
+                iscatbools.append(False)
+                mappings.append(dict())
+            #categorical
+            except:
+                iscatbools.append(True)
+                uniques, categorical = np.unique(xi, return_inverse=True)
+                categorical = categorical.astype(np.float64)
+                nanidx = np.where(uniques=='nan')[0][0]
+                categorical[(categorical==nanidx)] = np.nan
+                mapping = {u:idx for idx, u in enumerate(uniques)}
+                mappings.append(mapping)
+                X_num[idx] = categorical
         
-        #get initial shape of dataframe
-        df_input_shape = df.shape[0]    #shape if input dataframe (for verbosity)
-
-
-        #initialize a score_col placeholder if no score-col is provided
-        if score_col is None:
-            score_col_use = '<score_placeholder>'
-            while score_col_use in df.columns:
-                score_col_use += '_'
-            df = df.insert_at_idx(df.shape[1], pl.Series(score_col_use, np.zeros(df.shape[0])))
-        elif isinstance(score_col, int):
-            score_col_use = df.columns[score_col]
-        else:
-            score_col_use = score_col
-
-        ##replace 'score_col' with 'score_col_use'
-        score_scaling = score_scaling.replace('score_col', 'score_col_use')
-        #filter which range of scores to display and remove scores evaluating to nan if desired
-        df = df.filter(((pl.col(score_col_use).is_between(min_score, max_score))|(pl.col(score_col_use).is_nan())))
-        df_minmaxscore_shape = df.shape[0]  #shape of dataframe after score_col_use boundaries got applied
-        if remove_nanscore:
-            df = df.filter(pl.col(score_col_use).is_not_nan())
-        df_nonan_shape = df.shape[0]    #shape of dataframe after nans got removed
-    
-        if verbose > 0:
-            print(
-                f'INFO(ParallelCoordinates): Removed\n'
-                f'    {df_input_shape-df_minmaxscore_shape} row(s) via ({min_score} < {score_col_use} < {max_score}),\n'
-                f'    {df_minmaxscore_shape-df_nonan_shape} row(s) containig nans,\n'
-                f'    {df_input_shape-df_nonan_shape} row(s) total.\n'
-            )
-        #apply user defined expression to scale the score-function and thus color-scale
-        df = df.with_columns(eval(score_scaling).alias(score_col_use))
-
-        return df, score_col_use
-    
-    def __deal_withnan(self,
-        df:pl.DataFrame
-        ) -> Tuple[pl.DataFrame,float]:
-        """
-            - method to deal with `nan` values in df
-            - essentially will replace all `nan` with a value 0.5 lower than the minimum of the numerical columns in the dataframe
-            - necessary to avoid issues while plotting
-
-            Parameters
-            ----------
-                - `df`
-                    - pl.DataFrame
-                    - input dataframe that will be modified (`nan` will be filled)
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `df`
-                    - pl.DataFrame
-                    - dataframe with the `nan` filled as 0.5 lower than the minimum of all numerical columns in the input `df`
-                - fill_value
-                    - float
-                    - the value used to fill the `nan`
-
-            Comments
-            --------
-        """
-
-        fill_value = df.min()
-        cols = np.array(fill_value.columns)[(np.array(fill_value.dtypes, dtype=str)!='Utf8')]
-        fill_value = np.nanmin(fill_value.select(pl.col(cols)).to_numpy())-0.5                  #fill with value slightly lower than minimum of whole dataframe -> Ensures that nan end up in respective part of colormap
-        df = df.fill_nan(fill_value=fill_value)
-        df = df.fill_null(value=fill_value)
-
-        return df, fill_value
+        X_num = X_num.T.astype(np.float64)
+        
+        return X_num, mappings, iscatbools
 
     def __deal_with_inf(self,
-        df:pl.DataFrame, score_col:str,
-        verbose:int=0,
-        ):
+        X:np.ndarray,
+        infmargin:float=0.05,
+        verbose:int=None,
+        ) -> np.ndarray:
         """
             - method that removes rows with infinite values in `score_col` resulting from `score_scaling`
 
@@ -854,26 +589,58 @@ class ParallelCoordinates:
             -------
                 
         """
+        
+        #TODO: deal with +/- inf separately (add extra ticks all the way at the top and bottom)
+        X_inffilled = X.copy()
+        X_inffilled[np.isinf(X)] = np.nan #fill inf with nan
 
-        df_input_shape = df.shape[0]
-        df = df.filter((pl.col(score_col).is_finite()|pl.col(score_col).is_nan()))
+        return X_inffilled
 
-        df_inf_shape = df.shape[0]
+    def __deal_with_nan(self,
+        X:np.ndarray,
+        nanmargin:float=0.1,
+        verbose:int=None,
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to deal with `nan` values in df
+            - essentially will replace all `nan` with a value 0.5 lower than the minimum of the numerical columns in the dataframe
+            - necessary to avoid issues while plotting
 
-        if verbose > 0:
-            print(
-                f'INFO(ParallelCoordinates): Removed\n'
-                f'    {df_input_shape-df_inf_shape} row(s) where {score_col} evaluated to inf or -inf due to "score_scaling",\n'
-                # f'    {df_input_shape-df_inf_shape} row(s) total.\n'
-            )
-        # df = df.with_columns(
-        #     pl.when(pl.col(score_col).is_infinite())
-        #     .then(float("nan"))
-        #     .otherwise(pl.col(score_col))
-        #     .keep_name()
-        # )
+            Parameters
+            ----------
+                - `df`
+                    - pl.DataFrame
+                    - input dataframe that will be modified (`nan` will be filled)
 
-        return df
+            Raises
+            ------
+
+            Returns
+            -------
+                - `df`
+                    - pl.DataFrame
+                    - dataframe with the `nan` filled as 0.5 lower than the minimum of all numerical columns in the input `df`
+                - fill_value
+                    - float
+                    - the value used to fill the `nan`
+
+            Comments
+            --------
+        """
+
+        namask = np.isnan(X)            #check where nan were filled
+        idxs = np.where(np.isnan(X))
+
+        mins = np.nanmin(X, axis=0)
+        maxs = np.nanmax(X, axis=0)
+
+        fill_values = mins - (maxs - mins)*nanmargin  #fill with min - 10% of feature range (i.e., plot nan below everything else)
+
+        X_nafilled = X.copy()
+        X_nafilled[idxs] = np.take(fill_values, idxs[1])
+
+
+        return X_nafilled, namask
 
     def plot_(self,
         coordinates:Union[pl.DataFrame,List[dict],np.ndarray],
@@ -1371,7 +1138,7 @@ class ParallelCoordinates:
 
     def plot_line(self,
         line,
-        fill_value:float,
+        nabool:bool,
         ax:plt.Axes,
         cmap:mcolors.Colormap, nancolor:Tuple[str,tuple]='tab:grey',
         sleep=0,
@@ -1428,17 +1195,16 @@ class ParallelCoordinates:
         path = Path(verts, codes)
         
         #actually plot the line for current model (colomap according to cmap)
-        ##run without score
-        if line[-1] == fill_value:
+        ##runs with any missing values
+        if nabool:
             patch = mpatches.PathPatch(path, facecolor='none', edgecolor=nancolor, **pathpatch_kwargs)
+        ##completely valid runs
         else:
             patch = mpatches.PathPatch(path, facecolor='none', edgecolor=cmap(line[-1]), **pathpatch_kwargs)
+        
+        #add line to plot        
         ax.add_patch(patch)
 
-        # #cutoff at upper/lower boundary to have no values out of bounds due to the interpolation
-        # y_plot[(y_plot>1)] = 1
-        # y_plot[(y_plot<0)] = 0
-        
 
         time.sleep(sleep)
 
@@ -1472,13 +1238,28 @@ class ParallelCoordinates:
         #get colormap
         if isinstance(base_cmap, str): cmap = plt.get_cmap(base_cmap)
         else: cmap = base_cmap
-        # ##if any score evaluates to nan, generate a cmap accordingly
-        # if df.select(pl.col(score_col_use).is_nan().any()).item():
-        #     cmap = self.make_new_cmap(cmap=cmap, nancolor=nancolor, nanfrac=nanfrac)
+
+        #prepare data
+        ##deal with categorical (str) columns
+        X_plot, mappings, iscatbools = self.__deal_with_categorical(X)
+                
+        ##deal with inf
+        X_plot = self.__deal_with_inf(X_plot, infmargin=0.05, verbose=verbose)
+        ##deal with nan
+        X_plot, namask = self.__deal_with_nan(X_plot, nanmargin=0.1, verbose=verbose)
+
+        #get ranges (for rescaling and limit definition)
+        mins    = np.nanmin(X_plot, axis=0)
+        maxs    = np.nanmax(X_plot, axis=0)
+        nanmins = mins.copy()               #store minima for plotting nan
+        mins    -= (maxs - mins)*y_margin
+        maxs    += (maxs - mins)*y_margin
+     
+        ##scale to make features compatible
+        X_plot = ((X_plot - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
 
 
-
-        #creation of axis, labels etc.
+        #create axis, labels etc.
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111)
@@ -1486,48 +1267,58 @@ class ParallelCoordinates:
             fig = ax.get_figure()
 
         ##add coordinate axes (make separate list to work work with any subplot)
-        axs = [ax] + [ax.twinx() for idx in range(X.shape[1]-1)]
+        axs = [ax] + [ax.twinx() for idx in range(X_plot.shape[1]-1)]
 
-        
-        for idx, (axi, xi) in enumerate(zip(axs, X.T)):
-            axi.set_ylim(np.nanmin(xi), np.nanmax(xi))
+        ##format all axis
+        for idx, (axi, xi) in enumerate(zip(axs, X_plot.T)):
+            axi.set_ylim(mins[idx], maxs[idx])
             axi.spines['top'].set_visible(False)
             axi.spines['bottom'].set_visible(False)
             if idx > 0:
                 axi.spines['left'].set_visible(False)
                 axi.yaxis.set_ticks_position('right')
-                axi.spines['right'].set_position(('axes', idx / (X.shape[1]-1)))
+                axi.spines['right'].set_position(('axes', idx / (X_plot.shape[1]-1)))
+            if iscatbools[idx]:
+                axi.set_yticks(
+                    ticks=list(mappings[idx].values()),
+                    labels=list(mappings[idx].keys()),
+                )
+            if np.any(namask, axis=0)[idx]:
+                ylim = axi.get_ylim()   #store ylim to reset after new tick-assignment
+                #add tick for nan
+                axi.set_yticks(
+                    ticks= list(axi.get_yticks())+[nanmins[idx]],
+                    labels=list(axi.get_yticklabels())+['nan'],
+                )
+                #reassign ylim
+                axi.set_ylim(ylim)
 
-        ax.set_xlim(0, X.shape[1]-1)
-        ax.set_xticks(range(X.shape[1]))
+
+        ##correct labelling
+        ax.set_xlim(0, X_plot.shape[1]-1)
+        ax.set_xticks(range(X_plot.shape[1]))
         ax.set_xticklabels(coordnames, **set_xticklabels_kwargs)
         ax.tick_params(axis='x', which='major', pad=7)
         ax.spines['right'].set_visible(False)
         ax.xaxis.tick_top()
 
-        #actual plotting
-        ##TODO: Deal with nan
-        fill_value = -99
-        ##scale to make features compatible
-        mins = np.nanmin(X, axis=0)
-        maxs = np.nanmax(X, axis=0)
-        #TODO: y_margin
-        X_scaled = ((X - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
-        print(X_scaled.min(), X_scaled.max())
-        mins += y_margin * mins
-        maxs += y_margin * maxs
-        X_scaled = ((X - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
-        print(X_scaled.min(), X_scaled.max())
 
-        for idx, line in enumerate(X_scaled):
+        #actual plotting
+        ##plot lines
+        for idx, line in enumerate(X_plot):
             self.plot_line(
                 line,
-                fill_value=fill_value,
+                nabool=np.any(namask, axis=1)[idx],
                 ax=ax, cmap=cmap,
                 nancolor=nancolor,
                 pathpatch_kwargs=pathpatch_kwargs,
             )
 
+        ##plot score distribution
+        self.add_score_distribution(
+            X_plot,
+            nanfrac=nanfrac,
+        )
 
         axs = fig.axes
 
