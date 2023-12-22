@@ -533,6 +533,8 @@ class ParallelCoordinates:
     def __deal_with_categorical(self,
         X:np.ndarray,
         ):
+        #TODO: hole if entry alphabetically before nan
+
         X_num = X.T.copy()  #init numerical version of X
         mappings = []
         iscatbools = []
@@ -544,17 +546,32 @@ class ParallelCoordinates:
                 mappings.append(dict())
             #categorical
             except:
+                #denote that columns is categorical
                 iscatbools.append(True)
+
+                #get uniques and int-encoding
                 uniques, categorical = np.unique(xi, return_inverse=True)
+                
+                #convert to numerical
                 categorical = categorical.astype(np.float64)
+                
+                #int equivalent of 'nan'
                 nanidx = np.where(uniques=='nan')[0][0]
+                
+                #assign actual np.nan to 'nan' (to be colored correctly)
                 categorical[(categorical==nanidx)] = np.nan
+                
+                #store mapping (for axis lables)
                 mapping = {u:idx for idx, u in enumerate(uniques)}
+                mapping.pop('nan')  #remove duplicate label for 'nan'
                 mappings.append(mapping)
+
+                #assign numerical version of categorical column to `X`
                 X_num[idx] = categorical
         
+        #make sure shapes are correct again
         X_num = X_num.T.astype(np.float64)
-        
+
         return X_num, mappings, iscatbools
 
     def __deal_with_inf(self,
