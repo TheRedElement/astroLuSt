@@ -31,57 +31,6 @@ class ParallelCoordinates:
 
         Attributes
         ----------
-            - `show_idcol`
-                - bool, optional
-                - whether to show a column encoding the ID of a particular run/model
-                - only recommended if the number of models is not too large
-                - the default is `False`
-            - `interpkind`
-                - str, optional
-                - function to use for the interpolation between the different coordinates
-                - argument passed as `kind` to `scipy.interpolate.interp1d()`
-                - the default is `'quadratic'`
-            - `res`
-                - int, optional
-                - resolution of the interpolated line
-                    - i.e. the number of points used to plot each run/model
-                - the default is 1000
-            - `axpos_coord`
-                - tuple, int, optional
-                - position of where to place the axis containing the coordinate-plot
-                - specification following the matplotlib convention
-                    - will be passed to `fig.add_subplot()`
-                - the default is `None`
-                    - will use 121
-            - `axpos_hist`
-                - tuple, int, optional
-                - position of where to place the axis containing the histogram of scorings
-                - specification following the matplotlib convention
-                    - will be passed to `fig.add_subplot()`
-                - the default is `None`
-                    - will use 164
-            - `map_suffix`
-                - str, optional
-                - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
-                - only use if your column-names contain the parameter default (`'__map'`)
-                - the default is `'__map'`
-            - `ticks2display`
-                - int, optional
-                - number of ticks to show for numeric coordinates
-                - the default is 5
-            - `tickcolor`
-                - str, tuple, optional
-                - color to draw ticks and ticklabels in
-                - if a tuple is passed it has to be a RGBA-tuple
-                - the default is `'tab:grey'`
-            - `ticklabelrotation`
-                - float, optional
-                - rotation of the ticklabels
-                - the default is 45
-            - `tickformat`
-                - str, optional
-                - formatstring for the (numeric) ticklabels
-                - the default is `'%g'`
             - `nancolor`
                 - str, tuple, optional
                 - color to draw failed runs (evaluate to nan) in
@@ -94,38 +43,21 @@ class ParallelCoordinates:
                 - will also influence the number of bins/binsize used in the performance-histogram
                 - a value between 0 and 1
                 - the default is 4/256
-            - `linealpha`
-                - float, optional
-                - alpha value of the lines representing runs/models
-                - the default is 1
-            - `linewidth`
-                - float, optional
-                - linewidth of the lines representing runs/models
-                - the default is 1
             - `base_cmap`
                 - str, mcolors.Colormap
                 - colormap to map the scores onto
                 - some space will be allocated for `nan`, if nans shall be displayed as well
                 - the default is `'plasma'`
-            - `cbar_over_hist`
-                - bool, optional
-                - whether to plot a colorbar instead of the default performance-histogram
-                - the histogram also has a colorbar encoded
-                - the default is `False`
-            - `n_jobs`
-                - int, optional
-                - number of threads to use when plotting the runs/models
-                - use for large coordinate-plots
-                - argmument passed to `joblib.Parallel`
-                - the default is 1
-            - `n_jobs_addaxes`
-                - int, optional
-                - number of threads to use when plotting the axes for the different coordinates
-                - use if a lot coordinates shall be plotted
-                - argmument passed to `joblib.Parallel`
-                - it could be that that a `RuntimeError` occurs if too many threads try to add axes at the same time
-                    - this error should be caught with a try-except statement, but in case it something still goes wrong try setting `n_jobs_addaxes` to 1
-                - the default is 1
+            - `vmin`
+                - float, optional
+                - minimum value for the colormapping
+                - for evenly spaced colors choose 0
+                - the default is 0
+            - `vmax`
+                - float, optional
+                - maximum value for the colormapping
+                - for evenly spaced colors choose 1
+                - the default is 1            
             - `sleep`
                 - float, optional
                 - time to sleep after finishing each job in plotting runs/models and coordinate-axes
@@ -134,34 +66,26 @@ class ParallelCoordinates:
                 - int, optional
                 - verbosity level
                 - the default is 0
-            - `text_kwargs`
-                - dict, optional
-                - kwargs passed to `ax.text()`
-                    - affect the labels of the created subplots for each coordinate
-                - if the passed dict does not contain `'rotation'`, `'rotation':45` will be added
-                - the default is `None`
-                    - will be initialized with `{'rotation':45}`                
 
         Methods
         -------
             - `make_new_cmap()`
-            - `col2range01()`
-            - `plot_model()`
-            - `add_coordaxes()`
-            - `add_score_distribution()`
-            - `__init_scorecol()`
-            - `__deal_with_nan()`
+            - `rescale2range()`
+            - `symlog()`
+            - `__deal_with_categorical()`
             - `__deal_with_inf()`
+            - `__deal_with_nan()`
+            - `__set_xscale_dist()`
+            - `create_axes()`
+            - `plot_line()`
+            - `plot_score_distribution()`
             - `plot()`
 
         Dependencies
         ------------
-            - joblib
             - matplotlib
             - numpy
-            - polars
             - re
-            - scipy
             - time
             - typing
 
@@ -191,19 +115,16 @@ class ParallelCoordinates:
     def __repr__(self) -> str:
 
         return (
-            f'ParallelCoordinates(\n'
-            f'    interpkind={repr(self.interpkind)},\n'
-            f'    res={repr(self.res)},\n'
-            f'    axpos_coord={repr(self.axpos_coord)}, axpos_hist={repr(self.axpos_hist)},\n'
-            f'    map_suffix={repr(self.map_suffix)},\n'
-            f'    ticks2display={repr(self.ticks2display)}, tickcolor={repr(self.tickcolor)}, ticklabelrotation={repr(self.ticklabelrotation)}, tickformat={repr(self.tickformat)},\n'
+            f'{self.__class__.__name__}(\n'
             f'    nancolor={repr(self.nancolor)}, nanfrac={repr(self.nanfrac)},\n'
-            f'    linealpha={repr(self.linealpha)}, linewidth={repr(self.linewidth)},\n'
-            f'    base_cmap={repr(self.base_cmap)}, cmap_over_hist={repr(self.cbar_over_hist)},\n'
-            f'    n_jobs={repr(self.n_jobs)}, n_jobs_addaxes={repr(self.n_jobs_addaxes)}, sleep={repr(self.sleep)},\n'
+            f'    base_cmap={repr(self.base_cmap)}, vmin={repr(self.vmin)}, vmin={repr(self.vmax)},\n'
+            f'    sleep={repr(self.sleep)},\n'
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
+    
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def make_new_cmap(self,
         cmap:mcolors.Colormap,
@@ -212,7 +133,7 @@ class ParallelCoordinates:
         ) -> mcolors.Colormap:
         """
             - method to generate a colormap allocating some space for nan-values
-            - nan-values are represented by some fill-value
+            - nan-values are represented by the lowest values
 
             Parameters
             ----------
@@ -221,16 +142,16 @@ class ParallelCoordinates:
                     - template-colormap to use for the creation
                 - `nancolor`
                     - str, tuple, optional
-                    - color to draw values representing nan in
+                    - color to draw values representing `nan` in
                     - if a tuple is passed it has to be a RGBA-tuple
                     - the default is `'tab:grey'`
                 - `nanfrac`
                     - float, optional
-                    - the fraction of the colormap to use for `nan`-values (i.e. failed runs)
+                    - the fraction of the colormap to use for `nan`-values (i.e., failed runs)
                         - fraction of 256 (resolution of the colormap)
                     - will also influence the number of bins/binsize used in the performance-histogram
                     - a value between 0 and 1
-                    - the default is 4/256
+                    - the default is `4/256`
 
             Raises
             ------
@@ -254,29 +175,54 @@ class ParallelCoordinates:
 
     def rescale2range(self,
         X:np.ndarray,
-        min_in:Union[float,np.ndarray], max_in:Union[float,np.ndarray],
+        min_in:Union[float,np.ndarray]=None, max_in:Union[float,np.ndarray]=None,
         min_out:float=0, max_out:float=1,
         verbose:int=None,
         ) -> np.ndarray:
         """
-            - method to map any column onto the interval `[0,1]`
-            - a unique value for every unique element in categorical columns will be assigned to them
-            - continuous columns will just be scaled to lie within the range
+            - method to map an input array to a custom parameter range
 
             Parameters
-            ----------`
+            ----------
+                - `X`
+                    - np.ndarray
+                    - array to be rescaled
+                - `min_in`
+                    - float, np.ndarray, optional
+                    - reference value for the minimum of the input-range
+                    - the default is `None`
+                        - will be set to `np.nanmin(X)`
+                - `max_in`
+                    - float, np.ndarray, optional
+                    - reference value for the maximum of the input-range
+                    - the default is `None`
+                        - will be set to `np.nanmax(X)`
+                - `min_out`
+                    - float, optional
+                    - minimum value for the wished output range
+                    - the default is 0
+                - `max_out`
+                    - float, optional
+                    - maximum value for the wished output range
+                    - the default is 1
 
             Raises
             ------
 
             Returns
             -------
+                - `X_scaled`
+                    - np.ndarray
+                    - same shape as `X`
+                    - scaled version of `X`
 
             Comments
             --------
         """
-          
+  
         #default parameters
+        if min_in is None:  min_in  = np.nanmin(X)
+        if max_in is None:  max_in  = np.nanmax(X)
         if verbose is None: verbose = self.verbose
 
         #rescale
@@ -287,7 +233,29 @@ class ParallelCoordinates:
 
     def symlog(self,
         x:np.ndarray
-        ):
+        ) -> np.ndarray:
+        """
+            - method implementing a symmetric logarithm similar to `matplotlib` y-scale `'symlog'`
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - array to be mapped to the symmetric log function
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `out`
+                    - np.ndarray
+                    - `x` after application of the symmetric log function
+
+            Comments
+            --------
+
+        """
 
         out = np.sign(x) * np.log1p(np.abs(x))
 
@@ -703,7 +671,6 @@ class ParallelCoordinates:
         
         return
  
-
     def plot(self,
         X:np.ndarray,
         coordnames:list=None,
