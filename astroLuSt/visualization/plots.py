@@ -4,6 +4,7 @@
 #TODO: Customization
 #TODO: Parallelization
 #TODO: Streamlining of code
+#TODO: Remove unnecessary attr and params
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -416,103 +417,7 @@ class ParallelCoordinates:
         time.sleep(sleep)
 
         return axp
-
-    def add_score_distribution(self,
-        score_col_map:pl.Series,
-        nanfrac:float=4/256,
-        lab:str=None, ticklabcolor:Union[str,tuple]='tab:grey',
-        cmap:Union[mcolors.Colormap,str]='plasma',
-        fig:Figure=None, axpos:Union[tuple,int]=None,
-        ) -> None:
-        """
-            - method to add a distribution of scores into the figure
-            - the distribution will be colorcoded to matcht he colormapping of the different runs/models
-
-            Parameters
-            ----------
-                - `score_col_map`
-                    - pl.Series
-                    - series containing some score mapped onto the interval [0,1]
-                - `nanfrac`
-                    - float, optional
-                    - the fraction of the colormap to use for `nan`-values (i.e. failed runs)
-                        - fraction of 256 (resolution of the colormap)
-                    - will also influence the number of bins/binsize used in the performance-histogram
-                    - a value between 0 and 1
-                    - the default is 4/256
-                - `lab`
-                    - str, optional
-                    - label to use for the y-axis of the plot
-                    - the default is `None`
-                - `ticklabcolor`
-                    - str, tuple, optional
-                    - color to draw ticks, ticklabels and axis labels in
-                    - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is `'tab:grey'`
-                - `cmap`
-                    - mcolor.Colormap, str
-                    - colormap to apply to the plot for encoding the score
-                    - the default is `'plasma'`
-                - `fig`
-                    - Figure, optional
-                    - figure to plot into
-                    - the default is `None`
-                        - will create a new figure
-                - `axpos`
-                    - tuplple, int
-                    - axis position in standard matplotlib convention
-                    - will be passed to `fig.add_subplot()`
-                    - the default is `None`
-                        - will use 111
-                
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-        """
-        
-        if fig is None: fig = plt.figure()
-        if axpos is None: axpos = 111
-
-        #initialize new axis
-        if isinstance(axpos, (int, float)):
-            ax = fig.add_subplot(int(axpos))
-        else:
-            ax = fig.add_subplot(*axpos)
-        ax.set_zorder(0)
-        ax.set_ymargin(0)
-
-        #adjust bins to colorbar
-        bins = np.linspace(score_col_map.min().item(), score_col_map.max().item(), int(1//nanfrac))
-
-        #get colors for bins
-        if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
-        colors = cmap(bins)
-        
-        #get histogram
-        hist, bin_edges = np.histogram(score_col_map, bins)
-
-        #plot and colormap hostogram
-        ax.barh(bin_edges[:-1], hist, height=nanfrac, color=colors)
-        ax.set_xscale('symlog')
-
-        #labelling
-        ax.set_ylabel(lab, rotation=270, labelpad=15, va='bottom', ha='center', color=ticklabcolor)
-        ax.yaxis.set_label_position("right")
-        
-        ax.tick_params(axis='x', colors=ticklabcolor)
-        ax.spines[['top', 'left', 'right']].set_visible(False)
-        ax.spines['bottom'].set_color(ticklabcolor)
-        ax.set_yticks([])
-        ax.set_xlabel('Counts', color=ticklabcolor)
-        
-
-        return
-    
+ 
     def __deal_with_categorical(self,
         X:np.ndarray,
         ):
@@ -669,501 +574,6 @@ class ParallelCoordinates:
 
         return x
     
-
-    def plot_(self,
-        coordinates:Union[pl.DataFrame,List[dict],np.ndarray],
-        id_col:Union[str,int]=None,
-        score_col:Union[str,int]=None,
-        coords_cols:Union[str,list]=r'^.*$',
-        min_score:float=None, max_score:float=None, remove_nanscore:bool=False,
-        score_scaling:str='pl.col(score_col)',
-        show_idcol:bool=None,
-        interpkind:str=None,
-        res:int=None,
-        axpos_coord:tuple=None, axpos_hist:tuple=None,
-        ticks2display:int=None, tickcolor:Union[str,tuple]=None, ticklabelrotation:float=None, tickformat:str=None,
-        coordinate_labs:list=None,
-        nancolor:Union[str,tuple]=None, nanfrac:float=None,
-        linealpha:float=None, linewidth:float=None,
-        base_cmap:Union[str,mcolors.Colormap]=None, cbar_over_hist:bool=None,
-        n_jobs:int=None, n_jobs_addaxes:int=None, sleep:float=None,
-        map_suffix:str=None,
-        save:Union[str,bool]=False,
-        max_nretries:int=4,
-        verbose:int=None,
-        text_kwargs:dict=None, fig_kwargs:dict=None, save_kwargs:dict=None
-        ) -> Tuple[Figure, plt.Axes]:
-        """
-            - method to create a coordinate plot
-
-            Parameters
-            ----------
-                - `coordinates`
-                    - pl.DataFrame, list(dict), np.ndarray
-                    - structure contianing the coordinates to plot
-                        - rows denote different runs/models
-                        - columns different coordinates
-                    - the structure should (but does not have to) contain
-                        - an id column used for identification
-                        - a score column used for rating different runs/models
-                    - will call `pl.DataFrame(coordinates)` if anything else than a pl.DataFrame is passed
-                        - if a np.ndarray is passed, make sure that the dtype is NOT `object`
-                - `id_col`
-                    - str, int optional
-                    - name of the column to use as an ID
-                    - if str
-                        - will be interpreted as the column name
-                    - if int
-                        - will be interpreted as index of column
-                    - the default is `None`
-                        - will generate an id column by assigning a unique integer to each row
-                - `score_col`
-                    - str, int, optional
-                    - if str
-                        - name of the column used for scoring the different runs/models
-                    - if int
-                        - index of the column used for scoring in the different runs/models                    
-                    - the default is `None`
-                        - no scoring will be used
-                        - a dummy column consisting of zeros will be added to `df`
-                - `coords_cols`
-                    - str, list
-                    - expression or list specifying the columns in `df` to use as coordinates
-                    - the default is `'^.*$'`
-                        - will select all columns
-                - `min_score`
-                    - float, optional
-                    - minimum score to plot
-                    - everything below will be dropped from `df`
-                    - the default is `None`
-                        - will be set to `-np.inf`
-                - `max_score`
-                    - float, optional
-                    - maximum score to plot
-                    - everything above will be dropped from `df`
-                    - the default is `None`
-                        - will be set to `np.inf`
-                - `remove_nanscore`
-                    - bool, optional
-                    - whether to drop all rows that have a score evaluating to `np.nan`
-                    - the default is `False`
-                - `score_scaling`
-                    - str, optional
-                    - str representing a polars expression
-                    - will be applied to `score_col` to scale it
-                        - might be useful for better visualization
-                    - some useful examples
-                        - `'np.log10(pl.col(score_col))'`
-                            - logarithmic score
-                        - `'np.abs(pl.col(score_col))'`
-                            - absolute score
-                        - `'pl.col(score_col)**2'`
-                            - squared score
-                    - the default is `'pl.col(score_col)'`
-                        - i.e. no modification
-                - `show_idcol`
-                    - bool, optional
-                    - whether to show a column encoding the ID of a particular run/model
-                    - only recommended if the number of models is not too large
-                    - overwrites `self.show_idcol`
-                    - the default is `None`
-                        - will default to `self.show_idcol`
-                - `interpkind`
-                    - str, optional
-                    - function to use for the interpolation between the different coordinates
-                    - argument passed as `kind` to `scipy.interpolate.interp1d()`
-                    - overwrites `self.interpkind`
-                    - the default is `None`
-                        - will default to `self.interpkind`
-                - `res`
-                    - int, optional
-                    - resolution of the interpolated line
-                        - i.e. the number of points used to plot each run/model
-                    - overwrites `self.res`
-                    - the default is `None`
-                        - defaults to `self.res`
-                - `axpos_coord`
-                    - tuple, int, optional
-                    - position of where to place the axis containing the coordinate-plot
-                    - specification following the matplotlib convention
-                        - will be passed to `fig.add_subplot()`
-                    - overwrites `self.axpos_coord`
-                    - the default is `None`
-                        - defaults to `self.axpos_coord`
-                - `axpos_hist`
-                    - tuple, int, optional
-                    - position of where to place the axis containing the histogram of scorings
-                    - specification following the matplotlib convention
-                        - will be passed to `fig.add_subplot()`
-                    - overwrites `self.axpos_hist`
-                    - the default is `None`
-                        - defaults to `self.axpos_hist`
-                - `ticks2display`
-                    - int, optional
-                    - number of ticks to show for numeric coordinates
-                    - overwrites `self.ticks2display`
-                    - the default is `None`
-                        - defaults to `self.ticks2display`
-                - `tickcolor`
-                    - str, tuple, optional
-                    - color to draw ticks and ticklabels in
-                    - if a tuple is passed it has to be a RGBA-tuple
-                    - overwrites `self.tickcolor`
-                    - the default is `None`
-                        - defaults to `self.tickcolor`
-                - `ticklabelrotation`
-                    - float, optional
-                    - rotation of the ticklabels
-                    - overwrites `self.ticklabelrotation`
-                    - the default is `None`
-                        - defaults to `self.ticklabelrotation`
-                - `tickformat`
-                    - str, optional
-                    - formatstring for the (numeric) ticklabels
-                    - overwrites `self.tickformat`
-                    - the default is `None`
-                        - defaults to `self.tickformat`
-                - `coordinate_labs`
-                    - list, optional
-                    - list of labels to plot above each coordinate
-                    - has to have at least as many entries as coordinates to plot + 1
-                        - because of the score-column
-                    - the default is `None`
-                        - will autogenerate the labels
-                - `nancolor`
-                    - str, tuple, optional
-                    - color to draw failed runs (evaluate to nan) in
-                    - if a tuple is passed it has to be a RGBA-tuple
-                    - overwrites `self.nancolor`
-                    - the default is `None`
-                        - defaults to `self.nancolor`
-                - `nanfrac`
-                    - float, optional
-                    - the fraction of the colormap to use for nan-values (i.e. failed runs)
-                        - fraction of 256 (resolution of the colormap)
-                    - will also influence the number of bins/binsize used in the performance-histogram
-                    - a value between 0 and 1
-                    - overwrites `self.nanfrac`
-                    - the default is `None`
-                        - defaults to `self.nanfrac`
-                - `linealpha`
-                    - float, optional
-                    - alpha value of the lines representing runs/models
-                    - overwrites `self.linealpha`
-                    - the default is `None`
-                        - defaults to `self.linealpha`
-                - `linewidth`
-                    - float, optional
-                    - linewidth of the lines representing runs/models
-                    - overwrites `self.linewidth`
-                    - the default is `None`
-                        - defaults to `self.linewidth`
-                - `base_cmap`
-                    - str, mcolors.Colormap
-                    - colormap to map the scores onto
-                    - some space will be allocated for nan, if nans shall be displayed as well
-                    - overwrites `self.base_cmap`
-                    - the default is `None`
-                        - defaults to `self.base_cmap`
-                - `cbar_over_hist`
-                    - bool, optional
-                    - whether to plot a colorbar instead of the default performance-histogram
-                    - the histogram also has a colorbar encoded
-                    - overwrites self.cbar_over_hist
-                    - the default is None
-                        - defaults to self.cbar_over_hist
-                - `n_jobs`
-                    - int, optional
-                    - number of threads to use when plotting the runs/modes
-                    - use for large coordinate-plots
-                    - argmument passed to `joblib.Parallel`
-                    - overwrites `self.n_jobs`
-                    - the default is `None`
-                        - defaults to `self.n_jobs`
-                - `n_jobs_addaxes`
-                    - int, optional
-                    - number of threads to use when plotting the axes for the different coordinates
-                    - use if a lot coordinates shall be plotted
-                    - argmument passed to `joblib.Parallel`
-                    - it could be that that a `RuntimeError` occurs if too many threads try to add axes at the same time
-                        - this error should be caught with a `try ... except` statement, but in case it something still goes wrong try setting `n_jobs_addaxes` to 1
-                    - overwrites `self.n_jobs_addaxes`
-                    - the default is `None`
-                        - defaults to `self.n_jobs_addaxes`
-                - `sleep`
-                    - float, optional
-                    - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - overwrites `self.sleep`
-                    - the default is `None`
-                        - defaults to `self.sleep`
-                - `map_suffix`
-                    - str, optional
-                    - suffix to add to the columns created by mapping the coordinates onto the intervals [0,1]
-                    - only use if your column-names contain the default (`'__map'`)
-                    - overwrites `self.map_suffix`
-                    - the default is `None`
-                        - defaults to `self.map_suffix`
-                - `save`
-                    - str, optional
-                    - filename to save the plot to
-                    - the default is `False`
-                        - will not save the plot
-                - `max_nretries`
-                    - int, optional
-                    - maximum number of retries in case a `RuntimeError` occurs during parallelized plotting
-                    - only relevant if `n_jobs` or `n_jobs_addaxes` is greater than 1 or -1
-                    - the default is 4
-                - `verbose`
-                    - int, optional
-                    - verbosity level
-                    - overwrites `self.verbose`
-                    - the default is `None`
-                        - defaults to `self.verbose`
-                - `text_kwargs`
-                    - dict, optional
-                    - kwargs passed to `ax.text()`
-                        - affect the labels of the created subplots for each coordinate
-                    - overwrites `self.text_kwargs`
-                    - the default is `None`
-                        - defaults to `self.text_kwargs`
-                - `fig_kwargs`
-                    - dict, optional
-                    - kwargs to pass to `plt.figure()`
-                    - the default is `None`
-                        - will not pass any additional arguments
-                - `save_kwargs`
-                    - dict, optional
-                    - kwargs to pass to `plt.savefig()`
-                    - the default is `None`
-                        - will not pass any additional arguments
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `fig`
-                    - matplotlib Figure
-                    - created figure
-                - `axs`
-                    - plt.Axes
-                    - axes corresponding to `fig`
-
-            Comments
-            --------
-        """
-
-        #initialize
-        if show_idcol is None:          show_idcol          = self.show_idcol
-        if interpkind is None:          interpkind          = self.interpkind
-        if res is None:                 res                 = self.res
-        if axpos_coord is None:         axpos_coord         = self.axpos_coord
-        if axpos_hist is None:          axpos_hist          = self.axpos_hist
-        if ticks2display is None:       ticks2display       = self.ticks2display
-        if tickcolor is None:           tickcolor           = self.tickcolor
-        if ticklabelrotation is None:   ticklabelrotation   = self.ticklabelrotation
-        if tickformat is None:          tickformat          = self.tickformat
-        if nancolor is None:            nancolor            = self.nancolor
-        if nanfrac is None:             nanfrac             = self.nanfrac
-        if linealpha is None:           linealpha           = self.linealpha
-        if linewidth is None:           linewidth           = self.linewidth
-        if base_cmap is None:           base_cmap           = self.base_cmap
-        if cbar_over_hist is None:      cbar_over_hist      = self.cbar_over_hist
-        if n_jobs is None:              n_jobs              = self.n_jobs
-        if sleep is None:               sleep               = self.sleep
-        if map_suffix is None:          map_suffix          = self.map_suffix
-        if n_jobs_addaxes is None:      n_jobs_addaxes      = self.n_jobs_addaxes
-        if verbose is None:             verbose             = self.verbose
-        if text_kwargs is None:         text_kwargs         = self.text_kwargs
-
-        if min_score is None: min_score = -np.inf
-        if max_score is None: max_score =  np.inf
-        
-
-        if fig_kwargs is None:  fig_kwargs  = {}
-        if save_kwargs is None: save_kwargs = {}
-
-
-        #convert grid to polars DataFrame
-        if isinstance(coordinates, pl.DataFrame):
-            df = coordinates
-        else:
-            df = pl.DataFrame(coordinates)
-
-        
-        #initialize idcol correctly
-        ##generate id if None has been passed
-        if id_col is None:
-            id_col = 'id'
-            df = df.insert_at_idx(0, pl.Series(id_col, np.arange(0, df.shape[0], 1, dtype=np.int64)))
-        ##obtain string corresponding to the passed index
-        elif isinstance(id_col, int):
-            id_col = df.columns[id_col]
-
-        #initialize score column
-        df, score_col_use = self.__init_scorecol(
-            df=df,
-            score_col=score_col, score_scaling=score_scaling,
-            min_score=min_score, max_score=max_score,
-            remove_nanscore=remove_nanscore,
-            verbose=verbose
-        )
-        
-        #get colormap
-        if isinstance(base_cmap, str): cmap = plt.get_cmap(base_cmap)
-        else: cmap = base_cmap
-        ##if any score evaluates to nan, generate a cmap accordingly
-        if df.select(pl.col(score_col_use).is_nan().any()).item():
-            cmap = self.make_new_cmap(cmap=cmap, nancolor=nancolor, nanfrac=nanfrac)
-
-        #extract model-names, parameter-columns, ...
-        ids = df.select(pl.col(id_col))
-        scores = df.select(pl.col(score_col_use))
-        df = df.drop(id_col)                 #in case idcol is part of the searched parameters
-        df = df.drop(score_col_use)          #in case score_col_use is part of the coords_cols
-        df = df.select(pl.col(coords_cols))
-        
-        #if desired also show the individual model-ids
-        if show_idcol: df.insert_at_idx(0,  ids.to_series())
-        #only display score, if score_col is provided
-        if score_col is not None:
-            df.insert_at_idx(df.shape[1], scores.to_series())
-            #deal with inifinite values in score_col_use only if a score_col got passed
-            df = self.__deal_with_inf(df, score_col_use, verbose=verbose)
-                
-        #deal with missing values
-        df, fill_value = self.__deal_withnan(df)
-
-        #coordinates
-        coords = df.columns
-        coords_map = [c+map_suffix for c in df.columns]
-        n_coords = len(coords)-1
-
-        #convert categorical columns to unique integers for plotting - ensures that each coordinate lies within range(0,1)
-        df = df.fill_null('None') #replace None with 'None' because otherwise mapping does not work        
-        for c in df.columns:
-            df = self.col2range01(df=df, colname=c, map_suffix=map_suffix)
-            
-        #################
-        #actual plotting#
-        #################
-
-        #temporarily disable tight-layout if enabled by default
-        plt.rcParams['figure.autolayout'] = False
-
-        fig = plt.figure(**fig_kwargs)
-        
-        #axis used for plotting models
-        if isinstance(axpos_coord, (int, float)):
-            ax1 = fig.add_subplot(int(axpos_coord))
-        else:
-            ax1 = fig.add_subplot(*axpos_coord)
-        
-        #no space between figure edge and plot
-        ax1.set_xmargin(0)
-        ax1.set_ymargin(0)
-
-        #hide all spines ticks ect. of ax1, because custom axis showing correct ticks will be generated
-        ax1.spines[['top', 'bottom', 'left', 'right']].set_visible(False)
-        ax1.set_yticks([])
-        
-        #iterate over all rows in the dataframe (i.e. all fitted models) and plot a line for every model
-        ##try except to retry if a RuntimeError occured
-        map_cols = df.select(pl.col(r'^*%s$'%map_suffix)).columns
-        e = True
-        nretries = 0
-        while e and nretries < max_nretries:
-            try:
-                Parallel(n_jobs, verbose=verbose, prefer='threads')(
-                    delayed(self.plot_model)(
-                        coordinates=row, coordinates_map=row_map,
-                        fill_value=fill_value,
-                        ax=ax1,
-                        cmap=cmap, nancolor=nancolor,
-                        interpkind=interpkind, res=res,
-                        linealpha=linealpha, linewidth=linewidth,
-                        sleep=sleep,
-                    ) for idx, (row_map, row) in enumerate(zip(df.select(map_cols).iter_rows(), df.drop(map_cols).iter_rows()))
-                )
-                e = False
-            except RuntimeError as err:
-                e = True
-                nretries += 1
-                if verbose > 0:
-                   print(
-                        f'INFO(WB_HypsearchPlot.plot_model()):\n'
-                        f'    The following error occured while plotting the models: {err}.\n'
-                        f'    Retrying to plot. Number of elapsed retries: {nretries}.'
-                    )
-
-        #generate score label from score_scaling expression
-        score_lab = re.sub(r'pl\.col\(score\_col\)', score_col_use, score_scaling)
-        score_lab = re.sub(r'(np|pl|pd)\.', '', score_lab)
-
-        #plot one additional y-axis for every single coordinate
-        ##try except to retry if a RuntimeError occured
-        if coordinate_labs is None: coordinate_labs = [None]*(len(coords)-1) + [score_lab]
-        e = True
-        nretries = 0
-        while e and nretries < max_nretries:
-            try:
-                axps = Parallel(n_jobs=n_jobs_addaxes, verbose=verbose, prefer='threads')(
-                    delayed(self.add_coordax)(
-                        ax=ax1,
-                        coordinate=coordinate, coordinate_map=coordinate_map,
-                        fill_value=fill_value,
-                        idx=idx, n_coords=n_coords,
-                        ticks2display=ticks2display, tickcolor=tickcolor, ticklabelrotation=ticklabelrotation, tickformat=tickformat,
-                        lab=clab,
-                        sleep=sleep,
-                        text_kwargs=text_kwargs,
-                    ) for idx, (coordinate, coordinate_map, clab) in enumerate(zip(df.select(pl.col(coords)), df.select(pl.col(coords_map)), coordinate_labs))
-                )
-                e = False
-            except RuntimeError as err:
-                e = True
-                nretries += 1
-                if verbose > 0:
-                    print(
-                        f'INFO(WB_HypsearchPlot.add_coordaxes()):\n'
-                        f'    The following error occured while plotting the models: {err}.\n'
-                        f'    Retrying to plot. Number of elapsed retries: {nretries}.'
-                    )
-        
-        #if a score column has been passed use it
-        if score_col is not None:
-            #add colorbar
-            if cbar_over_hist:
-                norm = mcolors.Normalize(vmin=df.select(pl.col(score_col_use)).min(), vmax=df.select(pl.col(score_col)).max())
-                cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ax=axps[-1], pad=0.0005, drawedges=False, anchor=(0,0))
-                cbar.outline.set_visible(False) #hide colorbar outline
-                cbar.set_label(score_lab, color=tickcolor)
-
-
-                cbar.ax.set_zorder(0)
-                cbar.ax.set_yticks([])  #use ticks from last subplot
-
-            #generate a histogram including the colorbar
-            else:
-                self.add_score_distribution(
-                    score_col_map=df.select(pl.col(score_col_use+map_suffix)),
-                    nanfrac=nanfrac,
-                    lab=score_lab, ticklabcolor=tickcolor,
-                    cmap=cmap,
-                    fig=fig, axpos=axpos_hist,
-                )
-                plt.subplots_adjust(wspace=0) #will move around colorbar if applied there
-        
-        if isinstance(save, str): plt.savefig(save, bbox_inches='tight', **save_kwargs)
-        # plt.tight_layout()    #moves cbar around
-
-        axs = fig.axes
-
-        plt.rcParams['figure.autolayout'] = True
-
-
-        return fig, axs
-
     def plot_line(self,
         line,
         nabool:bool,
@@ -1319,7 +729,7 @@ class ParallelCoordinates:
         #rescale to (range(0,1) to fit in axis)
         hist = hist/hist.max()      #rescale to fit into axis
 
-        #adapt xtics to match scaled display of data
+        #adapt xticks to match scaled display of data
         xticks = np.linspace(0,1,3)
         xticks = self.__set_xscale_dist(xticks, xscale_dist=xscale_dist)
         ax.set_xticks(xticks)
@@ -1328,24 +738,8 @@ class ParallelCoordinates:
 
         #plot and colormap hostogram
         binheight = nanfrac*(X.max()-X.min())    #rescale binheight to match axis limits
-        # ax.barh(bin_edges[:-1], hist, height=binheight, left=X.shape[1]-1, color=colors)
         ax.barh(bin_edges[:-1], hist, height=binheight, left=None, color=colors)
         
-
-        # ax.set_xscale('symlog')
-        # ax.set_ylim(bin_edges.min(), bin_edges.max())
-
-        # #labelling
-        # ax.set_ylabel(lab, rotation=270, labelpad=15, va='bottom', ha='center', color=ticklabcolor)
-        # ax.yaxis.set_label_position("right")
-        
-        # ax.tick_params(axis='x', colors=ticklabcolor)
-        # ax.spines[['top', 'left', 'right']].set_visible(False)
-        # ax.spines['bottom'].set_color(ticklabcolor)
-        # ax.set_yticks([])
-        # ax.set_xlabel('Counts', color=ticklabcolor)
-        
-
         return
  
 
@@ -1363,7 +757,24 @@ class ParallelCoordinates:
         pathpatch_kwargs:dict=None,
         set_xticklabels_dist_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
+        """
+            Parameters
+            ----------
 
+            Raises
+            ------
+
+            Returns
+            ------
+                - `fig`
+                - `axs`
+                    - plt.Axes
+                    - the newly created axes
+            
+            Comments
+            --------
+        
+        """
         
 
         #default parameters
@@ -1447,7 +858,10 @@ class ParallelCoordinates:
         axd.spines['bottom'].set_visible(False)
         axd.spines['right'].set_visible(False)
         axd.spines['left'].set_visible(False)
-        axd.set_ylabel('Score Distribution')
+        axd.xaxis.set_label_position('bottom')
+        axd.set_xlabel('Counts', loc='right')
+        # axd.yaxis.set_label_position('right')
+        # axd.set_ylabel('Score Distribution', loc='center')
 
         ##correct labelling
         ax.set_xlim(0, X_plot.shape[1])
@@ -1456,6 +870,7 @@ class ParallelCoordinates:
         ax.tick_params(axis='x', which='major', pad=7)
         ax.spines['right'].set_visible(False)
         ax.xaxis.tick_top()
+
 
         #make sure labels of last coordinate are not covered by distribution (axd)
         axs[-1].set_zorder(1)
@@ -1485,7 +900,6 @@ class ParallelCoordinates:
             set_xticklabels_dist_kwargs=set_xticklabels_dist_kwargs,
         )
 
-        axs = fig.axes
 
         return fig, axs
 
