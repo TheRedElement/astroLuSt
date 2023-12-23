@@ -172,7 +172,7 @@ class ParallelCoordinates:
 
     def __init__(self,
         nancolor:Union[str,tuple]='tab:grey', nanfrac:float=4/256,
-        base_cmap:Union[str,mcolors.Colormap]='plasma',
+        base_cmap:Union[str,mcolors.Colormap]='plasma', vmin:float=0, vmax:float=0,
         sleep:float=0.1,
         verbose:int=0,
         ) -> None:
@@ -181,6 +181,8 @@ class ParallelCoordinates:
         self.nancolor           = nancolor
         self.nanfrac            = nanfrac
         self.base_cmap          = base_cmap
+        self.vmin               = vmin
+        self.vmax               = vmax
         self.sleep              = sleep
         self.verbose            = verbose
         
@@ -608,7 +610,7 @@ class ParallelCoordinates:
         ax:plt.Axes,
         nanfrac:float=4/256,
         xscale_dist:Literal['symlog', 'linear']=None,
-        cmap:Union[mcolors.Colormap,str]='plasma',
+        cmap:Union[mcolors.Colormap,str]='plasma', vmin:float=None, vmax:float=None,
         verbose:int=None,
         set_xticklabels_dist_kwargs:dict=None,
         ) -> None:
@@ -664,6 +666,8 @@ class ParallelCoordinates:
         """
         
         #default parameter
+        if vmin is None:                        vmin                        = self.vmin
+        if vmax is None:                        vmax                        = self.vmax
         if verbose is None:                     verbose                     = self.verbose
         if xscale_dist is None:                 xscale_dist                 = 'linear'
         if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict(rotatoin=45)
@@ -671,7 +675,7 @@ class ParallelCoordinates:
         
         #adjust bins to colorbar
         bins = np.linspace(X[:,-1].min(), X[:,-1].max(), int(1//nanfrac))
-        bins01 = self.rescale2range(bins, bins.min(), bins.max(), 0, 1, verbose=verbose)
+        bins01 = self.rescale2range(bins, bins.min(), bins.max(), vmin, vmax, verbose=verbose)
 
         #get colors for bins
         if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
@@ -704,7 +708,7 @@ class ParallelCoordinates:
         X:np.ndarray,
         coordnames:list=None,
         nancolor=None, nanfrac=None,
-        base_cmap=None,
+        base_cmap=None, vmin:float=None, vmax:float=None,
         y_margin:float=0.2,
         xscale_dist:Literal['symlog', 'linear']=None,
         ax:plt.Axes=None,
@@ -739,6 +743,8 @@ class ParallelCoordinates:
         if nancolor is None:                    nancolor                    = self.nancolor
         if nanfrac is None:                     nanfrac                     = self.nanfrac
         if base_cmap is None:                   base_cmap                   = self.base_cmap
+        if vmin is None:                        vmin                        = self.vmin
+        if vmax is None:                        vmax                        = self.vmax
         if xscale_dist is None:                 xscale_dist                 = 'linear'
         if sleep is None:                       sleep                       = self.sleep
         if verbose is None:                     verbose                     = self.verbose
@@ -808,7 +814,7 @@ class ParallelCoordinates:
 
         #actual plotting
         ##plot lines
-        norm_scores = self.rescale2range(X_plot[:,-1], X_plot[:,-1].min(), X_plot[:,-1].max(), 0, 1, verbose=verbose)   #normalize scores
+        norm_scores = self.rescale2range(X_plot[:,-1], X_plot[:,-1].min(), X_plot[:,-1].max(), vmin, vmax, verbose=verbose)   #normalize scores
         linecolors = cmap(norm_scores)  #get line colors from normalized scores
         for idx, line in enumerate(X_plot):
             self.plot_line(
@@ -827,7 +833,7 @@ class ParallelCoordinates:
             ax=axd,
             nanfrac=nanfrac,
             xscale_dist=xscale_dist,
-            cmap=cmap,
+            cmap=cmap, vmin=vmin, vmax=vmax,
             verbose=verbose,
             set_xticklabels_dist_kwargs=set_xticklabels_dist_kwargs,
         )
