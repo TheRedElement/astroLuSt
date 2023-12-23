@@ -1,8 +1,8 @@
-#TODO: make PC work with exclusively numpy (https://stackoverflow.com/questions/8230638/parallel-coordinates-plot-in-matplotlib)
+#TODO: Demo of plotting right into axis
+#TODO: axis (lineplot) creation to separate function -> allows for usage of only parts
 #TODO: gap in categorical if 'nan' alphabetically after something else
 #TODO: Documentation
-#TODO: Customization
-#TODO: Parallelization
+#TODO: Customization options
 #TODO: Streamlining of code
 #TODO: Remove unnecessary attr and params
 
@@ -186,7 +186,7 @@ class ParallelCoordinates:
         nancolor:Union[str,tuple]='tab:grey', nanfrac:float=4/256,
         linealpha:float=1, linewidth:float=1,
         base_cmap:Union[str,mcolors.Colormap]='plasma', cbar_over_hist:bool=False,
-        n_jobs:int=1, n_jobs_addaxes:int=1, sleep:float=0.1,
+        sleep:float=0.1,
         verbose:int=0,
         text_kwargs:dict=None,
         ) -> None:
@@ -206,8 +206,6 @@ class ParallelCoordinates:
         self.linewidth          = linewidth
         self.base_cmap          = base_cmap
         self.cbar_over_hist     = cbar_over_hist
-        self.n_jobs             = n_jobs
-        self.n_jobs_addaxes     = n_jobs_addaxes
         self.sleep              = sleep
         self.verbose            = verbose
         
@@ -579,7 +577,7 @@ class ParallelCoordinates:
         nabool:bool,
         ax:plt.Axes,
         linecolor:Tuple[str,tuple], nancolor:Union[str,tuple]='tab:grey',
-        sleep=0,
+        sleep:float=0,
         pathpatch_kwargs:dict=None,
         ) -> None:
         """
@@ -751,8 +749,8 @@ class ParallelCoordinates:
         y_margin:float=0.2,
         xscale_dist:Literal['symlog', 'linear']=None,
         ax:plt.Axes=None,
+        sleep:float=None,
         verbose:int=None,
-        n_jobs:int=None, sleep:float=None,
         set_xticklabels_kwargs:dict=None,
         pathpatch_kwargs:dict=None,
         set_xticklabels_dist_kwargs:dict=None,
@@ -778,18 +776,16 @@ class ParallelCoordinates:
         
 
         #default parameters
-        if coordnames is None:                  coordnames          = [f'Feature {i}' for i in range(X.shape[1])]
-        if nancolor is None:                    nancolor            = self.nancolor
-        if nanfrac is None:                     nanfrac             = self.nanfrac
-        if base_cmap is None:                   base_cmap           = self.base_cmap
-        if xscale_dist is None:                 xscale_dist         = 'linear'
-        # if cbar_over_hist is None:      cbar_over_hist      = self.cbar_over_hist
-        if n_jobs is None:                      n_jobs              = self.n_jobs
-        if sleep is None:                       sleep               = self.sleep
-        if verbose is None:                     verbose             = self.verbose
-        if set_xticklabels_kwargs is None:      set_xticklabels_kwargs  = dict()
-        if pathpatch_kwargs is None:            pathpatch_kwargs    = dict()
-        if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs  = dict()
+        if coordnames is None:                  coordnames                  = [f'Feature {i}' for i in range(X.shape[1])]
+        if nancolor is None:                    nancolor                    = self.nancolor
+        if nanfrac is None:                     nanfrac                     = self.nanfrac
+        if base_cmap is None:                   base_cmap                   = self.base_cmap
+        if xscale_dist is None:                 xscale_dist                 = 'linear'
+        if sleep is None:                       sleep                       = self.sleep
+        if verbose is None:                     verbose                     = self.verbose
+        if set_xticklabels_kwargs is None:      set_xticklabels_kwargs      = dict()
+        if pathpatch_kwargs is None:            pathpatch_kwargs            = dict()
+        if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict()
 
         #get colormap
         if isinstance(base_cmap, str): cmap = plt.get_cmap(base_cmap)
@@ -871,7 +867,6 @@ class ParallelCoordinates:
         ax.spines['right'].set_visible(False)
         ax.xaxis.tick_top()
 
-
         #make sure labels of last coordinate are not covered by distribution (axd)
         axs[-1].set_zorder(1)
 
@@ -880,6 +875,7 @@ class ParallelCoordinates:
         ##plot lines
         norm_scores = self.rescale2range(X_plot[:,-1], X_plot[:,-1].min(), X_plot[:,-1].max(), 0, 1)   #normalize scores
         linecolors = cmap(norm_scores)  #get line colors from normalized scores
+        
         for idx, line in enumerate(X_plot):
             self.plot_line(
                 line,
