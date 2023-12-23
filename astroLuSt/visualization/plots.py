@@ -1,9 +1,7 @@
 #TODO: make PC work with exclusively numpy (https://stackoverflow.com/questions/8230638/parallel-coordinates-plot-in-matplotlib)
-#TODO: 2 nan in categorical!
+#TODO: gap in categorical if 'nan' alphabetically after something else
 #TODO: score distribution
 #TODO: score-scaling (log, custom fct., ...)
-#TODO: Coloring score_dist nan
-#TODO: separate function "scale to range" -> apply where needed
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -288,62 +286,34 @@ class ParallelCoordinates:
 
         return cmap
 
-    def col2range01(self,
-        df:pl.DataFrame, colname:str,
-        map_suffix:str='__map',
-        ) -> pl.DataFrame:
+    def rescale2range(self,
+        X:np.ndarray,
+        min_in:Union[float,np.ndarray], max_in:Union[float,np.ndarray],
+        min_out:float=0, max_out:float=1,
+        ) -> np.ndarray:
         """
             - method to map any column onto the interval `[0,1]`
             - a unique value for every unique element in categorical columns will be assigned to them
             - continuous columns will just be scaled to lie within the range
 
             Parameters
-            ----------
-                - `df`
-                    - pl.DataFrame
-                    - input dataframe
-                        - the mapped column (name = original name with the appendix __map) will be append to it
-                        - the new colum is the input column (`'colname'`) mapped onto the interval `[0,1]`
-                - `colname`
-                    - str
-                    - name of the column to be mapped
-                - `map_suffix`
-                    - str, optional
-                    - suffix to add to the columns created by mapping the coordinates onto the intervals `[0,1]`
-                    - only use if your column-names contain the default (`'__map'`)
-                    - the default is `'__map'`
+            ----------`
 
             Raises
             ------
 
             Returns
             -------
-                - `df`
-                    - pl.DataFrame
-                    - input dataframe with additional column (`'colname'+'map_suffix'`) appended to it
 
             Comments
             --------
         """
-                
-        coordinate = df.select(pl.col(colname)).to_series()
-
-        #for numeric columns squeeze them into range(0,1) to be comparable accross hyperparams
-        if coordinate.is_numeric() and len(coordinate.unique()) > 1:
-            exp = (pl.col(colname)-pl.col(colname).min())/(pl.col(colname).max()-pl.col(colname).min())
-
-        #for categorical columns convert them to unique indices in the range(0,1)
-        else:
-            # coordinate = coordinate.fill_null('None')
-            #convert categorical columns to unique indices
-            uniques = coordinate.unique()
-            mapping = {u:m for u,m in zip(uniques.sort(), np.linspace(0,1,len(uniques)))}
-            exp = coordinate.map_dict(mapping)
+          
         
-        #apply expression
-        df = df.with_columns(exp.alias(f'{colname}{map_suffix}'))
-        
-        return df
+        X_scaled = (X - min_in)/(max_in-min_in) * (max_out-min_out) + min_out
+
+
+        return X_scaled
 
 
     def add_coordax(self,
@@ -1306,10 +1276,11 @@ class ParallelCoordinates:
         #adjust bins to colorbar
         print(X.shape)
         bins = np.linspace(X[:,-1].min(), X[:,-1].max(), int(1//nanfrac))
+        bins01 = self.rescale2range(bins, bins.min(), bins.max(), 0, 1)
 
         #get colors for bins
         if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
-        colors = cmap((bins - bins.min())/(bins.max()-bins.min()))
+        colors = cmap(bins01)
         
         #get histogram
         hist, bin_edges = np.histogram(X[:,-1], bins)
@@ -1363,6 +1334,7 @@ class ParallelCoordinates:
         #get colormap
         if isinstance(base_cmap, str): cmap = plt.get_cmap(base_cmap)
         else: cmap = base_cmap
+        cmap = self.make_new_cmap(cmap=cmap, nancolor=nancolor, nanfrac=nanfrac)    #modified cmap
 
         #prepare data
         ##deal with categorical (str) columns
@@ -1381,7 +1353,7 @@ class ParallelCoordinates:
         maxs    += (maxs - mins)*y_margin
      
         ##scale to make features compatible
-        X_plot = ((X_plot - mins)/(maxs - mins)) * (maxs[0] - mins[0]) + mins[0]
+        X_plot = self.rescale2range(X_plot, mins, maxs, mins[0], maxs[0])
 
 
         #create axis, labels etc.
@@ -1430,7 +1402,7 @@ class ParallelCoordinates:
 
         #actual plotting
         ##plot lines
-        norm_scores = (X_plot[:,-1] - X_plot[:,-1].min())/(X_plot[:,-1].max() - X_plot.min())   #normalize scores
+        norm_scores = self.rescale2range(X_plot[:,-1], X_plot[:,-1].min(), X_plot[:,-1].max(), 0, 1)   #normalize scores
         linecolors = cmap(norm_scores)  #get line colors from normalized scores
         for idx, line in enumerate(X_plot):
             self.plot_line(
@@ -1443,11 +1415,11 @@ class ParallelCoordinates:
             )
 
         ##plot score distribution
-        print(ax.get_xlim())
         self.plot_score_distribution(
             X_plot,
             ax=ax,
             nanfrac=nanfrac,
+            cmap=cmap,
         )
 
         axs = fig.axes
