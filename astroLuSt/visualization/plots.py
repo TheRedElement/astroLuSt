@@ -265,7 +265,48 @@ class ParallelCoordinates:
     def __deal_with_categorical(self,
         X:np.ndarray,
         verbose:int=None,
-        ):
+        ) -> Tuple[np.ndarray, dict, list]:
+        """
+            - method to convert categorical columns (columns in `X` that are not convertible to `np.float64`) to a float representation
+                - will assign one unique integer to every unique element in the corresponding columns
+
+            Parameters
+            ----------
+                - `X`
+                    - np.ndarray
+                    - 2d array containing the data
+                    - has shape `(nsamples,nfeatures)`
+                    - every column will be checked and converted if necessary
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `X_num`
+                    - np.ndarray
+                    - `X` but categorical columns are replaced by float representations
+                - `mappings`
+                    - dict
+                    - mappings used to convert original categorical columns to numerical equivalents
+                    - keys
+                        - original classes
+                    - values
+                        - corresponding integers
+                - `iscatbools`
+                    - list
+                    - has length like `X.shape[1]`
+                    - contains booleans specifying whether a specific feature/column is categorical
+            
+            Columns
+            -------
+        """
         #TODO: hole if entry alphabetically before nan
 
         #default parameters
@@ -316,33 +357,44 @@ class ParallelCoordinates:
         verbose:int=None,
         ) -> np.ndarray:
         """
-            - method that removes rows with infinite values in `score_col` resulting from `score_scaling`
+            - method that modifies `np.inf` and `-np.inf` to don't give issues when creating the plot
+            - the current implementation replaces them with `np.nan`
 
             Parameters
             ----------
-                -  `df`
-                    - pl.DataFrame
-                    - input dataframe that will be modified (`inf` and `-inf` will be replaced by `np.nan`)
-                - `score_col`
-                    - str
-                    - name of the score column
+                - `X`
+                    - np.ndarray
+                    - data array in which to deal with `inf` and `-inf` values accordingly
+                    - has shape `(nsamples,nfeatures)`
+                - `infmargin`
+                    - NOTE: not implemented yet
+                    - float, optional
+                    - margin to place between valid values and `+/- np.inf`
+                    - the default is 0.05
+                        - 5% of data-range above maximum value for `+np.inf`
+                        - 5% of data-range below minimum value for `-np.inf`
                 - `verbose`
                     - int, optional
                     - verbosity level
-                    - the default is 0
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
             Raises
             ------
                 
             Returns
             -------
-                - `df`
-                    - pl.DataFrame
-                    - dataframe with the `inf` and `-inf` in `score_col` removed
+                - `X_inffilled`
+                    - np.ndarray
+                    - `X` where `+/-np.inf` have been dealt with accordingly
 
             Comment
             -------
                 
         """
+
+        #default parameters
+        if verbose is None: verbose = self.verbose
         
         #TODO: deal with +/- inf separately (add extra ticks all the way at the top and bottom)
         X_inffilled = X.copy()
@@ -356,31 +408,47 @@ class ParallelCoordinates:
         verbose:int=None,
         ) -> Tuple[np.ndarray,np.ndarray]:
         """
-            - method to deal with `nan` values in df
-            - essentially will replace all `nan` with a value 0.5 lower than the minimum of the numerical columns in the dataframe
-            - necessary to avoid issues while plotting
+            - method that deals with missing values (`np.nan`) to don't give issues when creating the plot
+            - also makes sure that `np.nan` values are visualized accordingly to debug models and make inferences about the data
 
             Parameters
             ----------
-                - `df`
-                    - pl.DataFrame
-                    - input dataframe that will be modified (`nan` will be filled)
+                - `X`
+                    - np.ndarray
+                    - data array in which to deal with `np.inf` values accordingly
+                    - has shape `(nsamples,nfeatures)`
+                - `nanmargin`
+                    - float, optional
+                    - margin to place between valid values and `np.nan`-representation
+                    - the default is 0.1
+                        - 10% of data-range below minimum value
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
 
             Raises
             ------
-
+                
             Returns
             -------
-                - `df`
-                    - pl.DataFrame
-                    - dataframe with the `nan` filled as 0.5 lower than the minimum of all numerical columns in the input `df`
-                - fill_value
-                    - float
-                    - the value used to fill the `nan`
+                - `X_nanfilled`
+                    - np.ndarray
+                    - `X` where `np.nan` have been dealt with accordingly
+                - `nanmask`
+                    - np.ndarray
+                    - boolean array representing entries where `X` contains `np.nan`
+                    - used in plotting to ensure that lines containing any `np.nan` are using the correct colormapping
 
-            Comments
-            --------
+            Comment
+            -------
+                
         """
+        #default parameters
+        if verbose is None: verbose = self.verbose
+        
 
         nanmask = np.isnan(X)            #check where nan were filled
         idxs = np.where(np.isnan(X))
@@ -401,16 +469,48 @@ class ParallelCoordinates:
         xscale_dist:Union[Literal['symlog', 'linear'],Callable]=None,
         verbose:int=None,
         ) -> np.ndarray:
+        """
+            - method to apply scaling to the x-axis of the score-distribution
+
+            Parameters
+            ----------
+                - `x`
+                    - np.ndarray
+                    - array to be scaled i.e.,
+                        - actual data
+                        - axis-ticks
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`                    
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_scaled`
+                    - np.ndarray
+                    - scaled version of `x`
+            
+            Comments
+            --------
+        
+        """
+
+
         #default parameters
         if verbose is None: verbose = self.verbose
         
         #select correct scaling
         if xscale_dist == 'linear':
-            x = x
+            x_scaled = x
         elif xscale_dist == 'symlog':
-            x = self.symlog(x)
+            x_scaled = self.symlog(x)
         elif isinstance(xscale_dist, Callable):
-            x = xscale_dist(x)
+            x_scaled = xscale_dist(x)
         else:
             almf.printf(
                 msg=(
@@ -422,7 +522,7 @@ class ParallelCoordinates:
                 verbose=verbose
             )
 
-        return x
+        return x_scaled
     
     def create_axes(self,
         ax:plt.Axes,
