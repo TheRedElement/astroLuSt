@@ -1,5 +1,4 @@
-#TODO: gap in categorical if 'nan' alphabetically after something else
-#TODO: Documentation
+#TODO: PC: gap in categorical if 'nan' alphabetically after something else
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -40,11 +39,11 @@ class ParallelCoordinates:
                 - float, optional
                 - the fraction of the colormap to use for nan-values (i.e. failed runs)
                     - fraction of 256 (resolution of the colormap)
-                - will also influence the number of bins/binsize used in the performance-histogram
+                - will also influence the number of bins/binsize used in the histogram of the last coordinate
                 - a value between 0 and 1
                 - the default is 4/256
             - `base_cmap`
-                - str, mcolors.Colormap
+                - str, mcolors.Colormap, optional
                 - colormap to map the scores onto
                 - some space will be allocated for `nan`, if nans shall be displayed as well
                 - the default is `'plasma'`
@@ -57,11 +56,31 @@ class ParallelCoordinates:
                 - float, optional
                 - maximum value for the colormapping
                 - for evenly spaced colors choose 1
-                - the default is 1            
+                - the default is 1
+            - `y_margin`
+                - float, optional
+                - how much space to add above and below the maxima of the coordinate axes
+                    - i.e., padding of the coordinate axis
+                - the default is 0.05
+                    - 5% of the axis range
+            - `xscale_dist`
+                - Literal, Callable, optional
+                - scaling to apply to the x-axis of the histogram/distribution of the last coordinate
+                - allowed Literals
+                    - `'symlog'`
+                        - will use `self.symlog()` to calculate the scaling
+                        - imitates `matplotlib`s symlog axis scaling
+                    - `'linear'`
+                        - applies linear scaling
+                - if Callable
+                    - has to take one argument (`x`, array to be scaled)
+                    - has to return one parameter (`x_scaled`, scaled version of `x`)
+                - the default is `None`
+                    - will use `'linear'`
             - `sleep`
                 - float, optional
                 - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                - the default is 0.1 (seconds)
+                - the default is 0.0 (seconds)
             - `verbose`
                 - int, optional
                 - verbosity level
@@ -97,18 +116,23 @@ class ParallelCoordinates:
     def __init__(self,
         nancolor:Union[str,tuple]='tab:grey', nanfrac:float=4/256,
         base_cmap:Union[str,mcolors.Colormap]='plasma', vmin:float=0, vmax:float=0,
-        sleep:float=0.1,
+        y_margin:float=0.05,
+        xscale_dist:Union[str,Callable]=None,
+        sleep:float=0,
         verbose:int=0,
         ) -> None:
         
         
-        self.nancolor           = nancolor
-        self.nanfrac            = nanfrac
-        self.base_cmap          = base_cmap
-        self.vmin               = vmin
-        self.vmax               = vmax
-        self.sleep              = sleep
-        self.verbose            = verbose
+        self.nancolor                                   = nancolor
+        self.nanfrac                                    = nanfrac
+        self.base_cmap                                  = base_cmap
+        self.vmin                                       = vmin
+        self.vmax                                       = vmax
+        self.y_margin                                   = y_margin
+        if xscale_dist is None:     self.xscale_dist    = 'linear'
+        else: self.xscale_dist                          = xscale_dist
+        self.sleep                                      = sleep
+        self.verbose                                    = verbose
         
         return
 
@@ -149,7 +173,7 @@ class ParallelCoordinates:
                     - float, optional
                     - the fraction of the colormap to use for `nan`-values (i.e., failed runs)
                         - fraction of 256 (resolution of the colormap)
-                    - will also influence the number of bins/binsize used in the performance-histogram
+                    - will also influence the number of bins/binsize used in the histogram of the last coordinate
                     - a value between 0 and 1
                     - the default is `4/256`
 
@@ -479,6 +503,20 @@ class ParallelCoordinates:
                     - array to be scaled i.e.,
                         - actual data
                         - axis-ticks
+                - `xscale_dist`
+                    - Literal, Callable, optional
+                    - scaling to apply to the x-axis of the histogram/distribution of the last coordinate
+                    - allowed Literals
+                        - `'symlog'`
+                            - will use `self.symlog()` to calculate the scaling
+                            - imitates `matplotlib`s symlog axis scaling
+                        - `'linear'`
+                            - applies linear scaling
+                    - if Callable
+                        - has to take one argument (`x`, array to be scaled)
+                        - has to return one parameter (`x_scaled`, scaled version of `x`)
+                    - the default is `None`
+                        - will use `'linear'`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -751,52 +789,81 @@ class ParallelCoordinates:
     def plot_score_distribution(self,
         X:np.ndarray,
         ax:plt.Axes,
-        nanfrac:float=4/256,
-        xscale_dist:Literal['symlog', 'linear']=None,
+        nanfrac:float=None,
+        xscale_dist:Union[Literal['symlog', 'linear'],Callable]=None,
         cmap:Union[mcolors.Colormap,str]='plasma', vmin:float=None, vmax:float=None,
         verbose:int=None,
         set_xticklabels_dist_kwargs:dict=None,
         ) -> None:
         """
-            - method to add a distribution of scores into the figure
-            - the distribution will be colorcoded to match the colormapping of the different runs/models
+            - method to add a distribution of the final coordinate (usually scores) to `ax`
+            - the distribution will be colorcoded to match the values
 
             Parameters
             ----------
-                - `score_col_map`
-                    - pl.Series
-                    - series containing some score mapped onto the interval [0,1]
+                - `X`
+                    - np.ndarray
+                    - has shape `(nsamples,nfeatures)`
+                    - dataset to plot
+                    - contains coordinate to plot as distribution as last row
+                - `ax`
+                    - plt.Axes
+                    - axis to plot into
+                    - usually the host axis
                 - `nanfrac`
                     - float, optional
-                    - the fraction of the colormap to use for `nan`-values (i.e. failed runs)
+                    - the fraction of the colormap to use for missing values (`np.nan`)
                         - fraction of 256 (resolution of the colormap)
-                    - will also influence the number of bins/binsize used in the performance-histogram
+                    - will also influence the number of bins/binsize used in the histogram
                     - a value between 0 and 1
-                    - the default is 4/256
-                - `lab`
-                    - str, optional
-                    - label to use for the y-axis of the plot
+                    - overrides `self.nanfrac`
                     - the default is `None`
-                - `ticklabcolor`
-                    - str, tuple, optional
-                    - color to draw ticks, ticklabels and axis labels in
-                    - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is `'tab:grey'`
+                        - will fall back to `self.nanfrac`
+                - `xscale_dist`
+                    - Literal, Callable, optional
+                    - scaling to apply to the x-axis of the histogram/distribution of the last coordinate
+                    - allowed Literals
+                        - `'symlog'`
+                            - will use `self.symlog()` to calculate the scaling
+                            - imitates `matplotlib`s symlog axis scaling
+                        - `'linear'`
+                            - applies linear scaling
+                    - if Callable
+                        - has to take one argument (`x`, array to be scaled)
+                        - has to return one parameter (`x_scaled`, scaled version of `x`)
+                    - overrides `self.xscale_dist`
+                    - the default is `None`
+                        - will fall back to `self.xscale_dist`
                 - `cmap`
-                    - mcolor.Colormap, str
+                    - mcolor.Colormap, str, optional
                     - colormap to apply to the plot for encoding the score
                     - the default is `'plasma'`
-                - `fig`
-                    - Figure, optional
-                    - figure to plot into
+                - `vmin`
+                    - float, optional
+                    - minimum value for the colormapping
+                    - for evenly spaced colors choose 0
+                    - overrides `self.vmin`
                     - the default is `None`
-                        - will create a new figure
-                - `axpos`
-                    - tuplple, int
-                    - axis position in standard matplotlib convention
-                    - will be passed to `fig.add_subplot()`
+                        - will fall back to `self.vmin`
+                - `vmax`
+                    - float, optional
+                    - maximum value for the colormapping
+                    - for evenly spaced colors choose 1
+                    - overrides `self.vmax`
                     - the default is `None`
-                        - will use 111
+                        - will fall back to `self.vmax`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `set_xticklabels_dist_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.set_xticklabels()`
+                        - i.e. ticklabels for the distribution counts
+                    - the default is `None`
+                        - will be set to `dict(rotation=45)`
                 
             Raises
             ------
@@ -809,11 +876,14 @@ class ParallelCoordinates:
         """
         
         #default parameter
+        if nanfrac is None:                     nanfrac                     = self.nanfrac
         if vmin is None:                        vmin                        = self.vmin
         if vmax is None:                        vmax                        = self.vmax
         if verbose is None:                     verbose                     = self.verbose
-        if xscale_dist is None:                 xscale_dist                 = 'linear'
-        if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict(rotatoin=45)
+        if xscale_dist is None:                 xscale_dist                 = self.xscale_dist
+        if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict(rotation=45)
+
+        if 'rotation' not in set_xticklabels_dist_kwargs.keys(): set_xticklabels_dist_kwargs['rotation'] = 45
         
         
         #adjust bins to colorbar
@@ -851,7 +921,7 @@ class ParallelCoordinates:
         coordnames:list=None,
         nancolor=None, nanfrac=None,
         base_cmap=None, vmin:float=None, vmax:float=None,
-        y_margin:float=0.2,
+        y_margin:float=None,
         xscale_dist:Literal['symlog', 'linear']=None,
         ax:plt.Axes=None,
         sleep:float=None,
@@ -863,16 +933,121 @@ class ParallelCoordinates:
         """
             Parameters
             ----------
-
+                - `X`
+                    - np.ndarray
+                    - array contianin samples to show in the plot
+                    - has shape `(nsamples,nfeatures)`
+                    - last feature/coordinate will also be displayed as distribution
+                - `coordnames`
+                    - np.ndarray, optional
+                    - names of the individual coordinates (columns in `X`)
+                    - if not enough are passed, will set the missing names to default values
+                    - the default is `None`
+                        - will autogenerate names
+                - `nancolor`
+                    - str, tuple, optional
+                    - color to draw sample/line in, if it contains missing values (`np.nan`)
+                    - if a tuple is passed it has to be a RGBA-tuple
+                    - the default is `'tab:grey'`
+                - `nanfrac`
+                    - float, optional
+                    - the fraction of the colormap to use for missing values (`np.nan`)
+                        - fraction of 256 (resolution of the colormap)
+                    - will also influence the number of bins/binsize used in the histogram
+                    - a value between 0 and 1
+                    - overrides `self.nanfrac`
+                    - the default is `None`
+                        - will fall back to `self.nanfrac`
+                - `base_cmap`
+                    - str, mcolors.Colormap, optional
+                    - colormap to map the last coordinate/feature in `X` onto
+                    - some space will be allocated for `nan`, if nans shall be displayed as well
+                    - overrides `self.base_cmap`
+                    - the default is `None`
+                        - will fall back to `self.base_cmap`
+                - `vmin`
+                    - float, optional
+                    - minimum value for the colormapping
+                    - for evenly spaced colors choose 0
+                    - overrides `self.vmin`
+                    - the default is `None`
+                        - will fall back to `self.vmin`
+                - `vmax`
+                    - float, optional
+                    - maximum value for the colormapping
+                    - for evenly spaced colors choose 1
+                    - overrides `self.vmax`
+                    - the default is `None`
+                        - will fall back to `self.vmax`
+                - `y_margin`
+                    - float, optional
+                    - how much space to add above and below the maxima of the coordinate axes
+                        - i.e., padding of the coordinate axis
+                    - overrides `self.y_margin`
+                    - the default is `None`
+                        - will fall back to `self.y_margin`
+                - `xscale_dist`
+                    - Literal, Callable, optional
+                    - scaling to apply to the x-axis of the histogram/distribution of the last coordinate
+                    - allowed Literals
+                        - `'symlog'`
+                            - will use `self.symlog()` to calculate the scaling
+                            - imitates `matplotlib`s symlog axis scaling
+                        - `'linear'`
+                            - applies linear scaling
+                    - if Callable
+                        - has to take one argument (`x`, array to be scaled)
+                        - has to return one parameter (`x_scaled`, scaled version of `x`)
+                    - overrides `self.xscale_dist`
+                    - the default is `None`
+                        - will fall back to `self.xscale_dist`
+                - `ax`
+                    - plt.Axes, optional
+                    - axis to plot into
+                    - the default is `None`
+                        - will generate new figure and axis if not provided
+                - `sleep`
+                    - float, optional
+                    - time to sleep after finishing plotting one line/sample
+                    - overrides `self.sleep`
+                    - the default is `None`
+                        - will fall back to `self.sleep`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `set_xticklabels_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.set_xticklabels()` in `self.create_axes()`
+                        - i.e. names of the individual coordinates/axes
+                    - the default is `None`
+                        - will be set to `dict()`                
+                - `pathpatch_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `matplotlib.patches.PathPatch()` in `self.plot_line()`
+                    - the default is `None`
+                        - will be set to `dict()`                        
+                - `set_xticklabels_dist_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.set_xticklabels()` in `self.plot_score_distribution()`
+                        - i.e. ticklabels for the distribution counts
+                    - the default is `None`
+                        - will be set to `dict(rotation=45)`
+                        
             Raises
             ------
 
             Returns
             ------
                 - `fig`
+                    - matplotlib.figure.Figure
+                    - created figure if no `ax` was passed
+                    - original figure corresponding to host axis (`ax`) if `ax` was passed
                 - `axs`
                     - plt.Axes
-                    - the newly created axes
+                    - axis corresponding to `fig`
             
             Comments
             --------
@@ -887,12 +1062,16 @@ class ParallelCoordinates:
         if base_cmap is None:                   base_cmap                   = self.base_cmap
         if vmin is None:                        vmin                        = self.vmin
         if vmax is None:                        vmax                        = self.vmax
-        if xscale_dist is None:                 xscale_dist                 = 'linear'
+        if y_margin is None:                    y_margin                    = self.y_margin
+        if xscale_dist is None:                 xscale_dist                 = self.xscale_dist
         if sleep is None:                       sleep                       = self.sleep
         if verbose is None:                     verbose                     = self.verbose
-        if set_xticklabels_kwargs is None:      set_xticklabels_kwargs      = dict()
+        if set_xticklabels_kwargs is None:      set_xticklabels_kwargs      = dict(rotation=45)
         if pathpatch_kwargs is None:            pathpatch_kwargs            = dict()
         if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict()
+
+        if 'rotation' not in set_xticklabels_dist_kwargs.keys(): set_xticklabels_dist_kwargs['rotation'] = 45
+
 
         #ensure correct shapes
         if len(coordnames) < X.shape[1]:
@@ -980,6 +1159,7 @@ class ParallelCoordinates:
             set_xticklabels_dist_kwargs=set_xticklabels_dist_kwargs,
         )
 
+        axs = fig.axes
 
         return fig, axs
 
