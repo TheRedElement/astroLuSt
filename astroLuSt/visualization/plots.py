@@ -2,8 +2,6 @@
 #TODO: axis (lineplot) creation to separate function -> allows for usage of only parts
 #TODO: gap in categorical if 'nan' alphabetically after something else
 #TODO: Documentation
-#TODO: Customization options
-#TODO: Streamlining of code
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -432,7 +430,7 @@ class ParallelCoordinates:
 
     def __set_xscale_dist(self,
         x:np.ndarray,
-        xscale_dist:Literal['symlog', 'linear']=None,
+        xscale_dist:Union[Literal['symlog', 'linear'],Callable]=None,
         verbose:int=None,
         ):
         #TODO: custom function scale
@@ -445,11 +443,13 @@ class ParallelCoordinates:
             x = x
         elif xscale_dist == 'symlog':
             x = self.symlog(x)
+        elif isinstance(xscale_dist, Callable):
+            x = xscale_dist(x)
         else:
             almf.printf(
                 msg=(
                     f'Using `"linear"` since `"{xscale_dist}"` is not a valid argument. '
-                    f'Allowed are `"symlog"`, `"linear"`.'
+                    f'Allowed are `"symlog"`, `"linear"`, or a custom callabel taking one input and returning one output.'
                 ),
                 context=self.__set_xscale_dist.__name__,
                 type='WARNING', level=0,
