@@ -1,5 +1,3 @@
-#TODO: Demo of plotting right into axis
-#TODO: axis (lineplot) creation to separate function -> allows for usage of only parts
 #TODO: gap in categorical if 'nan' alphabetically after something else
 #TODO: Documentation
 
@@ -432,9 +430,7 @@ class ParallelCoordinates:
         x:np.ndarray,
         xscale_dist:Union[Literal['symlog', 'linear'],Callable]=None,
         verbose:int=None,
-        ):
-        #TODO: custom function scale
-
+        ) -> np.ndarray:
         #default parameters
         if verbose is None: verbose = self.verbose
         
