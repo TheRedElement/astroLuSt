@@ -534,6 +534,70 @@ class ParallelCoordinates:
         verbose:int=None,
         set_xticklabels_kwargs:dict=None,
         ):
+        """
+            - method to initialize the axes needed for the parallel-coordinate plot
+            
+            Parameters
+            ----------
+                - `ax`
+                    - plt.Axes
+                    - host axis to plot into
+                - `coordnames`
+                    - np.ndarray
+                    - names of the individual coordinates
+                    - will create one axis per entry of `coordnames`
+                - `mins`
+                    - np.ndarray
+                    - same length as `coordnames`
+                    - minimum y-limit for the different axis
+                - `maxs`
+                    - np.ndarray
+                    - same length as `coordnames`
+                    - maximum y-limits for the different axis
+                - `iscatbools`
+                    - np.ndarray
+                    - contains booleans
+                    - same length as `coordnames`
+                    - specifies whether an individual axis contains a categorical feature or not
+                    - will use `mappings` for tick-labelling instead of automatic `matplotlib` ticks
+                - `nanmask`
+                    - np.ndarray
+                    - has dtype bool
+                    - has shape `(nsamples,nfeature)`
+                    - used to determine if an extra tick for missing values (`np.nan`) has to be allocated
+                - `nanmins`
+                    - np.ndarray
+                    - same length as `coordnames`
+                    - contains y-positions of ticks for missing values (`np.nan`)
+                    - tick will get added if `nanmask` evaluates to true for any of the elements in the respective column
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `set_xticklabels_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.set_xticklabels()`
+                        - i.e. names of the individual coordinates/axes
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `axs`
+                    - np.ndarray
+                    - contains
+                        - host axis (`ax`) as zeroth element
+                        - all created coordinate axis as following elements
+                        - axis created for the score-distribution as last element
+
+            Comments
+            --------
+        """
 
         if verbose is None:                 verbose                 = self.verbose
         if set_xticklabels_kwargs is None:  set_xticklabels_kwargs  = dict()
@@ -598,10 +662,10 @@ class ParallelCoordinates:
         return axs
 
     def plot_line(self,
-        line,
+        line:np.ndarray,
         nabool:bool,
         ax:plt.Axes,
-        linecolor:Tuple[str,tuple], nancolor:Union[str,tuple]='tab:grey',
+        linecolor:Tuple[str,tuple]='tab:blue', nancolor:Union[str,tuple]='tab:grey',
         sleep:float=0,
         verbose:int=None,
         pathpatch_kwargs:dict=None,
@@ -612,28 +676,39 @@ class ParallelCoordinates:
             Parameters
             ----------
                 - `line`
-                    - TODO
-                - `fill_value`
-                    - float
-                    - value to use for plotting instead of nan
-                    - i.e. value representing failed runs
+                    - np.ndarray
+                    - has shape `(nfeatures)`
+                    - line to add to the plot
+                    - will be displayed as cubic bezier curve
                 - `ax`
                     - plt.Axes
-                    - axis to plot the line onto
-                - `cmap`
-                    - mcolor.Colormap
-                    - colormap to use for coloring the lines
+                    - axis to plot `line` into
+                    - usually the host-axis of the plot
+                - `linecolor`
+                    - str, tuple, optional
+                    - color to plot the line in
+                    - if a tuple is passed, it has to be a RGBA-tuple
+                    - the default is `'tab:blue'`
                 - `nancolor`
                     - str, tuple, optional
-                    - color to draw failed runs (evaluate to nan) in
+                    - color to draw line in, if it contains missing values (`np.nan`)
                     - if a tuple is passed it has to be a RGBA-tuple
                     - the default is `'tab:grey'`
                 - `sleep`
                     - float, optional
-                    - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - the default is 0.1 (seconds)
+                    - time to sleep after finishing plotting `line`
+                    - the default is 0.0 (seconds)
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`                
                 - `pathpatch_kwargs`
-                    - TODO
+                    - dict, optional
+                    - kwargs to pass to `matplotlib.patches.PathPatch()`
+                    - the default is `None`
+                        - will be set to `dict()`
 
             Raises
             ------
