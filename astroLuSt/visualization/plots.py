@@ -4,7 +4,6 @@
 #TODO: Documentation
 #TODO: Customization options
 #TODO: Streamlining of code
-#TODO: Remove unnecessary attr and params
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -176,49 +175,18 @@ class ParallelCoordinates:
     """
 
     def __init__(self,
-        show_idcol:bool=True,                 
-        interpkind:str='quadratic',
-        res:int=1000,
-        axpos_coord:Union[tuple,int]=None, axpos_hist:Union[tuple,int]=None,
-        map_suffix:str='__map',
-        ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45, tickformat:str='%g',
         nancolor:Union[str,tuple]='tab:grey', nanfrac:float=4/256,
-        linealpha:float=1, linewidth:float=1,
-        base_cmap:Union[str,mcolors.Colormap]='plasma', cbar_over_hist:bool=False,
+        base_cmap:Union[str,mcolors.Colormap]='plasma',
         sleep:float=0.1,
         verbose:int=0,
-        text_kwargs:dict=None,
         ) -> None:
         
         
-        self.show_idcol         = show_idcol
-        self.interpkind         = interpkind
-        self.res                = res
-        self.map_suffix         = map_suffix
-        self.ticks2display      = ticks2display
-        self.tickcolor          = tickcolor
-        self.ticklabelrotation  = ticklabelrotation
-        self.tickformat         = tickformat
         self.nancolor           = nancolor
         self.nanfrac            = nanfrac
-        self.linealpha          = linealpha
-        self.linewidth          = linewidth
         self.base_cmap          = base_cmap
-        self.cbar_over_hist     = cbar_over_hist
         self.sleep              = sleep
         self.verbose            = verbose
-        
-        if axpos_coord is None:     self.axpos_coord    = (1,2,1)
-        else:                       self.axpos_coord    = axpos_coord
-        if axpos_hist is None:      self.axpos_hist     = (1,6,4)
-        else:                       self.axpos_hist     = axpos_hist
-
-        if text_kwargs is None: self.text_kwargs = {'rotation':45}
-        else:
-            self.text_kwargs = text_kwargs
-            if 'rotation' not in self.text_kwargs.keys():
-                self.text_kwargs['rotation'] = 45
-
         
         return
 
@@ -290,6 +258,7 @@ class ParallelCoordinates:
         X:np.ndarray,
         min_in:Union[float,np.ndarray], max_in:Union[float,np.ndarray],
         min_out:float=0, max_out:float=1,
+        verbose:int=None,
         ) -> np.ndarray:
         """
             - method to map any column onto the interval `[0,1]`
@@ -309,7 +278,10 @@ class ParallelCoordinates:
             --------
         """
           
-        
+        #default parameters
+        if verbose is None: verbose = self.verbose
+
+        #rescale
         X_scaled = (X - min_in)/(max_in-min_in) * (max_out-min_out) + min_out
 
 
@@ -323,102 +295,15 @@ class ParallelCoordinates:
 
         return out
     
-
-    def add_coordax(self,
-        ax:plt.Axes,
-        coordinate:pl.Series, coordinate_map:pl.Series,
-        fill_value:float,
-        idx:int, n_coords:int,
-        ticks2display:int=5, tickcolor:Union[str,tuple]='tab:grey', ticklabelrotation:float=45, tickformat:str='%g',
-        lab:str=None,
-        sleep=0,
-        text_kwargs:dict=None,
-        ) -> plt.Axes:
-        """
-            - method to add a new axis coordinate
-            - will move the spine to be aligned with the cordinates x-position in `ax`
-
-            Parameters
-            ----------
-                - `ax`
-                    - plt.Axes
-                    - axis to add the new axis to
-                    - should be the axis used for plotting the runs/models
-                - `coordinate`
-                    - pl.Series
-                    - series containing the coordinate to plot
-                - `coordinate_map`
-                    - pl.Series
-                    - series containing the mapped values of `coordinate`
-                - `fill_value`
-                    - float
-                    - value to use for plotting instead of `nan`
-                    - i.e. value representing failed runs
-                - `idx`
-                    - int
-                    - index specifying which axis the current one is (i.e. 0 meaning it is the first axis, 1 the second, ect.)
-                    - used to determine where to place the axis based on `n_coords`
-                        - `position = idx//n_coords`
-                        - 0 meaning directly at the location of `ax`
-                        - 1 meaning at the far right of `ax`
-                - `n_coords`
-                    - int
-                    - number of coordinates to plot in total
-                - `ticks2display`
-                    - int, optional
-                    - number of ticks to show for numeric coordinates
-                    - the default is 5
-                - `tickcolor`
-                    - str, tuple, optional
-                    - color to draw ticks and ticklabels in
-                    - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is `'tab:grey'`
-                - `ticklabelrotation`
-                    - float, optional
-                    - rotation of the ticklabels
-                    - the default is 45
-                - `tickformat`
-                    - str, optional
-                    - formatstring for the (numeric) ticklabels
-                    - the default is `'%g'`
-                - `lab`
-                    - str, optional
-                    - label to plot for the added axes
-                    - the default is `None`
-                        - will use the name of the coordinate
-                - `sleep`
-                    - float, optional
-                    - time to sleep after finishing each job in plotting runs/models and coordinate-axes
-                    - the default is 0.1 (seconds)
-                - `text_kwargs`
-                    - dict, optional
-                    - kwargs passed to `ax.text()`
-                        - affect the labels of the created subplots for each coordinate
-                    - the default is `None`
-                        - will be initialized with an empty dict (`{}`)
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `axp`
-                    - plt.Axes
-                    - newly created axis
-
-            Comments
-            --------
-        """
-
-        #TODO
-        time.sleep(sleep)
-
-        return axp
  
     def __deal_with_categorical(self,
         X:np.ndarray,
+        verbose:int=None,
         ):
         #TODO: hole if entry alphabetically before nan
+
+        #default parameters
+        if verbose is None: verbose = self.verbose
 
         X_num = X.T.copy()  #init numerical version of X
         mappings = []
@@ -537,7 +422,7 @@ class ParallelCoordinates:
         mins = np.nanmin(X, axis=0)
         maxs = np.nanmax(X, axis=0)
 
-        fill_values = mins - (maxs - mins)*nanmargin  #fill with min - 10% of feature range (i.e., plot nan below everything else)
+        fill_values = mins - (maxs - mins)*nanmargin  #fill with `min - nanmargin`% of feature range (i.e., plot nan below everything else)
 
         X_nafilled = X.copy()
         X_nafilled[idxs] = np.take(fill_values, idxs[1])
@@ -550,7 +435,9 @@ class ParallelCoordinates:
         xscale_dist:Literal['symlog', 'linear']=None,
         verbose:int=None,
         ):
+        #TODO: custom function scale
 
+        #default parameters
         if verbose is None: verbose = self.verbose
         
         #select correct scaling
@@ -574,7 +461,6 @@ class ParallelCoordinates:
     def create_axes(self,
         ax:plt.Axes,
         coordnames:np.ndarray,
-        # n_subaxis:int,
         mins:np.ndarray, maxs:np.ndarray,
         iscatbools:np.ndarray,
         mappings:List[dict],
@@ -651,6 +537,7 @@ class ParallelCoordinates:
         ax:plt.Axes,
         linecolor:Tuple[str,tuple], nancolor:Union[str,tuple]='tab:grey',
         sleep:float=0,
+        verbose:int=None,
         pathpatch_kwargs:dict=None,
         ) -> None:
         """
@@ -693,7 +580,8 @@ class ParallelCoordinates:
         """
 
         #default values
-        if pathpatch_kwargs is None: pathpatch_kwargs = dict()
+        if verbose is None:             verbose             = self.verbose
+        if pathpatch_kwargs is None:    pathpatch_kwargs    = dict()
 
         #create cubic bezier for nice display
         verts = list(zip(
@@ -703,7 +591,7 @@ class ParallelCoordinates:
         codes = [Path.MOVETO] + [Path.CURVE4 for _ in range(len(verts) - 1)]
         path = Path(verts, codes)
         
-        #actually plot the line for current model (colomap according to cmap)
+        #actually plot the line for current model
         ##runs with any missing values
         if nabool:
             patch = mpatches.PathPatch(path, facecolor='none', edgecolor=nancolor, **pathpatch_kwargs)
@@ -725,6 +613,7 @@ class ParallelCoordinates:
         nanfrac:float=4/256,
         xscale_dist:Literal['symlog', 'linear']=None,
         cmap:Union[mcolors.Colormap,str]='plasma',
+        verbose:int=None,
         set_xticklabels_dist_kwargs:dict=None,
         ) -> None:
         """
@@ -779,13 +668,14 @@ class ParallelCoordinates:
         """
         
         #default parameter
-        if xscale_dist is None: xscale_dist = 'linear'
+        if verbose is None:                     verbose                     = self.verbose
+        if xscale_dist is None:                 xscale_dist                 = 'linear'
         if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict(rotatoin=45)
         
         
         #adjust bins to colorbar
         bins = np.linspace(X[:,-1].min(), X[:,-1].max(), int(1//nanfrac))
-        bins01 = self.rescale2range(bins, bins.min(), bins.max(), 0, 1)
+        bins01 = self.rescale2range(bins, bins.min(), bins.max(), 0, 1, verbose=verbose)
 
         #get colors for bins
         if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
@@ -797,8 +687,8 @@ class ParallelCoordinates:
         #rescaling to specification
         hist = self.__set_xscale_dist(hist, xscale_dist=xscale_dist)
 
-        #rescale to (range(0,1) to fit in axis)
-        hist = hist/hist.max()      #rescale to fit into axis
+        #rescale to range(0,1) (to fit in axis)
+        hist = hist/hist.max()
 
         #adapt xticks to match scaled display of data
         xticks = np.linspace(0,1,3)
@@ -807,7 +697,7 @@ class ParallelCoordinates:
         ax.set_xticklabels(ax.get_xticks(), **set_xticklabels_dist_kwargs)
         ax.xaxis.set_major_formatter(mticker.FormatStrFormatter('%.2f'))
 
-        #plot and colormap hostogram
+        #plot and colormap histogram
         binheight = nanfrac*(X.max()-X.min())    #rescale binheight to match axis limits
         ax.barh(bin_edges[:-1], hist, height=binheight, left=None, color=colors)
         
@@ -860,7 +750,7 @@ class ParallelCoordinates:
         if pathpatch_kwargs is None:            pathpatch_kwargs            = dict()
         if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict()
 
-        #check shapes
+        #ensure correct shapes
         if len(coordnames) < X.shape[1]:
             almf.printf(
                 msg=(
@@ -881,8 +771,7 @@ class ParallelCoordinates:
 
         #prepare data
         ##deal with categorical (str) columns
-        X_plot, mappings, iscatbools = self.__deal_with_categorical(X)
-                
+        X_plot, mappings, iscatbools = self.__deal_with_categorical(X, verbose=verbose)   
         ##deal with inf
         X_plot = self.__deal_with_inf(X_plot, infmargin=0.05, verbose=verbose)
         ##deal with nan
@@ -896,7 +785,7 @@ class ParallelCoordinates:
         maxs    += (maxs - mins)*y_margin
      
         ##scale to make features compatible
-        X_plot = self.rescale2range(X_plot, mins, maxs, mins[0], maxs[0])
+        X_plot = self.rescale2range(X_plot, mins, maxs, mins[0], maxs[0], verbose=verbose)
 
 
         #create axis, labels etc.
@@ -908,7 +797,6 @@ class ParallelCoordinates:
 
         axs = self.create_axes(
             ax=ax,
-            # n_subaxis=X_plot.shape[1]
             coordnames=coordnames,
             mins=mins, maxs=maxs,
             iscatbools=iscatbools,
@@ -924,9 +812,8 @@ class ParallelCoordinates:
 
         #actual plotting
         ##plot lines
-        norm_scores = self.rescale2range(X_plot[:,-1], X_plot[:,-1].min(), X_plot[:,-1].max(), 0, 1)   #normalize scores
+        norm_scores = self.rescale2range(X_plot[:,-1], X_plot[:,-1].min(), X_plot[:,-1].max(), 0, 1, verbose=verbose)   #normalize scores
         linecolors = cmap(norm_scores)  #get line colors from normalized scores
-        
         for idx, line in enumerate(X_plot):
             self.plot_line(
                 line,
@@ -934,6 +821,7 @@ class ParallelCoordinates:
                 ax=ax,
                 linecolor=linecolors[idx],
                 nancolor=nancolor,
+                verbose=verbose,
                 pathpatch_kwargs=pathpatch_kwargs,
             )
 
@@ -944,6 +832,7 @@ class ParallelCoordinates:
             nanfrac=nanfrac,
             xscale_dist=xscale_dist,
             cmap=cmap,
+            verbose=verbose,
             set_xticklabels_dist_kwargs=set_xticklabels_dist_kwargs,
         )
 
