@@ -1,7 +1,9 @@
 #TODO: make PC work with exclusively numpy (https://stackoverflow.com/questions/8230638/parallel-coordinates-plot-in-matplotlib)
 #TODO: gap in categorical if 'nan' alphabetically after something else
-#TODO: score distribution
-#TODO: score-scaling (log, custom fct., ...)
+#TODO: Documentation
+#TODO: Customization
+#TODO: Parallelization
+#TODO: Streamlining of code
 
 #%%imports
 from    joblib.parallel import Parallel, delayed
@@ -10,7 +12,7 @@ from    matplotlib.figure import Figure
 import  matplotlib.patches as mpatches
 from    matplotlib.path import Path
 import  matplotlib.pyplot as plt
-from    matplotlib.ticker import MaxNLocator
+import  matplotlib.ticker as mticker
 import  numpy as np
 import  polars as pl
 import  re
@@ -18,7 +20,7 @@ from    scipy.interpolate import interp1d
 from    scipy import stats
 from    sklearn.neighbors import KNeighborsClassifier
 import  time
-from    typing import Union, Tuple, List, Callable
+from    typing import Union, Tuple, List, Callable, Literal
 import  warnings
 
 from    astroLuSt.visualization import plotting as alvp
@@ -315,6 +317,14 @@ class ParallelCoordinates:
 
         return X_scaled
 
+    def symlog(self,
+        x:np.ndarray
+        ):
+
+        out = np.sign(x) * np.log1p(np.abs(x))
+
+        return out
+    
 
     def add_coordax(self,
         ax:plt.Axes,
@@ -632,6 +642,33 @@ class ParallelCoordinates:
 
 
         return X_nafilled, namask
+
+    def __set_xscale_dist(self,
+        x:np.ndarray,
+        xscale_dist:Literal['symlog', 'linear']=None,
+        verbose:int=None,
+        ):
+
+        if verbose is None: verbose = self.verbose
+        
+        #select correct scaling
+        if xscale_dist == 'linear':
+            x = x
+        elif xscale_dist == 'symlog':
+            x = self.symlog(x)
+        else:
+            almf.printf(
+                msg=(
+                    f'Using `"linear"` since `"{xscale_dist}"` is not a valid argument. '
+                    f'Allowed are `"symlog"`, `"linear"`.'
+                ),
+                context=self.__set_xscale_dist.__name__,
+                type='WARNING', level=0,
+                verbose=verbose
+            )
+
+        return x
+    
 
     def plot_(self,
         coordinates:Union[pl.DataFrame,List[dict],np.ndarray],
@@ -1205,8 +1242,9 @@ class ParallelCoordinates:
         X:np.ndarray,
         ax:plt.Axes,
         nanfrac:float=4/256,
-        lab:str=None, ticklabcolor:Union[str,tuple]='tab:grey',
+        xscale_dist:Literal['symlog', 'linear']=None,
         cmap:Union[mcolors.Colormap,str]='plasma',
+        set_xticklabels_dist_kwargs:dict=None,
         ) -> None:
         """
             - method to add a distribution of scores into the figure
@@ -1259,22 +1297,12 @@ class ParallelCoordinates:
             --------
         """
         
-        fig = ax.figure
-
-        # ax = fig.add_axes([1,0,0.2,1])
-
-        # print(ax.get_ylim())
-        # x = np.linspace(3,5,10)
-        # y = x
-        # ax.plot(x,y)
-
-        # #initialize new axis
-
-        # ax.set_zorder(0)
-        # ax.set_ymargin(0)
-
+        #default parameter
+        if xscale_dist is None: xscale_dist = 'linear'
+        if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs = dict(rotatoin=45)
+        
+        
         #adjust bins to colorbar
-        print(X.shape)
         bins = np.linspace(X[:,-1].min(), X[:,-1].max(), int(1//nanfrac))
         bins01 = self.rescale2range(bins, bins.min(), bins.max(), 0, 1)
 
@@ -1284,11 +1312,26 @@ class ParallelCoordinates:
         
         #get histogram
         hist, bin_edges = np.histogram(X[:,-1], bins)
-        hist = hist/X.shape[1]      #rescale to fit into axis
+        
+        #rescaling to specification
+        hist = self.__set_xscale_dist(hist, xscale_dist=xscale_dist)
+
+        #rescale to (range(0,1) to fit in axis)
+        hist = hist/hist.max()      #rescale to fit into axis
+
+        #adapt xtics to match scaled display of data
+        xticks = np.linspace(0,1,3)
+        xticks = self.__set_xscale_dist(xticks, xscale_dist=xscale_dist)
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(ax.get_xticks(), **set_xticklabels_dist_kwargs)
+        ax.xaxis.set_major_formatter(mticker.FormatStrFormatter('%.2f'))
 
         #plot and colormap hostogram
         binheight = nanfrac*(X.max()-X.min())    #rescale binheight to match axis limits
-        ax.barh(bin_edges[:-1], hist, height=binheight, left=X.shape[1]-1, color=colors)#, color=colors)
+        # ax.barh(bin_edges[:-1], hist, height=binheight, left=X.shape[1]-1, color=colors)
+        ax.barh(bin_edges[:-1], hist, height=binheight, left=None, color=colors)
+        
+
         # ax.set_xscale('symlog')
         # ax.set_ylim(bin_edges.min(), bin_edges.max())
 
@@ -1312,24 +1355,30 @@ class ParallelCoordinates:
         nancolor=None, nanfrac=None,
         base_cmap=None,
         y_margin:float=0.2,
+        xscale_dist:Literal['symlog', 'linear']=None,
         ax:plt.Axes=None,
         verbose:int=None,
         n_jobs:int=None, sleep:float=None,
         set_xticklabels_kwargs:dict=None,
         pathpatch_kwargs:dict=None,
+        set_xticklabels_dist_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
 
+        
+
         #default parameters
-        if coordnames is None:          coordnames          = [f'Feature {i}' for i in range(X.shape[1])]
-        if nancolor is None:            nancolor            = self.nancolor
-        if nanfrac is None:             nanfrac             = self.nanfrac
-        if base_cmap is None:           base_cmap           = self.base_cmap
+        if coordnames is None:                  coordnames          = [f'Feature {i}' for i in range(X.shape[1])]
+        if nancolor is None:                    nancolor            = self.nancolor
+        if nanfrac is None:                     nanfrac             = self.nanfrac
+        if base_cmap is None:                   base_cmap           = self.base_cmap
+        if xscale_dist is None:                 xscale_dist         = 'linear'
         # if cbar_over_hist is None:      cbar_over_hist      = self.cbar_over_hist
-        if n_jobs is None:              n_jobs              = self.n_jobs
-        if sleep is None:               sleep               = self.sleep
-        if verbose is None:             verbose             = self.verbose
-        if set_xticklabels_kwargs is None:  set_xticklabels_kwargs  = dict()
-        if pathpatch_kwargs is None:    pathpatch_kwargs    = dict()
+        if n_jobs is None:                      n_jobs              = self.n_jobs
+        if sleep is None:                       sleep               = self.sleep
+        if verbose is None:                     verbose             = self.verbose
+        if set_xticklabels_kwargs is None:      set_xticklabels_kwargs  = dict()
+        if pathpatch_kwargs is None:            pathpatch_kwargs    = dict()
+        if set_xticklabels_dist_kwargs is None: set_xticklabels_dist_kwargs  = dict()
 
         #get colormap
         if isinstance(base_cmap, str): cmap = plt.get_cmap(base_cmap)
@@ -1375,6 +1424,7 @@ class ParallelCoordinates:
                 axi.spines['left'].set_visible(False)
                 axi.yaxis.set_ticks_position('right')
                 axi.spines['right'].set_position(('axes', idx / (X_plot.shape[1])))
+                axi.patch.set_alpha(0.5)
             if iscatbools[idx]:
                 axi.set_yticks(
                     ticks=list(mappings[idx].values()),
@@ -1390,6 +1440,14 @@ class ParallelCoordinates:
                 #reassign ylim
                 axi.set_ylim(ylim)
 
+        axd = ax.twiny()
+        axd.set_xlim(-(X_plot.shape[1]-1), None)
+        axd.xaxis.set_ticks_position('bottom')
+        axd.spines['top'].set_visible(False)
+        axd.spines['bottom'].set_visible(False)
+        axd.spines['right'].set_visible(False)
+        axd.spines['left'].set_visible(False)
+        axd.set_ylabel('Score Distribution')
 
         ##correct labelling
         ax.set_xlim(0, X_plot.shape[1])
@@ -1398,6 +1456,9 @@ class ParallelCoordinates:
         ax.tick_params(axis='x', which='major', pad=7)
         ax.spines['right'].set_visible(False)
         ax.xaxis.tick_top()
+
+        #make sure labels of last coordinate are not covered by distribution (axd)
+        axs[-1].set_zorder(1)
 
 
         #actual plotting
@@ -1417,9 +1478,11 @@ class ParallelCoordinates:
         ##plot score distribution
         self.plot_score_distribution(
             X_plot,
-            ax=ax,
+            ax=axd,
             nanfrac=nanfrac,
+            xscale_dist=xscale_dist,
             cmap=cmap,
+            set_xticklabels_dist_kwargs=set_xticklabels_dist_kwargs,
         )
 
         axs = fig.axes
@@ -1787,7 +1850,7 @@ class LatentSpaceExplorer:
         ax0.set_yticks([])
         #set ticks and ticklabels correctly
         ax0.set_xlim(np.min(z0)-np.mean(np.diff(z0))/2, np.max(z0)+np.mean(np.diff(z0))/2)
-        ax0.xaxis.set_major_locator(MaxNLocator(len(z0), prune='both'))        
+        ax0.xaxis.set_major_locator(mticker.MaxNLocator(len(z0), prune='both'))        
 
 
         for col, z0i in enumerate(z0):
@@ -1995,8 +2058,8 @@ class LatentSpaceExplorer:
         #set ticks and ticklabels correctly
         ax0.set_ylim(np.min(z1)-np.mean(np.diff(z1))/2, np.max(z1)+np.mean(np.diff(z1))/2)
         ax0.set_xlim(np.min(z0)-np.mean(np.diff(z0))/2, np.max(z0)+np.mean(np.diff(z0))/2)
-        ax0.yaxis.set_major_locator(MaxNLocator(len(z1), prune='both'))
-        ax0.xaxis.set_major_locator(MaxNLocator(len(z0), prune='both'))
+        ax0.yaxis.set_major_locator(mticker.MaxNLocator(len(z1), prune='both'))
+        ax0.xaxis.set_major_locator(mticker.MaxNLocator(len(z0), prune='both'))
 
         for row, z1i in enumerate(z1[::-1]):
             for col, z0i in enumerate(z0):
