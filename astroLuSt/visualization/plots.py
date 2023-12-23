@@ -1,7 +1,6 @@
 #TODO: PC: gap in categorical if 'nan' alphabetically after something else
 
 #%%imports
-from    joblib.parallel import Parallel, delayed
 import  matplotlib.colors as mcolors
 from    matplotlib.figure import Figure
 import  matplotlib.patches as mpatches
@@ -9,7 +8,6 @@ from    matplotlib.path import Path
 import  matplotlib.pyplot as plt
 import  matplotlib.ticker as mticker
 import  numpy as np
-import  polars as pl
 import  re
 from    scipy import stats
 from    sklearn.neighbors import KNeighborsClassifier
