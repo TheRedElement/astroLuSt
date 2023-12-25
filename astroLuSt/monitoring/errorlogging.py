@@ -169,7 +169,7 @@ class LogErrors:
         error_msgs      = re.findall(r'\w+Error[:\w ]+',    format_exc)
      
         #in case no problem lines have been identified
-        if len(problem_lines) == 0: problem_lines = ['<NO PROBLEM LINES IDENTIFIED>']
+        if len(problem_lines) == 0: problem_lines = ['<NO PROBLEM LINE IDENTIFIED>']*len(files)
 
         # print([format_exc])
         # print([prefix])
@@ -179,18 +179,32 @@ class LogErrors:
         # print(problem_lines)
         # print(error_msgs)
         df_temp = pd.DataFrame({
-            'exception':[format_exc],
-            'prefix':   [prefix],
-            'suffix':   [suffix],
-            'file':     [';'.join(files)],    #transform to 1 line
-            'line':     [';'.join(lines)],    #transform to 1 line
-            'problem_line':[';'.join(problem_lines)],
-            'error_message':error_msgs,
-            'time':[pd.Timestamp.now()],
-        })        
+            'exception':    [format_exc]*len(files),
+            'prefix':       [prefix]*len(files),
+            'suffix':       [suffix]*len(files),
+            'file':         files,
+            'line':         lines,
+            'problem_line': problem_lines,
+            'error_message':error_msgs*len(files),
+            'time':         [pd.Timestamp.now()]*len(files),
+        })         
+        # df_temp = pd.DataFrame({
+        #     'exception':[format_exc],
+        #     'prefix':   [prefix],
+        #     'suffix':   [suffix],
+        #     'file':     [';'.join(files)],    #transform to 1 line
+        #     'line':     [';'.join(lines)],    #transform to 1 line
+        #     'problem_line':[';'.join(problem_lines)],
+        #     'error_message':error_msgs,
+        #     'time':[pd.Timestamp.now()],
+        # })        
+
+        if self.df_errorlog.last_valid_index() is None: idx = 0
+        else: idx = self.df_errorlog.last_valid_index() + 1
+        df_temp.index = [idx]*len(files)
 
         if store:
-            self.df_errorlog = pd.concat([self.df_errorlog, df_temp]).reset_index(drop=True)
+            self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
 
         return df_temp
 
