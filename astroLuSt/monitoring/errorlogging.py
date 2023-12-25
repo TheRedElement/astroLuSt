@@ -21,10 +21,7 @@ class LogErrors:
             - `df_errorlog`
                 - pd.DataFrame
                 - dataframe to log all the caught errors
-                - if multiple files appear in `'file'`
-                    - files will be separated by semicolons (`;`)
-                - if multiple lines appear in `'promblem_line'`
-                    - lines will be separated by semicolons (`;`)
+                - rows corresponding to the same error will have the same index
         
         Methods
         -------
@@ -171,13 +168,6 @@ class LogErrors:
         #in case no problem lines have been identified
         if len(problem_lines) == 0: problem_lines = ['<NO PROBLEM LINE IDENTIFIED>']*len(files)
 
-        # print([format_exc])
-        # print([prefix])
-        # print([suffix])
-        # print([';'.join(files)])
-        # print([';'.join(lines)])
-        # print(problem_lines)
-        # print(error_msgs)
         df_temp = pd.DataFrame({
             'exception':    [format_exc]*len(files),
             'prefix':       [prefix]*len(files),
