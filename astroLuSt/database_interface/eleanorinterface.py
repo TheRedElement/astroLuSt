@@ -195,7 +195,7 @@ class EleanorDatabaseInterface:
                     - dict, optional
                     - kwargs to pass to `eleanor.TargetData()`
                     - the default is `None`
-                        - will be set to `dict()`
+                        - will be set to `dict(height=13, width=13)`
                 - `custom_aperture_kwargs`
                     - dict, optional
                     - kwargs if one wants to use a custom aperture
@@ -276,8 +276,10 @@ class EleanorDatabaseInterface:
         if tpfs2store is None:              tpfs2store              = slice(0) 
         if verbose is None:                 verbose                 = self.verbose
         if multi_sectors_kwargs is None:    multi_sectors_kwargs    = dict()
-        if targetdata_kwargs is None:       targetdata_kwargs       = dict()
-        
+        if targetdata_kwargs is None:       targetdata_kwargs       = dict(height=13, width=13)
+        if 'height' not in targetdata_kwargs.keys(): targetdata_kwargs['height'] = 13
+        if 'width' not in targetdata_kwargs.keys():  targetdata_kwargs['width']  = 13
+
         if save_kwargs is None: save_kwargs_use = None
         else:
             save_kwargs_use = save_kwargs.copy()
@@ -394,7 +396,9 @@ class EleanorDatabaseInterface:
         
         except Exception as e:
             #log and return empty result
-            lcs = np.empty((0,len(headers)))
+            lcs             = np.empty((0,len(headers)))
+            # tpfs            = [np.empty((targetdata_kwargs['height'], targetdata_kwargs['width'],1))]
+            # aperture_masks  = [np.empty((targetdata_kwargs['height'], targetdata_kwargs['width'],1))]
 
             self.LE.print_exc(e, prefix=f'{source_id}', suffix=None,)
             self.LE.exc2df(e, prefix=f'{source_id}', suffix=None,)
