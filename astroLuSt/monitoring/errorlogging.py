@@ -21,6 +21,10 @@ class LogErrors:
             - `df_errorlog`
                 - pd.DataFrame
                 - dataframe to log all the caught errors
+                - if multiple files appear in `'file'`
+                    - files will be separated by semicolons (`;`)
+                - if multiple lines appear in `'promblem_line'`
+                    - lines will be separated by semicolons (`;`)
         
         Methods
         -------
@@ -43,7 +47,7 @@ class LogErrors:
         self.verbose = verbose
 
         self.df_errorlog = pd.DataFrame(
-            columns=['exception', 'prefix', 'suffix', 'file', 'line', 'problem line', 'error msg', 'time']
+            columns=['exception', 'prefix', 'suffix', 'file', 'line', 'problem_line', 'error_message', 'time']
         )
         pass
 
@@ -157,29 +161,19 @@ class LogErrors:
         problem_lines   = re.findall(r'(?<=<module>\n).+',  format_exc)
         # error_msgs      = re.findall(r'\w+Error: [\w ]+',   format_exc)
         error_msgs      = re.findall(r'\w+Error[:\w ]+',    format_exc)
-
-        # df_temp = pd.DataFrame({
-        #     'exception':[format_exc]*len(files),
-        #     'prefix':   [prefix]*len(files),
-        #     'suffix':   [suffix]*len(files),
-        #     'file':     files,
-        #     'line':     lines,
-        #     'problem line':[problem_lines]*len(files),
-        #     'error msg':error_msgs*len(files),
-        #     'time':[pd.Timestamp.now()]*len(files),
-        # })        
+     
         df_temp = pd.DataFrame({
             'exception':[format_exc],
             'prefix':   [prefix],
             'suffix':   [suffix],
-            'file':     ';'.join(files),
-            'line':     ';'.join(lines),
-            'problem line':[problem_lines],
-            'error msg':error_msgs,
+            'file':     ';'.join(files),    #transform to 1 line
+            'line':     ';'.join(lines),    #transform to 1 line
+            'problem_line':problem_lines,
+            'error_message':error_msgs,
             'time':[pd.Timestamp.now()],
         })        
 
-        self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
+        self.df_errorlog = pd.concat([self.df_errorlog, df_temp]).reset_index(drop=True)
 
         return df_temp
 
