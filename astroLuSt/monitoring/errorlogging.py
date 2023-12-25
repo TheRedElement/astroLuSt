@@ -152,21 +152,31 @@ class LogErrors:
 
         format_exc = traceback.format_exc()
 
-        files = re.findall(r'(?<=File ").+(?=")', format_exc)        
-        lines = re.findall(r'(?<=line )\d+(?=,)', format_exc)
-        problem_lines = re.findall(r'(?<=<module>\n).+', format_exc)
-        # error_msgs = re.findall(r'\w+Error: [\w ]+', format_exc)
-        error_msgs = re.findall(r'\w+Error[:\w ]+', format_exc)
+        files           = re.findall(r'(?<=File ").+(?=")', format_exc)        
+        lines           = re.findall(r'(?<=line )\d+(?=,)', format_exc)
+        problem_lines   = re.findall(r'(?<=<module>\n).+',  format_exc)
+        # error_msgs      = re.findall(r'\w+Error: [\w ]+',   format_exc)
+        error_msgs      = re.findall(r'\w+Error[:\w ]+',    format_exc)
 
+        # df_temp = pd.DataFrame({
+        #     'exception':[format_exc]*len(files),
+        #     'prefix':   [prefix]*len(files),
+        #     'suffix':   [suffix]*len(files),
+        #     'file':     files,
+        #     'line':     lines,
+        #     'problem line':[problem_lines]*len(files),
+        #     'error msg':error_msgs*len(files),
+        #     'time':[pd.Timestamp.now()]*len(files),
+        # })        
         df_temp = pd.DataFrame({
-            'exception':[format_exc]*len(files),
-            'prefix':[prefix]*len(files),
-            'suffix':[suffix]*len(files),
-            'file':files,
-            'line':lines,
-            'problem line':[problem_lines]*len(files),
-            'error msg':error_msgs*len(files),
-            'time':[pd.Timestamp.now()]*len(files),
+            'exception':[format_exc],
+            'prefix':   [prefix],
+            'suffix':   [suffix],
+            'file':     ';'.join(files),
+            'line':     ';'.join(lines),
+            'problem line':[problem_lines],
+            'error msg':error_msgs,
+            'time':[pd.Timestamp.now()],
         })        
 
         self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
