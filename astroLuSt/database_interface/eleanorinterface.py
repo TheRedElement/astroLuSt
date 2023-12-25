@@ -327,6 +327,7 @@ class EleanorDatabaseInterface:
                 **multi_sectors_kwargs,
             )
 
+            #iterate over found sectors
             for idx, s in enumerate(star):
                 
                 #test if failure in sector
@@ -625,8 +626,8 @@ class EleanorDatabaseInterface:
             tpfs            += [r[2] for r in res]
             aperture_masks  += [r[3] for r in res]
 
-        #update number of extracted targets
-        extracted += len(chunk)
+            #update number of extracted targets
+            extracted += len(chunk)
 
         return lcs, headers, tpfs, aperture_masks
     
