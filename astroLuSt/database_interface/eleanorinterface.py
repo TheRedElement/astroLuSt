@@ -589,6 +589,9 @@ class EleanorDatabaseInterface:
         #iterate over chunks
         extracted = 0
         for cidx, chunk in enumerate(chunks):
+            #update number of extracted targets
+            extracted += len(chunk)
+            
             almf.printf(
                 msg=f'Extracting chunk {cidx+1}/{len(chunks)} ({extracted}/{len(source_ids)})',
                 context=f'{self.__class__.__name__}.{self.download.__name__}()',
@@ -630,8 +633,6 @@ class EleanorDatabaseInterface:
             tpfs            += [r[2] for r in res]
             aperture_masks  += [r[3] for r in res]
 
-            #update number of extracted targets
-            extracted += len(chunk)
 
         return lcs, headers, tpfs, aperture_masks
     
