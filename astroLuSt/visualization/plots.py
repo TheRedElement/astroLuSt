@@ -2133,7 +2133,7 @@ class CornerPlot:
 
         #normal distribution estimate
         if mu1 is not None and sigma1 is not None:
-            xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
+            xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), hist_kwargs['bins'])
             normal = stats.norm.pdf(xvals, mu1, sigma1)
             
             if orientation == 'horizontal':
