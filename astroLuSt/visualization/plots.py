@@ -1979,12 +1979,16 @@ class CornerPlot:
         )
         
         #normal distribution estimate
+        if isinstance(bins, int):
+            xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+            yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
+        else:
+            xvals = bins.copy()
+            yvals = bins.copy()        
         if mu1 is not None and sigma1 is not None:
             
             covmat = np.cov(np.array([d1,d2]))
 
-            xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
-            yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
             xx, yy = np.meshgrid(xvals, yvals)
             mesh = np.dstack((xx, yy))
             
@@ -2007,8 +2011,8 @@ class CornerPlot:
             ax.set_yticklabels([])
         ax.tick_params()
 
-        ax.set_xlim(np.nanmin(d2), np.nanmax(d2))
-        ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
+        ax.set_xlim(np.nanmin(xvals), np.nanmax(xvals))
+        ax.set_ylim(np.nanmin(yvals), np.nanmax(yvals))
 
         #add corrcoeff in legend
         ax.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
@@ -2118,9 +2122,13 @@ class CornerPlot:
             ax.set_xticklabels(ax.get_xticklabels(), visible=False)
 
         #plot histograms (color each class in y)
+        if isinstance(bins, int):
+            bins_use = bins//len(np.unique(y))
+        else:
+            bins_use = bins.copy()
         for yu, c in zip(np.unique(y), colors):
             ax.hist(
-                d1[(y==yu)].flatten(), bins=bins//len(np.unique(y)),
+                d1[(y==yu)].flatten(), bins=bins_use,
                 orientation=orientation,
                 color=c,
                 **hist_kwargs
@@ -2194,6 +2202,7 @@ class CornerPlot:
 
             Comments
             --------
+                - DEPRECATED
 
         """
 
@@ -2221,9 +2230,8 @@ class CornerPlot:
     def plot(self,
         X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
         mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
-        bins:int=100,
+        bins:Union[int,np.ndarray]=100,
         cmap:Union[str,mcolors.Colormap]='viridis',
-        xymin:float=None, xymax:float=None,
         asstandardnormal:bool=False,
         fig:Figure=None,
         sctr_kwargs:dict=None,
@@ -2269,29 +2277,22 @@ class CornerPlot:
                     - the default is `None`
                         - will infer the correlation coefficients
                 - `bins`
-                    - int, optional
-                    - number of bins to use in `plt.histogram`
-                    - also the resolution for the estimation of the normal distribution
+                    - int, np.ndarray, optional
+                    - number of bins to use in
+                        - `ax.histogram()`
+                        - `np.meshgrid()` in `self.__2d_distributions()`
+                    - if `np.ndarray`
+                        - will be used as axis limits for ALL axis as well
+                        - will use those exact bins for ALL uninque values in `y`
+                    - if `int`
+                        - will automatically calculate the bins
+                            - distributes bins evenly accross unique values in `y`
                     - the default is 100
                 - `cmap`
                     - str, mcolors.Colormap
                     - name of the colormap to use or Colormap instance
                     - used to color the 1d and 2d distributions according to `y`
                     - the default is `'viridis'`
-                - `xymin`
-                    - float, optional
-                    - minimum of x- and y-axis limits
-                    - will be set for all axes
-                        - will exclude Counts of 1D histograms in the limit enforcement
-                    - the default is `None`
-                        - no modifications to minimum limit
-                - `xymax`
-                    - float, optional
-                    - maximum of x- and y-axis limits
-                    - will be set for all axes
-                        - will exclude Counts of 1D histograms in the limit enforcement
-                    - the default is `None`
-                        - no modifications to maximum limit                    
                 - `asstandardnormal`
                     - bool, optional
                     - whether to plot the data rescaled to zero mean and unit variance
@@ -2379,14 +2380,6 @@ class CornerPlot:
                         hist_kwargs,
                         sctr_kwargs,
                     )            
-        
-        #make x and y limits equal if requested
-        if not asstandardnormal:
-            self.__make_equalrange(
-                fig, nrowscols,
-                xymin, xymax,
-            )
-
 
         #get axes
         axs = fig.axes
