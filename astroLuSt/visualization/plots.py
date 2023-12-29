@@ -2111,15 +2111,17 @@ class CornerPlot:
 
 
         if idx != 1:
-            orientation = "horizontal"
+            orientation = 'horizontal'
             ax.tick_params(bottom=False, top=True, labelbottom=False, labeltop=True)
             ax.xaxis.set_label_position('top')
             ax.set_xlabel(countlab)
             ax.set_yticklabels(ax.get_yticklabels(), visible=False)
+            ax.set_ymargin(0)
         else:
-            orientation = "vertical"
+            orientation = 'vertical'
             ax.set_ylabel(countlab)
             ax.set_xticklabels(ax.get_xticklabels(), visible=False)
+            ax.set_xmargin(0)
 
         #plot histograms (color each class in y)
         if isinstance(bins, int):
@@ -2143,24 +2145,13 @@ class CornerPlot:
             if orientation == 'horizontal':
                 ax.axhline(mu1, color='tab:orange', linestyle='--', label=r'$\mu=%.2f$'%(mu1))
                 ax.plot(normal, xvals)
-                ax.set_ylim(np.nanmin(d1), np.nanmax(d1))
-                
-                ax.xaxis.set_ticks_position('top')
-                ax.set_yticklabels([])
             
             elif orientation == 'vertical':
                 ax.plot(xvals, normal)
                 ax.axvline(mu1, color='tab:orange', linestyle='--', label=r'$\mu=%.2f$'%(mu1))
-                ax.set_xlim(np.nanmin(d1), np.nanmax(d1))
-                
-                ax.yaxis.set_ticks_position('right')
-                ax.set_xticklabels([])
         
             ax.errorbar(np.nan, np.nan, color='none', label=r'$\sigma=%.2f$'%(sigma1))
             ax.legend()
-        
-
-        ax.tick_params()
 
         return ax
     
