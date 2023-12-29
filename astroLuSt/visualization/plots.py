@@ -2302,6 +2302,15 @@ class CornerPlot:
                     - figure to plot into
                     - the default is `None`
                         - will create a new figure
+                - `sctr_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.scatter()`
+                    - the default is `None`
+                        - will be set to `dict(s=1, alpha=0.5, zorder=2)`
+                - `hist_kwargs`
+                    - kwargs to pass to `ax.hist()`
+                    - the default is `None`
+                        - will be set to `dict(density=True, alpha=0.5, zorder=2)`
 
             Raises
             ------
@@ -2319,7 +2328,7 @@ class CornerPlot:
             --------
         """
 
-        #initialize correctly
+        #default parameters
         if y is None:
             y = 'tab:blue'
         if featurenames is None: featurenames = [f'Feature {i}' for i in np.arange(X.shape[1])]
@@ -2331,9 +2340,15 @@ class CornerPlot:
         if corrmat is None:
             corrmat = np.corrcoef(X.T)
         if sctr_kwargs is None:
-            sctr_kwargs = {'s':1, 'alpha':0.5, 'zorder':2}
+            sctr_kwargs = dict(s=1, alpha=0.5, zorder=2)
+        if 's' not in sctr_kwargs.keys():       sctr_kwargs['s']        = 1
+        if 'alpha' not in sctr_kwargs.keys():   sctr_kwargs['alpha']    = 0.5
+        if 'zorder' not in sctr_kwargs.keys():  sctr_kwargs['zorder']   = 2
         if hist_kwargs is None:
-            hist_kwargs = {'density':True, 'alpha':0.5, 'zorder':2}
+            hist_kwargs = dict(density=True, alpha=0.5, zorder=2)
+        if 'density' not in hist_kwargs.keys(): hist_kwargs['density']  = True
+        if 'alpha' not in hist_kwargs.keys():   hist_kwargs['alpha']    = 0.5
+        if 'zorder' not in hist_kwargs.keys():  hist_kwargs['zorder']   = 2
 
         if fig is None: fig = plt.figure()
         nrowscols = X.shape[1]
