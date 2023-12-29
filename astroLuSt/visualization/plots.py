@@ -2014,6 +2014,8 @@ class CornerPlot:
         ax.set_xlim(np.nanmin(xvals), np.nanmax(xvals))
         ax.set_ylim(np.nanmin(yvals), np.nanmax(yvals))
 
+        ax.margins(x=0,y=0)
+
         #add corrcoeff in legend
         ax.errorbar(np.nan, np.nan, color="none", label=r"$r_\mathrm{P}=%.4f$"%(corrmat[idx1, idx2]))
         ax.legend()
@@ -2026,7 +2028,6 @@ class CornerPlot:
         d1:np.ndarray, mu1:float, sigma1:float,
         y:np.ndarray,
         cmap:Union[str,mcolors.Colormap],
-        bins:int,
         fig:Figure, nrowscols:int,
         hist_kwargs:dict,
         sctr_kwargs:dict,
@@ -2054,9 +2055,6 @@ class CornerPlot:
                 - `cmap`
                     - str, Colormap
                     - name of colormap or Colormap instance to color the datapoints
-                - `bins`
-                    - int
-                    - number of bins to use for the histograms
                 - `fig`
                     - Figure
                     - figure to plot into
@@ -2124,13 +2122,9 @@ class CornerPlot:
             ax.set_xmargin(0)
 
         #plot histograms (color each class in y)
-        if isinstance(bins, int):
-            bins_use = bins//len(np.unique(y))
-        else:
-            bins_use = bins.copy()
         for yu, c in zip(np.unique(y), colors):
             ax.hist(
-                d1[(y==yu)].flatten(), bins=bins_use,
+                d1[(y==yu)].flatten(),
                 orientation=orientation,
                 color=c,
                 **hist_kwargs
@@ -2272,12 +2266,16 @@ class CornerPlot:
                     - number of bins to use in
                         - `ax.histogram()`
                         - `np.meshgrid()` in `self.__2d_distributions()`
+                    - will be passed to 
+                        - `self.__2d_distributions()`
+                        - `hist_kwargs`
+                            - if not overwritten
                     - if `np.ndarray`
                         - will be used as axis limits for ALL axis as well
                         - will use those exact bins for ALL uninque values in `y`
                     - if `int`
                         - will automatically calculate the bins
-                            - distributes bins evenly accross unique values in `y`
+                        - will use the calculated bins for ALL uninque values in `y`
                     - the default is 100
                 - `cmap`
                     - str, mcolors.Colormap
@@ -2301,7 +2299,7 @@ class CornerPlot:
                 - `hist_kwargs`
                     - kwargs to pass to `ax.hist()`
                     - the default is `None`
-                        - will be set to `dict(density=True, alpha=0.5, zorder=2)`
+                        - will be set to `dict(bins=bins, density=True, alpha=0.5, zorder=2)`
 
             Raises
             ------
@@ -2336,7 +2334,9 @@ class CornerPlot:
         if 'alpha' not in sctr_kwargs.keys():   sctr_kwargs['alpha']    = 0.5
         if 'zorder' not in sctr_kwargs.keys():  sctr_kwargs['zorder']   = 2
         if hist_kwargs is None:
-            hist_kwargs = dict(density=True, alpha=0.5, zorder=2)
+            hist_kwargs = dict(bins=bins, density=True, alpha=0.5, zorder=2)
+        if 'bins' not in hist_kwargs.keys():    hist_kwargs['bins']     = bins
+        else:                                   bins = hist_kwargs['bins']
         if 'density' not in hist_kwargs.keys(): hist_kwargs['density']  = True
         if 'alpha' not in hist_kwargs.keys():   hist_kwargs['alpha']    = 0.5
         if 'zorder' not in hist_kwargs.keys():  hist_kwargs['zorder']   = 2
@@ -2381,7 +2381,6 @@ class CornerPlot:
                         d1, mu1, sigma1,
                         y,
                         cmap,
-                        bins,
                         fig, nrowscols,
                         hist_kwargs,
                         sctr_kwargs,
