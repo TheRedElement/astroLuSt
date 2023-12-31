@@ -6,3 +6,10 @@ def raise_div0():
 
 def raise_concaterr(n:int):
     return np.concatenate(n, 0)
+
+def raise_nested_exception():
+    
+    try:
+        raise ValueError('custom error')
+    except Exception as e:
+        raise ValueError('custom error in except')

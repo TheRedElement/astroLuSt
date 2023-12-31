@@ -150,6 +150,10 @@ class LogErrors:
 
             Comments
             --------
+                - if nested `try...except` statements raised the error
+                    - will only care about the last (deepest) one
+                    - the rest will be stored as part of `format_exc` in `self.df_errorlog['exception']` anyways
+                    
         """
 
         #initilaize
@@ -158,13 +162,16 @@ class LogErrors:
 
         format_exc = traceback.format_exc()
 
+        #for nested try...except:
+        #   - only care about last error
+        #   - rest will be stored in `format_exc` anyways
         files           = re.findall(r'(?<=File ").+(?=")', format_exc)        
         lines           = re.findall(r'(?<=line )\d+(?=,)', format_exc)
         # problem_lines   = re.findall(r'(?<=<module>\n).+',  format_exc)
         problem_lines   = re.findall(r'(?<=\n    ).+',  format_exc)
         # error_msgs      = re.findall(r'\w+Error: [\w ]+',   format_exc)
-        error_msgs      = re.findall(r'\w+Error[:\w ]+',    format_exc)
-     
+        error_msgs      = re.findall(r'\w+Error[:\w ]+',    format_exc)[-1:]
+
         #in case no problem lines have been identified
         if len(problem_lines) == 0: problem_lines = ['<NO PROBLEM LINE IDENTIFIED>']*len(files)
 
@@ -175,7 +182,7 @@ class LogErrors:
             'file':         files,
             'line':         lines,
             'problem_line': problem_lines,
-            'error_message':error_msgs*len(files),
+            'error_message':error_msgs*(len(files)//len(error_msgs)),
             'time':         [pd.Timestamp.now()]*len(files),
         })         
         # df_temp = pd.DataFrame({
