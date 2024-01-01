@@ -7,6 +7,7 @@ import numpy as np
 from typing import Union, Tuple, Callable
 
 from astroLuSt.visualization.plotting import generate_colors
+from astroLuSt.monitoring import formatting as almof
 
 
 #%%classes
@@ -651,6 +652,7 @@ def periodize(
     x:list, y:list,
     repetitions:Union[np.ndarray,float]=2, outshapes:Union[np.ndarray,int]=None,
     testplot:bool=False,
+    verbose:int=0,
     ) -> Tuple[list,list]:
     """
         - function to create a periodic signal out of the `x` and `y` values of a time-series given in phase space
@@ -689,6 +691,10 @@ def periodize(
                 - bool, optional
                 - whether to show a test-plot
                 - the default is `False`
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
 
         Raises
         ------
@@ -727,6 +733,13 @@ def periodize(
     #inintialize all relevant params depending on what has been provided
     if outshapes is None:   outshapes   = [int(yi.shape[0]*r) for yi, r in zip(y, repetitions)]
     else:                   repetitions = [os/yi.shape[0] for yi, os in zip(y, outshapes)]
+
+    almof.printf(
+        msg=f'Using the following: {outshapes=}, {repetitions=}.',
+        context='periodize()',
+        type='INFO',
+        verbose=verbose,
+    )
 
     #init output lists
     x_periodized = []

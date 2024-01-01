@@ -467,6 +467,7 @@ class GeneratePeriodicSignals:
 
     def random(self,
         x:np.ndarray,
+        verbose:int=None,
         **kwargs
         ) -> np.ndarray:
         """
@@ -477,6 +478,12 @@ class GeneratePeriodicSignals:
                 - `x`
                     - np.ndarray
                     - input values to evaluate on
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
                 - `**kwargs`
                     - kwargs to pass to the function
                         - will use `kwargs['amp']`
@@ -495,18 +502,31 @@ class GeneratePeriodicSignals:
             Comments
             --------
 
-        """        
-        period = 0.2
-        dt = x.shape[0]
-        repetitions = dt/period
-        print(period, dt, repetitions)
-        randarray = np.random.randn(1,period)
-        _, randarray = alpdm.periodize(randarray, period=period, repetitions=repetitions, testplot=True)
-        return randarray
+        """
+        if verbose is None: verbose = self.verbose
+
+        #resolution of initial (template) 
+        ##constant value scaled by period to generate randomness in number of repetitions
+        res = int(kwargs['init_res']*kwargs['period'])
+        
+        #generate template arrays
+        x_ = [np.linspace(0,1,res)]
+        randarray = np.random.randn(1,res)
+        
+        #periodize template arrays
+        _, randarray = alpdm.periodize(
+            x_, randarray,
+            # repetitions=None,
+            outshapes=[kwargs['npoints']],
+            testplot=False,
+            verbose=verbose
+        )
+
+        return randarray[0]
 
     def select_choice(self,
         choices:np.ndarray,
-        x:np.ndarray, period:float,
+        x:np.ndarray, period:float, npoints:int,
         func_kwargs:dict=None
         ) -> np.ndarray:
         """
@@ -569,12 +589,15 @@ class GeneratePeriodicSignals:
             func_kwargs = {
                 'p':[np.random.randint(1,5)],
                 'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.uniform(0.1,1),
+                'init_res':50,
             }
-        if 'p' not in func_kwargs:      func_kwargs['p']        = [np.random.randint(1,5)]
-        if 'amp' not in func_kwargs:    func_kwargs['amp']      = np.random.uniform(0.1,5)
-        if 'loc' not in func_kwargs:    func_kwargs['loc']      = np.random.uniform(-1,1)
-        if 'scale' not in func_kwargs:  func_kwargs['scale']    = np.random.uniform(0.1,1)
-        func_kwargs['period']                                   = period
+        if 'p' not in func_kwargs:          func_kwargs['p']        = [np.random.randint(1,5)]
+        if 'amp' not in func_kwargs:        func_kwargs['amp']      = np.random.uniform(0.1,5)
+        if 'loc' not in func_kwargs:        func_kwargs['loc']      = np.random.uniform(-1,1)
+        if 'scale' not in func_kwargs:      func_kwargs['scale']    = np.random.uniform(0.1,1)
+        if 'init_res' not in func_kwargs:   func_kwargs['init_res'] = 50
+        func_kwargs['period']                                       = period
+        func_kwargs['npoints']                                      = npoints
 
         choice = np.random.choice(choices, size=None)
 
@@ -657,9 +680,9 @@ class GeneratePeriodicSignals:
         else:
             npoints = self.npoints
             if len(np.unique(self.npoints)) > 1:
-                shape[1] = None
+                shape = (shape[0],None)
             else:
-                shape[1] = self.npoints[0]
+                shape = (shape[0],self.npoints[0])
 
         #update `shape` accordingly
         shape = (len(periods), shape[1])
@@ -695,7 +718,11 @@ class GeneratePeriodicSignals:
                 #convert to phases for superposition
                 phases = (x-xoi)/pi
                 #choose function/array to generate from
-                yi = self.select_choice(choices=choices, x=phases, period=pi, func_kwargs=func_kwargs)
+                yi = self.select_choice(
+                    choices=choices, x=phases,
+                    period=pi, npoints=n,
+                    func_kwargs=func_kwargs
+                )
                 y += ai*yi
 
             #append to output
@@ -939,6 +966,9 @@ class GeneratePeriodicSignals:
             --------
         """
 
+        print(periods)
+
+        if periods is None: periods = np.array([None]*len(x_gen))
         if fig_kwargs is None:
             fig_kwargs = {}
         if plot_kwargs is None:
@@ -946,8 +976,9 @@ class GeneratePeriodicSignals:
 
         fig = plt.figure(**fig_kwargs)
         ax1 = fig.add_subplot(111)
-        for xi, yi in zip(x_gen, y_gen):
+        for xi, yi, pi in zip(x_gen, y_gen, periods):
             ax1.plot(xi, yi, **plot_kwargs)
+            ax1.axvline(np.nanmin(xi)+pi, c='c')
         
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')
