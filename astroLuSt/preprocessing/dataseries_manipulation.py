@@ -648,28 +648,43 @@ def periodic_shift(
     return shifted
 
 def periodize(
-    y:np.ndarray, period:Tuple[float,np.ndarray],
-    repetitions:float=2,
+    x:list, y:list,
+    repetitions:Union[np.ndarray,float]=2, outshapes:Union[np.ndarray,int]=None,
     testplot:bool=False,
-    ) -> Tuple[np.ndarray,np.ndarray]:
+    ) -> Tuple[list,list]:
     """
-        - function to create a periodic signal out of the `y` values of a time-series given in phase space and a `period`
+        - function to create a periodic signal out of the `x` and `y` values of a time-series given in phase space
+            - i.e., one repetition is provided
 
         Parameters
         ----------
-            - `y`
-                - np.ndarray
+            - `x`
+                - list
                 - has to be at least 2d
+                - also heterogeneous 2d arrays are allowed
+                - has to have same shapes as `y` in all axis
+                - x-values to be periodized
+            - `y`
+                - list
+                - has to be at least 2d
+                - also heterogeneous 2d arrays are allowed
+                - has to have same shapes as `x` in all axis
                 - y-values to be periodized
-            - `period`
-                - np.ndarray, float
-                - if np.ndarray, has to be of same length as `y`
-                - period to use for the repetition
             - `repetitions`
-                - float, optional
-                - number of times the signal (`y`) shall be repeated
+                - np.ndarray, float, optional
+                - if np.ndarray
+                    - has to have same length as `x` and `y`
+                - number of times the signal (`y(x)`) shall be repeated
                 - if `repetitions < 1` gets passed, the signal will be cut off at that point
                 - the default is 2
+            - `outshapes`
+                - np.ndarray, int, optional
+                - if np.ndarray
+                    - has to have same length as `x` and `y`
+                - desired output shape after periodizing
+                - overrides `repetitions`
+                - the default is `None`
+                    - will be calculated from `repetitions`
             - `testplot`
                 - bool, optional
                 - whether to show a test-plot
@@ -700,54 +715,56 @@ def periodize(
     
     """
 
-    #initialize x accordingly
-    if len(y.shape) == 1:
-        nsamples = 1
-        npoints  = y.shape[0]
-    else:
-        nsamples = y.shape[0]
-        npoints  = y.shape[1]
+    #make sure all shapes are correct
+    try:
+        y[0][0]
+        x[0][0]
+    except Exception as e:
+        raise ValueError('`x` and `y` have to be 2d lists!')
+    if isinstance(repetitions, (int,float)):    repetitions = np.array([repetitions]*len(y))
+    if isinstance(outshapes, int):              outshapes   = np.array([outshapes]*len(y))
 
-    x = np.array([np.linspace(0, 1, npoints, endpoint=False) for i in range(nsamples)])
+    #inintialize all relevant params depending on what has been provided
+    if outshapes is None:   outshapes   = [int(yi.shape[0]*r) for yi, r in zip(y, repetitions)]
+    else:                   repetitions = [os/yi.shape[0] for yi, os in zip(y, outshapes)]
 
-    #reshape if 1d array was passed
-    if len(x.shape) == 1: x = x.reshape(1,x.shape[0])
-    if len(y.shape) == 1: y = y.reshape(1,y.shape[0])
+    #init output lists
+    x_periodized = []
+    y_periodized = []
+    for xi, yi, outshape in zip(x, y, outshapes):
 
-    #generate times given passed period
-    x_times = phase2time(x, period)
+        #init periodized arrays for sample
+        yi_periodized = np.zeros(outshape)
+        xi_periodized = np.zeros(outshape)
+        
+        #add complete repetitions
+        for r in range(int(outshape//len(yi))):
+            start_idx = r*yi.shape[0]
+            end_idx = (r+1)*yi.shape[0]
+            end_offset = r*(np.nanmax(xi)-np.nanmin(xi))
+            xi_periodized[start_idx:end_idx] += (xi+end_offset) #offset xi to get correct xvalues
+            yi_periodized[start_idx:end_idx] += yi
+        #add fractional repetitions
+        if outshape < len(yi):
+            end_idx = 0
+            end_offset = 0
+        else:
+            end_offset = (r+1)*(np.nanmax(xi)-np.nanmin(xi))
+        xi_periodized[end_idx:] = (xi[:outshape%len(yi)]+end_offset)
+        yi_periodized[end_idx:] = yi[:outshape%len(yi)]
 
-    #initialize output arrays
-    x_periodized = np.zeros((x_times.shape[0], int(x_times.shape[1]*repetitions)))
-    y_periodized = np.zeros((x_times.shape[0], int(x_times.shape[1]*repetitions)))
-
-
-    endidx = 0
-    for r in np.arange(0, repetitions//1, 1, dtype=int):
-        #temporal offset
-        times_add = x_times + (r*period)
-
-        #indices to replace in template arrays
-        startidx = r*x_times.shape[1]
-        endidx   = startidx+times_add.shape[1]
-
-        #update template arrays
-        x_periodized[:,startidx:endidx] += times_add
-        y_periodized[:,startidx:endidx] += y
-
-
-    #add fraction of repetition that is left
-    x_periodized[:,endidx:] = (x_times + (repetitions//1*period))[:,:(x_periodized.shape[1]-endidx)]
-    y_periodized[:,endidx:] = y[:,:(x_periodized.shape[1]-endidx)]
-
-
+        #append to output
+        y_periodized.append(yi_periodized)
+        x_periodized.append(xi_periodized)
+        
     if testplot:
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        for idx, (xp, yp, xi, yi) in enumerate(zip(x_periodized, y_periodized, x_times, y)):
+        for idx, (xp, yp, xi, yi) in enumerate(zip(x_periodized, y_periodized, x, y)):
             lab_per = 'Periodized Signal'*(idx==0)
             lab_in  = 'Input Signal'*(idx==0)
             ax1.scatter(xi, yi, label=lab_in)
+            ax1.plot(xp, yp, c='w', lw=3)
             ax1.plot(xp, yp, label=lab_per)
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')
@@ -755,4 +772,4 @@ def periodize(
         plt.tight_layout()
         plt.show()
 
-    return x_periodized, y_periodized, 
+    return x_periodized, y_periodized

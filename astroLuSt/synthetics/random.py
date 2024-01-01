@@ -8,7 +8,7 @@ from scipy.stats import norm
 import string
 from typing import Union, Tuple
 
-from astroLuSt.preprocessing.dataseries_manipulation import periodize
+from astroLuSt.preprocessing import dataseries_manipulation as alpdm
 
 #%%definitions
 class GenUniqueStrings:
@@ -241,7 +241,7 @@ class GeneratePeriodicSignals:
                 self.tangent,
                 self.sawtooth,
                 self.polynomial,
-                self.gaussian,
+                # self.gaussian,
                 self.random,
             ], dtype=object)
         
@@ -496,11 +496,17 @@ class GeneratePeriodicSignals:
             --------
 
         """        
-        randarray = np.random.randn(x.shape[0])*kwargs['amp']
+        period = 0.2
+        dt = x.shape[0]
+        repetitions = dt/period
+        print(period, dt, repetitions)
+        randarray = np.random.randn(1,period)
+        _, randarray = alpdm.periodize(randarray, period=period, repetitions=repetitions, testplot=True)
         return randarray
 
     def select_choice(self,
-        choices:np.ndarray, x:np.ndarray,
+        choices:np.ndarray,
+        x:np.ndarray, period:float,
         func_kwargs:dict=None
         ) -> np.ndarray:
         """
@@ -564,10 +570,11 @@ class GeneratePeriodicSignals:
                 'p':[np.random.randint(1,5)],
                 'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.uniform(0.1,1),
             }
-        if 'p' not in func_kwargs:      func_kwargs['p'] = [np.random.randint(1,5)]
-        if 'amp' not in func_kwargs:    func_kwargs['amp'] = np.random.uniform(0.1,5)
-        if 'loc' not in func_kwargs:    func_kwargs['loc'] = np.random.uniform(-1,1)
-        if 'scale' not in func_kwargs:  func_kwargs['scale'] = np.random.uniform(0.1,1)
+        if 'p' not in func_kwargs:      func_kwargs['p']        = [np.random.randint(1,5)]
+        if 'amp' not in func_kwargs:    func_kwargs['amp']      = np.random.uniform(0.1,5)
+        if 'loc' not in func_kwargs:    func_kwargs['loc']      = np.random.uniform(-1,1)
+        if 'scale' not in func_kwargs:  func_kwargs['scale']    = np.random.uniform(0.1,1)
+        func_kwargs['period']                                   = period
 
         choice = np.random.choice(choices, size=None)
 
@@ -688,7 +695,7 @@ class GeneratePeriodicSignals:
                 #convert to phases for superposition
                 phases = (x-xoi)/pi
                 #choose function/array to generate from
-                yi = self.select_choice(choices=choices, x=phases, func_kwargs=func_kwargs)
+                yi = self.select_choice(choices=choices, x=phases, period=pi, func_kwargs=func_kwargs)
                 y += ai*yi
 
             #append to output
