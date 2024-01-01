@@ -12,4 +12,8 @@ def raise_nested_exception():
     try:
         raise ValueError('custom error')
     except Exception as e:
-        raise ValueError('custom error in except')
+        # raise ValueError('custom error in except')
+        try: 
+            raise ValueError('custom error in except')
+        except:
+            raise ValueError('custom error in except in except')

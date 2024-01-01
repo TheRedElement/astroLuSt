@@ -182,7 +182,7 @@ class LogErrors:
             'file':         files,
             'line':         lines,
             'problem_line': problem_lines,
-            'error_message':error_msgs*(len(files)//len(error_msgs)),
+            'error_message':error_msgs*len(files),
             'time':         [pd.Timestamp.now()]*len(files),
         })         
         # df_temp = pd.DataFrame({
