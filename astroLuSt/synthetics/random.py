@@ -149,60 +149,78 @@ class GeneratePeriodicSignals:
         ----------
             - `npoints`
                 - np.ndarray, int, optional
-                - number of points per dataseries
+                - number of points per dataseries/sample
+                - defines the number of samples to generate
+                    - i.e., `len(npoints)` is equal to the number of generated samples
                 - if np.ndarray
                     - has to have a length equal to the number of samples to generate
+                    - each entry will be interpreted as the number of datapoints to use for that particular sample
                 - if int
-                    - will use this many datapoints for all generated dataseries
-                - if `None`
-                    - will default to `shape[1]` of the parameter `shape` of `self.rvs()`
-                - the default is `None`
+                    - will use this many datapoints for all generated samples
+                - the default is 100
             - `periods`
                 - np.ndarray, int, float, optional
                 - periods of the individual generated dataseries
                     - will generate as many unique periodized dataseries as elements in `periods`
-                - if `None`
-                    - will default to `shape[0]` of the parameter `shape` of `self.rvs()`
                 - if int or float
                     - will use this period for all dataseries
-                - the default is `None`
+                - if np.ndarray
+                    - defines the periods of the composite signals for each sample
+                    - has to have shape `(nsamples, ncomposites)`
+                        - `nsamples`
+                            - number of samples that will be generated in total
+                        - `ncomposites`
+                            - number of functions that will get superpositioned to defined the final result
+                - the default is 1
             - `amplitudes`
-                - TODO                
+                - TODO
+            - `x_min`    
+                - TODO
+            - `x_max`
+                - TODO
             - `x_offsets`
                 - np.ndarray, int, optional
-                - has to be of same length as `periods`
                 - offsets to add to the x-values of the generated periodic dataseries
-                - if an np.ndarray
-                    - will be interpreted as the offset per generated dataseries
-                - if an int
-                    - will use that offset for all generated dataseries
-                - the default is `None`
+                - if np.ndarray
+                    - defines the offsets of the composite signals for each sample
+                    - has to have shape `(nsamples, ncomposites)`
+                        - `nsamples`
+                            - number of samples that will be generated in total
+                        - `ncomposites`
+                            - number of functions that will get superpositioned to defined the final result
+                - if int
+                    - will use that offset for all generated samples
+                - the default is 0
             - `choices`
                 - np.ndarray, int, optional
                 - has to be of dtype object
-                - contains either callables (functions) or np.ndarrays
-                    - callables will be evaluated on the parameter `x` of `self.rvs()`
-                    - np.ndarrays will be returned and periodized as they are
+                - contains either callables (functions) or `np.ndarray`s
+                    - callables will be evaluated on phases in `self.rvs()`
+                    - `np.ndarray`s will be returned and periodized as they are
                 - these choices will be used to randomly generate dataseries
                 - the default is `None`
                     - will use an array containing the following methods
-                        - `sine()`
-                        - `cosin()`
-                        - `tangent()`
-                        - `polynomial()`
-                        - `gaussian()`
-                        - `random()`
+                        - `self.sine()`
+                        - `self.cosine()`
+                        - `self.tangent()`
+                        - `self.sawtooth()`
+                        - `self.polynomial()`
+                        - `self.random()`
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
 
         Methods
         -------
             - `sine()`
             - `cosin()`
             - `tangent()`
+            - `sawtooth()`
             - `polynomial()`
             - `gaussian()`
             - `random()`
-            - `select_choice()`
-            - `generate_one()`
+            - `exec_chosen()`
             - `rvs()`
             - `plot_result()`
 
@@ -215,7 +233,7 @@ class GeneratePeriodicSignals:
     """
 
     def __init__(self,
-        npoints:Union[np.ndarray,int]=None,
+        npoints:Union[np.ndarray,int]=100,
         periods:Union[np.ndarray,int,float]=None,
         amplitudes:Union[np.ndarray,int,float]=None,
         x_min:Union[np.ndarray,int,float]=None, x_max:Union[np.ndarray,int,float]=None,
@@ -227,11 +245,11 @@ class GeneratePeriodicSignals:
         if npoints is None:                         self.npoints    = [100]
         elif isinstance(npoints, int):              self.npoints    = [npoints]
         else:                                       self.npoints    = npoints
-        if periods is None:                         self.periods    = [1]*len(self.npoints)
-        elif isinstance(periods, (int,float)):      self.periods    = [periods]*len(self.npoints)
+        if periods is None:                         self.periods    = np.array([[1]]*len(self.npoints))
+        elif isinstance(periods, (int,float)):      self.periods    = np.array([[periods]]*len(self.npoints))
         else:                                       self.periods    = periods
-        if amplitudes is None:                      self.amplitudes = [1]*len(self.npoints)
-        elif isinstance(amplitudes, (int,float)):   self.amplitudes = [amplitudes]*len(self.npoints)
+        if amplitudes is None:                      self.amplitudes = [[1]]*len(self.npoints)
+        elif isinstance(amplitudes, (int,float)):   self.amplitudes = [[amplitudes]]*len(self.npoints)
         else:                                       self.amplitudes = amplitudes
         if x_min is None:                           self.x_min      = [0]*len(self.npoints)
         elif isinstance(x_min, (int,float)):        self.x_min      = [x_min]*len(self.npoints)
@@ -239,8 +257,8 @@ class GeneratePeriodicSignals:
         if x_max is None:                           self.x_max      = [0]*len(self.npoints)
         elif isinstance(x_max, (int,float)):        self.x_max      = [x_max]*len(self.npoints)
         else:                                       self.x_max      = x_max
-        if x_offsets is None:                       self.x_offsets  = [0]*len(self.npoints)
-        elif isinstance(x_offsets, (int,float)):    self.x_offsets  = [x_offsets]*len(self.npoints)
+        if x_offsets is None:                       self.x_offsets  = [[0]]*len(self.npoints)
+        elif isinstance(x_offsets, (int,float)):    self.x_offsets  = [[x_offsets]]*len(self.npoints)
         else:                                       self.x_offsets  = x_offsets
         self.verbose                                                = verbose
 
