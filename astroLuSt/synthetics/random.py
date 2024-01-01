@@ -150,10 +150,12 @@ class GeneratePeriodicSignals:
             - `npoints`
                 - np.ndarray, int, optional
                 - number of points per dataseries
+                - if np.ndarray
+                    - has to have a length equal to the number of samples to generate
+                - if int
+                    - will use this many datapoints for all generated dataseries
                 - if `None`
                     - will default to `shape[1]` of the parameter `shape` of `self.rvs()`
-                - if int
-                    - will use this many datapoints for all dataseries
                 - the default is `None`
             - `periods`
                 - np.ndarray, int, float, optional
@@ -216,21 +218,47 @@ class GeneratePeriodicSignals:
         npoints:Union[np.ndarray,int]=None,
         periods:Union[np.ndarray,int,float]=None,
         amplitudes:Union[np.ndarray,int,float]=None,
+        x_min:Union[np.ndarray,int,float]=None, x_max:Union[np.ndarray,int,float]=None,
         x_offsets:Union[np.ndarray,int]=None,
         choices:np.ndarray=None,
         verbose:int=0,
     ) -> None:
       
-        if npoints is None:                     self.npoints    = 0
-        else:                                   self.npoints    = npoints
-        if periods is None:                     self.periods    = 1
-        else:                                   self.periods    = periods
-        if amplitudes is None:                  self.amplitudes = 1
-        else:                                   self.amplitudes = amplitudes
-        if x_offsets is None:                   self.x_offsets = 0
-        else:                                   self.x_offsets = x_offsets
-        self.x_offsets                          = x_offsets
-        self.verbose                            = verbose
+        if npoints is None:                         self.npoints    = [100]
+        elif isinstance(npoints, int):              self.npoints    = [npoints]
+        else:                                       self.npoints    = npoints
+        if periods is None:                         self.periods    = [1]*len(self.npoints)
+        elif isinstance(periods, (int,float)):      self.periods    = [periods]*len(self.npoints)
+        else:                                       self.periods    = periods
+        if amplitudes is None:                      self.amplitudes = [1]*len(self.npoints)
+        elif isinstance(amplitudes, (int,float)):   self.amplitudes = [amplitudes]*len(self.npoints)
+        else:                                       self.amplitudes = amplitudes
+        if x_min is None:                           self.x_min      = [0]*len(self.npoints)
+        elif isinstance(x_min, (int,float)):        self.x_min      = [x_min]*len(self.npoints)
+        else:                                       self.x_min      = x_min
+        if x_max is None:                           self.x_max      = [0]*len(self.npoints)
+        elif isinstance(x_max, (int,float)):        self.x_max      = [x_max]*len(self.npoints)
+        else:                                       self.x_max      = x_max
+        if x_offsets is None:                       self.x_offsets  = [0]*len(self.npoints)
+        elif isinstance(x_offsets, (int,float)):    self.x_offsets  = [x_offsets]*len(self.npoints)
+        else:                                       self.x_offsets  = x_offsets
+        self.verbose                                                = verbose
+
+
+        nsamples = len(self.npoints)
+
+        #check all shapes
+        if (len(self.periods) != nsamples) \
+            or (len(self.amplitudes) != nsamples) \
+            or (len(self.x_min) != nsamples) \
+            or (len(self.x_max) != nsamples) \
+            or (len(self.x_offsets) != nsamples):
+            raise ValueError((
+                f'`len(npoints)` has to be the same as'
+                f' `len(periods)`, `len(amplitudes)`, `len(x_min)`, `len(x_max)`, `len(x_offsets)`.'
+                f' The respective values are:'
+                f' {len(self.npoints)=}, {len(self.periods)=}, {len(self.amplitudes)=}, {len(self.x_min)=}, {len(self.x_max)=}, {len(self.x_offsets)=}!'
+            ))
 
         if np.any(self.periods<1e-2):
             almof.printf(
@@ -639,9 +667,7 @@ class GeneratePeriodicSignals:
         return chosen
 
     def rvs(self,
-        shape:tuple=None,
         choices:np.ndarray=None,
-        x_min:np.ndarray=None, x_max:np.ndarray=None,
         noise_level_y:float=0.1,
         noise_level_x:float=0.1,
         random_state:int=None,
@@ -730,57 +756,22 @@ class GeneratePeriodicSignals:
             --------
                 - make sure that whichever callable you pass within choices can accept `**kwargs`
         """
-        #default parameters
-        if shape is None:                   shape           = (1,100)
-        if choices is None:                 choices         = self.choices
-
-        #from attributes
-        if isinstance(self.periods, (int,float)):   periods     = np.array([[self.periods]]   *shape[0])
-        else:                                       periods     = self.periods
-        if isinstance(self.amplitudes, (int,float)):amplitudes  = np.array([[self.amplitudes]]*shape[0])
-        else:                                       amplitudes  = self.amplitudes
-        if isinstance(self.x_offsets, (int,float)): x_offsets   = np.array([[self.x_offsets]]*shape[0])
-        else:                                       x_offsets   = self.x_offsets
-        if isinstance(self.npoints, int):           npoints     = np.array([self.npoints]     *shape[0])
-        else:
-            npoints = self.npoints
-            if len(np.unique(self.npoints)) > 1:
-                shape = (shape[0],None)
-            else:
-                shape = (shape[0],self.npoints[0])
-
-        #from parameters
-        shape = (len(periods), shape[1])
-        if func_kwargs is None: func_kwargs = [None]*len(periods)
         
-        if x_min is None:                   x_min           = np.zeros(shape[0])
-        elif isinstance(x_min, (float,int)):x_min           = np.zeros(shape[0]) + x_min
-        if x_max is None:                   x_max           = np.ones(shape[0])
-        elif isinstance(x_max, (float,int)):x_max           = np.zeros(shape[0]) + x_max
+        nsamples = len(self.npoints)
+        
+        #default parameters
+        if choices is None:                 choices         = self.choices        
         if verbose is None:                 verbose         = self.verbose
         if choices_kwargs is None:          choices_kwargs  = dict()
+        if func_kwargs is None: func_kwargs = [None]*nsamples
         
-
-
-        #check all shapes
-        if (len(periods) != shape[0]) \
-            or (len(amplitudes) != shape[0]) \
-            or (len(x_offsets) != shape[0]) \
-            or (len(x_min) != shape[0]) \
-            or (len(x_max) != shape[0]):
-            raise ValueError((
-                f'`shape[0]` has to be the same as'
-                f' `len(periods)`, `len(amplitudes)`, `len(x_offsets)`, `len(x_min)`, `len(x_max)`.'
-                f' The respective values are:'
-                f' {shape[0]=}, {len(periods)=}, {len(amplitudes)=}, {len(x_offsets)=}, {len(x_min)=}, {len(x_max)=}!'
-            ))
 
         #initialize output lists
         x_gen = []
         y_gen = []
 
         ##individual samples
-        for xn, xx, n, p, a, xo, f_kwargs in zip(x_min, x_max, npoints, periods, amplitudes, x_offsets, func_kwargs):
+        for xn, xx, n, p, a, xo, f_kwargs in zip(self.x_min, self.x_max, self.npoints, self.periods, self.amplitudes, self.x_offsets, func_kwargs):
 
             #init individual sample
             x = np.linspace(xn, xx, n)
@@ -808,7 +799,7 @@ class GeneratePeriodicSignals:
             y_gen += [y]
 
 
-        return x_gen, y_gen, periods
+        return x_gen, y_gen
 
     def plot_result(self,
         x_gen:np.ndarray, y_gen:np.ndarray,
