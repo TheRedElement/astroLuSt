@@ -82,6 +82,9 @@ class GenUniqueStrings:
             f')'
         )
     
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
     def rvs(self,
         shape:Union[int, tuple]=None,
         random_state:int=None,
