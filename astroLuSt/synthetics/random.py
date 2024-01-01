@@ -232,8 +232,6 @@ class GeneratePeriodicSignals:
         self.x_offsets                          = x_offsets
         self.verbose                            = verbose
 
-        print(np.nanmin(self.periods))
-
         if np.any(self.periods<1e-2):
             almof.printf(
                 msg=(
@@ -733,12 +731,8 @@ class GeneratePeriodicSignals:
                 - make sure that whichever callable you pass within choices can accept `**kwargs`
         """
         #default parameters
-        if shape is None:       shape       = (1,100)
-        if choices is None:     choices     = self.choices
-        if x_min is None:       x_min       = np.zeros(shape[0])
-        if x_max is None:       x_max       = np.ones(shape[0])
-        if verbose is None:     verbose     = self.verbose
-        if choices_kwargs is None: choices_kwargs = dict()
+        if shape is None:                   shape           = (1,100)
+        if choices is None:                 choices         = self.choices
 
         #from attributes
         if isinstance(self.periods, (int,float)):   periods     = np.array([[self.periods]]   *shape[0])
@@ -755,9 +749,17 @@ class GeneratePeriodicSignals:
             else:
                 shape = (shape[0],self.npoints[0])
 
-        #update `shape` and `func_kwargs` accordingly
+        #from parameters
         shape = (len(periods), shape[1])
         if func_kwargs is None: func_kwargs = [None]*len(periods)
+        
+        if x_min is None:                   x_min           = np.zeros(shape[0])
+        elif isinstance(x_min, (float,int)):x_min           = np.zeros(shape[0]) + x_min
+        if x_max is None:                   x_max           = np.ones(shape[0])
+        elif isinstance(x_max, (float,int)):x_max           = np.zeros(shape[0]) + x_max
+        if verbose is None:                 verbose         = self.verbose
+        if choices_kwargs is None:          choices_kwargs  = dict()
+        
 
 
         #check all shapes
