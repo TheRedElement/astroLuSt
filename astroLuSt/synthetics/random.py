@@ -6,9 +6,10 @@ import random
 from scipy.signal import sawtooth
 from scipy.stats import norm
 import string
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 from astroLuSt.preprocessing import dataseries_manipulation as alpdm
+from astroLuSt.monitoring import formatting as almof
 
 #%%definitions
 class GenUniqueStrings:
@@ -230,7 +231,20 @@ class GeneratePeriodicSignals:
         else:                                   self.x_offsets = x_offsets
         self.x_offsets                          = x_offsets
         self.verbose                            = verbose
-        
+
+        print(np.nanmin(self.periods))
+
+        if np.any(self.periods<1e-2):
+            almof.printf(
+                msg=(
+                    f'Found entries in `self.periods` that are < 1e-2.'
+                    f' This is likely to cause issues during generation.'
+                    f' Consider providing a higher mininmum period or increase `init_res` in `func_kwargs` passed in the call to `self.rvs()` accordingly!'
+                ),
+                context=self.__class__.__init__.__name__,
+                type='WARNING',
+                verbose=self.verbose,
+            )
 
         #initialize choices
         self.passed_choices = choices
@@ -394,6 +408,7 @@ class GeneratePeriodicSignals:
 
     def polynomial(self,
         x:np.ndarray,
+        verbose:int=None,
         **kwargs,
         ) -> np.ndarray:
         """
@@ -423,7 +438,27 @@ class GeneratePeriodicSignals:
             --------
 
         """
-        poly = np.polyval(x=x, p=kwargs['p'])
+        if verbose is None: verbose =  self.verbose
+        
+        #resolution of initial (template) 
+        ##constant value scaled by period to generate randomness in number of repetitions
+        res = int(kwargs['init_res']*kwargs['period'])
+
+        #generate template arrays
+        x_ = [np.linspace(0,1,res)]
+        poly = [np.polyval(x=x_[0], p=kwargs['p'])]
+
+        #periodize template arrays
+        _, poly = alpdm.periodize(
+            x_, poly,
+            # repetitions=None,
+            outshapes=[x.shape[0]],
+            testplot=False,
+            verbose=verbose-2
+        )
+
+        poly = poly[0]
+
         return poly
 
     def gaussian(self,
@@ -517,16 +552,18 @@ class GeneratePeriodicSignals:
         _, randarray = alpdm.periodize(
             x_, randarray,
             # repetitions=None,
-            outshapes=[kwargs['npoints']],
+            outshapes=[x.shape[0]],
             testplot=False,
-            verbose=verbose
+            verbose=verbose-2
         )
 
-        return randarray[0]
+        randarray = randarray[0]
 
-    def select_choice(self,
-        choices:np.ndarray,
-        x:np.ndarray, period:float, npoints:int,
+        return randarray
+
+    def exec_chosen(self,
+        chosen:np.ndarray,
+        x:np.ndarray, period:float,
         func_kwargs:dict=None
         ) -> np.ndarray:
         """
@@ -589,66 +626,19 @@ class GeneratePeriodicSignals:
             func_kwargs = {
                 'p':[np.random.randint(1,5)],
                 'amp':np.random.uniform(0.1,5), 'loc':np.random.uniform(-1,1), 'scale':np.random.uniform(0.1,1),
-                'init_res':50,
+                'init_res':100,
             }
         if 'p' not in func_kwargs:          func_kwargs['p']        = [np.random.randint(1,5)]
         if 'amp' not in func_kwargs:        func_kwargs['amp']      = np.random.uniform(0.1,5)
         if 'loc' not in func_kwargs:        func_kwargs['loc']      = np.random.uniform(-1,1)
         if 'scale' not in func_kwargs:      func_kwargs['scale']    = np.random.uniform(0.1,1)
-        if 'init_res' not in func_kwargs:   func_kwargs['init_res'] = 50
+        if 'init_res' not in func_kwargs:   func_kwargs['init_res'] = 100
         func_kwargs['period']                                       = period
-        func_kwargs['npoints']                                      = npoints
 
-        choice = np.random.choice(choices, size=None)
+        if callable(chosen):
+            chosen = chosen(x, **func_kwargs)
 
-        if callable(choice):
-            choice = choice(x, **func_kwargs)
-
-        return choice
-
-    def generate_one(self,
-        y:np.ndarray,
-        npoints:int,
-        period:float,
-        ) -> Tuple[np.ndarray,np.ndarray]:
-        """
-            - method to generate one random periodic signal of lenght npoints with period 'period'
-
-            Parameters
-            ----------
-                - `y`
-                    - np.ndarray
-                    - y-values of the signal to periodize
-                - `npoints`
-                    - int
-                    - number of datapoints the periodic data-series shall have
-                - `period`
-                    - float
-                    - period the generated periodic signal shall have
-            
-            Raises
-            ------
-
-            Returns
-            -------
-                - `xp`
-                    - np.ndarray
-                    - x-values of the periodic data-series
-                - `yp`
-                    - np.ndarray
-                    - y-values of the periodic data-series
-
-            Comments
-            -------- 
-        """
-
-        #calculate how often the signal has to repeat to get the desired amount of datapoints
-        repetitions = npoints/y.shape[0]
-
-        #periodize the input signal
-        xp, yp = periodize(y=y, period=period, repetitions=repetitions, testplot=False)
-
-        return xp, yp
+        return chosen
 
     def rvs(self,
         shape:tuple=None,
@@ -658,90 +648,9 @@ class GeneratePeriodicSignals:
         noise_level_x:float=0.1,
         random_state:int=None,
         verbose:int=None,
-        func_kwargs:dict=None
-        # ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[np.ndarray]]: #works for python >= 3.9
-        ) -> Tuple[np.ndarray, np.ndarray]:
-
-        #default parameters
-        if shape is None:       shape       = (1,100)
-        if choices is None:     choices     = self.choices
-        if x_min is None:       x_min       = np.zeros(shape[0])
-        if x_max is None:       x_max       = np.ones(shape[0])
-        if verbose is None:     verbose     = self.verbose
-
-        #from attributes
-        if isinstance(self.periods, (int,float)):   periods     = np.array([[self.periods]]   *shape[0])
-        else:                                       periods     = self.periods
-        if isinstance(self.amplitudes, (int,float)):amplitudes  = np.array([[self.amplitudes]]*shape[0])
-        else:                                       amplitudes  = self.amplitudes
-        if isinstance(self.x_offsets, (int,float)): x_offsets   = np.array([[self.x_offsets]]*shape[0])
-        else:                                       x_offsets   = self.x_offsets
-        if isinstance(self.npoints, int):           npoints     = np.array([self.npoints]     *shape[0])
-        else:
-            npoints = self.npoints
-            if len(np.unique(self.npoints)) > 1:
-                shape = (shape[0],None)
-            else:
-                shape = (shape[0],self.npoints[0])
-
-        #update `shape` accordingly
-        shape = (len(periods), shape[1])
-
-        #check all shapes
-        if (len(periods) != shape[0]) \
-            or (len(amplitudes) != shape[0]) \
-            or (len(x_offsets) != shape[0]) \
-            or (len(x_min) != shape[0]) \
-            or (len(x_max) != shape[0]):
-            raise ValueError((
-                f'`shape[0]` has to be the same as'
-                f' `len(periods)`, `len(amplitudes)`, `len(x_offsets)`, `len(x_min)`, `len(x_max)`.'
-                f' The respective values are:'
-                f' {shape[0]=}, {len(periods)=}, {len(amplitudes)=}, {len(x_offsets)=}, {len(x_min)=}, {len(x_max)=}!'
-            ))
-
-        #initialize output lists
-        x_gen = []
-        y_gen = []
-
-        ##individual samples
-        for xn, xx, n, p, a, xo in zip(x_min, x_max, npoints, periods, amplitudes, x_offsets):
-
-            #init individual sample
-            x = np.linspace(xn, xx, n)
-            x += np.random.randn(x.shape[0]) * noise_level_x
-            y =  np.random.randn(x.shape[0]) * noise_level_y    #init with noise
-
-            #composite parts with different periods and amplitudes
-            for pi, ai, xoi in zip(p, a, xo):
-                
-                #convert to phases for superposition
-                phases = (x-xoi)/pi
-                #choose function/array to generate from
-                yi = self.select_choice(
-                    choices=choices, x=phases,
-                    period=pi, npoints=n,
-                    func_kwargs=func_kwargs
-                )
-                y += ai*yi
-
-            #append to output
-            x_gen += [x]
-            y_gen += [y]
-
-
-        return x_gen, y_gen, periods
-
-    def rvs_(self,
-        shape:tuple=None,
-        choices:np.ndarray=None,
-        x:np.ndarray=None,
-        noise_level_y:float=0.1,
-        noise_level_x:float=0.1,
-        random_state:int=None,
-        func_kwargs:dict=None 
-        # ) -> Tuple[np.ndarray[np.ndarray], np.ndarray[np.ndarray]]: #works for python >= 3.9
-        ) -> Tuple[np.ndarray, np.ndarray]:
+        choices_kwargs:dict=None,
+        func_kwargs:List[dict]=None,
+        ) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         """
             - method similar to the `scipy.stats` `rvs()` method
             - rvs ... random variates
@@ -823,102 +732,81 @@ class GeneratePeriodicSignals:
             --------
                 - make sure that whichever callable you pass within choices can accept `**kwargs`
         """
+        #default parameters
+        if shape is None:       shape       = (1,100)
+        if choices is None:     choices     = self.choices
+        if x_min is None:       x_min       = np.zeros(shape[0])
+        if x_max is None:       x_max       = np.ones(shape[0])
+        if verbose is None:     verbose     = self.verbose
+        if choices_kwargs is None: choices_kwargs = dict()
 
-        #initilaize
-
-        ##shape if nothing is passed to __init__()
-        if shape is None: shape = (1,10)
-
-
-        if choices is None:
-            choices = self.choices
-        
-        ##periods adopted to shape
-        if self.periods is None:
-            periods = np.ones(shape[0])
-        ##same period accross samples
-        elif isinstance(self.periods, (int, float)):
-            periods = np.zeros(shape[0]) + self.periods
-        ##varying period accross samples
-        else:
-            periods = self.periods
-            shape = (periods.shape[0],shape[1])
-        
-        ##amplitudes adopted to shape
-        if self.amplitudes is None:
-            amplitudes = np.ones(shape[0])
-        ##same period accross samples
-        elif isinstance(self.amplitudes, (int, float)):
-            amplitudes = np.zeros(shape[0]) + self.amplitudes
-        ##varying period accross samples
-        else:
-            amplitudes = self.amplitudes
-
-        ##npoints adopted to shape
-        if self.npoints is None:
-            npoints = np.zeros(shape[0]) + shape[1]
-        ##same number of points accross samples
-        elif isinstance(self.npoints, int):
-            npoints = np.zeros(shape[0]) + self.npoints
-            shape = (shape[0],self.npoints)
-        ##varying number of points accross samples
+        #from attributes
+        if isinstance(self.periods, (int,float)):   periods     = np.array([[self.periods]]   *shape[0])
+        else:                                       periods     = self.periods
+        if isinstance(self.amplitudes, (int,float)):amplitudes  = np.array([[self.amplitudes]]*shape[0])
+        else:                                       amplitudes  = self.amplitudes
+        if isinstance(self.x_offsets, (int,float)): x_offsets   = np.array([[self.x_offsets]]*shape[0])
+        else:                                       x_offsets   = self.x_offsets
+        if isinstance(self.npoints, int):           npoints     = np.array([self.npoints]     *shape[0])
         else:
             npoints = self.npoints
-            if len(np.unique(npoints)) > 1: shape = (shape[0],None)         #shape not inferable (variable npoints per dataseries)
-            else:                           shape = (shape[0],npoints[0])   #shape inferable (npoints the same accross dataseries)
-        
-        ##no offset
-        if self.x_offsets is None:
-            x_offsets = np.zeros(shape[0])
-        ##same offset accross samples
-        elif isinstance(self.x_offsets, (int, float)):
-            x_offsets = np.zeros(shape[0]) + self.x_offsets
-        ##varying offset accross samples
-        else:
-            x_offsets = self.x_offsets
+            if len(np.unique(self.npoints)) > 1:
+                shape = (shape[0],None)
+            else:
+                shape = (shape[0],self.npoints[0])
 
-        ##default x-values (phases) to generate on
-        if x is None:
-            x = np.linspace(0,1,10,endpoint=False)
+        #update `shape` and `func_kwargs` accordingly
+        shape = (len(periods), shape[1])
+        if func_kwargs is None: func_kwargs = [None]*len(periods)
 
-        #reshape offset to work with inhomogeneous arrays
-        if shape[1] is None:
-            x_offsets = x_offsets.flatten()
-        else:
-            x_offsets = x_offsets.reshape(-1,1)
 
-        #initialize output lists/arrays
+        #check all shapes
+        if (len(periods) != shape[0]) \
+            or (len(amplitudes) != shape[0]) \
+            or (len(x_offsets) != shape[0]) \
+            or (len(x_min) != shape[0]) \
+            or (len(x_max) != shape[0]):
+            raise ValueError((
+                f'`shape[0]` has to be the same as'
+                f' `len(periods)`, `len(amplitudes)`, `len(x_offsets)`, `len(x_min)`, `len(x_max)`.'
+                f' The respective values are:'
+                f' {shape[0]=}, {len(periods)=}, {len(amplitudes)=}, {len(x_offsets)=}, {len(x_min)=}, {len(x_max)=}!'
+            ))
+
+        #initialize output lists
         x_gen = []
         y_gen = []
 
-        #generate random periodic signals
-        for n, p, a in zip(npoints, periods, amplitudes):
-            
-            #generate individual parts of the signal (will be superpositioned)
-            ##init output
-            yp = np.zeros((1,int(n)))
-            for pi, ai in zip(p,a):
-                #choose function/array to generate from
-                y = self.select_choice(choices=choices, x=x, func_kwargs=func_kwargs)
+        ##individual samples
+        for xn, xx, n, p, a, xo, f_kwargs in zip(x_min, x_max, npoints, periods, amplitudes, x_offsets, func_kwargs):
 
-                #generate one periodized signal
-                xp, ypi = self.generate_one(y=y, npoints=n, period=pi)
-                yp += ai*ypi #scale by amplitude
-            #add noise
-            yp += np.random.randn(*yp.shape)*noise_level_y
-            xp += np.random.randn(*xp.shape)*noise_level_x
-            
+            #init individual sample
+            x = np.linspace(xn, xx, n)
+            x += np.random.randn(x.shape[0]) * noise_level_x
+            y =  np.random.randn(x.shape[0]) * noise_level_y    #init with noise
+
+            #choose generator-function
+            chosen = np.random.choice(choices, size=None, **choices_kwargs)
+
+            #composite parts with different periods and amplitudes
+            for pi, ai, xoi in zip(p, a, xo):
+                
+                #convert to phases for superposition
+                phases = (x-xoi)/pi
+                #execute chosen generator function
+                yi = self.exec_chosen(
+                    chosen=chosen, x=phases,
+                    period=pi,
+                    func_kwargs=f_kwargs
+                )
+                y += ai*yi
+
             #append to output
-            x_gen.append(xp.flatten())
-            y_gen.append(yp.flatten())
+            x_gen += [x]
+            y_gen += [y]
 
-        #add offset, transform to array
-        x_gen = np.array(x_gen, dtype=object) + x_offsets
-        y_gen = np.array(y_gen, dtype=object)
-        self.x_gen = x_gen
-        self.y_gen = y_gen
-        
-        return x_gen, y_gen
+
+        return x_gen, y_gen, periods
 
     def plot_result(self,
         x_gen:np.ndarray, y_gen:np.ndarray,
@@ -966,8 +854,6 @@ class GeneratePeriodicSignals:
             --------
         """
 
-        print(periods)
-
         if periods is None: periods = np.array([None]*len(x_gen))
         if fig_kwargs is None:
             fig_kwargs = {}
@@ -978,7 +864,6 @@ class GeneratePeriodicSignals:
         ax1 = fig.add_subplot(111)
         for xi, yi, pi in zip(x_gen, y_gen, periods):
             ax1.plot(xi, yi, **plot_kwargs)
-            ax1.axvline(np.nanmin(xi)+pi, c='c')
         
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')
