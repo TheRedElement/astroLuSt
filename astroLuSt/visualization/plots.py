@@ -2930,11 +2930,6 @@ class MultiHeadAttentionWeights:
         #plot matrices
         ax.pcolormesh(aw_h, cmap=cmap, norm=cmap_norm, **pcolormesh_kwargs)
 
-        #labelling
-        ax.set_aspect('equal')
-        ax.set_xlabel('Input Features')
-        ax.set_ylabel('Output Features')
-
         return
     
     def plot_attention_lines(self,
@@ -3028,6 +3023,8 @@ class MultiHeadAttentionWeights:
                     - `List[str]`
                     - names of the features stored in `attention_weights`
                     - has to have shape `(nfeatures)`
+                    - the default is `None`
+                        - no names displayed
                 - `style`
                     - `Literal['matrix','lines']`, optional
                     -  display style to use
@@ -3085,7 +3082,6 @@ class MultiHeadAttentionWeights:
             --------
         """
        
-        if featurenames is None:    featurenames=[f'{i}' for i in range(attention_weights.shape[1])]
         if style is None: style = self.style
         if cmap is None:            cmap        = self.cmap
         if isinstance(cmap, str):   cmap        = plt.get_cmap(cmap)
@@ -3106,11 +3102,22 @@ class MultiHeadAttentionWeights:
             #decide about style
             if style == 'matrix':
                 self.plot_attention_matrix(aw_h, ax=ax, cmap=cmap, cmap_norm=cmap_norm, **plot_attention_matrix_kwargs)
-                ax.set_xticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
-                ax.set_yticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
+                
+                
+                #labelling and formatting
+                if featurenames is not None:
+                    ax.set_xlabel('Input Features')
+                    ax.set_ylabel('Output Features')                    
+                    ax.set_xticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
+                    ax.set_yticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
+                ax.set_aspect('equal')
             elif style == 'lines':
                 self.plot_attention_lines(aw_h, ax=ax, cmap=cmap, cmap_norm=cmap_norm, **plot_attention_lines_kwargs)
-                ax.set_yticks(range(len(aw_h)), labels=featurenames)                
+                
+                #labelling and formatting
+                if featurenames is not None:
+                    ax.set_yticks(range(len(aw_h)), labels=featurenames)                
+                ax.tick_params(labelleft=True, labelright=True) #label both sides          
                 ax.set_xticks([0,1], labels=['Input', 'Output'])
 
         #add colorbar
