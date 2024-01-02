@@ -325,10 +325,54 @@ class PeriodicExpansion:
         return fig, axs
     
 class Pad2Size:
+    """
+        - class to pad a list of arrays with different lengths to a list of arrays with the same length
+
+        Attributes
+        ----------
+            - `size`
+                - int, optional
+                - target size of the padded arrays
+                - ever entry in `X` will have that length
+                - the default is `None`
+                    - will pad to the length of the longest entry in `X`
+            - `subsampling_mode`
+                - `Literal['first','last','random']`, optional
+                - mode to use for subsampling
+                    - in case an entry in `X` is longer than `size`
+                - allowed options are
+                    - `'first'`
+                        - will use the first `size` elements of entries in `X` that exceed `size`
+                    - `'last'`
+                        - will use the last `size` elements of entries in `X` that exceed `size`
+                    - `'random'`
+                        - will use a random subsample of `size` elements of entries in `X` that exceed `size`
+                - the default is `'first'`
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+
+        Methods
+        -------
+            - `fit()`
+            - `transform()`
+            - `fit_transform()`
+            - `plot_result()`
+        
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+        Comments
+        --------
+    """
 
     def __init__(self,
         size:int=None,
-        subsampling_mode:Literal['first','last','random']='first',        
+        subsampling_mode:Literal['first','last','random']='first',
         verbose:int=0         
         ) -> None:
 
@@ -351,10 +395,32 @@ class Pad2Size:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def fit(self,
-        X:List[np.ndarray], y:np,ndarray=None,
-        pad_kwargs:dict=None,
+        X:List[np.ndarray], y:np.ndarray=None,
         ) -> None:
+        """
+            - method to fit the transformer
+            
+            Parameters
+            ----------
+                - `X`
+                    - `List[np.ndarray]`
+                    - list containing arrays of differnt lengths to be padded
+                - `y`
+                    - `np.ndarray`, optional
+                    - labels corresponding to `X`
+                    - not used, only for consistency
+                    - the default is `None`
+            
+            Raises
+            ------
 
+            Returns
+            -------
+
+            Comments
+            --------
+
+        """
         #obtain padding length
         if self.size is None:
             self.size = max([len(x) for x in X])
@@ -362,43 +428,31 @@ class Pad2Size:
         return
     
     def transform(self,
-        X:List[np.ndarray], y:np,ndarray=None
-        ) -> np.ndarray:
-
-        return
-
-    def fit_transform(self,
-        X:List[np.ndarray], y:np,ndarray=None
-        ) -> np.ndarray:
-        return
-    
-    def plot_result(self,
-        ):
-
-        return
-
-    def pad2size(self,
-        X:List[np.ndarray], 
+        X:List[np.ndarray], y:np.ndarray=None,
         size:int=None,
-        subsampling_mode:Literal['first','last','random']='first',
-        testplot:bool=False,
-        verbose:int=0,
+        subsampling_mode:Literal['first','last','random']=None,
         pad_kwargs:dict=None,
-        ):
+        ) -> np.ndarray:
         """
-            - function to pad a list of arrays with different lengths to a list of arrays with the same length
+            - method to transform the input
 
             Parameters
             ----------
                 - `X`
                     - `List[np.ndarray]`
                     - list containing arrays of differnt lengths to be padded
+                - `y`
+                    - `np.ndarray`, optional
+                    - labels corresponding to `X`
+                    - not used, only for consistency
+                    - the default is `None`
                 - `size`
                     - int, optional
                     - target size of the padded arrays
-                    - ever entry in `X` will have that many elements
+                    - ever entry in `X` will have that length
+                    - overrides `self.size`
                     - the default is `None`
-                        - will pad to the length of the longest entry in `X`
+                        - will fall back to `self.size`
                 - `subsampling_mode`
                     - `Literal['first','last','random']`, optional
                     - mode to use for subsampling
@@ -410,22 +464,15 @@ class Pad2Size:
                             - will use the last `size` elements of entries in `X` that exceed `size`
                         - `'random'`
                             - will use a random subsample of `size` elements of entries in `X` that exceed `size`
-                    - the default is `'first'`
-                - `testplot`
-                    - bool, optional
-                    - whether to show a test plot of the result
-                    - the default is `False`
-                - `verbose`
-                    - int, optional
-                    - verbosity level
-                    - the default is 0
+                    - overrides `self.subsampling_mode`
+                    - the default is `None`
+                        - will fall back to `self.subsampling_mode`
                 - `pad_kwargs`
                     - dict, optional
                     - additional kwargs to pass to `np.pad()`
                     - the default is `None`
                         - will be set to `dict(constant_values=(np.nan))`
                             - i.e. padding values are `np.nan`
-
             Raises
             ------
 
@@ -436,25 +483,19 @@ class Pad2Size:
                     - padded version of `X`
                     - has shape `(len(X),size)`
 
-            Dependencies
-            ------------
-                - matplotlib
-                - numpy
-                - typing
-            
             Comments
-            --------
+            --------     
         """
 
         #default parameters
-        if size is None:
-            size = max([len(x) for x in X])
-        if pad_kwargs is None: pad_kwargs = dict(constant_values=(np.nan))
+        if size is None:                size                = self.size
+        if subsampling_mode is None:    subsampling_mode    = self.subsampling_mode
+        if pad_kwargs is None:          pad_kwargs          = dict(constant_values=(np.nan))
 
         #init output
         X_pad = np.empty((len(X),size))
-        
 
+        #transform `X`
         for idx, x in enumerate(X):
             #execute padding
             if x.shape[0] < size:
@@ -474,27 +515,113 @@ class Pad2Size:
             else:
                 pass
 
-        #plot of result
-        if testplot:
-            fig = plt.figure()
-            ax1 = fig.add_subplot(111)
-            colors = generate_colors(len(X))
-            for x, xp, c in zip(X, X_pad, colors):
-                ax1.plot(x,  c=c,   ls='-', lw=5)
-                ax1.plot(xp, c='w', ls='-',lw=3)
-                ax1.plot(xp, c=c, ls='--', lw=2)
-            ax1.plot(np.nan, color='tab:blue', ls='-',  lw=5, label='Original')
-            ax1.plot(np.nan, color='tab:blue', ls='--', lw=2, label='Padded')
-            ax1.legend()
-            ax1.set_xlabel('x')
-            ax1.set_ylabel('y')
-            plt.show()
-
         return X_pad
 
+    def fit_transform(self,
+        X:List[np.ndarray], y:np.ndarray=None,
+        fit_kwargs:dict=None,
+        transform_kwargs:dict=None,
+        ) -> np.ndarray:
+        """
+            - method to fit the transformer and transform the input
+        
+            Parameters
+            ----------
+                - `X`
+                    - `List[np.ndarray]`
+                    - list containing arrays of differnt lengths to be padded
+                - `y`
+                    - `np.ndarray`, optional
+                    - labels corresponding to `X`
+                    - not used, only for consistency
+                    - the default is `None`
+                - `fit_kwargs`
+                    - dict, optional
+                    - additional kwargs to pass to `self.fit()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `transform_kwargs`
+                    - dict, optional
+                    - additional kwargs to pass to `self.transform()`
+                    - the default is `None`
+                        - will be set to `dict()`
 
+            Raises
+            ------
 
-        return
+            Returns
+            -------
+                - `X_pad`
+                    - np.ndarray
+                    - padded version of `X`
+                    - has shape `(len(X),size)`
+
+            Comments
+            --------
+
+        """
+        if fit_kwargs is None:      fit_kwargs       = dict()
+        if transform_kwargs is None:transform_kwargs = dict()
+
+        self.fit(X, y, **fit_kwargs)
+        X_pad = self.transform(X, y, **fit_kwargs)
+        
+        return X_pad
+    
+    def plot_result(self,
+        X_pad:np.ndarray,
+        X:List[np.ndarray]=None,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to plot the transformed result
+
+            Parameters
+            ----------
+                - `X_pad`
+                    - np.ndarray
+                    - padded version of the input `X`
+                - `X`
+                    - `List[np.ndarray]`, optional
+                    - list containing arrays of differnt lengths to be padded
+                    - original input before transformation
+                    - the default is `None`
+                        - will be ignored
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - `Figure`
+                    -  created figure
+                - `axs`
+                    - `plt.Axes`
+                    - axis corresponding to `fig`
+
+            Comments
+            --------
+        
+        """
+        #default values
+        if X is None: X = [np.nan]*X_pad.shape[0]
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        colors = generate_colors(len(X))
+        for x, xp, c in zip(X, X_pad, colors):
+            ax1.plot(x,  c=c,   ls='-', lw=5)
+            ax1.plot(xp, c='w', ls='-',lw=3)
+            ax1.plot(xp, c=c, ls='--', lw=2)
+        ax1.plot(np.nan, color='tab:blue', ls='-',  lw=5, label='Original')
+        ax1.plot(np.nan, color='tab:blue', ls='--', lw=2, label='Padded')
+        ax1.legend()
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+
+        axs = fig.axes
+
+        return fig, axs
 
 #%%functions
 
