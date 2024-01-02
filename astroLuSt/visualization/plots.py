@@ -2792,6 +2792,336 @@ class VennDiagram:
         
         return fig, axs
     
+class MultiHeadAttentionWeights:
+    """
+        - class to visualize attention weights of a multi-head attention (MHA) block
+
+        Attributes
+        ----------
+            - `style`
+                - `Literal['matrix','lines']`, optional
+                -  display style to use
+                - allowed choices
+                    - `'matrix'`
+                        - will display connection-weights as matrices
+                    - `'lines'`
+                        - will display connection-weights as lines connecting two features
+                - the default is `None`
+                    - will be set to `'matrix'`
+            - `cmap`
+                - `Union[str,mcolors.Colormap]`, optional
+                - colormap to use for plotting
+                - the default is `None`
+                    - will be set to `'Blues'`
+            - `cmap_norm`
+                - `mcolors.Normalize`,optional
+                - normalization to use for colormapping
+                - the default is `'None'`
+                    - will infer norm based on the passed data in `self.plot()`
+            - `verbose`
+                - `int`, optional
+                - verbosity level
+                - the default is 0
+        
+        Methods
+        -------
+            - `plot_attention_matrix()`
+            - `plot_attention_lines()`
+            - `plot()`
+        
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+    
+        Comments
+        --------
+            
+    """
+
+    def __init__(self,
+        style:Literal['matrix','lines']=None,
+        cmap:Union[str,mcolors.Colormap]=None, cmap_norm:mcolors.Normalize=None,
+        verbose:int=0,
+        ) -> None:
+
+        if style is None:           self.style  = 'matrix'
+        else:                       self.style  = style
+        if cmap is None:            self.cmap   = 'Blues'
+        elif isinstance(cmap, str): self.cmap   = plt.get_cmap(cmap)
+        else:                       self.cmap   = cmap
+        self.cmap_norm                          = cmap_norm
+
+        self.verbose = verbose
+
+
+        return
+
+    def __repr__(self) -> str:
+
+        return (
+            f'{self.__class__.__name__}(\n'
+            f'    style={repr(self.style)},\n'
+            f'    cmap={repr(self.cmap)}, cmap_norm={repr(self.cmap_norm)},\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
+    
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
+
+    def plot_attention_matrix(self,
+        aw_h:np.ndarray,
+        ax:plt.Axes,
+        cmap:Union[str,mcolors.Colormap]=None, cmap_norm:mcolors.Normalize=None,
+        pcolormesh_kwargs:dict=None
+        ) -> None:
+        """
+            - method to plot the attention-weight-matrices of Multi-Head-Attention
+
+            Parameters
+            ----------
+                - `aw_h`
+                    - `np.ndarray`
+                    - attention weights of one head
+                    - has to have shape `(nfeatures,nfeatures)`
+                - `ax`
+                    - `plt.Axes`
+                    - axis to plot into
+                - `cmap`
+                    - `Union[str,mcolors.Colormap]`, optional
+                    - colormap to use for encoding the attention weights
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
+                - `cmap_norm`
+                    - `mcolors.Normalize`, optional
+                    - normalization to use for colormapping
+                    - overrides `self.cmap_norm`
+                    - the default is `'None'`
+                        - will fall back to `self.cmap_norm`
+                - `pcolormesh_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `ax.pcolormesh()`
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+        
+        #default parameters
+        if cmap is None:                cmap                = self.cmap
+        if isinstance(cmap, str):       cmap                = plt.get_cmap(cmap)
+        if cmap_norm is None:           cmap_norm           = self.cmap_norm
+        if pcolormesh_kwargs is None:   pcolormesh_kwargs   = dict()
+
+        #get actual cmap; update cmap_norm if also self.cmap_norm is None
+        if cmap_norm is None:       cmap_norm   = mcolors.Normalize(vmin=np.nanmin(aw_h), vmax=np.nanmax(aw_h))
+
+        #plot matrices
+        ax.pcolormesh(aw_h, cmap=cmap, norm=cmap_norm, **pcolormesh_kwargs)
+
+        #labelling
+        ax.set_aspect('equal')
+        ax.set_xlabel('Input Features')
+        ax.set_ylabel('Output Features')
+
+        return
+    
+    def plot_attention_lines(self,
+        aw_h:np.ndarray,
+        ax:plt.Axes,
+        cmap:Union[str,mcolors.Colormap]=None,
+        cmap_norm:mcolors.Normalize=None,
+        plot_kwargs:dict=None,
+        ) -> None:
+        """
+            - method to plot the attention-weights of Multi-Head-Attention as lines
+
+            Parameters
+            ----------
+                - `aw_h`
+                    - `np.ndarray`
+                    - attention weights of one head
+                    - has to have shape `(nfeatures,nfeatures)`
+                - `ax`
+                    - `plt.Axes`
+                    - axis to plot into
+                - `cmap`
+                    - `Union[str,mcolors.Colormap]`, optional
+                    - colormap to use for encoding the attention weights
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
+                - `cmap_norm`
+                    - `mcolors.Normalize`, optional
+                    - normalization to use for colormapping
+                    - overrides `self.cmap_norm`
+                    - the default is `'None'`
+                        - will fall back to `self.cmap_norm`
+                - `plot_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `ax.plot()`
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+        
+        #default parameters
+        #default parameters
+        if cmap is None:            cmap        = self.cmap
+        if isinstance(cmap, str):   cmap        = plt.get_cmap(cmap)
+        if cmap_norm is None:       cmap_norm   = self.cmap_norm
+        if plot_kwargs is None:     plot_kwargs = dict()
+
+        #get actual cmap; update cmap_norm if also self.cmap_norm is None
+        if cmap_norm is None:       cmap_norm   = mcolors.Normalize(vmin=np.nanmin(aw_h), vmax=np.nanmax(aw_h))
+
+        #plot lines
+        for iidx in range(len(aw_h)):
+            for jidx in range(len(aw_h[iidx])):
+                ax.plot([iidx,jidx], c=cmap(cmap_norm(aw_h[iidx,jidx])), **plot_kwargs)
+
+
+        #labelling
+        ax.set_ylabel('Feature')
+
+        return
+
+    def plot(self,
+        attention_weights:np.ndarray,
+        featurenames:List[str]=None,
+        style:Literal['matrix','lines']=None,
+        cmap:Union[str,mcolors.Colormap]=None,
+        cmap_norm:mcolors.Normalize=None,
+        fig:Figure=None,
+        plot_attention_matrix_kwargs:dict=None,
+        plot_attention_lines_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to plot the attention-weights of Multi-Head-Attention as lines
+
+            Parameters
+            ----------
+                - `attention_weights`
+                    - `np.ndarray`
+                    - attention weights of all heads
+                    - has to have shape `(nheads,nfeatures,nfeatures)`
+                - `featurenames`
+                    - `List[str]`
+                    - names of the features stored in `attention_weights`
+                    - has to have shape `(nfeatures)`
+                - `style`
+                    - `Literal['matrix','lines']`, optional
+                    -  display style to use
+                    - allowed choices
+                        - `'matrix'`
+                            - will display connection-weights as matrices
+                        - `'lines'`
+                            - will display connection-weights as lines connecting two features
+                    - overrides `self.style`
+                    - the default is `None`
+                        - will fall back to `self.style`
+                - `cmap`
+                    - `Union[str,mcolors.Colormap]`, optional
+                    - colormap to use for encoding the attention weights
+                    - overrides `self.cmap`
+                    - the default is `None`
+                        - will fall back to `self.cmap`
+                - `cmap_norm`
+                    - `mcolors.Normalize`, optional
+                    - normalization to use for colormapping
+                    - overrides `self.cmap_norm`
+                    - the default is `'None'`
+                        - will fall back to `self.cmap_norm`
+                        - if still `None`
+                            - will be set to `mcolors.Normalize(vmin=np.nanmin(attention_weights), vmax=np.nanmax(attention_weights))`
+                - `fig`
+                    - `Figure`
+                    - matplotlib figure to plot into
+                    - the default is `None`
+                        - will generate a new figure
+                - `plot_attention_matrix_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `self.plot_attention_matrix()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `plot_attention_lines_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `self.plot_attention_lines()`
+                    - the default is `None`
+                        - will be set to `dict()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - `Figure`
+                    - created figure
+                -  `axs`
+                    - `plt.Axes`
+                    - axis corresponding to `fig`
+
+            Comments
+            --------
+        """
+       
+        if featurenames is None:    featurenames=[f'{i}' for i in range(attention_weights.shape[1])]
+        if style is None: style = self.style
+        if cmap is None:            cmap        = self.cmap
+        if isinstance(cmap, str):   cmap        = plt.get_cmap(cmap)
+        if cmap_norm is None:       cmap_norm   = mcolors.Normalize(vmin=np.nanmin(attention_weights), vmax=np.nanmax(attention_weights))
+        if fig is None: fig = plt.figure(figsize=(9,9))
+        if plot_attention_matrix_kwargs is None:    plot_attention_matrix_kwargs    = dict()
+        if plot_attention_lines_kwargs is None:     plot_attention_lines_kwargs     = dict()
+
+        #determine grid-layout
+        nsubplots = int(np.ceil(np.sqrt(attention_weights.shape[0])))
+
+        #plotting
+        for idx, aw_h in enumerate(attention_weights):
+            
+            ax = fig.add_subplot(nsubplots,nsubplots,idx+1)
+            ax.set_title(f'Attention Head {idx+1}')
+            
+            #decide about style
+            if style == 'matrix':
+                self.plot_attention_matrix(aw_h, ax=ax, cmap=cmap, cmap_norm=cmap_norm, **plot_attention_matrix_kwargs)
+                ax.set_xticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
+                ax.set_yticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
+            elif style == 'lines':
+                self.plot_attention_lines(aw_h, ax=ax, cmap=cmap, cmap_norm=cmap_norm, **plot_attention_lines_kwargs)
+                ax.set_yticks(range(len(aw_h)), labels=featurenames)                
+                ax.set_xticks([0,1], labels=['Input', 'Output'])
+
+        #add colorbar
+        cax = fig.add_axes([1,0.08,0.03,0.87])
+        cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=cmap_norm), cax=cax)
+        cbar.set_label('Attention Weights')
+
+
+        axs = fig.axes
+
+        return fig, axs
 
 #%%functions
 def plot_predictioneval(
@@ -2873,4 +3203,3 @@ def plot_predictioneval(
     axs = fig.axes
 
     return fig, axs
-
