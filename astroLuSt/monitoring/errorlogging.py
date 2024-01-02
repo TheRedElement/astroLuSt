@@ -244,8 +244,6 @@ class LogErrors:
             })  
         #sqeeze everything in one row if some shapes do not match (no loss of information, but not as nice formatting)
         except ValueError as ve:
-            print('HERE')
-            print(prefix)
             df_temp = pd.DataFrame({
                 'exception':    [format_exc],
                 'prefix':       [prefix],
