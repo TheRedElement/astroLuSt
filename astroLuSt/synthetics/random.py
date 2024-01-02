@@ -1175,9 +1175,14 @@ class GenerateViaReperiodizing:
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212)
         for xi, yi, pi in zip(x_gen, y_gen, p_gen):
-            ax1.plot(xi, yi, **plot_kwargs)
+            sortidx = np.argsort(xi)
+
+            ax1.plot(xi[sortidx], yi[sortidx], **plot_kwargs)
             
-            if pi is not None: ax2.scatter(alpdm.fold(xi, pi)[1], yi, **plot_kwargs)
+            if pi is not None:
+                xp = alpdm.fold(xi, pi)[1]
+                sortidx = np.argsort(xp)
+                ax2.plot(xp[sortidx], yi[sortidx], **plot_kwargs)
 
         
         ax1.set_xlabel('x')
