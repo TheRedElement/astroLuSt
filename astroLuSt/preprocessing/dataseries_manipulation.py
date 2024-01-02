@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import matplotlib.colors as mcolors
 import numpy as np
-from typing import Union, Tuple, Callable
+from typing import Union, Tuple, Callable, List, Literal
 
 from astroLuSt.visualization.plotting import generate_colors
 from astroLuSt.monitoring import formatting as almof
@@ -786,3 +786,121 @@ def periodize(
         plt.show()
 
     return x_periodized, y_periodized
+
+def pad2size(
+    X:List[np.ndarray], 
+    size:int=None,
+    subsampling_mode:Literal['first','last','random']='first',
+    testplot:bool=False,
+    verbose:int=0,
+    pad_kwargs:dict=None,
+    ):
+    """
+        - function to pad a list of arrays with different lengths to a list of arrays with the same length
+
+        Parameters
+        ----------
+            - `X`
+                - `List[np.ndarray]`
+                - list containing arrays of differnt lengths to be padded
+            - `size`
+                - int, optional
+                - target size of the padded arrays
+                - ever entry in `X` will have that many elements
+                - the default is `None`
+                    - will pad to the length of the longest entry in `X`
+            - `subsampling_mode`
+                - `Literal['first','last','random']`, optional
+                - mode to use for subsampling
+                    - in case an entry in `X` is longer than `size`
+                - allowed options are
+                    - `'first'`
+                        - will use the first `size` elements of entries in `X` that exceed `size`
+                    - `'last'`
+                        - will use the last `size` elements of entries in `X` that exceed `size`
+                    - `'random'`
+                        - will use a random subsample of `size` elements of entries in `X` that exceed `size`
+                - the default is `'first'`
+            - `testplot`
+                - bool, optional
+                - whether to show a test plot of the result
+                - the default is `False`
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
+            - `pad_kwargs`
+                - dict, optional
+                - additional kwargs to pass to `np.pad()`
+                - the default is `None`
+                    - will be set to `dict(constant_values=(np.nan))`
+                        - i.e. padding values are `np.nan`
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - `X_pad`
+                - np.ndarray
+                - padded version of `X`
+                - has shape `(len(X),size)`
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+        
+        Comments
+        --------
+    """
+
+    #default parameters
+    if size is None:
+        size = max([len(x) for x in X])
+    if pad_kwargs is None: pad_kwargs = dict(constant_values=(np.nan))
+
+    #init output
+    X_pad = np.empty((len(X),size))
+    
+
+    for idx, x in enumerate(X):
+        #execute padding
+        if x.shape[0] < size:
+            to_add = size-x.shape[0]
+            pad_width = (0,to_add)
+            X_pad[idx] = np.pad(x, pad_width=pad_width, **pad_kwargs)
+        #execute subsampling        
+        elif x.shape[0] > size:
+            #set indices according to mode
+            if subsampling_mode == 'first': idxs = slice(size)
+            elif subsampling_mode == 'last':idxs = slice(-size)
+            elif subsampling_mode == 'random':
+                idxs = np.random.choice(np.arange(x.shape[0]), size=size, replace=(x.shape[0]<size))
+                idxs = np.sort(idxs)
+            #first `size` entries
+            X_pad[idx] = x[idxs]
+        else:
+            pass
+
+    #plot of result
+    if testplot:
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        colors = generate_colors(len(X))
+        for x, xp, c in zip(X, X_pad, colors):
+            ax1.plot(x,  c=c,   ls='-', lw=5)
+            ax1.plot(xp, c='w', ls='-',lw=3)
+            ax1.plot(xp, c=c, ls='--', lw=2)
+        ax1.plot(np.nan, color='tab:blue', ls='-',  lw=5, label='Original')
+        ax1.plot(np.nan, color='tab:blue', ls='--', lw=2, label='Padded')
+        ax1.legend()
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+        plt.show()
+
+    return X_pad
+
+
+# %%
