@@ -4,6 +4,8 @@ import pandas as pd
 import re
 import traceback
 
+from astroLuSt.monitoring import formatting as almof
+
 #%%definitions
 class LogErrors:
     """
@@ -22,7 +24,29 @@ class LogErrors:
                 - pd.DataFrame
                 - dataframe to log all the caught errors
                 - rows corresponding to the same error will have the same index
-        
+                - has the following columns
+                    - 'exception'
+                        - the raised `Exception`
+                    - 'prefix'
+                        - a prefix defined by the user
+                        - i.e., for comments
+                    - 'suffix'
+                        - a suffix defined by the user
+                        - i.e., for comments
+                    - 'file'
+                        - the file that contains the problem-line 
+                    - 'line'
+                        - number of the problem-line 
+                    - 'problem_line'
+                        - the problem-line 
+                    - 'error_message'
+                        - the type of error message 
+                    - 'time'
+                        - a timestamp of when the error was caught 
+                    - 'squeezed'
+                        - whether all extracted errors have been squeezed into one line
+                        - relevant if some `ValueError` occurs when creating `df_temp`        
+                
         Methods
         -------
             - `print_exc()`
@@ -44,7 +68,7 @@ class LogErrors:
         self.verbose = verbose
 
         self.df_errorlog = pd.DataFrame(
-            columns=['exception', 'prefix', 'suffix', 'file', 'line', 'problem_line', 'error_message', 'time']
+            columns=['exception', 'prefix', 'suffix', 'file', 'line', 'problem_line', 'error_message', 'time', 'squeezed']
         )
         pass
 
@@ -115,9 +139,10 @@ class LogErrors:
         e:Exception,
         prefix:str=None, suffix:str=None,
         store:bool=True,
+        verbose:int=None
         ) -> pd.DataFrame:
         """
-            - method to store a caught exception e to a pandas DataFrame
+            - method to store a caught exception e to a `pandas.DataFrame`
 
             Parameters
             ----------
@@ -138,6 +163,12 @@ class LogErrors:
                     - bool, optional
                     - whether to also store the created dataframe to `self.df_errorlog`
                     - the default is True
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
             
             Raises
             ------
@@ -147,6 +178,28 @@ class LogErrors:
                 - `df_temp`
                     - pd.DataFrame
                     - temporary dataframe containing information for last exception
+                    - has the following columns
+                        - 'exception'
+                            - the raised `Exception`
+                        - 'prefix'
+                            - a prefix defined by the user
+                            - i.e., for comments
+                        - 'suffix'
+                            - a suffix defined by the user
+                            - i.e., for comments
+                        - 'file'
+                            - the file that contains the problem-line 
+                        - 'line'
+                            - number of the problem-line 
+                        - 'problem_line'
+                            - the problem-line 
+                        - 'error_message'
+                            - the type of error message 
+                        - 'time'
+                            - a timestamp of when the error was caught 
+                        - 'squeezed'
+                            - whether all extracted errors have been squeezed into one line
+                            - relevant if some `ValueError` occurs when creating `df_temp`
 
             Comments
             --------
@@ -156,9 +209,10 @@ class LogErrors:
                     
         """
 
-        #initilaize
-        if prefix is None:  prefix = ''
-        if suffix is None:  suffix = ''        
+        #default parameters
+        if prefix is None:  prefix  = ''
+        if suffix is None:  suffix  = ''        
+        if verbose is None: verbose = self.verbose
 
         format_exc = traceback.format_exc()
 
@@ -175,30 +229,50 @@ class LogErrors:
         #in case no problem lines have been identified
         if len(problem_lines) == 0: problem_lines = ['<NO PROBLEM LINE IDENTIFIED>']*len(files)
 
-        df_temp = pd.DataFrame({
-            'exception':    [format_exc]*len(files),
-            'prefix':       [prefix]*len(files),
-            'suffix':       [suffix]*len(files),
-            'file':         files,
-            'line':         lines,
-            'problem_line': problem_lines,
-            'error_message':error_msgs*len(files),
-            'time':         [pd.Timestamp.now()]*len(files),
-        })         
-        # df_temp = pd.DataFrame({
-        #     'exception':[format_exc],
-        #     'prefix':   [prefix],
-        #     'suffix':   [suffix],
-        #     'file':     [';'.join(files)],    #transform to 1 line
-        #     'line':     [';'.join(lines)],    #transform to 1 line
-        #     'problem_line':[';'.join(problem_lines)],
-        #     'error_message':error_msgs,
-        #     'time':[pd.Timestamp.now()],
-        # })        
+        #check if all shapes match nicely
+        try:
+            df_temp = pd.DataFrame({
+                'exception':    [format_exc]*len(files),
+                'prefix':       [prefix]*len(files),
+                'suffix':       [suffix]*len(files),
+                'file':         files,
+                'line':         lines,
+                'problem_line': problem_lines,
+                'error_message':error_msgs*len(files),
+                'time':         [pd.Timestamp.now()]*len(files),
+                'squeezed':     [False]*len(files),
+            })  
+        #sqeeze everything in one row if some shapes do not match (no loss of information, but not as nice formatting)
+        except ValueError as ve:
+            print('HERE')
+            print(prefix)
+            df_temp = pd.DataFrame({
+                'exception':    [format_exc],
+                'prefix':       [prefix],
+                'suffix':       [suffix],
+                'file':         [';'.join(files)],          #transform to 1 line
+                'line':         [';'.join(lines)],          #transform to 1 line
+                'problem_line': [';'.join(problem_lines)],  #transform to 1 line
+                'error_message':error_msgs,
+                'time':         [pd.Timestamp.now()], 
+                'squeezed':     [True],                     #whether the content has been sqeezed into one row
 
+            })
+            almof.printf(
+                msg=(
+                    f'All exceptions sqeezed into one row due to `ValueError`.'
+                    f' Likely the shapes of the extracted exceptions did not match.'
+                    f' Original error message: {ve}'
+                ),
+                context=self.exc2df.__name__,
+                type='WARNING',
+                verbose=verbose
+            )
+
+        #set index to be the same accross one extraction
         if self.df_errorlog.last_valid_index() is None: idx = 0
         else: idx = self.df_errorlog.last_valid_index() + 1
-        df_temp.index = [idx]*len(files)
+        df_temp.index = [idx]*df_temp.shape[0]
 
         if store:
             self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
@@ -234,3 +308,5 @@ class LogErrors:
 
         return
 
+
+# %%
