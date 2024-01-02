@@ -3106,10 +3106,10 @@ class MultiHeadAttentionWeights:
                 
                 #labelling and formatting
                 if featurenames is not None:
-                    ax.set_xlabel('Input Features')
-                    ax.set_ylabel('Output Features')                    
                     ax.set_xticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
                     ax.set_yticks(np.arange(len(aw_h))+0.5, labels=featurenames)                
+                ax.set_xlabel('Input Features')
+                ax.set_ylabel('Output Features')                    
                 ax.set_aspect('equal')
             elif style == 'lines':
                 self.plot_attention_lines(aw_h, ax=ax, cmap=cmap, cmap_norm=cmap_norm, **plot_attention_lines_kwargs)
