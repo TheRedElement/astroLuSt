@@ -895,8 +895,8 @@ class GeneratePeriodicSignals:
         return x_gen, y_gen
 
     def plot_result(self,
-        x_gen:np.ndarray, y_gen:np.ndarray,
-        periods:np.ndarray=None,
+        x_gen:list, y_gen:list,
+        p_gen:np.ndarray=None,
         fig_kwargs:dict=None, plot_kwargs:dict=None,
         ) -> Tuple[Figure,plt.Axes]:
         """
@@ -905,14 +905,17 @@ class GeneratePeriodicSignals:
             Parameters
             ----------
                 - `x_gen`
-                    - np.ndarray
-                    - TODO
+                    - list
+                    - contains x-values of newly generated samples
                 - `y_gen`
-                    - np.ndarray
-                    - TODO
+                    - list
+                    - contains y-values of newly generated samples
                 - `p_gen`
-                    - np.ndarray
-                    - TODO
+                    - np.ndarray, optional
+                    - contains all p_gen of newly generated signals
+                    - will only use the first period (`p_gen[:,0]`) for plotting
+                    - the default is `None`
+                        - will be ignored when plotting
                 - `fig_kwargs`
                     - dict, optional
                     - kwargs to pass to `plt.fig()`
@@ -940,7 +943,7 @@ class GeneratePeriodicSignals:
             --------
         """
 
-        if periods is None: periods = np.array([None]*len(x_gen))
+        if p_gen is None: p_gen = np.array([None]*len(x_gen))
         if fig_kwargs is None:
             fig_kwargs = {}
         if plot_kwargs is None:
@@ -949,17 +952,240 @@ class GeneratePeriodicSignals:
         fig = plt.figure(**fig_kwargs)
         ax1 = fig.add_subplot(211)
         ax2 = fig.add_subplot(212)
-        for xi, yi, pi in zip(x_gen, y_gen, periods):
+        for xi, yi, pi in zip(x_gen, y_gen, p_gen):
             ax1.plot(xi, yi, **plot_kwargs)
-            ax2.scatter(alpdm.fold(xi, pi[0])[0], yi, **plot_kwargs)
+            
+            if pi[0] is not None: ax2.scatter(alpdm.fold(xi, pi[0])[1], yi, **plot_kwargs)
 
         
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')
-        ax2.set_xlabel('Phase')
+        ax2.set_xlabel('Period')
         ax2.set_ylabel('y')
 
         axs = fig.axes   
 
         return fig, axs
 
+class GenerateViaReperiodizing:
+    """
+        - class to generate new (semi) artifical samples of periodic signals by reperiodizing an existing set of periodic signals
+
+        Attributes
+        ----------
+            - `verbose`
+                - int, optional
+                - verbosity level
+                - the default is 0
+
+        Methods
+        -------
+            - `rvs()`
+            - `plot_result()`
+
+        Dependencies
+        ------------
+            - matplotlib
+            - numpy
+            - typing
+
+        Comments
+        --------
+    
+    """
+    def __init__(self,
+        verbose:int=0,
+        ) -> None:
+        
+        self.verbose = verbose
+
+        return
+    
+    def __repr__(self) -> str:
+        return (
+            f'GenerateViaReperiodizing(\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
+
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
+    def rvs(self,
+        x:List[np.ndarray], y:List[np.ndarray],
+        new_periods:np.ndarray,
+        periods:Union[list,np.ndarray]=None,
+        size:int=None,
+        verbose:int=None,
+        ) -> Tuple[List[np.ndarray], List[np.ndarray], np.ndarray]:
+        """
+            - 
+
+            Parameters
+            ----------
+                - `x`
+                    - `List[np.ndarray]`
+                    - list of x-values of template dataseries
+                        - usually arrays of times
+                        - if `periods` was not passed
+                            - will be interpreted as phases
+                        - those will be reperiodized to generate new dataseries with different periods
+                    - will choose `size` random samples from `x`
+                - `y`
+                    - `List[np.ndarray]`
+                    - list of y-values of template dataseries
+                    - corresponding to `x`
+                - `new_periods`
+                    - np.ndarray
+                    - contains periods to use for generation of reperiodized signals
+                    - for every passed period one random sample from `[x,y,periods]` will be reperiodized to that passed period
+                - `periods`
+                    - list, np.ndarray, optional
+                    - periods corresponding to `x` and `y`
+                    - used to convert `x` into phase-domain
+                    - the default is `None`
+                        - will lead to `x` being interpreted as phases
+                - `size`
+                    - int, optional
+                    - how many samples to generate
+                    - if `> len(new_periods)`
+                        - will choose `size` random new periods with replacement from ` new_periods`
+                    - if `< len(new_periods)`
+                        - will choose `size` random new periods without replacement from ` new_periods`
+                    - if `== len(new_periods)`
+                        - will use periods exactly as they are (no change of order etc)
+                    - the default is `None`
+                        - will behave like `size = len(new_periods)`
+                - `verbose`
+                    - int, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_gen`
+                    - `List[np.ndarray]`
+                        - contains np.ndarrays
+                            - can have different lengths
+                    - each entry contains the x-values of one generated periodic signal (corresponding entry in `y_gen`)
+                - `y_gen`
+                    - `List[np.ndarray]`
+                        - contains np.ndarrays
+                            - can have different lengths
+                    - each entry contains the y-values of one generated periodic signal
+                        - the entry of `x_gen` contains the corresponding x-values
+                - `p_gen`
+                    - `np.ndarray`
+                    - periods of the generated signals (`y_gen(x_gen)`)
+
+            Comments
+            --------
+        """
+        
+        #default parameters
+        if size is None or size == len(new_periods):
+            size = len(new_periods)
+            p_gen = new_periods   #unchanged... use exactly the passed new_periods
+        elif size < len(new_periods):
+            p_gen = np.random.choice(new_periods, size=size, replace=False)   #choose random subset
+        elif size > len(new_periods):
+            p_gen = np.random.choice(new_periods, size=size, replace=True)    #choose random subset with replacing
+        
+        #convert to NON FOLDED phases
+        if periods is None: phases = x                                      #interpret `x` as phases if no periods passed
+        else:               phases = [xi/p for xi, p in zip(x,periods)]     #calculate phases if periods have been provided
+
+        
+
+        #generate new signals
+        x_gen = []
+        y_gen = []
+        for idx, new_p in enumerate(p_gen):
+            #random index to select random sample in `x` and `y`
+            randidx = np.random.randint(0, len(x)-1, size=1)
+
+            #reperiodize signal
+            x_gen.append(phases[int(randidx)]*new_p) #reperiodize
+            y_gen.append(y[int(randidx)])            #y stays the same
+
+
+        return x_gen, y_gen, p_gen
+    
+    def plot_result(self,
+        x_gen:list, y_gen:list,
+        p_gen:np.ndarray=None,
+        fig_kwargs:dict=None, plot_kwargs:dict=None,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to create a testplot visualizing the generated dataseries
+
+            Parameters
+            ----------
+                - `x_gen`
+                    - list
+                    - contains x-values of newly generated samples
+                - `y_gen`
+                    - list
+                    - contains y-values of newly generated samples
+                - `p_gen`
+                    - np.ndarray, optional
+                    - contains all p_gen of newly generated signals
+                    - will only use the first period (`p_gen[:,0]`) for plotting
+                    - the default is `None`
+                        - will be ignored when plotting
+                - `fig_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `plt.fig()`
+                    - the default is `None`
+                        - will initialize with empty dict (`fig_kwargs = dict()`)
+                - `plot_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `ax.plot()`
+                    - the default is `None`
+                        - will initialize with `dict(marker='o')`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - matplotlib Figure
+                    - created matplotlib figure
+                - `axs`
+                    - `plt.Axs`
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
+        """
+
+        if p_gen is None: p_gen = np.array([None]*len(x_gen))
+        if fig_kwargs is None:
+            fig_kwargs = {}
+        if plot_kwargs is None:
+            plot_kwargs = {'marker':'o'}
+
+        fig = plt.figure(**fig_kwargs)
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+        for xi, yi, pi in zip(x_gen, y_gen, p_gen):
+            ax1.plot(xi, yi, **plot_kwargs)
+            
+            if pi is not None: ax2.scatter(alpdm.fold(xi, pi)[1], yi, **plot_kwargs)
+
+        
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+        ax2.set_xlabel('Period')
+        ax2.set_ylabel('y')
+
+        axs = fig.axes   
+
+        return fig, axs
+    
