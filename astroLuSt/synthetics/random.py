@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 import random
+from scipy.interpolate import interp1d
 from scipy.signal import sawtooth
 from scipy.stats import norm
 import string
@@ -74,7 +75,7 @@ class GenUniqueStrings:
     def __repr__(self) -> str:
 
         return (
-            f'GenUniqueStrings(\n'
+            f'{self.__class__.__name__}(\n'
             f'    n={repr(self.n)},\n'
             f'    char_choices={repr(self.char_choices)},\n'
             f'    prefix={repr(self.prefix)},\n'
@@ -208,7 +209,7 @@ class GeneratePeriodicSignals:
                 - if int or float
                     - will use this maximum value for all dataseries
                 - if np.ndarray
-                    - defines the minimum x-value for each sample
+                    - defines the maximum x-value for each sample
                     - has to have shape `(nsamples)`
                         - `nsamples`
                             - number of samples that will be generated in total
@@ -345,7 +346,7 @@ class GeneratePeriodicSignals:
     def __repr__(self) -> str:
         choices2print = np.array([c.__name__ for c in self.choices])
         return (
-            f'GeneratePeriodicSignals(\n'
+            f'{self.__class__.__name__}(\n'
             f'    npoints={repr(self.npoints)},\n'
             f'    periods={repr(self.periods)},\n'
             f'    amplitudes={repr(self.amplitudes)},\n'
@@ -970,9 +971,40 @@ class GeneratePeriodicSignals:
 class GenerateViaReperiodizing:
     """
         - class to generate new (semi) artifical samples of periodic signals by reperiodizing an existing set of periodic signals
+        - the individual output samples will have the same shape as the corresponding template samples (input samples)
+            - in case that the output range is out of bounds w.r.t. the input range, the generated series will be padded
 
         Attributes
         ----------
+            - `periods`
+                - np.ndarray, int, float
+                - set of periods the generated signals shall have
+                    - will generate as many unique periodized dataseries (samples) as elements in `periods`
+                - for every passed period one random sample from `[x,y,old_periods]` will be reperiodized to that passed period
+                - if int or float
+                    - will use this `periods` for all generated samples dataseries
+                - if np.ndarray
+                    - defines the set of periods that will be randomly chosen from to generate new signals
+            - `x_min`    
+                - np.ndarray, int, float, optional
+                - minimum x-value of the individual generated dataseries
+                    - will generate as many unique periodized dataseries as elements in `periods`
+                - if int or float
+                    - will use this minimum value for all dataseries
+                - if np.ndarray
+                    - defines the set of minimum x-values to randomly choose from for each generated sample
+                - the default is 0
+            - `x_max`
+                - np.ndarray, int, float, optional
+                - maximum x-value of the individual generated dataseries
+                    - will generate as many unique periodized dataseries as elements in `periods`
+                - if int or float
+                    - will use this maximum value for all dataseries
+                - if np.ndarray
+                    - defines the set of maximum x-values to randomly choose from for each generated sample
+                - the default is `None`
+                    - will use the maximum possible value given the new period without the need of extrapolaiton
+                    - i.e., `np.max(x)*new_period/old_period`
             - `verbose`
                 - int, optional
                 - verbosity level
@@ -987,6 +1019,7 @@ class GenerateViaReperiodizing:
         ------------
             - matplotlib
             - numpy
+            - scipy
             - typing
 
         Comments
@@ -994,16 +1027,28 @@ class GenerateViaReperiodizing:
     
     """
     def __init__(self,
+        periods:Union[np.ndarray,int,float],
+        x_min:Union[np.ndarray,int,float]=None, x_max:Union[np.ndarray,int,float]=None,
         verbose:int=0,
         ) -> None:
         
+        if isinstance(periods, (int,float)):        self.periods    = [periods]
+        else:                                       self.periods    = periods
+        if isinstance(x_min, (int,float)):          self.x_min      = [x_min]*len(self.periods)
+        else:                                       self.x_min      = x_min
+        if x_max is None:                           self.x_max      = [None]*len(self.periods)
+        elif isinstance(x_max, (int,float)):        self.x_max      = [x_max]*len(self.periods)
+        else:                                       self.x_max      = x_max
+
         self.verbose = verbose
 
         return
     
     def __repr__(self) -> str:
         return (
-            f'GenerateViaReperiodizing(\n'
+            f'{self.__class__.__name__}(\n'
+            f'    periods={repr(self.periods)},\n'
+            f'    x_min={repr(self.x_min)}, x_max={repr(self.x_max)}\n'
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
@@ -1013,21 +1058,25 @@ class GenerateViaReperiodizing:
 
     def rvs(self,
         x:List[np.ndarray], y:List[np.ndarray],
-        new_periods:np.ndarray,
-        periods:Union[list,np.ndarray]=None,
+        periods_old:Union[list,np.ndarray]=None,
         size:int=None,
         verbose:int=None,
+        interp1d_kwargs:dict=None
         ) -> Tuple[List[np.ndarray], List[np.ndarray], np.ndarray]:
         """
-            - 
-
+            - method similar to the `scipy.stats` `rvs()` method
+            - rvs ... random variates
+            - will random samples from `[x,y,periods_old]` and reperiodize them to new periods (random choice from `self.periods`)
+            - uses `scipy.interpolate.interp1d()` to ensure that the generated samples have the same shape as the template samples
+                - will pad values outside the interpolation range
+            
             Parameters
             ----------
                 - `x`
                     - `List[np.ndarray]`
                     - list of x-values of template dataseries
                         - usually arrays of times
-                        - if `periods` was not passed
+                        - if `periods_old` was not passed
                             - will be interpreted as phases
                         - those will be reperiodized to generate new dataseries with different periods
                     - will choose `size` random samples from `x`
@@ -1035,11 +1084,7 @@ class GenerateViaReperiodizing:
                     - `List[np.ndarray]`
                     - list of y-values of template dataseries
                     - corresponding to `x`
-                - `new_periods`
-                    - np.ndarray
-                    - contains periods to use for generation of reperiodized signals
-                    - for every passed period one random sample from `[x,y,periods]` will be reperiodized to that passed period
-                - `periods`
+                - `periods_old`
                     - list, np.ndarray, optional
                     - periods corresponding to `x` and `y`
                     - used to convert `x` into phase-domain
@@ -1048,20 +1093,25 @@ class GenerateViaReperiodizing:
                 - `size`
                     - int, optional
                     - how many samples to generate
-                    - if `> len(new_periods)`
-                        - will choose `size` random new periods with replacement from ` new_periods`
-                    - if `< len(new_periods)`
-                        - will choose `size` random new periods without replacement from ` new_periods`
-                    - if `== len(new_periods)`
-                        - will use periods exactly as they are (no change of order etc)
+                    - if `> len(self.periods)`
+                        - will choose `size` random new periods with replacement from `self.periods`
+                    - if `< len(self.periods)`
+                        - will choose `size` random new periods without replacement from `self.periods`
+                    - if `== len(self.periods)`
+                        - will use `self.periods`, `x`, `y`, etc. exactly as they are (no change of order etc.)
                     - the default is `None`
-                        - will behave like `size = len(new_periods)`
+                        - will behave like `size = len(self.periods)`
                 - `verbose`
                     - int, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
                         - will fall back to `self.verbose`
+                - `interp1d_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `scipy.interpolate.interp1d()`
+                    - the default is `None`
+                        - will be set to `dict(bounds_error=False, fill_value=np.nan)`
 
             Raises
             ------
@@ -1088,30 +1138,54 @@ class GenerateViaReperiodizing:
         """
         
         #default parameters
-        if size is None or size == len(new_periods):
-            size = len(new_periods)
-            p_gen = new_periods   #unchanged... use exactly the passed new_periods
-        elif size < len(new_periods):
-            p_gen = np.random.choice(new_periods, size=size, replace=False)   #choose random subset
-        elif size > len(new_periods):
-            p_gen = np.random.choice(new_periods, size=size, replace=True)    #choose random subset with replacing
+        if size is None or size == len(self.periods):
+            size = len(self.periods)
+            p_gen = self.periods   #unchanged... use exactly the passed self.periods
+            x_min = self.x_min
+            x_max = self.x_max
+        elif size < len(self.periods):
+            p_gen = np.random.choice(self.periods, size=size, replace=False)   #choose random subset
+            x_min = np.random.choice(self.x_min,   size=size, replace=False)   #choose random subset
+            x_max = np.random.choice(self.x_max,   size=size, replace=False)   #choose random subset
+        elif size > len(self.periods):
+            p_gen = np.random.choice(self.periods, size=size, replace=True)    #choose random subset with replacing
+            x_min = np.random.choice(self.x_min,   size=size, replace=True)    #choose random subset with replacing
+            x_max = np.random.choice(self.x_max,   size=size, replace=True)    #choose random subset with replacing
+        if interp1d_kwargs is None:                         interp1d_kwargs                 = dict(bounds_error=False, fill_value=np.nan)
+        if 'bounds_error' not in interp1d_kwargs.keys():    interp1d_kwargs['bounds_error'] = False
+        if 'fill_value' not in interp1d_kwargs.keys():      interp1d_kwargs['fill_value']   = False
+
+        #generate random indices to select random sample in `x` and `y`
+        if size == len(x): 
+            #use samples in passed order if size == len(x) == len(self.periods)
+            randidxs = np.arange(size)
+        else:
+            #use random samples if size != len(x)
+            randidxs = np.random.choice(range(len(x)), size=size, replace=True) 
+
         
         #convert to NON FOLDED phases
-        if periods is None: phases = x                                      #interpret `x` as phases if no periods passed
-        else:               phases = [xi/p for xi, p in zip(x,periods)]     #calculate phases if periods have been provided
-
+        if periods_old is None: phases = x                                      #interpret `x` as phases if no periods_old passed
+        else:                   phases = [xi/p for xi, p in zip(x,periods_old)] #calculate phases if periods_old have been provided
         
-
         #generate new signals
         x_gen = []
         y_gen = []
-        for idx, new_p in enumerate(p_gen):
-            #random index to select random sample in `x` and `y`
-            randidx = np.random.randint(0, len(x)-1, size=1)
+        for idx, (ridx, new_p, xn, xx) in enumerate(zip(randidxs, p_gen, x_min, x_max)):
+
+            #default value for x_max = maximum possible value with new period
+            if xx is None: xx = np.nanmax(x[ridx])*new_p/periods_old[ridx]
 
             #reperiodize signal
-            x_gen.append(phases[int(randidx)]*new_p) #reperiodize
-            y_gen.append(y[int(randidx)])            #y stays the same
+            x_old = phases[ridx]*new_p #reperiodize
+            y_old = y[ridx]
+            ##interpolate to keep ranges the same
+            x_new = np.linspace(xn,xx,phases[int(ridx)].shape[0])
+            y_new = interp1d(x_old, y_old, **interp1d_kwargs)(x_new)   #interpolate y to match new period and keep sampling
+
+
+            x_gen.append(x_new)
+            y_gen.append(y_new)
 
 
         return x_gen, y_gen, p_gen
