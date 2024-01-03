@@ -353,6 +353,11 @@ class Pad2Size:
                 - verbosity level
                 - the default is 0
 
+        Infered Attributes
+        ------------------
+            - `size_fitted`
+                - int
+                - `size` after running `self.fit()`
 
         Methods
         -------
@@ -379,6 +384,9 @@ class Pad2Size:
         self.size               = size
         self.subsampling_mode   = subsampling_mode
         self.verbose            = verbose
+
+        #infered attributes
+        self.size_fitted        = size
 
         return
     
@@ -423,7 +431,9 @@ class Pad2Size:
         """
         #obtain padding length
         if self.size is None:
-            self.size = max([len(x) for x in X])
+            self.size_fitted = max([len(x) for x in X])
+        else:
+            self.size_fitted = self.size
         
         return
     
@@ -488,7 +498,7 @@ class Pad2Size:
         """
 
         #default parameters
-        if size is None:                size                = self.size
+        if size is None:                size                = self.size_fitted
         if subsampling_mode is None:    subsampling_mode    = self.subsampling_mode
         if pad_kwargs is None:          pad_kwargs          = dict(constant_values=(np.nan))
 
