@@ -131,7 +131,12 @@ class PDM:
                 - kwargs for the Binning class
                 - used to bin the folded curves and estimate the variance w.r.t. a mean curve
                 - the default is `None`
-                    - will be set to `{}`    
+                    - will be set to `dict()`
+                - `parallel_kwargs`
+                    - `dict`, optional
+                    - additional kwargs to pass to `joblib.parallel.Parallel()`
+                    - the default is `None`
+                        - will be set to `dict(backend='threading')`                    
         
         Infered Attributes
         ------------------
@@ -213,7 +218,8 @@ class PDM:
         #computation and plotting
         n_jobs:int=-1,
         verbose:int=0,
-        binning_kwargs:dict=None,   
+        binning_kwargs:dict=None,
+        parallel_kwargs:dict=None, 
         ) -> None:
 
         self.period_start   = period_start
@@ -237,10 +243,10 @@ class PDM:
         self.normalize = normalize
         self.n_jobs = n_jobs
         self.verbose = verbose
-        if binning_kwargs is None:
-            self.binning_kwargs = {}
-        else:
-            self.binning_kwargs = binning_kwargs
+        if binning_kwargs is None:  self.binning_kwargs = dict()
+        else:                       self.binning_kwargs = binning_kwargs
+        if parallel_kwargs is None: self.parallel_kwargs= dict(backend='threading')
+        else:                       self.parallel_kwargs= parallel_kwargs
 
         #adopt period_start and period_stop if trial_periods were passed
         if self.trial_periods is not None:
@@ -470,7 +476,8 @@ class PDM:
         tolerance_decay:float=None,
         breakloop:bool=None,
         n_jobs:int=None,
-        verbose:int=None
+        verbose:int=None,
+        parallel_kwargs:dict=None,
         ) -> None:
         """
             - method to fit the `PDM`-estimator
@@ -518,6 +525,12 @@ class PDM:
                     - will overwrite the `self.verbose`
                     - verbosity level
                     - the default is 0
+                - `parallel_kwargs`
+                    - `dict`, optional
+                    - additional kwargs to pass to `joblib.parallel.Parallel()`
+                    - overrides `self.parallel_kwargs`
+                    - the default is `None`
+                        - will fall back to `self.parallel_kwargs`
                                         
             Raises
             ------
@@ -533,11 +546,12 @@ class PDM:
 
         """
 
-        if tolerance_expression is None: tolerance_expression = self.tolerance_expression
-        if tolerance_decay is None:      tolerance_decay      = self.tolerance_decay
-        if breakloop is None:            breakloop            = self.breakloop
-        if n_jobs is None:               n_jobs               = self.n_jobs
-        if verbose is None:              verbose              = self.verbose
+        if tolerance_expression is None:tolerance_expression = self.tolerance_expression
+        if tolerance_decay is None:     tolerance_decay      = self.tolerance_decay
+        if breakloop is None:           breakloop            = self.breakloop
+        if n_jobs is None:              n_jobs               = self.n_jobs
+        if verbose is None:             verbose              = self.verbose
+        if parallel_kwargs is None:     parallel_kwargs      = self.parallel_kwargs
 
         if self.trial_periods is None:
             self.trial_periods = self.generate_period_grid(self.period_start, self.period_stop, self.nperiods, x=x)
@@ -546,7 +560,7 @@ class PDM:
         self.tot_var = np.nanvar(y)
 
         #calculate variance of folded curve for all trial periods
-        res = Parallel(n_jobs=self.n_jobs, verbose=verbose)(delayed(self.get_theta_for_p)(
+        res = Parallel(n_jobs=self.n_jobs, verbose=verbose, **parallel_kwargs)(delayed(self.get_theta_for_p)(
             x, y, p,
             ) for p in self.trial_periods)
 
@@ -1571,3 +1585,4 @@ class HPS:
 
         return fig, axs
     
+# %%
