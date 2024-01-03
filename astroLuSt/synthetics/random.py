@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 import random
-from scipy.interpolate import interp1d
 from scipy.signal import sawtooth
 from scipy.stats import norm
 import string
@@ -985,26 +984,32 @@ class GenerateViaReperiodizing:
                     - will use this `periods` for all generated samples dataseries
                 - if np.ndarray
                     - defines the set of periods that will be randomly chosen from to generate new signals
-            - `x_min`    
+            - `x_min`
                 - np.ndarray, int, float, optional
                 - minimum x-value of the individual generated dataseries
                     - will generate as many unique periodized dataseries as elements in `periods`
                 - if int or float
                     - will use this minimum value for all dataseries
+                    - if the minimum of the phased template series is higher, will use that value instead
+                        - i.e. will use `max(x_min,min(phases))`
                 - if np.ndarray
                     - defines the set of minimum x-values to randomly choose from for each generated sample
-                - the default is 0
+                - the default is `None`
+                    - will be set to `-np.inf`
+                    - i.e. the minimum of the phased template series will be used
             - `x_max`
                 - np.ndarray, int, float, optional
                 - maximum x-value of the individual generated dataseries
                     - will generate as many unique periodized dataseries as elements in `periods`
                 - if int or float
                     - will use this maximum value for all dataseries
+                    - if the maximum of the phased template series is lower, will use that value instead
+                        - i.e. will use `min(x_max,max(phases))`
                 - if np.ndarray
                     - defines the set of maximum x-values to randomly choose from for each generated sample
                 - the default is `None`
-                    - will use the maximum possible value given the new period without the need of extrapolaiton
-                    - i.e., `np.max(x)*new_period/old_period`
+                    - will be set to `np.inf`
+                    - i.e. the maximum of the phased template series will be used
             - `verbose`
                 - int, optional
                 - verbosity level
@@ -1019,7 +1024,6 @@ class GenerateViaReperiodizing:
         ------------
             - matplotlib
             - numpy
-            - scipy
             - typing
 
         Comments
@@ -1034,9 +1038,10 @@ class GenerateViaReperiodizing:
         
         if isinstance(periods, (int,float)):        self.periods    = [periods]
         else:                                       self.periods    = periods
-        if isinstance(x_min, (int,float)):          self.x_min      = [x_min]*len(self.periods)
+        if x_min is None:                           self.x_min      = [-np.inf]*len(self.periods)
+        elif isinstance(x_min, (int,float)):        self.x_min      = [x_min]*len(self.periods)
         else:                                       self.x_min      = x_min
-        if x_max is None:                           self.x_max      = [None]*len(self.periods)
+        if x_max is None:                           self.x_max      = [np.inf]*len(self.periods)
         elif isinstance(x_max, (int,float)):        self.x_max      = [x_max]*len(self.periods)
         else:                                       self.x_max      = x_max
 
@@ -1061,7 +1066,6 @@ class GenerateViaReperiodizing:
         periods_old:Union[list,np.ndarray]=None,
         size:int=None,
         verbose:int=None,
-        interp1d_kwargs:dict=None
         ) -> Tuple[List[np.ndarray], List[np.ndarray], np.ndarray]:
         """
             - method similar to the `scipy.stats` `rvs()` method
@@ -1107,11 +1111,6 @@ class GenerateViaReperiodizing:
                     - overrides `self.verbose`
                     - the default is `None`
                         - will fall back to `self.verbose`
-                - `interp1d_kwargs`
-                    - dict, optional
-                    - kwargs to pass to `scipy.interpolate.interp1d()`
-                    - the default is `None`
-                        - will be set to `dict(bounds_error=False, fill_value=np.nan)`
 
             Raises
             ------
@@ -1138,6 +1137,7 @@ class GenerateViaReperiodizing:
         """
         
         #default parameters
+        if periods_old is None: periods_old = [1]*len(x)
         if size is None or size == len(self.periods):
             size = len(self.periods)
             p_gen = self.periods   #unchanged... use exactly the passed self.periods
@@ -1151,16 +1151,13 @@ class GenerateViaReperiodizing:
             p_gen = np.random.choice(self.periods, size=size, replace=True)    #choose random subset with replacing
             x_min = np.random.choice(self.x_min,   size=size, replace=True)    #choose random subset with replacing
             x_max = np.random.choice(self.x_max,   size=size, replace=True)    #choose random subset with replacing
-        if interp1d_kwargs is None:                         interp1d_kwargs                 = dict(bounds_error=False, fill_value=np.nan)
-        if 'bounds_error' not in interp1d_kwargs.keys():    interp1d_kwargs['bounds_error'] = False
-        if 'fill_value' not in interp1d_kwargs.keys():      interp1d_kwargs['fill_value']   = False
 
         #generate random indices to select random sample in `x` and `y`
         if size == len(x): 
-            #use samples in passed order if size == len(x) == len(self.periods)
+            #use samples in passed order if `size == len(x) == len(self.periods)`
             randidxs = np.arange(size)
         else:
-            #use random samples if size != len(x)
+            #use random samples if `size != len(x)`
             randidxs = np.random.choice(range(len(x)), size=size, replace=True) 
 
         
@@ -1173,17 +1170,14 @@ class GenerateViaReperiodizing:
         y_gen = []
         for idx, (ridx, new_p, xn, xx) in enumerate(zip(randidxs, p_gen, x_min, x_max)):
 
-            #default value for x_max = maximum possible value with new period
-            if xx is None: xx = np.nanmax(x[ridx])*new_p/periods_old[ridx]
-
             #reperiodize signal
             x_old = phases[ridx]*new_p #reperiodize
             y_old = y[ridx]
-            ##interpolate to keep ranges the same
-            x_new = np.linspace(xn,xx,phases[int(ridx)].shape[0])
-            y_new = interp1d(x_old, y_old, **interp1d_kwargs)(x_new)   #interpolate y to match new period and keep sampling
-
-
+            
+            #make sure correct time-range is returned
+            xbool = (xn < x_old)&(x_old < xx)
+            x_new, y_new = x_old[xbool], y_old[xbool]
+            
             x_gen.append(x_new)
             y_gen.append(y_new)
 
@@ -1209,7 +1203,6 @@ class GenerateViaReperiodizing:
                 - `p_gen`
                     - np.ndarray, optional
                     - contains all p_gen of newly generated signals
-                    - will only use the first period (`p_gen[:,0]`) for plotting
                     - the default is `None`
                         - will be ignored when plotting
                 - `fig_kwargs`
