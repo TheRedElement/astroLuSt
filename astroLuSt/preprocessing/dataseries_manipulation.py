@@ -512,8 +512,9 @@ class Pad2Size:
                     idxs = np.sort(idxs)
                 #first `size` entries
                 X_pad[idx] = x[idxs]
+            #no modification
             else:
-                pass
+                X_pad[idx] = x
 
         return X_pad
 
@@ -564,7 +565,7 @@ class Pad2Size:
         if transform_kwargs is None:transform_kwargs = dict()
 
         self.fit(X, y, **fit_kwargs)
-        X_pad = self.transform(X, y, **fit_kwargs)
+        X_pad = self.transform(X, y, **transform_kwargs)
         
         return X_pad
     

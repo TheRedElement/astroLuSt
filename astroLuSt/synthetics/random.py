@@ -1121,11 +1121,13 @@ class GenerateViaReperiodizing:
                     - `List[np.ndarray]`
                         - contains np.ndarrays
                             - can have different lengths
+                            - lengths might not match lenghts of template-curves
                     - each entry contains the x-values of one generated periodic signal (corresponding entry in `y_gen`)
                 - `y_gen`
                     - `List[np.ndarray]`
                         - contains np.ndarrays
                             - can have different lengths
+                            - lengths might not match lenghts of template-curves
                     - each entry contains the y-values of one generated periodic signal
                         - the entry of `x_gen` contains the corresponding x-values
                 - `p_gen`
@@ -1134,6 +1136,8 @@ class GenerateViaReperiodizing:
 
             Comments
             --------
+                - if you wish to return generated samples that all have the same length
+                    - consider using `astroLuSt.proprocessing.dataseries_manipulation.Pad2Size()` on the generated samples
         """
         
         #default parameters
