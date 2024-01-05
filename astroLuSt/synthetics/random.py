@@ -213,10 +213,34 @@ class GeneratePeriodicSignals:
                         - `nsamples`
                             - number of samples that will be generated in total
                 - the default is 10
+            - `noise_level_x`
+                - `np.ndarray`, `float`, optional
+                - scale of the noise added to the periodized signal in x-direction of the individual generated dataseries
+                    - will generate as many unique periodized dataseries as elements in `npoints`
+                - if int or float
+                    - will use this noise value for all dataseries     
+                - if np.ndarray
+                    - defines the noise value for each sample
+                    - has to have shape `(nsamples)`
+                        - `nsamples`
+                            - number of samples that will be generated in total                               
+                - the default is 0.01
+            - `noise_level_y`
+                - `np.ndarray`, `float`, optional
+                - scale of the noise added to the periodized signal in y-direction of the individual generated dataseries
+                    - will generate as many unique periodized dataseries as elements in `npoints`
+                - if int or float
+                    - will use this noise value for all dataseries     
+                - if np.ndarray
+                    - defines the noise value for each sample
+                    - has to have shape `(nsamples)`
+                        - `nsamples`
+                            - number of samples that will be generated in total                               
+                - the default is 0.05
             - `x_offsets`
                 - np.ndarray, int, optional
                 - offsets to add to the x-values of the generated periodic dataseries
-                - if int
+                - if `int`
                     - will use that offset for all generated samples
                 - if np.ndarray
                     - defines the offsets of the composite signals for each sample
@@ -273,6 +297,7 @@ class GeneratePeriodicSignals:
         periods:Union[np.ndarray,int,float]=None,
         amplitudes:Union[np.ndarray,int,float]=None,
         x_min:Union[np.ndarray,int,float]=0, x_max:Union[np.ndarray,int,float]=10,
+        noise_level_x:float=0.01, noise_level_y:float=0.05,
         x_offsets:Union[np.ndarray,int]=0,
         choices:np.ndarray=None,
         verbose:int=0,
@@ -293,6 +318,12 @@ class GeneratePeriodicSignals:
         if x_max is None:                           self.x_max      = [10]*len(self.npoints)
         elif isinstance(x_max, (int,float)):        self.x_max      = [x_max]*len(self.npoints)
         else:                                       self.x_max      = x_max
+        if noise_level_x is None:                   self.noise_level_x  = [0.01]*len(self.npoints)
+        elif isinstance(noise_level_x, (int,float)):self.noise_level_x  = [noise_level_x]*len(self.npoints)
+        else:                                       self.noise_level_x  = noise_level_x
+        if noise_level_y is None:                   self.noise_level_y  = [0.05]*len(self.npoints)
+        elif isinstance(noise_level_y, (int,float)):self.noise_level_y  = [noise_level_y]*len(self.npoints)
+        else:                                       self.noise_level_y  = noise_level_y
         if x_offsets is None:                       self.x_offsets  = [[0]]*len(self.npoints)
         elif isinstance(x_offsets, (int,float)):    self.x_offsets  = [[x_offsets]]*len(self.npoints)
         else:                                       self.x_offsets  = x_offsets
@@ -763,8 +794,6 @@ class GeneratePeriodicSignals:
 
     def rvs(self,
         choices:np.ndarray=None,
-        noise_level_y:float=0.05,
-        noise_level_x:float=0.1,
         random_state:int=None,
         verbose:int=None,
         choices_kwargs:dict=None,
@@ -789,14 +818,6 @@ class GeneratePeriodicSignals:
                     - these choices will be used to randomly generate dataseries
                     - the default is `None`
                         - will fallback to `self.choices`
-                - `noise_level_x`
-                    - float, optional
-                    - scale of the noise added to the periodized signal in x-direction
-                    - the default is 0.05
-                - `noise_level_y`
-                    - float, optional
-                    - scale of the noise added to the periodized signal in y-direction
-                    - the default is 0.1
                 - `random_state`
                     - int, optional
                     - not implemented yet
@@ -864,12 +885,16 @@ class GeneratePeriodicSignals:
         y_gen = []
 
         ##individual samples
-        for xn, xx, n, p, a, xo, f_kwargs in zip(self.x_min, self.x_max, self.npoints, self.periods, self.amplitudes, self.x_offsets, func_kwargs):
+        for xn, xx, n, p, a, nlx, nly, xo, f_kwargs in zip(
+            self.x_min, self.x_max, self.npoints, self.periods, self.amplitudes,
+            self.noise_level_x, self.noise_level_y,
+            self.x_offsets,
+            func_kwargs):
 
             #init individual sample
             x = np.linspace(xn, xx, n)
-            x += np.random.randn(x.shape[0]) * noise_level_x
-            y =  np.random.randn(x.shape[0]) * noise_level_y    #init with noise
+            x += np.random.randn(x.shape[0]) * nlx
+            y =  np.random.randn(x.shape[0]) * nly    #init with noise
 
             #choose generator-function
             chosen = np.random.choice(choices, size=None, **choices_kwargs)
