@@ -223,9 +223,10 @@ class LogErrors:
         lines           = re.findall(r'(?<=line )\d+(?=,)', format_exc)
         # problem_lines   = re.findall(r'(?<=<module>\n).+',  format_exc)
         problem_lines   = re.findall(r'(?<=\n    ).+',  format_exc)
+        error_msgs      = re.split(r'\n', format_exc)[-2:-1]
         # error_msgs      = re.findall(r'\w+Error: [\w ]+',   format_exc)
-        error_msgs      = re.findall(r'\w+Error[:\w ]+',    format_exc)[-1:]
-
+        # error_msgs      = re.findall(r'\w+Error[:\w ]+',    format_exc)[-1:]
+        # error_msgs      = re.findall(r'(?<=raise )[^\(]+',    format_exc)[-1:]
         #in case no problem lines have been identified
         if len(problem_lines) == 0: problem_lines = ['<NO PROBLEM LINE IDENTIFIED>']*len(files)
 
