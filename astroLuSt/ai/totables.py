@@ -38,6 +38,12 @@ def hypergrid2latex(
 
     #default values
     if pd_to_latex_kwargs is None: pd_to_latex_kwargs = dict(buf=None, index=False, position='!th', label='tab:YOURLABEL', caption=f'Hyperparameter-Grid', escape=False)
+    if 'buf' not in pd_to_latex_kwargs.keys():      pd_to_latex_kwargs['buf']       = None
+    if 'index' not in pd_to_latex_kwargs.keys():    pd_to_latex_kwargs['index']     = False
+    if 'position' not in pd_to_latex_kwargs.keys(): pd_to_latex_kwargs['position']  = '!th'
+    if 'label' not in pd_to_latex_kwargs.keys():    pd_to_latex_kwargs['label']     = 'tab:YOURLABEL'
+    if 'label' not in pd_to_latex_kwargs.keys():    pd_to_latex_kwargs['label']     = 'Hyperparameter-Grid'
+    if 'caption' not in pd_to_latex_kwargs.keys():  pd_to_latex_kwargs['caption']   = False
 
     #generate DataFrame
     df_hypergrid = pd.DataFrame({k:[v] for k, v in hypergrid.items()}).T.reset_index()
@@ -52,3 +58,5 @@ def hypergrid2latex(
     hypergrid_str = df_hypergrid.to_latex(**pd_to_latex_kwargs)
     
     return hypergrid_str
+
+
