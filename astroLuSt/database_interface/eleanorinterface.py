@@ -295,7 +295,7 @@ class EleanorDatabaseInterface:
         lcs = []
         tpfs = []
         aperture_masks = []
-        headers = np.array(['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size'])
+        headers = np.array(['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size', 'tic', 'gaia', 'ra', 'dec'])
         if get_normalized_flux:
             headers = np.append(headers, ['raw_flux_normalized', 'corr_flux_normalized'])
         if 'do_pca' in targetdata_kwargs.keys():
@@ -341,12 +341,16 @@ class EleanorDatabaseInterface:
                         eleanor.TargetData.custom_aperture(datum, **custom_aperture_kwargs)
 
                     aperture_size = datum.aperture.sum()
-
+            
                     lc = np.array([
                         datum.time,
                         datum.raw_flux, datum.flux_err,
                         datum.corr_flux,
                         datum.quality,
+                        [s.tic]   *datum.time.shape[0],
+                        [s.gaia]  *datum.time.shape[0],
+                        [s.coords[0]]*datum.time.shape[0],
+                        [s.coords[1]]*datum.time.shape[0],
                         [s.sector]*datum.time.shape[0],
                         [s.tess_mag]*datum.time.shape[0],
                         # [datum.aperture_size]*datum.time.shape[0],
