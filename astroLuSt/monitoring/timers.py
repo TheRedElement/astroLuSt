@@ -1,10 +1,11 @@
 
 #%%imports
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
 import time
-from typing import Callable, Any, List
+from typing import Callable, Any, List, Tuple
 
 from astroLuSt.visualization.plotting import generate_colors
 
@@ -359,7 +360,7 @@ class ExecTimer:
         n:int=500,
         metrics:List[Callable]=None,
         drop_from_df_protocoll:bool=True,
-        ) -> pd.DataFrame:
+        ) -> Tuple[pd.DataFrame,Figure]:
         """
             - decorator method to execute a function `n` times and return a plot of requested statistics
 
@@ -386,8 +387,11 @@ class ExecTimer:
             Returns
             -------
                 - `df_execstats`
-                    - pd.DataFrame
+                    - `pd.DataFrame`
                     - dataframe entries of the executions within `self.get_execstats()`
+                - `fig`
+                    - `Figure`
+                    - created figure summarizing the execution metrics
 
             Comments
             --------
@@ -440,15 +444,13 @@ class ExecTimer:
                 ax1.set_xlabel('Elapsed Time [s]')
                 ax1.set_ylabel('Counts')
 
-                plt.show()
-
                 #drop get_execstats() executions from df_protocoll if requested
                 if drop_from_df_protocoll:
                     self.df_protocoll = self.df_protocoll.query('~'+execstats_bool)
 
 
                 #return dataframe of statistics
-                return df_execstats
+                return df_execstats, fig
             
             #return wrapped function (ultimately returns func_res)
             return wrapped_func
