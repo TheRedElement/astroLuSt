@@ -1886,9 +1886,10 @@ class CornerPlot:
         corrmat:np.ndarray,
         y:np.ndarray,
         cmap:Union[str,mcolors.Colormap],
-        bins:int,
+        xvals:np.ndarray, yvals:np.ndarray,
         fig:Figure, nrowscols:int,
-        sctr_kwargs:dict,
+        sctr_kwargs:dict=None,
+        contour_kwargs:dict=None,
         ) -> plt.Axes:
         """
             - method to generate the (off-diagonal) 2d distributions
@@ -1937,9 +1938,16 @@ class CornerPlot:
                 - `cmap`
                     - str, Colormap
                     - name of colormap or Colormap instance to color the datapoints
-                - `bins`
-                    - int
-                    - number of bins to use for the estimation of the estimated normal distribution
+                - `xvals`
+                    - `np.ndarray`
+                    - x-values to use for plotting
+                    - used for generating the normal distribution estimate
+                    - used for defining x-axis limits
+                - `yvals`
+                    - `np.ndarray`
+                    - y-values to use for plotting
+                    - used for generating the normal distribution estimate
+                    - used for defining y-axis limits
                 - `fig`
                     - Figure
                     - figure to plot into
@@ -1947,8 +1955,15 @@ class CornerPlot:
                     - int
                     - number of rows and columns of the corner-plot
                 - `sctr_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `ax.scatter()`
+                    - the default is `None`
+                        - will be set to `dict(s=1, alpha=0.5, zorder=2)`
+                - `countour_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `ax.contour()`
+                    - the default is `None`
+                        - will be set to `dict(cmap='gray')`
 
             Raises
             ------
@@ -1962,6 +1977,15 @@ class CornerPlot:
             Comments
             --------
         """
+
+        #default values
+        if sctr_kwargs is None:
+            sctr_kwargs = dict(s=1, alpha=0.5, zorder=2)
+        if 's' not in sctr_kwargs.keys():       sctr_kwargs['s']        = 1
+        if 'alpha' not in sctr_kwargs.keys():   sctr_kwargs['alpha']    = 0.5
+        if 'zorder' not in sctr_kwargs.keys():  sctr_kwargs['zorder']   = 2
+        if contour_kwargs is None:              contour_kwargs          = dict(cmap='gray')
+        if 'cmap' not in contour_kwargs.keys(): contour_kwargs['cmap']  = 'gray'
 
         #add new panel
         ax = fig.add_subplot(nrowscols, nrowscols, idx)
@@ -1977,14 +2001,7 @@ class CornerPlot:
             cmap=cmap,
             **sctr_kwargs,
         )
-        
-        #normal distribution estimate
-        if isinstance(bins, int):
-            xvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
-            yvals = np.linspace(np.nanmin([d1, d2]), np.nanmax([d1, d2]), bins)
-        else:
-            xvals = bins.copy()
-            yvals = bins.copy()        
+             
         if mu1 is not None and sigma1 is not None:
             
             covmat = np.cov(np.array([d1,d2]))
@@ -1997,7 +2014,7 @@ class CornerPlot:
                 cov=covmat,
                 allow_singular=True
             )
-            cont = ax.contour(yy, xx, norm.pdf(mesh), cmap="gray", zorder=1)
+            cont = ax.contour(yy, xx, norm.pdf(mesh), zorder=1, **contour_kwargs)
         
 
         #labelling
@@ -2028,9 +2045,12 @@ class CornerPlot:
         d1:np.ndarray, mu1:float, sigma1:float,
         y:np.ndarray,
         cmap:Union[str,mcolors.Colormap],
+        bins:np.ndarray,
         fig:Figure, nrowscols:int,
-        hist_kwargs:dict,
-        sctr_kwargs:dict,
+        hist_kwargs:dict=None,
+        sctr_kwargs:dict=None,
+        plot_kwargs:dict=None,
+        axvline_kwargs:dict=None,
         ) -> plt.Axes:
         """
             - method to generate (on-diagonal) 1d distributions (i.e. histograms)
@@ -2055,6 +2075,9 @@ class CornerPlot:
                 - `cmap`
                     - str, Colormap
                     - name of colormap or Colormap instance to color the datapoints
+                - `bins`
+                    - np.ndarray
+                    - bins to use in the histogram
                 - `fig`
                     - Figure
                     - figure to plot into
@@ -2068,7 +2091,17 @@ class CornerPlot:
                     - dict, optional
                     - kwargs to pass to `ax.scatter()`
                     - will use only part of the information to format 1d-histograms similarly to the scatters
-
+                - `plot_kwargs`
+                    - `dict` optional
+                    - kwargs to pass to `ax.plot()`
+                    - the default is `None`
+                        - will be set to `dict(color='tab:grey')`
+                - `axvline_kwargs`
+                    - `dict` optional
+                    - kwargs to pass to `ax.axvline()`
+                    - the default is `None`
+                        - will be set to `dict(color='tab:orange', linestyle='--')`
+                    
             Raises
             ------
 
@@ -2083,6 +2116,22 @@ class CornerPlot:
 
         """
 
+        #default parameters
+        if hist_kwargs is None:                     hist_kwargs                 = dict(density=True, alpha=0.5, zorder=2)
+        if 'density' not in hist_kwargs.keys():     hist_kwargs['density']      = True
+        if 'alpha' not in hist_kwargs.keys():       hist_kwargs['alpha']        = 0.5
+        if 'zorder' not in hist_kwargs.keys():      hist_kwargs['zorder']       = 2
+        if sctr_kwargs is None:                     sctr_kwargs                 = dict(s=1, alpha=0.5, zorder=2)
+        if 's' not in sctr_kwargs.keys():           sctr_kwargs['s']            = 1
+        if 'alpha' not in sctr_kwargs.keys():       sctr_kwargs['alpha']        = 0.5
+        if 'zorder' not in sctr_kwargs.keys():      sctr_kwargs['zorder']       = 2        
+        if plot_kwargs is None:                     plot_kwargs                 = dict(color='tab:grey')
+        if 'color' not in plot_kwargs.keys():       plot_kwargs['color']        = 'tab:grey'
+        if axvline_kwargs is None:                  axvline_kwargs              = dict(color='tab:orange', linestyle='--')
+        if 'color' not in axvline_kwargs.keys():    axvline_kwargs['color']     = 'tab:orange'
+        if 'linestyle' not in axvline_kwargs.keys():axvline_kwargs['linestyle'] = '--'
+        
+        
         if 'vmin' in sctr_kwargs.keys(): vmin = sctr_kwargs['vmin']
         else:                            vmin = None
         if 'vmax' in sctr_kwargs.keys(): vmax = sctr_kwargs['vmax']
@@ -2127,22 +2176,22 @@ class CornerPlot:
                 d1[(y==yu)].flatten(),
                 orientation=orientation,
                 color=c,
+                bins=bins,
                 **hist_kwargs
             )
 
 
         #normal distribution estimate
         if mu1 is not None and sigma1 is not None:
-            xvals = np.linspace(np.nanmin(d1), np.nanmax(d1), hist_kwargs['bins'])
-            normal = stats.norm.pdf(xvals, mu1, sigma1)
+            normal = stats.norm.pdf(bins, mu1, sigma1)
             
             if orientation == 'horizontal':
-                ax.axhline(mu1, color='tab:orange', linestyle='--', label=r'$\mu=%.2f$'%(mu1))
-                ax.plot(normal, xvals)
+                ax.plot(normal, bins, **plot_kwargs)
+                ax.axhline(mu1, label=r'$\mu=%.2f$'%(mu1), **axvline_kwargs)
             
             elif orientation == 'vertical':
-                ax.plot(xvals, normal)
-                ax.axvline(mu1, color='tab:orange', linestyle='--', label=r'$\mu=%.2f$'%(mu1))
+                ax.plot(bins, normal, **plot_kwargs)
+                ax.axvline(mu1, label=r'$\mu=%.2f$'%(mu1), **axvline_kwargs)
         
             ax.errorbar(np.nan, np.nan, color='none', label=r'$\sigma=%.2f$'%(sigma1))
             ax.legend()
@@ -2220,7 +2269,10 @@ class CornerPlot:
         asstandardnormal:bool=False,
         fig:Figure=None,
         sctr_kwargs:dict=None,
+        contour_kwargs:dict=None,
         hist_kwargs:dict=None,
+        plot_kwargs:dict=None,
+        axvline_kwargs:dict=None,
         ):
         """
             - method to create the corner-plot
@@ -2276,6 +2328,7 @@ class CornerPlot:
                     - if `int`
                         - will automatically calculate the bins
                         - will use the calculated bins for ALL uninque values in `y`
+                    - to enforce equal ranges for all panels use `bins=np.array(X.min(), X.max(), 100)`
                     - the default is 100
                 - `cmap`
                     - str, mcolors.Colormap
@@ -2296,10 +2349,25 @@ class CornerPlot:
                     - kwargs to pass to `ax.scatter()`
                     - the default is `None`
                         - will be set to `dict(s=1, alpha=0.5, zorder=2)`
+                - `countour_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `ax.contour()`
+                    - the default is `None`
+                        - will be set to `dict(cmap='gray')`                        
                 - `hist_kwargs`
                     - kwargs to pass to `ax.hist()`
                     - the default is `None`
                         - will be set to `dict(bins=bins, density=True, alpha=0.5, zorder=2)`
+                - `plot_kwargs`
+                    - `dict` optional
+                    - kwargs to pass to `ax.plot()`
+                    - the default is `None`
+                        - will be set to `dict(color='tab:grey')`
+                - `axvline_kwargs`
+                    - `dict` optional
+                    - kwargs to pass to `ax.axvline()`
+                    - the default is `None`
+                        - will be set to `dict(color='tab:orange', linestyle='--')`                        
 
             Raises
             ------
@@ -2333,14 +2401,19 @@ class CornerPlot:
         if 's' not in sctr_kwargs.keys():       sctr_kwargs['s']        = 1
         if 'alpha' not in sctr_kwargs.keys():   sctr_kwargs['alpha']    = 0.5
         if 'zorder' not in sctr_kwargs.keys():  sctr_kwargs['zorder']   = 2
+        if contour_kwargs is None:              contour_kwargs          = dict(cmap='gray')
+        if 'cmap' not in contour_kwargs.keys(): contour_kwargs['cmap']  = 'gray'
         if hist_kwargs is None:
-            hist_kwargs = dict(bins=bins, density=True, alpha=0.5, zorder=2)
-        if 'bins' not in hist_kwargs.keys():    hist_kwargs['bins']     = bins
-        else:                                   bins = hist_kwargs['bins']
+            hist_kwargs = dict(density=True, alpha=0.5, zorder=2)
         if 'density' not in hist_kwargs.keys(): hist_kwargs['density']  = True
         if 'alpha' not in hist_kwargs.keys():   hist_kwargs['alpha']    = 0.5
         if 'zorder' not in hist_kwargs.keys():  hist_kwargs['zorder']   = 2
-
+        if plot_kwargs is None:                     plot_kwargs                 = dict(color='tab:grey')
+        if 'color' not in plot_kwargs.keys():       plot_kwargs['color']        = 'tab:grey'
+        if axvline_kwargs is None:                  axvline_kwargs              = dict(color='tab:orange', linestyle='--')
+        if 'color' not in axvline_kwargs.keys():    axvline_kwargs['color']     = 'tab_orange'
+        if 'linestyle' not in axvline_kwargs.keys():axvline_kwargs['linestyle'] = '--'
+        
         if fig is None: fig = plt.figure()
         nrowscols = X.shape[1]
 
@@ -2358,32 +2431,43 @@ class CornerPlot:
                             d2, mu2, sigma2,
                         )
 
+                #get x and y values (serve as bins as well)
+                if isinstance(bins, int):
+                        xvals = np.linspace(np.nanmin(d2), np.nanmax(d2), bins)
+                        yvals = np.linspace(np.nanmin(d1), np.nanmax(d1), bins)
+                else:
+                    xvals = bins.copy()
+                    yvals = bins.copy() 
+
                 #plotting 2D distributions
                 if idx1 > idx2:
                     
                     ax1 = self.__2d_distributions(
-                        idx1, idx2, idx,
-                        d1, mu1, sigma1, l1,
-                        d2, mu2, sigma2, l2,
-                        corrmat,
-                        y,
-                        cmap,
-                        bins,
-                        fig, nrowscols,
-                        sctr_kwargs,                        
+                        idx1=idx1, idx2=idx2, idx=idx,
+                        d1=d1, mu1=mu1, sigma1=sigma1, l1=l1,
+                        d2=d2, mu2=mu2, sigma2=sigma2, l2=l2,
+                        corrmat=corrmat,
+                        y=y,
+                        cmap=cmap,
+                        xvals=xvals, yvals=yvals,
+                        fig=fig, nrowscols=nrowscols,
+                        sctr_kwargs=sctr_kwargs,                        
                     )
 
                 #plotting 1d histograms
                 elif idx1 == idx2:
 
                     axhist = self.__1d_distributions(
-                        idx,
-                        d1, mu1, sigma1,
-                        y,
-                        cmap,
-                        fig, nrowscols,
-                        hist_kwargs,
-                        sctr_kwargs,
+                        idx=idx,
+                        d1=d1, mu1=mu1, sigma1=sigma1,
+                        y=y,
+                        cmap=cmap,
+                        bins=xvals,
+                        fig=fig, nrowscols=nrowscols,
+                        hist_kwargs=hist_kwargs,
+                        sctr_kwargs=sctr_kwargs,
+                        plot_kwargs=plot_kwargs,
+                        axvline_kwargs=axvline_kwargs,
                     )            
 
         #get axes
