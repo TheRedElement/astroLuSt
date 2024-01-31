@@ -322,8 +322,7 @@ class EleanorDatabaseInterface:
             )
 
             #return nothing
-            lcs = np.empty((0,len(headers)))
-            return lcs, headers, tpfs, aperture_masks
+            return lcs, meta, tpfs, aperture_masks
 
 
         #extract data
