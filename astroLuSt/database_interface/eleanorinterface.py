@@ -135,7 +135,7 @@ class EleanorDatabaseInterface:
         targetdata_kwargs:dict=None,
         custom_aperture_kwargs:dict=None,
         save_kwargs:dict=None,
-        ) -> Tuple[np.ndarray,np.ndarray,np.ndarray,np.ndarray]:
+        ) -> Tuple[dict,dict,np.ndarray,np.ndarray]:
         """
             - method to extract data for a single source
 
@@ -217,39 +217,38 @@ class EleanorDatabaseInterface:
             Returns
             -------
                 - `lcs`
-                    - np.ndarray
+                    - `dict`
                     - contains lightcurve related quantities that got extracted
-                    - will be of shape `(nobservations,nparameters)`
-                        - axis 1: contains extracted parameters
-                            - `'time'`
-                            - `'raw_flux'`
-                            - `'flux_err'`
-                            - `'corr_flux'`
-                            - `'quality'`
-                            - `'sector'`
-                            - `'tess_mag'`
-                            - `'aperture_size'`
-                            - `'raw_flux_normalized'`
-                                - only if `get_normalized_flux == True`
-                            - `'corr_flux_normalized'`
-                                - only if `get_normalized_flux == True`
-                            - `'pca_flux'`
-                                - only if specified within `targetdata_kwargs`
-                                    - `do_pca=True`
-                            - `'pca_flux_normalized'`
-                                - only if `get_normalized_flux == True`
-                            - `'psf_flux'`
-                                - only if specified within `targetdata_kwargs`
-                                    - `do_psf=True`
-                                - only if '`pca_flux'` also got extracted
-                            - `'psf_flux_normalized'`
-                                - only if `get_normalized_flux == True`
-                                - only if '`psf_flux'` also got extracted
-                - `headers`
-                    - np.ndarray
-                    - contains headers (column names) corresponding to `lcs`
+                    - will have the following keys
+                        - `'time'`
+                        - `'raw_flux'`
+                        - `'flux_err'`
+                        - `'corr_flux'`
+                        - `'quality'`
+                        - `'sector'`
+                        - `'tess_mag'`
+                        - `'aperture_size'`
+                        - `'raw_flux_normalized'`
+                            - only if `get_normalized_flux == True`
+                        - `'corr_flux_normalized'`
+                            - only if `get_normalized_flux == True`
+                        - `'pca_flux'`
+                            - only if specified within `targetdata_kwargs`
+                                - `do_pca=True`
+                        - `'pca_flux_normalized'`
+                            - only if `get_normalized_flux == True`
+                        - `'psf_flux'`
+                            - only if specified within `targetdata_kwargs`
+                                - `do_psf=True`
+                            - only if '`pca_flux'` also got extracted
+                        - `'psf_flux_normalized'`
+                            - only if `get_normalized_flux == True`
+                            - only if '`psf_flux'` also got extracted
+                - `meta`
+                    - `dict`
+                    - contains metadata obtained during the extraction
                 - `tpfs`
-                    - np.ndarray
+                    - `np.ndarray`
                     - tpfs that got extracted
                     - will have shape `(ntpfs,xpix,ypix,1)`
                         - `ntpfs` denotes the number of tpfs that got extracted
@@ -257,7 +256,7 @@ class EleanorDatabaseInterface:
                         - `ypix` is the pixel coordinate in y direction
                         - last dimension contains flux values
                 - `aperture_masks`
-                    - np.ndarray
+                    - `np.ndarray`
                     - boolean arrays
                     - contains aperture-masks for every sector
                     - will have shape `(nsectors,xpix,ypix,1)`
@@ -292,18 +291,26 @@ class EleanorDatabaseInterface:
 
         
         #define storage structures
-        lcs = []
+        lcs = {
+            'time':np.array([]),
+            'raw_flux':np.array([]),
+            'flux_err':np.array([]),
+            'corr_flux':np.array([]),
+            'quality':np.array([]),
+            'sector':np.array([]),
+        }
+        meta = {'tic':[], 'gaia':[], 'ra':[], 'dec':[], 'sector':[], 'tess_mag':[], 'aperture_size':[]}
         tpfs = []
         aperture_masks = []
-        headers = np.array(['time', 'raw_flux', 'flux_err', 'corr_flux', 'quality', 'sector', 'tess_mag', 'aperture_size', 'tic', 'gaia', 'ra', 'dec'])
         if get_normalized_flux:
-            headers = np.append(headers, ['raw_flux_normalized', 'corr_flux_normalized'])
+            lcs['raw_flux_normalized']  = np.array([])
+            lcs['corr_flux_normalized'] = np.array([])
         if 'do_pca' in targetdata_kwargs.keys():
-            headers = np.append(headers, ['pca_flux']*targetdata_kwargs['do_pca'])
-            headers = np.append(headers, ['pca_flux_normalized']*targetdata_kwargs['do_pca']*get_normalized_flux)
+            if targetdata_kwargs['do_pca']:                     lcs['pca_flux']             = np.array([])
+            if targetdata_kwargs['do_pca']*get_normalized_flux: lcs['pca_flux_normalized']  = np.array([])
         if 'do_psf' in targetdata_kwargs.keys():
-            headers = np.append(headers, ['psf_flux']*targetdata_kwargs['do_psf'])
-            headers = np.append(headers, ['psf_flux_normalized']*targetdata_kwargs['do_psf']*get_normalized_flux)
+            if targetdata_kwargs['do_psf']:                     lcs['psf_flux']             = np.array([])
+            if targetdata_kwargs['do_psf']*get_normalized_flux: lcs['psf_flux_normalized']  = np.array([])
 
         #check if redownload is wished and target alread got extracted in the past
         if not self.redownload and len(glob.glob(f"{save_kwargs_use['directory']}{save_kwargs_use['filename']}.*")) > 0:
@@ -341,39 +348,42 @@ class EleanorDatabaseInterface:
                         eleanor.TargetData.custom_aperture(datum, **custom_aperture_kwargs)
 
                     aperture_size = datum.aperture.sum()
-            
-                    lc = np.array([
-                        datum.time,
-                        datum.raw_flux, datum.flux_err,
-                        datum.corr_flux,
-                        datum.quality,
-                        [s.tic]   *datum.time.shape[0],
-                        [s.gaia]  *datum.time.shape[0],
-                        [s.coords[0]]*datum.time.shape[0],
-                        [s.coords[1]]*datum.time.shape[0],
-                        [s.sector]*datum.time.shape[0],
-                        [s.tess_mag]*datum.time.shape[0],
-                        # [datum.aperture_size]*datum.time.shape[0],
-                        [aperture_size]*datum.time.shape[0],
-                    ]).T
+
+                    lcs['time']      = np.append(lcs['time'],       datum.time)
+                    lcs['raw_flux']  = np.append(lcs['raw_flux'],   datum.raw_flux)
+                    lcs['flux_err']  = np.append(lcs['flux_err'],   datum.flux_err)
+                    lcs['corr_flux'] = np.append(lcs['corr_flux'],  datum.flux_err)
+                    lcs['quality']   = np.append(lcs['quality'],    datum.quality)
+                    lcs['sector']    = np.append(lcs['sector'],     [s.sector]*len(datum.time))
+
+                    #store metadata
+                    meta['tic'].append(s.tic)
+                    meta['gaia'].append(s.gaia)
+                    meta['ra'].append(s.coords[0])
+                    meta['dec'].append(s.coords[1])
+                    meta['sector'].append(s.sector)
+                    meta['tess_mag'].append(s.tess_mag)
+                    meta['aperture_size'].append(aperture_size)
+                    # meta['aperture_size'].append(datum.aperture_size)
+                    
 
                     if get_normalized_flux:
                         raw_flux_norm   = normfunc(datum.raw_flux)
                         corr_flux_norm  = normfunc(datum.corr_flux)
-                        lc = np.append(lc, np.expand_dims(raw_flux_norm, 1), axis=1)
-                        lc = np.append(lc, np.expand_dims(corr_flux_norm,1), axis=1)
+                        lcs['raw_flux_normalized']  = np.append(lcs['raw_flux_normalized'],  raw_flux_norm)
+                        lcs['corr_flux_normalized'] = np.append(lcs['corr_flux_normalized'], corr_flux_norm)
                     if datum.pca_flux is not None:
-                        lc = np.append(lc, np.expand_dims(datum.pca_flux,1), axis=1)
+                        lcs['pca_flux']  = np.append(lcs['pca_flux'],   datum.pca_flux)
+
                         if get_normalized_flux:
                             pca_flux_norm = normfunc(datum.pca_flux)
-                            lc = np.append(lc, np.expand_dims(pca_flux_norm,1), axis=1)
+                            lcs['pca_flux_normalized'] = np.append(lcs['pca_flux_normalized'], pca_flux_norm)
                     if datum.psf_flux is not None:
-                        lc = np.append(lc, np.expand_dims(datum.psf_flux,1), axis=1)
+                        lcs['psf_flux']  = np.append(lcs['psf_flux'],   datum.pcs_flux)
                         if get_normalized_flux:
                             psf_flux_norm = normfunc(datum.psf_flux)
-                            lc = np.append(lc, np.expand_dims(psf_flux_norm,1), axis=1)
+                            lcs['psf_flux_normalized'] = np.append(lcs['psf_flux_normalized'], psf_flux_norm)
 
-                    lcs.append(lc)
                     # if tpfs2store is not None: tpfs.append(datum.tpf[tpfs2store])
                     tpfs.append(datum.tpf[tpfs2store])
                     if store_aperture_masks:    aperture_masks.append(datum.aperture)
@@ -385,13 +395,12 @@ class EleanorDatabaseInterface:
 
             #concatenate and transform to arrays
             ##expand dimensions to get (nframes,xpix,ypix,flux)
-            lcs             = np.concatenate(lcs, axis=0)
             tpfs            = np.concatenate(np.expand_dims(tpfs, axis=-1), axis=0)
             aperture_masks  = np.array(np.expand_dims(aperture_masks, axis=-1))
-
             if save_kwargs_use is not None:
                 self.save(
-                    df=pd.DataFrame(data=lcs, columns=headers),
+                    df=pd.DataFrame(data=lcs),
+                    df_meta=pd.DataFrame(data=meta),
                     **save_kwargs_use,
                 )
 
@@ -400,14 +409,13 @@ class EleanorDatabaseInterface:
         
         except Exception as e:
             #log and return empty result
-            lcs             = np.empty((0,len(headers)))
             # tpfs            = [np.empty((targetdata_kwargs['height'], targetdata_kwargs['width'],1))]
             # aperture_masks  = [np.empty((targetdata_kwargs['height'], targetdata_kwargs['width'],1))]
 
             self.LE.print_exc(e, prefix=f'{source_id}', suffix=None,)
             self.LE.exc2df(e, prefix=f'{source_id}', suffix=None,)
 
-        return lcs, headers, tpfs, aperture_masks
+        return lcs, meta, tpfs, aperture_masks
     
     def download(self,
         sectors:Union[str,list]=None,
@@ -421,7 +429,7 @@ class EleanorDatabaseInterface:
         targetdata_kwargs:dict=None,
         custom_aperture_kwargs:dict=None,
         save_kwargs:dict=None,
-        ) -> Tuple[list,list,list,list]:
+        ) -> Tuple[List[dict],List[dict],list,list]:
         """
             - method to execute a parallel download of a list of targets
 
@@ -518,11 +526,10 @@ class EleanorDatabaseInterface:
             Returns
             -------
                 - `lcs`
-                    - list
-                    - contains np.ndarray for every extracted source
+                    - `list`
+                    - contains `dict` for every extracted source
                         - contain lightcurve related quantities that got extracted
-                        - will be of shape `(nobservations,nparameters)`
-                            - axis 1: contains extracted parameters
+                        - will have the following keys
                             - `'time'`
                             - `'raw_flux'`
                             - `'flux_err'`
@@ -547,12 +554,12 @@ class EleanorDatabaseInterface:
                             - `'psf_flux_normalized'`
                                 - only if `get_normalized_flux == True`
                                 - only if '`psf_flux'` also got extracted
-                - `headers`
-                    - list
-                    - contains np.ndarray for every extracted source
-                        - contain headers (column names) corresponding to entries of `lcs`
+                - `metas`
+                    - `list`
+                    - contains `dict` for every extracted source
+                        - contain metadata obtained during the extraction
                 - `tpfs`
-                    - list
+                    - `list`
                         - contains np.ndarray for every extracted source
                         - contain tpfs that got extracted
                         - will have shape `(ntpfs,xpix,ypix,1)`
@@ -561,7 +568,7 @@ class EleanorDatabaseInterface:
                             - `ypix` is the pixel coordinate in y direction
                             - last dimension contains flux values
                 - `aperture_masks`
-                    - list
+                    - `list`
                         - contains np.ndarray for every extracted source
                         - boolean arrays
                         - contain aperture-masks for every sector
@@ -632,19 +639,20 @@ class EleanorDatabaseInterface:
                     self.LE.exc2df(e=e, prefix='No Metadata to clear!')
 
             #append to output lists
-            lcs             += [r[0] for r in res]
-            headers         += [r[1] for r in res]
+            lcs             =  [r[0] for r in res]
+            metas           =  [r[1] for r in res]
             tpfs            += [r[2] for r in res]
             aperture_masks  += [r[3] for r in res]
 
-
-        return lcs, headers, tpfs, aperture_masks
+        return lcs, metas, tpfs, aperture_masks
     
     def save(self,
         df:pd.DataFrame,
         filename:str,
+        df_meta:pd.DataFrame=None,
         directory:str=None,
         pd_savefunc:str=None,
+        store_metadata:bool=True,
         save_kwargs:dict=None,
         ) -> None:
         """
@@ -659,6 +667,11 @@ class EleanorDatabaseInterface:
                     - str
                     - name of the file in which the data gets stored
                     - NO FILE EXTENSION!
+                - `df_meta`
+                    - `pd.DataFrame`, optional
+                    - dataframe containing metadata of the extraction
+                    - the default is `None`
+                        - will be ignored
                 - `directory`
                     - str, optional
                     - directory of where the data will be stored
@@ -673,6 +686,10 @@ class EleanorDatabaseInterface:
                             - `'to_parquet'`
                     - the default is `None`
                         - will be set to `'to_parquet'`
+                - `store_metadata`
+                    - `bool`,  optional
+                    - whether to also save extracted metadata
+                    - the default is `True`                
                 - `save_kwargs`
                     - dict, optional
                     - kwargs to pass to `pd_savefunc`
@@ -686,6 +703,7 @@ class EleanorDatabaseInterface:
 
             Comments
             --------
+                - metadata will be saved to a separate file with the same name except `'_meta'` inserted before the extension
         """
 
         if directory is None:   directory   = './'
@@ -701,12 +719,13 @@ class EleanorDatabaseInterface:
 
         #save
         eval(f'df.{pd_savefunc}("{directory}{filename}.{ext}", **{save_kwargs})')
+        if df_meta is not None and store_metadata:
+            eval(f'df_meta.{pd_savefunc}("{directory}{filename}_meta.{ext}", **{save_kwargs})')
 
         return
 
     def plot_result(self,
-        lcs:np.ndarray,
-        headers:np.ndarray,
+        lcs:dict,
         tpfs:np.ndarray=None,
         aperture_masks:np.ndarray=None,
         fig:Figure=None,
@@ -718,13 +737,11 @@ class EleanorDatabaseInterface:
             Parameters
             ----------
                 - `lcs`
-                    - np.ndarray
+                    - `dict`
                     - extracted data corresponding to the lightcurve
+                    - output of `self.extract_source()` or one entry of the output of `self.download()`
                     - has to be of shape `(nobservations,nquantities)`
                     - output from `self.extract_source`
-                - `headers`
-                    - np.ndarray
-                    - headers/column names corresponding to `lcs` as output by `self.extract_source`
                 - `tpfs`
                     - np.ndarray, optional
                     - exemplary target pixel files for each sector
@@ -765,20 +782,20 @@ class EleanorDatabaseInterface:
         """
 
         #default parameters
-        sectors = np.unique(lcs[:,(headers=='sector')])
+        sectors = np.unique(lcs['sector'])
         if tpfs is None:            tpfs            = [None]*len(sectors)
         if aperture_masks is None:  aperture_masks  = [None]*len(sectors)
         if sctr_kwargs is None:     sctr_kwargs     = dict(cmap='nipy_spectral')
 
         #check if normalized entries exist
-        normalized = 'raw_flux_normalized' in headers
+        normalized = 'raw_flux_normalized' in lcs.keys()
 
         if fig is None: fig = plt.figure(figsize=(16,16))
 
         for idx, (s, tpf, ap) in enumerate(zip(sectors, tpfs, aperture_masks)):
             
             #boolean of current sector
-            s_bool = (lcs[:,(headers=='sector')] == s).flatten()
+            s_bool = (lcs['sector'] == s).flatten()
             
 
             #plot tpf and aperture (only if one of them is provided)
@@ -816,20 +833,20 @@ class EleanorDatabaseInterface:
                 ax2 = fig.add_subplot(len(sectors)+1, 2, 2*idx+2)
                 
             if normalized:
-                sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='raw_flux_normalized')], label='Raw Flux'*(idx==0))
-                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='corr_flux_normalized')], label='Corr Flux'*(idx==0))
+                sctr = ax2.plot(lcs['time'][s_bool], lcs['raw_flux_normalized'][s_bool], label='Raw Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs['time'][s_bool], lcs['corr_flux_normalized'][s_bool], label='Corr Flux'*(idx==0))
                 except: pass
-                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='pca_flux_normalized')], label='PCA Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs['time'][s_bool], lcs['pca_flux_normalized'][s_bool], label='PCA Flux'*(idx==0))
                 except Exception as e: pass
-                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='psf_flux_normalized')], label='PSF Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs['time'][s_bool], lcs['psf_flux_normalized'][s_bool], label='PSF Flux'*(idx==0))
                 except: pass
             else:
-                sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='raw_flux')], label='Raw Flux'*(idx==0))
-                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='corr_flux')], label='Corr Flux'*(idx==0))
+                sctr = ax2.plot(lcs['time'][s_bool], lcs['raw_flux'][s_bool], label='Raw Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs['time'][s_bool], lcs['corr_flux'][s_bool], label='Corr Flux'*(idx==0))
                 except: pass
-                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='pca_flux')], label='PCA Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs['time'][s_bool], lcs['pca_flux'][s_bool], label='PCA Flux'*(idx==0))
                 except: pass
-                try: sctr = ax2.plot(lcs[s_bool,(headers=='time')], lcs[s_bool,(headers=='psf_flux')], label='PSF Flux'*(idx==0))
+                try: sctr = ax2.plot(lcs['time'][s_bool], lcs['psf_flux'][s_bool], label='PSF Flux'*(idx==0))
                 except: pass
         
             
@@ -849,15 +866,15 @@ class EleanorDatabaseInterface:
         ax0 = fig.add_subplot(len(sectors)+1, 1, len(sectors)+1)
         if normalized:
             try:
-                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='corr_flux_normalized')], c=lcs[:,(headers=='sector')], **sctr_kwargs)
+                sctr = ax0.scatter(lcs['time'], lcs['corr_flux_normalized'], c=lcs['sector'], **sctr_kwargs)
             except:
-                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='raw_flux_normalized')],  c=lcs[:,(headers=='sector')], **sctr_kwargs)
+                sctr = ax0.scatter(lcs['time'], lcs['raw_flux_normalized'],  c=lcs['sector'], **sctr_kwargs)
             ax0.set_ylabel('Normalized Flux')
         else:
             try:
-                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='corr_flux')], c=lcs[:,(headers=='sector')], **sctr_kwargs)
+                sctr = ax0.scatter(lcs['time'], lcs['corr_flux'], c=lcs['sector'], **sctr_kwargs)
             except:
-                sctr = ax0.scatter(lcs[:,(headers=='time')], lcs[:,(headers=='raw_flux')],  c=lcs[:,(headers=='sector')], **sctr_kwargs)
+                sctr = ax0.scatter(lcs['time'], lcs['raw_flux'],  c=lcs['sector'], **sctr_kwargs)
             
             ax0.set_ylabel(r'Flux $\left[\frac{e^-}{s}\right]$')
         
