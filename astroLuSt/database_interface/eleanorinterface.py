@@ -299,7 +299,17 @@ class EleanorDatabaseInterface:
             'quality':np.array([]),
             'sector':np.array([]),
         }
-        meta = {'tic':[], 'gaia':[], 'ra':[], 'dec':[], 'sector':[], 'tess_mag':[], 'aperture_size':[]}
+        meta = {
+            'tic':[],
+            'gaia':[],
+            'ra':[],
+            'dec':[],
+            'sector':[],
+            'tess_mag':[],
+            'aperture_size':[],
+            'chip':[],
+            'camera':[],
+        }
         tpfs = []
         aperture_masks = []
         if get_normalized_flux:
@@ -363,6 +373,8 @@ class EleanorDatabaseInterface:
                     meta['sector'].append(s.sector)
                     meta['tess_mag'].append(s.tess_mag)
                     meta['aperture_size'].append(aperture_size)
+                    meta['chip'].append(s.chip)
+                    meta['camera'].append(s.camera)
                     # meta['aperture_size'].append(datum.aperture_size)
                     
 
