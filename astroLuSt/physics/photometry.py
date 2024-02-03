@@ -389,28 +389,36 @@ def wesenheit_magnitude(
 
     return w, dw
 
-def mags_sum(m:np.ndarray, w:np.ndarray=None, axis:int=None):
+def mags_sum(
+    m:np.ndarray, w:np.ndarray=None,
+    dm:np.ndarray=0,
+    axis:int=None,
+    ) -> Tuple[float,float]:
     """
         - function to calculate the total magnitude of a set of magnitudes
 
         Parameters
         ----------
             - `m`
-                - np.ndarray
-                - 3d array of shape (nframes,xpix,ypix)
+                - `np.ndarray`
+                - 3d array of shape `(nframes,xpix,ypix)`
                     - nframes denotes the number of frames passed
                     - xpix is the number of pixels in x direction
                     - ypix is the number of pixels in y direction
                 - contains magnitudes to add up
             - `w`
-                - np.ndarray, optional
+                - `np.ndarray`, optional
                 - weight for each passed pixel
                     - for example some distance measure
                 - has to be of shape `(1,*m.shape[1:])`
                 - the default is `None`
                     - will be set to 1 for all elements in `m`
+            - `dm`
+                - `np.ndarray`, optional
+                - uncertainties of `m`
+                - the default is 0
             - `axis`
-                - int, optional
+                - `int`, optional
                 - axis along which to add up magnitudes
                     - 0     ... pixel wise
                     - 1     ... row wise
@@ -425,8 +433,11 @@ def mags_sum(m:np.ndarray, w:np.ndarray=None, axis:int=None):
         Returns
         -------
             - `m_tot`
-                - float
+                - `float`
                 - combined (weighted) magnitude
+            - `dm_tot`
+                - `float`
+                - uncertainty of `m_tot`
         
         Dependencies
         ------------
@@ -444,7 +455,11 @@ def mags_sum(m:np.ndarray, w:np.ndarray=None, axis:int=None):
     m_sum = np.sum(w*m_exp, axis=axis)
     m_tot = -2.5*np.log10(m_sum)
 
-    return m_tot
+    #error
+    dm_sum = np.sum(dm * np.abs(w* 10**(-0.4*m)  *(-0.4*np.log(10))), axis=axis)
+    dm_tot = dm_sum * np.abs(-2.5*1/m_sum)
+
+    return m_tot, dm_tot
 
 def mags_contribution(
     m:Union[float,np.ndarray], m_cont:Union[float,np.ndarray],

@@ -581,7 +581,7 @@ class TPF:
         if trend in ['lineary', 'linearx']:
             if trend == 'lineary':
                 trend = np.linspace(1,2*np.ones((self.frame.shape[0])), self.frame.shape[1], axis=0)
-            if trend == 'linearx':
+            elif trend == 'linearx':
                 trend = np.linspace(1,2*np.ones((self.frame.shape[0])), self.frame.shape[1], axis=1)
 
         self.frame[:,:,2] += amplitude*trend
