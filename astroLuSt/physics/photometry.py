@@ -548,7 +548,7 @@ def mags_sum(
 def mags_contribution(
     m:Union[float,np.ndarray], m_cont:Union[float,np.ndarray],
     w:np.ndarray=None,
-    dm:Union[float,np.ndarray]=0, dm_cont:Union[float,np.ndarray]=0,
+    dm:Union[float,np.ndarray]=None, dm_cont:Union[float,np.ndarray]=None,
     ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
         - function that estimates the contribution in magnitude of target star (m) to a total magnitude
@@ -580,14 +580,18 @@ def mags_contribution(
             - `dm`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `m`
+                - the default is `None`
+                    - will be set to 0 for all entries in `m` (infinite accuracy)
             - `dm_cont`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `m_cont`
+                - the default is `None`
+                    - will be set to 0 for all entries in `m_cont` (infinite accuracy)
 
         Raises
         ------
-            - `TypeError`
-                - if quantities and uncertainties don't have the same type
+            - `ValueError`
+                - if quantities and uncertainties don't have the same shape
 
         Returns
         -------
@@ -610,19 +614,25 @@ def mags_contribution(
         Comments
         --------
     """
-    
-    #check types
-    if type(m)      != type(dm):        raise TypeError('`m` and `dm` have to be of the same type!')
-    if type(m_cont) != type(dm_cont):   raise TypeError('`m_cont` and `dm_cont` have to be of the same type!')
-    
 
-    #convert to np.ndarray
-    m_cont = np.array([m_cont]).flatten()
+    m_in = m.copy()
 
+    #default values; convert to np.ndarray
+    m       = np.array([m]).flatten()
+    m_cont  = np.array([m_cont]).flatten()
+    if dm is None:      dm      = np.zeros_like(m)
+    else:               dm      = np.array([dm]).flatten()
+    if dm_cont is None: dm_cont = np.zeros_like(m_cont)
+    else:               dm_cont = np.array([dm_cont]).flatten()
+
+    #check shapes
+    if m.shape      != dm.shape:        raise ValueError(f'`m` and `dm` have to have the same shape but have `{m.shape=}` and {dm.shape=}!')
+    if m_cont.shape != dm_cont.shape:   raise ValueError(f'`m_cont` and `dm_cont` have to have the same shape but have `{m_cont.shape=}` and {dm_cont.shape=}!')
 
     #handle arrays of len() == 0
     if len(m_cont) == 0:
-        m_cont = np.append(m_cont, [np.inf])    #set m_cont = inf i.e., infinitely faint object
+        m_cont  = np.append(m_cont, [np.inf])   #set m_cont = inf i.e., infinitely faint object
+        dm_cont = np.append(dm_cont, [0])       #set dm_cont = 0 i.e., infinite accuracy
 
     #calculate total contaminant magnitude if array of magnitudes is provided
     if len(m_cont) > 1:
@@ -630,12 +640,12 @@ def mags_contribution(
 
     ffrac, dffrac = mags2fluxes(m=m_cont, m_ref=m, dm=dm_cont, dm_ref=dm)
     p = 1/(1 + ffrac)
-
+    
     #uncertainty
     dp = dffrac * np.abs(-1/(1+ffrac)**2)
 
-
-    if isinstance(m, float):
+    #convert to float if input was float
+    if isinstance(m_in, float):
         p = float(p)
         dp = float(dp)
 
@@ -644,7 +654,7 @@ def mags_contribution(
 def flux_contribution(
     f:Union[float,np.ndarray], f_cont:Union[float,np.ndarray],
     w:np.ndarray=None,
-    df:Union[float,np.ndarray]=0, df_cont:Union[float,np.ndarray]=0,
+    df:Union[float,np.ndarray]=None, df_cont:Union[float,np.ndarray]=None,
     ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
         - function that estimates the contribution in flux of target star (`f`) to a total flux
@@ -676,14 +686,18 @@ def flux_contribution(
             - `df`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `f`
+                - the default is `None`
+                    - will be set to 0 for all entries in `f` (infinite accuracy)                
             - `df_cont`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `f_cont`
+                - the default is `None`
+                    - will be set to 0 for all entries in `f_cont` (infinite accuracy)                
 
         Raises
         ------
-            - `TypeError`
-                - if quantities and uncertainties don't have the same type
+            - `ValueError`
+                - if quantities and uncertainties don't have the same shape
 
         Returns
         -------
@@ -707,20 +721,29 @@ def flux_contribution(
         --------
     """
     
-    #default values
-    if w is None: w = 1
+    f_in = f.copy()
 
-    #check types
-    if type(f)      != type(df):        raise TypeError('`f` and `df` have to be of the same type!')
-    if type(f_cont) != type(df_cont):   raise TypeError('`f_cont` and `df_cont` have to be of the same type!')
+    #default values; convert to np.ndarray
+    f       = np.array([f]).flatten()
+    f_cont  = np.array([f_cont]).flatten()
+    if w is None: w = 1
+    if df is None:      df      = np.zeros_like(f)
+    else:               df      = np.array([df]).flatten()
+    if df_cont is None: df_cont = np.zeros_like(f_cont)
+    else:               df_cont = np.array([df_cont]).flatten()
     
+    #check shapes
+    if f.shape      != df.shape:        raise ValueError(f'`f` and `df` have to have the same shape but have `{f.shape=}` and {df.shape=}!')
+    if f_cont.shape != df_cont.shape:   raise ValueError(f'`f_cont` and `df_cont` have to have the same shape but have `{f_cont.shape=}` and {df_cont.shape=}!')
+
     #convert to np.ndarray
     f_cont = np.array([f_cont]).flatten()
 
 
     #handle arrays of len() == 0
     if len(f_cont) == 0:
-        f_cont = np.append(f_cont, [0])    #set f_cont = 0 i.e., infinitely faint object
+        f_cont  = np.append(f_cont, [0])    #set f_cont = 0 i.e., infinitely faint object
+        df_cont = np.append(df_cont, [0])   #set df_cont = 0 i.e., infinite accuracy
 
     #calculate total contaminant flux if array of fluxes is provided
     if len(f_cont) > 1:
@@ -735,7 +758,7 @@ def flux_contribution(
         + df_cont * np.abs(-f/(f+f_cont)**2)
 
 
-    if isinstance(f, float):
+    if isinstance(f_in, float):
         p = float(p)
         dp = float(dp)
 
