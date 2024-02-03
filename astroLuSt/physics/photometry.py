@@ -560,20 +560,20 @@ def mags_contribution(
                 - magnitude(s) of the target star(s)
                 - if `float`
                     - will calculate and return the contribution of that one target star
-                - if np.ndarray
+                - if `np.ndarray`
                     - will calculate contribution of every single star to the `m_cont` contaminant stars
             - `m_cont`
                 - `float`, `np.ndarray`
                 - if `float`
                     - total magnitude to compare `m` to
-                - if np.ndarray
+                - if `np.ndarray`
                     - magnitudes to calculate total magnitude from on the fly
                         - will call `mags_sum(m_cont, w=w)`
                     - i.e. magnitudes of all contaminant stars
             - `w`
                 - `np.ndarray`, optional
                 - weights for each passed magnitude
-                    - only applied if `m_cont` is a np.ndarray
+                    - only applied if `m_cont` is a `np.ndarray`
                     - for example some distance measure
                 - the default is `None`
                     - will be set to 1 for all elements in `m`
@@ -586,6 +586,8 @@ def mags_contribution(
 
         Raises
         ------
+            - `TypeError`
+                - if quantities and uncertainties don't have the same type
 
         Returns
         -------
@@ -609,6 +611,11 @@ def mags_contribution(
         --------
     """
     
+    #check types
+    if type(m)      != type(dm):        raise TypeError('`m` and `dm` have to be of the same type!')
+    if type(m_cont) != type(dm_cont):   raise TypeError('`m_cont` and `dm_cont` have to be of the same type!')
+    
+
     #convert to np.ndarray
     m_cont = np.array([m_cont]).flatten()
 
@@ -634,3 +641,102 @@ def mags_contribution(
 
     return p, dp
 
+def flux_contribution(
+    f:Union[float,np.ndarray], f_cont:Union[float,np.ndarray],
+    w:np.ndarray=None,
+    df:Union[float,np.ndarray]=0, df_cont:Union[float,np.ndarray]=0,
+    ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
+    """
+        - function that estimates the contribution in flux of target star (`f`) to a total flux
+        
+        Parameters
+        ----------
+            - `f`
+                - `float`, `np.ndarray`
+                - flux(s) of the target star(s)
+                - if `float`
+                    - will calculate and return the contribution of that one target star
+                - if `np.ndarray`
+                    - will calculate contribution of every single star to the `m_cont` contaminant stars
+            - `f_cont`
+                - `float`, `np.ndarray`
+                - if `float`
+                    - total flux to compare `f` to
+                - if `np.ndarray`
+                    - fluxes to calculate total flux from on the fly
+                        - will call `np.sum(w*f_cont)`
+                    - i.e. flux of all contaminant stars
+            - `w`
+                - `np.ndarray`, optional
+                - weights for each passed flux
+                    - only applied if `f_cont` is a `np.ndarray`
+                    - for example some distance measure
+                - the default is `None`
+                    - will be set to 1 for all elements in `f`
+            - `df`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `f`
+            - `df_cont`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `f_cont`
+
+        Raises
+        ------
+            - `TypeError`
+                - if quantities and uncertainties don't have the same type
+
+        Returns
+        -------
+            - `p`
+                - `float`, `np.ndarray`
+                - fractional contribution of `f` to `f_cont`
+                - `float` if `f` is `float`
+                - `np.ndarray` if `f` is a `np.ndarray`
+            - `dp`
+                - `float`, `np.ndarray`
+                - uncertainty of `p`
+                - `float` if `f` is `float`
+                - `np.ndarray` if `f` is a `np.ndarray`
+
+        Dependencies
+        ------------
+            - numpy
+            - typing
+
+        Comments
+        --------
+    """
+    
+    #default values
+    if w is None: w = 1
+
+    #check types
+    if type(f)      != type(df):        raise TypeError('`f` and `df` have to be of the same type!')
+    if type(f_cont) != type(df_cont):   raise TypeError('`f_cont` and `df_cont` have to be of the same type!')
+    
+    #convert to np.ndarray
+    f_cont = np.array([f_cont]).flatten()
+
+
+    #handle arrays of len() == 0
+    if len(f_cont) == 0:
+        f_cont = np.append(f_cont, [0])    #set f_cont = 0 i.e., infinitely faint object
+
+    #calculate total contaminant flux if array of fluxes is provided
+    if len(f_cont) > 1:
+        f_cont = np.sum(w*f_cont)
+        df_cont = np.sum(df_cont*np.abs(w))
+
+    #contribution factor
+    p = 1/(1 + f_cont/f)
+
+    #uncertainty
+    dp =  df      * np.abs((f_cont/(f+f_cont)**2)) \
+        + df_cont * np.abs(-f/(f+f_cont)**2)
+
+
+    if isinstance(f, float):
+        p = float(p)
+        dp = float(dp)
+
+    return p, dp
