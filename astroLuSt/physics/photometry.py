@@ -246,9 +246,9 @@ def mags2fluxes(
     m:Union[np.ndarray,float],
     m_ref:Union[np.ndarray,float],
     f_ref:Union[np.ndarray,float]=1,
-    dm:Union[np.ndarray,float]=0,
-    dm_ref:Union[np.ndarray,float]=0,
-    df_ref:Union[np.ndarray,float]=0,
+    dm:Union[np.ndarray,float]=None,
+    dm_ref:Union[np.ndarray,float]=None,
+    df_ref:Union[np.ndarray,float]=None,
     ) -> Tuple[Union[np.ndarray,float],Union[np.ndarray,float]]:
     """
         - function to convert magnitudes to flux
@@ -272,15 +272,18 @@ def mags2fluxes(
             - `dm`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `m`
             - `dm_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm_ref`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `m_ref`
             - `dm_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm_ref`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `f_ref`
 
 
         Raises
@@ -304,6 +307,12 @@ def mags2fluxes(
         --------
 
     """
+
+    #default values
+    if dm       is None: dm     = np.zeros_like(m)
+    if dm_ref   is None: dm_ref = np.zeros_like(m_ref)
+    if df_ref   is None: df_ref = np.zeros_like(f_ref)
+
     f = 10**(-0.4*(m - m_ref)) * f_ref
     
     #uncertainty
@@ -317,9 +326,9 @@ def fluxes2mags(
     f:Union[np.ndarray,float],
     f_ref:Union[np.ndarray,float],
     m_ref:Union[np.ndarray,float]=0,
-    df:Union[np.ndarray,float]=0,
-    df_ref:Union[np.ndarray,float]=0,
-    dm_ref:Union[np.ndarray,float]=0,
+    df:Union[np.ndarray,float]=None,
+    df_ref:Union[np.ndarray,float]=None,
+    dm_ref:Union[np.ndarray,float]=None,
     ) -> Tuple[Union[np.ndarray,float],Union[np.ndarray,float]]:
     """
         - function to convert photon flux to magnitudes
@@ -343,15 +352,18 @@ def fluxes2mags(
             - `df`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `df`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `df`
             - `df_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `df_ref`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `df_ref`
             - `dm_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm_ref`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `dm_ref`
 
         Raises
         ------
@@ -373,6 +385,12 @@ def fluxes2mags(
         Comments
         --------
     """
+
+    #default values
+    if df       is None: df     = np.zeros_like(f)
+    if df_ref   is None: df_ref = np.zeros_like(f_ref)
+    if dm_ref   is None: dm_ref = np.zeros_like(m_ref)
+
     m = -2.5*np.log10(f/f_ref) + m_ref
 
     #uncertainty
@@ -386,9 +404,9 @@ def wesenheit_magnitude(
     M:Union[float,np.ndarray], CI:Union[float,np.ndarray],
     R:Union[float,np.ndarray]=None,
     A_M:Union[float,np.ndarray]=None, E_CI:Union[float,np.ndarray]=None,
-    dM:Union[float,np.ndarray]=0, dCI:Union[float,np.ndarray]=0,
-    dR:Union[float,np.ndarray]=0,
-    dA_M:Union[float,np.ndarray]=0, dE_CI:Union[float,np.ndarray]=0,
+    dM:Union[float,np.ndarray]=None, dCI:Union[float,np.ndarray]=None,
+    dR:Union[float,np.ndarray]=None,
+    dA_M:Union[float,np.ndarray]=None, dE_CI:Union[float,np.ndarray]=None,
     ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
         - function to calculate the wesenheit magnitude for a given set of input parameters
@@ -416,23 +434,28 @@ def wesenheit_magnitude(
             - `dM`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `M`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `M`
             - `dCI`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `CI`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `CI`
             - `dR`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `R`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `R`
             - `dA_M`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `A_M`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `A_M`
             - `dE_CI`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `E_CI`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `E_CI`
 
         Raises
         ------
@@ -456,6 +479,13 @@ def wesenheit_magnitude(
         --------
     """
 
+    #default values
+    if dM is None:      dM      = np.zeros_like(M)
+    if dCI is None:     dCI     = np.zeros_like(CI)
+    if dR is None:      dR      = np.zeros_like(R)
+    if dA_M is None:    dA_M    = np.zeros_like(A_M)
+    if dE_CI is None:   dE_CI   = np.zeros_like(E_CI)
+
     if R is None and A_M is not None and E_CI is not None:
         R = A_M/E_CI
         dR = dA_M*np.abs(1/dE_CI) + dE_CI * np.abs(A_M/E_CI**2)
@@ -475,7 +505,7 @@ def wesenheit_magnitude(
 
 def mags_sum(
     m:np.ndarray, w:np.ndarray=None,
-    dm:np.ndarray=0,
+    dm:np.ndarray=None,
     axis:int=None,
     ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
@@ -500,7 +530,8 @@ def mags_sum(
             - `dm`
                 - `np.ndarray`, optional
                 - uncertainties of `m`
-                - the default is 0
+                - the default is `None`
+                    - will be set to 0 for all entries in `m`
             - `axis`
                 - `int`, optional
                 - axis along which to add up magnitudes
@@ -534,6 +565,7 @@ def mags_sum(
     """
 
     if w is None: w = np.ones(m.shape[1:])
+    if dm is None: dm = np.zeros_like(m)
 
     m_exp = 10**(-0.4*m)
     m_sum = np.sum(w*m_exp, axis=axis)
