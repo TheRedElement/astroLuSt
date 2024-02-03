@@ -16,29 +16,45 @@ class DistanceModule:
         Attributes
         ----------
             - `m`
-                - float, np.ndarray, optional
+                - `float, np.ndarray`, optional
                 - apparent magnitude(s)
                 - will infer `M` if both `M` and `m` are not `None`
                 - the default is `None`
                     - will be infered from `M`
             - `M`
-                - float, np.ndarray, optional
+                - `float, np.ndarray`, optional
                 - absolute magnitude(s)
                 - will infer `M` if both `M` and `m` are not `None`
                 - the default is `None`
                     - will be infered from `m`
             - `d`
-                - float, np.ndarray, optional
+                - `float, np.ndarray`, optional
                 - distance(s) in parsec [pc]
                 - will use `d` if both `d` and `plx` are not `None`
                 - the default is `None`
                     - will try to infer distances via `plx`
             - `plx`
-                - float, np.ndarray, optional
+                - `float, np.ndarray`, optional
                 - parallax(es) in arcseconds [arcsec]
                 - will use `d` if both `d` and `plx` are not `None`
                 - the default is `None`
                     - will try to infer parallaces via `d`
+            - `dm`
+                - `float, np.ndarray`, optional
+                - uncertainty of `dm`
+                - the default is 0
+            - `dM`
+                - `float, np.ndarray`, optional
+                - uncertainty of `dM`
+                - the default is 0
+            - `dd`
+                - `float, np.ndarray`, optional
+                - uncertainty of `dd`
+                - the default is 0
+            - `dplx`
+                - `float, np.ndarray`, optional
+                - uncertainty of `dplx`
+                - the default is 0
 
         Methods
         -------
@@ -60,6 +76,8 @@ class DistanceModule:
     def __init__(self,
         m:Union[float,np.ndarray]=None, M:Union[float,np.ndarray]=None,
         d:Union[float,np.ndarray]=None, plx:Union[float,np.ndarray]=None,
+        dm:Union[float,np.ndarray]=0, dM:Union[float,np.ndarray]=0,
+        dd:Union[float,np.ndarray]=0, dplx:Union[float,np.ndarray]=0,
         ) -> None:
 
 
@@ -67,6 +85,12 @@ class DistanceModule:
         self.M      = M
         self.d      = d
         self.plx    = plx
+
+        #uncertainties
+        self.dm      = dm
+        self.dM      = dM
+        self.dd      = dd
+        self.dplx    = dplx
 
         #calculate parameters
         self.infer_d_plx()
@@ -80,6 +104,8 @@ class DistanceModule:
             f'DistanceModule(\n'
             f'    m={repr(self.m)}, M={repr(self.M)},\n'
             f'    d={repr(self.d)}, plx={repr(self.plx)},\n'
+            f'    dm={repr(self.dm)}, dM={repr(self.dM)},\n'
+            f'    dd={repr(self.dd)}, dplx={repr(self.dplx)},\n'
             f')'
         )
 
@@ -112,12 +138,15 @@ class DistanceModule:
         #infer d from plx
         elif self.d is None and self.plx is not None:
             self.d = 1/self.plx
+            self.dd = self.dplx * np.abs(-1/self.plx**2)
         #infer plx from d
         elif self.d is not None and self.plx is None:
             self.plx = 1/self.d
+            self.dplx = self.dd * np.abs(-1/self.d**2)
         #use d if both provided
         elif self.d is not None and self.plx is not None:
             self.plx = 1/self.d
+            self.dplx = self.dd * np.abs(-1/self.d**2)
 
 
         return
@@ -176,7 +205,9 @@ class DistanceModule:
             --------
         """
 
-        self.M = self.m - 5*np.log10(self.d/10)
+        self.M  = self.m - 5*np.log10(self.d/10)
+        self.dM = self.dm \
+            + self.dd * np.abs(-5/(np.log(10)*self.d))
 
         return 
 
@@ -204,6 +235,8 @@ class DistanceModule:
         """
 
         self.m = 5*np.log10(self.d/10) + self.M
+        self.dm = self.dM \
+            + self.dd * np.abs(5/(np.log(10)*self.d))
 
         return
 

@@ -1,4 +1,6 @@
 
+#TODO: add frame with uncertainties to TPF (use `dm_` and `df_`)
+
 #%%imports
 from functools import partial
 import matplotlib.pyplot as plt
