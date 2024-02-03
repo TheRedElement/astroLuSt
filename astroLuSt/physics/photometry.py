@@ -282,26 +282,41 @@ def fluxes2mags(
     f:Union[np.ndarray,float],
     f_ref:Union[np.ndarray,float],
     m_ref:Union[np.ndarray,float]=0,
-    ) -> Union[np.ndarray,float]:
+    df:Union[np.ndarray,float]=0,
+    df_ref:Union[np.ndarray,float]=0,
+    dm_ref:Union[np.ndarray,float]=0,
+    ) -> Tuple[Union[np.ndarray,float],Union[np.ndarray,float]]:
     """
         - function to convert photon flux to magnitudes
 
         Parameters
         ----------
             - `f`
-                - float, np.array
+                - `float`, `np.array`
                 - fluxes to be converted
             - `f_ref`
-                - float, np.ndarray
+                - `float`, `np.ndarray`
                 - reference flux for the conversion
                     - this value is dependent on the passband in use
             - `m_ref`
-                - float, np.ndarray, optional
+                - `float`, `np.ndarray`, optional
                 - reference magnitude for the conversion
                     - corresponding to `f_ref`
                     - this value is dependent on the passband in use
                 - the default is 0
                     - will return the difference `m - m_ref`
+            - `df`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `df`
+                - the default is 0
+            - `df_ref`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `df_ref`
+                - the default is 0
+            - `dm_ref`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `dm_ref`
+                - the default is 0
 
         Raises
         ------
@@ -309,8 +324,11 @@ def fluxes2mags(
         Returns
         -------
             - `m`
-                - float, np.array
+                - `float`, `np.array`
                 - magnitudes corresponding to `f`
+            - `dm`
+                - `float`, `np.array`
+                - uncertainty of `m`
 
         Dependencies
         ------------
@@ -322,7 +340,11 @@ def fluxes2mags(
     """
     m = -2.5*np.log10(f/f_ref) + m_ref
 
-    return m
+    dm =  df     *np.abs(-2.5*1/(np.log(10)*f)) \
+        + df_ref *np.abs( 2.5*1/(np.log(10)*f_ref)) \
+        + dm_ref *np.abs(1)
+
+    return m, dm
 
 def wesenheit_magnitude(
     M:Union[float,np.ndarray], CI:Union[float,np.ndarray],
