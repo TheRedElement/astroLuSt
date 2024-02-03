@@ -304,31 +304,54 @@ def fluxes2mags(
 def wesenheit_magnitude(
     M:np.ndarray, CI:np.ndarray,
     R:np.ndarray=None,
-    A_M:np.ndarray=None, E_CI:np.ndarray=None 
-    ) -> np.ndarray:
+    A_M:np.ndarray=None, E_CI:np.ndarray=None,
+    dM:np.ndarray=0, dCI:np.ndarray=0,
+    dR:np.ndarray=0,
+    dA_M:np.ndarray=0, dE_CI:np.ndarray=0,
+    ) -> Tuple[np.ndarray,np.ndarray]:
     """
         - function to calculate the wesenheit magnitude for a given set of input parameters
 
         Parameters
         ----------
             - `M`
-                - np.ndarray
+                - `np.ndarray`
                 - absolute magnitude in some passband
             - `CI`
-                - np.ndarray
+                - `np.ndarray`
                 - color index
             - `R`
-                - np.ndarray, optional
+                - `np.ndarray`, optional
                 - reddening factor
                 - the default is `None`
             - `A_M`
-                - np.ndarray, optional
+                - `np.ndarray`, optional
                 - interstellar extinction in the same passband as passed to `M`
                 - the default is `None`
             - `E_CI`
-                - np.ndarray, optional
+                - `np.ndarray`, optional
                 - color excess in same color as passed to `CI`
                 - the default is `None`
+            - `dM`
+                - `np.ndarray`, optional
+                - uncertainty of `M`
+                - the default is 0
+            - `dCI`
+                - `np.ndarray`, optional
+                - uncertainty of `CI`
+                - the default is 0
+            - `dR`
+                - `np.ndarray`, optional
+                - uncertainty of `R`
+                - the default is 0
+            - `dA_M`
+                - `np.ndarray`, optional
+                - uncertainty of `A_M`
+                - the default is 0
+            - `dE_CI`
+                - `np.ndarray`, optional
+                - uncertainty of `E_CI`
+                - the default is 0
 
         Raises
         ------
@@ -338,8 +361,11 @@ def wesenheit_magnitude(
         Returns
         -------
             - `w`
-                - np.ndarray
+                - `np.ndarray`
                 - wesenheit magnitude
+            - `dw`
+                - `np.ndarra`
+                - uncertainty of `w`
 
         Dependencies
         ------------
@@ -351,6 +377,7 @@ def wesenheit_magnitude(
 
     if R is None and A_M is not None and E_CI is not None:
         R = A_M/E_CI
+        dR = dA_M*np.abs(1/dE_CI) + dE_CI * np.abs(A_M/E_CI**2)
     elif R is not None:
         R = R
     else:
@@ -358,8 +385,9 @@ def wesenheit_magnitude(
 
 
     w = M - R*CI
+    dw = dM + dR*np.abs(CI) + dCI*np.abs(R)
 
-    return w
+    return w, dw
 
 def mags_sum(m:np.ndarray, w:np.ndarray=None, axis:int=None):
     """
