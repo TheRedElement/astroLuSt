@@ -159,8 +159,7 @@ class TPF:
         
         #frame in mags
         self.frame_mag = self.frame.copy()
-        self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame_mag[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)           #reset magnitude values
-
+        self.frame_mag[:,:,2], dm_ = alpp.fluxes2mags(self.frame_mag[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)  #reset magnitude values
         #intermediate storage
         self.store_stars = store_stars
 
@@ -273,11 +272,11 @@ class TPF:
         """
 
         if f is None and m is not None:
-            f =  alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
+            f, df_ =  alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
         elif f is not None and m is None:
-            m =  alpp.fluxes2mags(f=f, f_ref=self.f_ref, m_ref=self.m_ref)
+            m, dm_ =  alpp.fluxes2mags(f=f, f_ref=self.f_ref, m_ref=self.m_ref)
         if f is not None and m is not None:
-            m =  alpp.fluxes2mags(f=f, f_ref=self.f_ref, m_ref=self.m_ref)
+            m, dm_ =  alpp.fluxes2mags(f=f, f_ref=self.f_ref, m_ref=self.m_ref)
         else:
             raise ValueError(f'At least one of `f` and `m` has to be not `None` but they have values {f} and {m}.')
 
@@ -287,7 +286,7 @@ class TPF:
         ).pdf(self.frame[:,:,:2])
 
         #star in magnitudes
-        star_mag = alpp.fluxes2mags(star, f_ref=self.f_ref, m_ref=self.m_ref)
+        star_mag, dm_ = alpp.fluxes2mags(star, f_ref=self.f_ref, m_ref=self.m_ref)
         
         #aperture mask
         aperture_mask = (np.sqrt(np.sum((self.frame[:,:,:2]-pos)**2, axis=2))<aperture)
@@ -513,7 +512,7 @@ class TPF:
                     m['params'].append((nstars))
                     m = eval(f"self.rng.{m['dist']}(*{m['params']})")
             m = np.array(m)
-            f = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
+            f, df_ = alpp.mags2fluxes(m=m, m_ref=self.m_ref, f_ref=self.f_ref)
 
         #generate apertures
         ##for randomly generated
@@ -534,7 +533,7 @@ class TPF:
 
         #convert to magnitudes            
         if self.mode == 'mag':
-            self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
+            self.frame_mag[:,:,2], dm_ = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
 
         return
     
@@ -588,7 +587,7 @@ class TPF:
 
         #convert to magnitudes            
         if self.mode == 'mag':
-            self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
+            self.frame_mag[:,:,2], dm_ = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
 
         return
 
@@ -629,7 +628,7 @@ class TPF:
 
         #convert to magnitudes            
         if self.mode == 'mag':
-            self.frame_mag[:,:,2] = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
+            self.frame_mag[:,:,2], dm_ = alpp.fluxes2mags(self.frame[:,:,2], f_ref=self.f_ref, m_ref=self.m_ref)
 
         return
     

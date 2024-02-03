@@ -272,6 +272,8 @@ def mags2fluxes(
 
     """
     f = 10**(-0.4*(m - m_ref)) * f_ref
+    
+    #uncertainty
     df =  dm     * np.abs(f*(-0.4*np.log(10))) \
         + dm_ref * np.abs(f*( 0.4*np.log(10))) \
         + df_ref * np.abs(10**(-0.4*(m - m_ref)))
@@ -340,6 +342,7 @@ def fluxes2mags(
     """
     m = -2.5*np.log10(f/f_ref) + m_ref
 
+    #uncertainty
     dm =  df     *np.abs(-2.5*1/(np.log(10)*f)) \
         + df_ref *np.abs( 2.5*1/(np.log(10)*f_ref)) \
         + dm_ref *np.abs(1)
@@ -425,11 +428,14 @@ def wesenheit_magnitude(
         dR = dA_M*np.abs(1/dE_CI) + dE_CI * np.abs(A_M/E_CI**2)
     elif R is not None:
         R = R
+        dR = dR
     else:
         raise ValueError('Either "R" or both "A_M" and E_CI" have to be not None')
 
 
     w = M - R*CI
+    
+    #uncertainty
     dw = dM + dR*np.abs(CI) + dCI*np.abs(R)
 
     return w, dw
@@ -500,9 +506,9 @@ def mags_sum(
     m_sum = np.sum(w*m_exp, axis=axis)
     m_tot = -2.5*np.log10(m_sum)
 
-    #error
+    #uncertainty
     dm_sum = np.sum(dm * np.abs(w* 10**(-0.4*m)  *(-0.4*np.log(10))), axis=axis)
-    dm_tot = dm_sum * np.abs(-2.5*1/m_sum)
+    dm_tot = dm_sum * np.abs(-2.5*1/(np.log(10)*m_sum))
 
     return m_tot, dm_tot
 
