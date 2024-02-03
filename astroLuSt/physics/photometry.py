@@ -213,26 +213,42 @@ def mags2fluxes(
     m:Union[np.ndarray,float],
     m_ref:Union[np.ndarray,float],
     f_ref:Union[np.ndarray,float]=1,
-    ) -> Union[np.ndarray,float]:
+    dm:Union[np.ndarray,float]=0,
+    dm_ref:Union[np.ndarray,float]=0,
+    df_ref:Union[np.ndarray,float]=0,
+    ) -> Tuple[Union[np.ndarray,float],Union[np.ndarray,float]]:
     """
         - function to convert magnitudes to flux
         
         Parameters
         ----------
             - `m`
-                - float, np.ndarray
+                - `float`, `np.ndarray`
                 - magnitudes to be converted
             - `m_ref`
-                - float, np.ndarray
+                - `float`, `np.ndarray`
                 - reference magnitude for the conversion
                     - this value is dependent on the passband in use
             - `f_ref`
-                - float, np.ndarray, optional
+                - `float`, `np.ndarray`, optional
                 - reference flux for the conversion
                     - corresponding to `m_ref`
                     - this value is dependent on the passband in use
                 - the default is 1
                     - will return the fraction `f/f_ref`
+            - `dm`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `dm`
+                - the default is 0
+            - `dm_ref`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `dm_ref`
+                - the default is 0
+            - `dm_ref`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `dm_ref`
+                - the default is 0
+
 
         Raises
         ------
@@ -240,8 +256,11 @@ def mags2fluxes(
         Returns
         -------
             - `f`
-                - float, np.array
+                - `float`, `np.array`
                 - flux corresponding to `m`
+            - `df`
+                - `float`, `np.array`
+                - uncertainty of `f`
 
         Dependencies
         ------------
@@ -253,7 +272,11 @@ def mags2fluxes(
 
     """
     f = 10**(-0.4*(m - m_ref)) * f_ref
-    return f
+    df =  dm     * np.abs(f*(-0.4*np.log(10))) \
+        + dm_ref * np.abs(f*( 0.4*np.log(10))) \
+        + df_ref * np.abs(10**(-0.4*(m - m_ref)))
+
+    return f, df
 
 def fluxes2mags(
     f:Union[np.ndarray,float],
@@ -302,54 +325,54 @@ def fluxes2mags(
     return m
 
 def wesenheit_magnitude(
-    M:np.ndarray, CI:np.ndarray,
-    R:np.ndarray=None,
-    A_M:np.ndarray=None, E_CI:np.ndarray=None,
-    dM:np.ndarray=0, dCI:np.ndarray=0,
-    dR:np.ndarray=0,
-    dA_M:np.ndarray=0, dE_CI:np.ndarray=0,
-    ) -> Tuple[np.ndarray,np.ndarray]:
+    M:Union[float,np.ndarray], CI:Union[float,np.ndarray],
+    R:Union[float,np.ndarray]=None,
+    A_M:Union[float,np.ndarray]=None, E_CI:Union[float,np.ndarray]=None,
+    dM:Union[float,np.ndarray]=0, dCI:Union[float,np.ndarray]=0,
+    dR:Union[float,np.ndarray]=0,
+    dA_M:Union[float,np.ndarray]=0, dE_CI:Union[float,np.ndarray]=0,
+    ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
         - function to calculate the wesenheit magnitude for a given set of input parameters
 
         Parameters
         ----------
             - `M`
-                - `np.ndarray`
+                - `np.ndarray`, `float`
                 - absolute magnitude in some passband
             - `CI`
-                - `np.ndarray`
+                - `np.ndarray`, `float`
                 - color index
             - `R`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - reddening factor
                 - the default is `None`
             - `A_M`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - interstellar extinction in the same passband as passed to `M`
                 - the default is `None`
             - `E_CI`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - color excess in same color as passed to `CI`
                 - the default is `None`
             - `dM`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - uncertainty of `M`
                 - the default is 0
             - `dCI`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - uncertainty of `CI`
                 - the default is 0
             - `dR`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - uncertainty of `R`
                 - the default is 0
             - `dA_M`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - uncertainty of `A_M`
                 - the default is 0
             - `dE_CI`
-                - `np.ndarray`, optional
+                - `np.ndarray`, `float`, optional
                 - uncertainty of `E_CI`
                 - the default is 0
 
@@ -361,10 +384,10 @@ def wesenheit_magnitude(
         Returns
         -------
             - `w`
-                - `np.ndarray`
+                - `np.ndarray`, `float`
                 - wesenheit magnitude
             - `dw`
-                - `np.ndarra`
+                - `np.ndarra`, `float`
                 - uncertainty of `w`
 
         Dependencies
@@ -393,7 +416,7 @@ def mags_sum(
     m:np.ndarray, w:np.ndarray=None,
     dm:np.ndarray=0,
     axis:int=None,
-    ) -> Tuple[float,float]:
+    ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
         - function to calculate the total magnitude of a set of magnitudes
 
@@ -464,6 +487,7 @@ def mags_sum(
 def mags_contribution(
     m:Union[float,np.ndarray], m_cont:Union[float,np.ndarray],
     w:np.ndarray=None,
+    dm:Union[float,np.ndarray]=0, dm_cont:Union[float,np.ndarray]=0,
     ) ->Union[float,np.ndarray]:
     """
         - function that estimates the contribution in magnitude of target star (m) to a total magnitude
@@ -524,7 +548,7 @@ def mags_contribution(
 
     #calculate total contaminant magnitude if array of magnitudes is provided
     if len(m_cont) > 1:
-        m_cont = mags_sum(m_cont, w=w)
+        m_cont, dm_cont = mags_sum(m=m_cont, w=w, dm=dm_cont)
 
     ffrac = mags2fluxes(m=m_cont, m_ref=m)
     p = 1/(1 + ffrac)
