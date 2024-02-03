@@ -516,35 +516,40 @@ def mags_contribution(
     m:Union[float,np.ndarray], m_cont:Union[float,np.ndarray],
     w:np.ndarray=None,
     dm:Union[float,np.ndarray]=0, dm_cont:Union[float,np.ndarray]=0,
-    ) ->Union[float,np.ndarray]:
+    ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
         - function that estimates the contribution in magnitude of target star (m) to a total magnitude
         
         Parameters
         ----------
             - `m`
-                - float, np.ndarray
+                - `float`, `np.ndarray`
                 - magnitude(s) of the target star(s)
-                - if float
+                - if `float`
                     - will calculate and return the contribution of that one target star
                 - if np.ndarray
                     - will calculate contribution of every single star to the `m_cont` contaminant stars
             - `m_cont`
-                - float, np.ndarray
-                - if float
+                - `float`, `np.ndarray`
+                - if `float`
                     - total magnitude to compare `m` to
                 - if np.ndarray
                     - magnitudes to calculate total magnitude from on the fly
                         - will call `mags_sum(m_cont, w=w)`
                     - i.e. magnitudes of all contaminant stars
             - `w`
-                - np.ndarray, optional
+                - `np.ndarray`, optional
                 - weights for each passed magnitude
                     - only applied if `m_cont` is a np.ndarray
                     - for example some distance measure
                 - the default is `None`
                     - will be set to 1 for all elements in `m`
-
+            - `dm`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `m`
+            - `dm_cont`
+                - `float`, `np.ndarray`, optional
+                - uncertainty of `m_cont`
 
         Raises
         ------
@@ -552,10 +557,15 @@ def mags_contribution(
         Returns
         -------
             - `p`
-                - float, np.ndarray
+                - `float`, `np.ndarray`
                 - fractional contribution of `m` to `m_cont`
-                - float if `m` is float
-                - np.ndarray if `m` is a np.ndarray  
+                - `float` if `m` is `float`
+                - `np.ndarray` if `m` is a `np.ndarray`
+            - `dp`
+                - `float`, `np.ndarray`
+                - uncertainty of `p`
+                - `float` if `m` is `float`
+                - `np.ndarray` if `m` is a `np.ndarray`
 
         Dependencies
         ------------
@@ -578,10 +588,16 @@ def mags_contribution(
     if len(m_cont) > 1:
         m_cont, dm_cont = mags_sum(m=m_cont, w=w, dm=dm_cont)
 
-    ffrac = mags2fluxes(m=m_cont, m_ref=m)
+    ffrac, dffrac = mags2fluxes(m=m_cont, m_ref=m, dm=dm_cont, dm_ref=dm)
     p = 1/(1 + ffrac)
 
-    if isinstance(m, float): p = float(p)
+    #uncertainty
+    dp = dffrac * np.abs(-1/(1+ffrac)**2)
 
-    return p
+
+    if isinstance(m, float):
+        p = float(p)
+        dp = float(dp)
+
+    return p, dp
 
