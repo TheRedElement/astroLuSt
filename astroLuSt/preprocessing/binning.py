@@ -19,7 +19,7 @@ class Binning:
         Attributes
         ----------
             - `nintervals`
-                - float, int optional
+                - `float`, `int` optional
                 - nuber of intervals/bins to generate
                 - if a value between 0 and 1 is passed
                     - will be interpreted as fraction of input dataseries length
@@ -28,14 +28,20 @@ class Binning:
                     - will be interpreted as the number of intervals to use
                 - the default is 0.5
             - `npoints_per_interval`
-                - int, optional
-                - generate intervals/bins automatically such that each bin contains 'npoints_per_interval' datapoints
+                - `int`, `int`, optional
+                - generate intervals/bins automatically such that each bin contains `npoints_per_interval` datapoints
                     - the last interval will contain all datapoints until the end of the dataseries
-                - if set will overwrite nintervals
+                - if between 0 and 1
+                    - will be interpreted as a fraction of the input dataseries length
+                        - i.e. each bin contains `npoints_per_interval`*100% datapoints
+                - if greater 1
+                    - will be converted to `int`
+                    - will be interpreted as actual number of datapoints
+                - if set will overwrite `nintervals`
                 - the default is None
-                    - will use 'nintervals' to generate the bins
+                    - will use `nintervals` to generate the bins
             - `xmin`
-                - float, optional
+                - `float`, optional
                 - the minimum value to consider for the interval/bin creation
                 - the default is `None`
                     - will use the minimum of the input-series `x`-values
@@ -117,12 +123,12 @@ class Binning:
     """
 
     def __init__(self,
-        nintervals:Union[float,int]=0.2, npoints_per_interval:int=None,
+        nintervals:Union[float,int]=0.2, npoints_per_interval:Union[float,int]=None,
         xmin:float=None, xmax:float=None,
         ddof:int=0,
         meanfunc_x:Callable=None, meanfunc_y:Callable=None,
         verbose:int=0,     
-        ):
+        ) -> None:
     
         self.nintervals = nintervals
         self.npoints_per_interval= npoints_per_interval
@@ -141,7 +147,7 @@ class Binning:
 
         pass
 
-    def __repr__(self):
+    def __repr__(self) -> str:
 
         return (
             f'Binning(\n'
@@ -153,9 +159,12 @@ class Binning:
             f')'
         )
 
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
     def generate_bins(self,
         x:np.ndarray, y:np.ndarray,
-        nintervals:int=None, npoints_per_interval:int=None,
+        nintervals:Union[float,int]=None, npoints_per_interval:Union[float,int]=None,
         verbose:int=None,
         ) -> np.ndarray:
         """
@@ -170,19 +179,31 @@ class Binning:
                     - np.ndarray
                     - y-values to be binned
                 - `nintervals`
-                    - int, optional
+                    - `float`, `int` optional
                     - nuber of intervals/bins to generate
-                    - overwrites `self.nintervals`
+                    - if a value between 0 and 1 is passed
+                        - will be interpreted as fraction of input dataseries length
+                    - if a value greater than 1 is passed
+                        - will be converted to integer
+                        - will be interpreted as the number of intervals to use
+                    - overrides `self.nintervals`
                     - the default is `None`
-                        - uses `self.nintervals`
+                        - will fall back to `self.nintervals`
                 - `npoints_per_interval`
-                    - int, optional
+                    - `int`, `int`, optional
                     - generate intervals/bins automatically such that each bin contains `npoints_per_interval` datapoints
                         - the last interval will contain all datapoints until the end of the dataseries
-                    - overwrites `self.npoints_per_interval`
+                    - if between 0 and 1
+                        - will be interpreted as a fraction of the input dataseries length
+                            - i.e. each bin contains `npoints_per_interval`*100% datapoints
+                    - if greater 1
+                        - will be converted to `int`
+                        - will be interpreted as actual number of datapoints
                     - if set will overwrite `nintervals`
+                    - overrides `nintervals`
+                    - overrides `self.npoints_per_interval`
                     - the default is `None`
-                        - will use `nintervals` to generate the bins
+                        - will fall back to `self.npoints_per_interval`
                 - `verbose`
                     - int, optional
                     - verbosity level
@@ -217,6 +238,13 @@ class Binning:
 
         #dynamically calculate bins if npoints_per_interval is specified 
         if npoints_per_interval is not None:
+            if 0 < npoints_per_interval and npoints_per_interval < 1:
+                #calculate `npoints_per_interval` as fraction of the shape of x and y 
+                npoints_per_interval = int(self.npoints_per_interval*x.shape[0])
+            elif npoints_per_interval >= 1:
+                npoints_per_interval = int(npoints_per_interval)
+            else:
+                raise ValueError("`npoints_per_interval` has to be greater than 0!")
 
             #try converting to numpy (otherwise bin generation might fail)
             if not isinstance(x, np.ndarray):
@@ -246,7 +274,7 @@ class Binning:
             elif nintervals >= 1:
                 nintervals = int(nintervals)
             else:
-                raise ValueError("'nintervals' has to be greater than 0!")
+                raise ValueError("`nintervals` has to be greater than 0!")
 
 
             if self.xmin is None: self.xmin = np.nanmin(x)
