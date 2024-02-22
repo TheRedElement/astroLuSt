@@ -173,7 +173,7 @@ class ExecTimer:
         return
 
     def checkpoint_end(self,
-        taskname:str, comment:str='',
+        taskname:str, comment:str=None,
         ) -> None:
         """
             - method to wrap up a task of name `taskname`
