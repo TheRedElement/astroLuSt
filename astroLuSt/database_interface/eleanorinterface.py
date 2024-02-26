@@ -102,7 +102,8 @@ class EleanorDatabaseInterface:
         self.redownload     = redownload
         self.verbose        = verbose
 
-        if metadata_path is None: self.metadata_path = './mastDownload/HLSP'
+        if metadata_path is None:   self.metadata_path = './mastDownload/HLSP'
+        else:                       self.metadata_path = metadata_path
 
         #infered attributes
         self.LE = alme.LogErrors()
