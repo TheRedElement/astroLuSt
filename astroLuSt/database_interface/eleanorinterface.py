@@ -130,6 +130,7 @@ class EleanorDatabaseInterface:
         sectors:Union[str,List]=None,
         source_id:dict=None,
         get_normalized_flux:bool=True, normfunc:Callable=None,
+        custom_aperture:np.ndarray=None,
         tpfs2store:slice=None, store_aperture_masks:bool=True,
         verbose:int=None,
         multi_sectors_kwargs:dict=None,
@@ -170,6 +171,12 @@ class EleanorDatabaseInterface:
                         - `flux`
                     - the default is `None`
                         - will be set to `lambda x: x/np.nanmedian(x)`
+                - `custom_aperture`
+                    - `np.ndarray`, optional
+                    - custom aperture to use for creating the lightcurve
+                    - will be passed to `eleanor.TargetData.get_lightkurve()`
+                    - the default is `None`
+                        - uses aperture calcualted by `eleanor`
                 - `tpfs2store`
                     - slice, optional
                     - which target-pixel-files to store
@@ -356,6 +363,8 @@ class EleanorDatabaseInterface:
                     #use custom aperture
                     if custom_aperture_kwargs is not None:
                         eleanor.TargetData.custom_aperture(datum, **custom_aperture_kwargs)
+                    
+                    eleanor.TargetData.get_lightcurve(datum, custom_aperture)
 
                     aperture_size = datum.aperture.sum()
 
@@ -433,6 +442,7 @@ class EleanorDatabaseInterface:
         sectors:Union[str,list]=None,
         source_ids:List[dict]=None,
         get_normalized_flux:bool=True, normfunc:Callable=None,
+        custom_aperture:np.ndarray=None,
         tpfs2store:slice=None, store_aperture_masks:bool=True,
         n_chunks:int=1,
         verbose:int=None,
@@ -476,6 +486,12 @@ class EleanorDatabaseInterface:
                         - `flux`
                     - the default is `None`
                         - will be set to `lambda x: x/np.nanmedian(x)`
+                - `custom_aperture`
+                    - `np.ndarray`, optional
+                    - custom aperture to use for creating the lightcurve
+                    - will be passed to `eleanor.TargetData.get_lightkurve()`
+                    - the default is `None`
+                        - uses aperture calcualted by `eleanor`                
                 - `tpfs2store`
                     - slice, optional
                     - which target-pixel-files to store
@@ -628,6 +644,7 @@ class EleanorDatabaseInterface:
                     sectors=sectors,
                     source_id=source_id,
                     get_normalized_flux=get_normalized_flux, normfunc=normfunc,
+                    custom_aperture=custom_aperture,
                     tpfs2store=tpfs2store, store_aperture_masks=store_aperture_masks,
                     multi_sectors_kwargs=multi_sectors_kwargs,
                     targetdata_kwargs=targetdata_kwargs,
