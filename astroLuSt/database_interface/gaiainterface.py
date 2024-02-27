@@ -1,12 +1,9 @@
 
 #%%imports
-from astropy.table import Table
-from astroquery.gaia import Gaia
-import numpy as np
-import os
+from astroquery.gaia import GaiaClass
 import pandas as pd
-from typing import List
-from urllib import request
+import re
+from typing import List, Union, Any, Dict
 
 #%%definitions
 #GAIA
@@ -16,30 +13,43 @@ class GaiaDatabaseInterface:
 
         Attributes
         ----------
+            - `gaia_class`
+                - `astroquery.gaia.GaiaClass`
+                - instance of `astroquery.gaia.Gaia`
+                - instance to use for quering the Gaia database
+            - `verbose`
+                - `int`, optional
+                - verbosity level
+                - the default is 0
+                
         
         Methods
         -------
+            - `remove_all_jobs()`
+            - `get_datalink()`
+            - `save()`
 
         Dependencies
         ------------
-            - astropy
-            - astroquery
-            - numpy
-            - os
-            - pandas
-            - typing
-            - urllib
+            - `astroquery`
+            - `pandas`
+            - `re`
+            - `typing`
 
         Comments
         --------
 
     """
 
-    def __init__(self):
+    def __init__(self,
+        gaia_class:GaiaClass,
+        verbose:int=0,
+        ) -> None :
 
-        self.gaia_crendetials = None
-        self.df_LCs = pd.DataFrame()
-        pass
+        self.Gaia = gaia_class
+        self.verbose = verbose
+        
+        return
 
     def __repr__(self) -> str:
         return (
@@ -47,69 +57,14 @@ class GaiaDatabaseInterface:
             f')'
         )
 
-
-    def get_lc_gaia(self,
-        gaia_result:str
-        ) -> List[Table]:
-        """
-            - method to obtain the light-curve data from a gaia query
-
-            Parameters
-            ----------
-                - `gaia_result`
-                    - str
-                    - location of the saved query-result
-                    - has to be a .vot file (votable)
-            
-            Raises
-            ------
-
-            Returns
-            -------
-                - results
-                    - list
-                    - list of `astropy.Table` objects
-                        - each table contains the result for one of the rows in the input-votable
-
-            Comments
-            --------
-        """
-
-
-        res = Table.read(gaia_result, format="votable")
-
-        urls = np.array(res["datalink_url"].data.data)
-
-        results = []
-        for idx, url in enumerate(urls):
-            tempfilename = f"tempfile_1{idx}"
-            lcfilename = f"FT CVn{idx}.xml"
-
-            request.urlretrieve(url, tempfilename)
-            a_url = Table.read(tempfilename, format="votable")["access_url"].data.data[0]
-
-            try:
-                request.urlretrieve(a_url, lcfilename)
-                res2 = Table.read(lcfilename, format="votable")
-            except Exception as e:
-                print("WARNING: Error in request.urlretrieve")
-                print(f"original ERROR: {e}")
-                res2 = None
-
-            results.append(res2)
-
-            os.remove(tempfilename)
-
-        return results
-
     def remove_all_jobs(self,
-        pd_filter:str=None, gaia_credentials:str=None,
-        login_before:bool=False, logout_after:bool=False,
+        pd_filter:str=None,
         verbose:int=0
         ) -> None:
         """
             - method to remove all jobs stored in the Gaia-Archive
-
+            - `self.Gaia` has to be an instance where you are logged in for this method to work
+            
             Parameters
             ----------
                 - `pd_filter`
@@ -141,20 +96,6 @@ class GaiaDatabaseInterface:
                                 
                     - the default is `None`
                         - will delete all jobs in the archive
-                - `gaia_credentials`
-                    - str, optional
-                    - path to your gaia credentials file
-                    - required if `login_before` is `True` and no credentials file has been passed yet
-                    - the default is `None`
-                - `login_before`
-                    - bool, optional
-                    - whether to log into the gaia archive before deleting the jobs
-                    - not necessary if you login somwhere in your code before calling `remove_all_jobs()`
-                    - the default is `False`
-                - `logout_after`
-                    - bool, optional
-                    - whether to log out of the gaia archive after deleting the jobs
-                    - the default is `False`
                 - `verbose`
                     - int, optional
                     - how much additional information to display
@@ -170,23 +111,12 @@ class GaiaDatabaseInterface:
 
             Comments
             --------
+                - `self.Gaia` has to be an instance where you are logged in for this method to work
         """
 
-        if login_before:
-            if self.gaia_crendetials is None:
-                if gaia_credentials is None:
-                    raise ValueError(
-                        "Not able to log into Gaia."
-                        "Provide a path to your credentials file as the argument 'gaia_credentials'")
-                else:
-                    self.gaia_crendetials = gaia_credentials
-
-
-            #login
-            Gaia.login(credentials_file=self.gaia_crendetials)
         
         #get all jobs
-        all_jobs = Gaia.search_async_jobs(verbose=False)
+        all_jobs = self.Gaia.search_async_jobs(verbose=False)
         
         jobs = pd.DataFrame({
             "jobid":[job.jobid for job in all_jobs],
@@ -219,10 +149,166 @@ class GaiaDatabaseInterface:
             to_remove = jobs["jobid"].to_list()
 
         #remove jobs
-        Gaia.remove_jobs(to_remove)
+        self.Gaia.remove_jobs(to_remove)
         
-        #logout
-        if logout_after:
-            Gaia.logout()
+        return
+
+    def get_datalink(self,
+        ids:Union[str,List[str]],
+        retrieval_type:List[str]=None,
+        verbose:int=None,
+        load_data_kwargs:dict=None,
+        save_kwargs:dict=None,
+        ) -> Dict[str,pd.DataFrame]:
+        """
+            - method to obtain the datalink data from a gaia archive
+            - i.e.
+                - photometry
+                - rvs
+            - resource:
+                - https://www.cosmos.esa.int/web/gaia-users/archive/datalink-products
+                - last accessed 2024/02/26
+            
+            Parameters
+            ----------
+                - `ids`
+                    - `str`, `List`
+                    - gaia source ids to download the data for
+                - `retrieval_type`
+                    - `List[str]`, optional
+                    - type of data to be downloaded
+                    - will be passed to `Gaia.load_data()`
+                    - the default is `None`
+                        - will be set to `['ALL']`
+                - `verbose`
+                    - `int`, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - falls back to `self.verbose`
+                - `load_data_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `Gaia.load_data()`
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `save_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `self.save()`
+                    - the default is `None`
+                        - will be set to `dict(directory=None)`
+                        - data will not be saved
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `results`
+                    - `Dict[pd.DataFrame]`
+                    - list of pandas DataFrames
+                    - keys are the retrieved quantity alongside the gaia id
+                    - values contain the extracted data
+                        
+
+            Comments
+            --------
+        """
+
+        if retrieval_type is None:      retrieval_type      = ['ALL']
+        if verbose is None:             verbose             = self.verbose
+        if load_data_kwargs is None:    load_data_kwargs    = dict()
+        if save_kwargs is None:         save_kwargs_use     = dict(directory=None)
+        else:                           save_kwargs_use     = save_kwargs.copy()
+
+        for rt in retrieval_type:
+
+            datalink = self.Gaia.load_data(ids=ids, retrieval_type=rt, **load_data_kwargs)
+
+            keys = datalink.keys()
+            
+            result = dict()
+            for k in keys:
+                dl_id = re.findall('(?<=Gaia DR3 )\d+', k)
+                dl_prod = re.findall('^\w+(?=-)', k)
+
+                for idx, dl in enumerate(datalink[k]):
+                    df = dl.to_table().to_pandas()
+                
+                result[k] = df
+
+                #save if wished for
+                if isinstance(save_kwargs_use['directory'], str):
+                    self.save(
+                        df=df,
+                        filename=f'gaia{dl_id[idx]}_{dl_prod[idx].lower()}',
+                        **save_kwargs,
+                    )
+                    
+        return result
+
+    def save(self,
+        df:pd.DataFrame,
+        filename:str,
+        directory:str=None,
+        pd_savefunc:str=None,
+        save_kwargs:dict=None,
+        ) -> None:
+        """
+            - method to save the extracted data
+
+            Parameters
+            ----------
+                - `df`
+                    - pd.DataFrame
+                    - dataframe of extracted lc-data (`lcs` from `self.extract_source()`)
+                - `filename`
+                    - str
+                    - name of the file in which the data gets stored
+                    - NO FILE EXTENSION!
+                - `directory`
+                    - str, optional
+                    - directory of where the data will be stored
+                    - the default is `None`
+                        - will be set to `'./'`
+                - `pd_savefunc`
+                    - str, optional
+                    - pandas saving function to use
+                        - i.e., methods of pd.DataFrames
+                        - examples
+                            - `'to_csv'`
+                            - `'to_parquet'`
+                    - the default is `None`
+                        - will be set to `'to_parquet'`
+                - `save_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `pd_savefunc`
+                    - the default is `None`
+                        - will be set to `dict()`
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+                - metadata will be saved to a separate file with the same name except `'_meta'` inserted before the extension
+        """
+
+        if directory is None:   directory   = './'
+        if pd_savefunc is None: pd_savefunc = 'to_parquet'
+        if save_kwargs is None: save_kwargs = dict()
+
+        #get correct extension
+        if pd_savefunc == 'to_hdf': ext = 'h5'
+        elif pd_savefunc == 'to_excel': ext = 'xlsx'
+        elif pd_savefunc == 'to_stata': ext = 'dta'
+        elif pd_savefunc == 'to_markdown': ext = 'md'
+        else: ext = pd_savefunc[3:]
+
+        #save
+        eval(f'df.{pd_savefunc}("{directory}{filename}.{ext}", **{save_kwargs})')
 
         return
+    
+    

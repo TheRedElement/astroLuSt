@@ -1,5 +1,5 @@
 
-#TODO: document custom_aperture_kwargs
+#TODO: EDI.download(): enable to not save (save_kwargs(directory=None))
 
 #%%imports
 import eleanor
