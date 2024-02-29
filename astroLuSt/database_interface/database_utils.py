@@ -6,6 +6,7 @@ from joblib.parallel import Parallel, delayed
 import numpy as np
 import os
 import pandas as pd
+import time
 
 
 #%%classes
@@ -18,6 +19,7 @@ def query_upload_table(
     df_upload:pd.DataFrame,
     upload_table_name:str,
     nsplits:int=1,
+    sleep:int=0,
     parallel_kwargs:dict=None,
     launch_job_async_kwargs:dict=None,
     ) -> pd.DataFrame:
@@ -82,6 +84,7 @@ def query_upload_table(
         s:pd.DataFrame,
         query:str,
         temp_filename:str,
+        sleep:int,
         upload_table_name:str,
         launch_job_async_kwargs:dict,
         ) -> pd.DataFrame:
@@ -90,7 +93,7 @@ def query_upload_table(
         """
 
         #temporarily store in votable for upload
-        Table().from_pandas(s).write(temp_filename, format='votable')
+        Table().from_pandas(s).write(temp_filename, format='votable', overwrite=True)
 
         #execute query
         job = tap.launch_job_async(
@@ -104,6 +107,7 @@ def query_upload_table(
 
         #clean up temporary files
         os.remove(temp_filename)
+        time.sleep(sleep)
 
         return df_res
     
@@ -120,6 +124,7 @@ def query_upload_table(
             s=s,
             query=query,
             temp_filename=f'_query_upload_table_{idx:.0f}.vot',
+            sleep=sleep,
             upload_table_name=upload_table_name,
             launch_job_async_kwargs=launch_job_async_kwargs,
         ) for idx, s in enumerate(splits)
