@@ -8,7 +8,7 @@ import os
 import pandas as pd
 import time
 
-
+from astroLuSt.monitoring import formatting as almofo
 #%%classes
 
 
@@ -20,6 +20,7 @@ def query_upload_table(
     upload_table_name:str,
     nsplits:int=1,
     sleep:int=0,
+    verbose:int=0,
     parallel_kwargs:dict=None,
     launch_job_async_kwargs:dict=None,
     ) -> pd.DataFrame:
@@ -52,6 +53,20 @@ def query_upload_table(
                 - will be passed as `indices_or_sections` to `np.array_split()`
                 - the default is 1
                     - upload the whole `df_upload`
+            - `sleep`
+                - `float`, optional
+                - time to sleep after each iteration
+                - will be passed to `time.sleep()`
+                - the deafault is 0
+            - `verbose`
+                - `int`, optional
+                - verbosity level
+                - the default is 0
+            - `parallel_kwargs`
+                - `dict`, optional
+                - kwargs to pass to `joblib.parallel.Parallel()`
+                - the default is `None`
+                    - will be set to `dict()`
             - `launch_job_async_kwargs`
                 - `dict`, optional
                 - kwargs to pass to `tap.launch_job_async()`
