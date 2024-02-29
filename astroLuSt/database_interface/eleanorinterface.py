@@ -167,8 +167,11 @@ class EleanorDatabaseInterface:
                 - `normfunc`
                     - Callable, optional
                     - function to execute the normalization
-                    - has to take exactly one argument
+                    - has to take exactly one two arguments
                         - `flux`
+                        - `datum`
+                            - `eleanor.TargetData()` object
+                                - can be used to acess quality flags etc.
                     - the default is `None`
                         - will be set to `lambda x: x/np.nanmedian(x)`
                 - `custom_aperture`
@@ -188,7 +191,14 @@ class EleanorDatabaseInterface:
                     - bool, optional
                     - whether to also store aperture-masks
                     - the default is True
-                - `verbose`
+                - `verbose`                - `save_kwargs`
+                    - dict, optional
+                    - kwargs to pass to `self.save()`
+                    - if entry for `save_kwargs['directory']` is `None`
+                        - will not save
+                    - the default is `None`
+                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory=None)`
+
                     - int, optional
                     - verbosity level
                     - overrides `self.verbose`
@@ -216,8 +226,10 @@ class EleanorDatabaseInterface:
                 - `save_kwargs`
                     - dict, optional
                     - kwargs to pass to `self.save()`
+                    - if entry for `save_kwargs['directory']` is `None`
+                        - will not save
                     - the default is `None`
-                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory='./')`
+                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory=None)`
 
             Raises
             ------
@@ -279,7 +291,7 @@ class EleanorDatabaseInterface:
 
         if sectors is None:                 sectors                 = 'all'
         if source_id is None:               source_id               = dict()
-        if normfunc is None:                normfunc                = lambda x: x/np.nanmedian(x)
+        if normfunc is None:                normfunc                = lambda x, datum: x/np.nanmedian(x)
         if tpfs2store is None:              tpfs2store              = slice(0) 
         if verbose is None:                 verbose                 = self.verbose
         if multi_sectors_kwargs is None:    multi_sectors_kwargs    = dict()
@@ -294,7 +306,7 @@ class EleanorDatabaseInterface:
             if 'filename' not in save_kwargs_use.keys():
                 save_kwargs_use['filename'] = '_'.join([''.join(item) for item in source_id.items()])
             if 'directory' not in save_kwargs_use.keys():
-                save_kwargs_use['directory'] = './'
+                save_kwargs_use['directory'] = None
         
 
         
@@ -389,20 +401,20 @@ class EleanorDatabaseInterface:
                     
 
                     if get_normalized_flux:
-                        raw_flux_norm   = normfunc(datum.raw_flux)
-                        corr_flux_norm  = normfunc(datum.corr_flux)
+                        raw_flux_norm   = normfunc(datum.raw_flux, datum)
+                        corr_flux_norm  = normfunc(datum.corr_flux, datum)
                         lcs['raw_flux_normalized']  = np.append(lcs['raw_flux_normalized'],  raw_flux_norm)
                         lcs['corr_flux_normalized'] = np.append(lcs['corr_flux_normalized'], corr_flux_norm)
                     if datum.pca_flux is not None:
                         lcs['pca_flux']  = np.append(lcs['pca_flux'],   datum.pca_flux)
 
                         if get_normalized_flux:
-                            pca_flux_norm = normfunc(datum.pca_flux)
+                            pca_flux_norm = normfunc(datum.pca_flux, datum)
                             lcs['pca_flux_normalized'] = np.append(lcs['pca_flux_normalized'], pca_flux_norm)
                     if datum.psf_flux is not None:
                         lcs['psf_flux']  = np.append(lcs['psf_flux'],   datum.pcs_flux)
                         if get_normalized_flux:
-                            psf_flux_norm = normfunc(datum.psf_flux)
+                            psf_flux_norm = normfunc(datum.psf_flux, datum)
                             lcs['psf_flux_normalized'] = np.append(lcs['psf_flux_normalized'], psf_flux_norm)
 
                     # if tpfs2store is not None: tpfs.append(datum.tpf[tpfs2store])
@@ -418,7 +430,7 @@ class EleanorDatabaseInterface:
             ##expand dimensions to get (nframes,xpix,ypix,flux)
             tpfs            = np.concatenate(np.expand_dims(tpfs, axis=-1), axis=0)
             aperture_masks  = np.array(np.expand_dims(aperture_masks, axis=-1))
-            if save_kwargs_use is not None:
+            if save_kwargs_use['directory'] is not None:
                 self.save(
                     df=pd.DataFrame(data=lcs),
                     df_meta=pd.DataFrame(data=meta),
@@ -482,8 +494,11 @@ class EleanorDatabaseInterface:
                 - `normfunc`
                     - Callable, optional
                     - function to execute the normalization
-                    - has to take exactly one argument
+                    - has to take exactly one two arguments
                         - `flux`
+                        - `datum`
+                            - `eleanor.TargetData()` object
+                                - can be used to acess quality flags etc.
                     - the default is `None`
                         - will be set to `lambda x: x/np.nanmedian(x)`
                 - `custom_aperture`
@@ -544,9 +559,11 @@ class EleanorDatabaseInterface:
                 - `save_kwargs`
                     - dict, optional
                     - kwargs to pass to `self.save()`
+                    - if entry for `save_kwargs['directory']` is `None`
+                        - will not save
                     - the default is `None`
-                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory='./')`
-                            - done within `self.extract_source()`
+                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory=None)`
+
 
             Raises
             ------
