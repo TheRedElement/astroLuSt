@@ -204,8 +204,8 @@ class GaiaDatabaseInterface:
             Returns
             -------
                 - `results`
-                    - `Dict[pd.DataFrame]`
-                    - list of pandas DataFrames
+                    - `Dict[str,pd.DataFrame]`
+                    - dict of pandas DataFrames
                     - keys are the retrieved quantity alongside the gaia id
                     - values contain the extracted data
                         
