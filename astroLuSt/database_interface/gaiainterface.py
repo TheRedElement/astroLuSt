@@ -1,9 +1,10 @@
 
 #%%imports
 from astroquery.gaia import GaiaClass
+import numpy as np
 import pandas as pd
 import re
-from typing import List, Union, Any, Dict
+from typing import List, Union, Any, Dict, Callable
 
 #%%definitions
 #GAIA
@@ -32,6 +33,7 @@ class GaiaDatabaseInterface:
         Dependencies
         ------------
             - `astroquery`
+            - `numpy`
             - `pandas`
             - `re`
             - `typing`
@@ -156,6 +158,7 @@ class GaiaDatabaseInterface:
     def get_datalink(self,
         ids:Union[str,List[str]],
         retrieval_type:List[str]=None,
+        get_normalized_flux:bool=True, normfunc:Callable=None,
         verbose:int=None,
         load_data_kwargs:dict=None,
         save_kwargs:dict=None,
@@ -180,6 +183,21 @@ class GaiaDatabaseInterface:
                     - will be passed to `Gaia.load_data()`
                     - the default is `None`
                         - will be set to `['ALL']`
+                - `get_normalized_flux`
+                    - bool, optional
+                    - whether to also extract the (passband-wise) normalized versions of the extracted fluxes
+                    - the default is True
+                - `normfunc`
+                    - Callable, optional
+                    - function to execute the normalization
+                    - has to take exactly one two arguments
+                        - `flux`
+                        - `df`
+                            - `pandas.DataFrame()` object
+                            - contains all extracted quantities
+                            - can be used to acess quality flags etc.
+                    - the default is `None`
+                        - will be set to `lambda x: x/np.nanmedian(x)`                
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -215,6 +233,7 @@ class GaiaDatabaseInterface:
         """
 
         if retrieval_type is None:      retrieval_type      = ['ALL']
+        if normfunc is None:            normfunc            = lambda x, datum: x/np.nanmedian(x)
         if verbose is None:             verbose             = self.verbose
         if load_data_kwargs is None:    load_data_kwargs    = dict()
         if save_kwargs is None:         save_kwargs_use     = dict(directory=None)
@@ -234,8 +253,14 @@ class GaiaDatabaseInterface:
                 for idx, dl in enumerate(datalink[k]):
                     df = dl.to_table().to_pandas()
                 
-                result[k] = df
 
+                if 'EPOCH_PHOTOMETRY' in k and get_normalized_flux:
+                    df['flux_normalized'] = 0.
+                    for b in np.unique(df['band']):
+                        df.loc[(df['band']==b),'flux_normalized'] = normfunc(df['flux'], df)
+
+                result[k] = df
+                
                 #save if wished for
                 if isinstance(save_kwargs_use['directory'], str):
                     self.save(

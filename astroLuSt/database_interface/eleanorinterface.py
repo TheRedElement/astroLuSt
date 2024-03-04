@@ -167,7 +167,7 @@ class EleanorDatabaseInterface:
                 - `normfunc`
                     - Callable, optional
                     - function to execute the normalization
-                    - has to take exactly one two arguments
+                    - has to take exactly two arguments
                         - `flux`
                         - `datum`
                             - `eleanor.TargetData()` object
