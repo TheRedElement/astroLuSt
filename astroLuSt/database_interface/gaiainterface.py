@@ -197,7 +197,7 @@ class GaiaDatabaseInterface:
                             - contains all extracted quantities
                             - can be used to acess quality flags etc.
                     - the default is `None`
-                        - will be set to `lambda x: x/np.nanmedian(x)`                
+                        - will be set to `lambda x, df: x/np.nanmedian(x)`                
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -233,7 +233,7 @@ class GaiaDatabaseInterface:
         """
 
         if retrieval_type is None:      retrieval_type      = ['ALL']
-        if normfunc is None:            normfunc            = lambda x, datum: x/np.nanmedian(x)
+        if normfunc is None:            normfunc            = lambda x, df: x/np.nanmedian(x)
         if verbose is None:             verbose             = self.verbose
         if load_data_kwargs is None:    load_data_kwargs    = dict()
         if save_kwargs is None:         save_kwargs_use     = dict(directory=None)
@@ -255,10 +255,9 @@ class GaiaDatabaseInterface:
                 
 
                 if 'EPOCH_PHOTOMETRY' in k and get_normalized_flux:
-                    df['flux_normalized'] = 0.
+                    # df['flux_normalized'] = 0.
                     for b in np.unique(df['band']):
-                        df.loc[(df['band']==b),'flux_normalized'] = normfunc(df['flux'], df)
-
+                        df.loc[(df['band']==b),'flux_normalized'] = normfunc(df.query('band==@b')['flux'], df)
                 result[k] = df
                 
                 #save if wished for
