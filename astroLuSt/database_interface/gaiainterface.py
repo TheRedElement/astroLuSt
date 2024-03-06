@@ -6,6 +6,8 @@ import pandas as pd
 import re
 from typing import List, Union, Any, Dict, Callable
 
+from astroLuSt.monitoring import formatting as almf
+
 #%%definitions
 #GAIA
 class GaiaDatabaseInterface:
@@ -159,6 +161,7 @@ class GaiaDatabaseInterface:
         ids:Union[str,List[str]],
         retrieval_type:List[str]=None,
         get_normalized_flux:bool=True, normfunc:Callable=None,
+        n_chunks:int=1,
         verbose:int=None,
         load_data_kwargs:dict=None,
         save_kwargs:dict=None,
@@ -197,7 +200,13 @@ class GaiaDatabaseInterface:
                             - contains all extracted quantities
                             - can be used to acess quality flags etc.
                     - the default is `None`
-                        - will be set to `lambda x, df: x/np.nanmedian(x)`                
+                        - will be set to `lambda x, df: x/np.nanmedian(x)`
+                - `n_chunks`
+                    - `int`, optional
+                    - number of chunks to split `ids` into
+                    - use if too many targets to extract, i.e. request refuses to process
+                    - the default is 1
+                        - all `ids` at once
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -239,34 +248,65 @@ class GaiaDatabaseInterface:
         if save_kwargs is None:         save_kwargs_use     = dict(directory=None)
         else:                           save_kwargs_use     = save_kwargs.copy()
 
-        for rt in retrieval_type:
+        #split into n_chuncks chuncks, for huge number of targets
+        chunks = np.array_split(ids, n_chunks)
 
-            datalink = self.Gaia.load_data(ids=ids, retrieval_type=rt, **load_data_kwargs)
-
-            keys = datalink.keys()
+        #init dict of results
+        result = dict()
+        
+        #iterate over requested dataproducts
+        for ridx, rt in enumerate(retrieval_type):
             
-            result = dict()
-            for k in keys:
-                dl_id = re.findall('(?<=Gaia DR3 )\d+', k)
-                dl_prod = re.findall('^\w+(?=-)', k)
+            almf.printf(
+                msg=f'Extracting retrieval_type {ridx+1}/{len(retrieval_type)} ({rt})',
+                context=f'{self.__class__.__name__}.{self.get_datalink.__name__}()',
+                type='INFO',
+                level=0,
+                verbose=verbose
+            )
 
-                for idx, dl in enumerate(datalink[k]):
-                    df = dl.to_table().to_pandas()
-                
+            #iterate over chuncks
+            extracted = 0
+            for cidx, chunk in enumerate(chunks):
+                #update number of extracted targets
+                extracted += len(chunk)
 
-                if 'EPOCH_PHOTOMETRY' in k and get_normalized_flux:
-                    # df['flux_normalized'] = 0.
-                    for b in np.unique(df['band']):
-                        df.loc[(df['band']==b),'flux_normalized'] = normfunc(df.query('band==@b')['flux'], df)
-                result[k] = df
+                almf.printf(
+                    msg=f'Extracting chunk {cidx+1}/{len(chunks)} ({extracted}/{len(ids)})',
+                    context=f'{self.__class__.__name__}.{self.get_datalink.__name__}()',
+                    type='INFO',
+                    level=1,
+                    verbose=verbose,
+                )
+
+                #obtain data from gaia archive
+                datalink = self.Gaia.load_data(ids=chunk, retrieval_type=rt, **load_data_kwargs)
+
+                #check what got extracted
+                keys = datalink.keys()
                 
-                #save if wished for
-                if isinstance(save_kwargs_use['directory'], str):
-                    self.save(
-                        df=df,
-                        filename=f'gaia{dl_id[idx]}_{dl_prod[idx].lower()}',
-                        **save_kwargs,
-                    )
+                #store extracted quantities accordingly
+                for k in keys:
+                    dl_id = re.findall('(?<=Gaia DR3 )\d+', k)
+                    dl_prod = re.findall('^\w+(?=-)', k)
+
+                    for idx, dl in enumerate(datalink[k]):
+                        df = dl.to_table().to_pandas()
+                    
+
+                    if 'EPOCH_PHOTOMETRY' in k and get_normalized_flux:
+                        # df['flux_normalized'] = 0.
+                        for b in np.unique(df['band']):
+                            df.loc[(df['band']==b),'flux_normalized'] = normfunc(df.query('band==@b')['flux'], df)
+                    result[k] = df
+                    
+                    #save if wished for
+                    if isinstance(save_kwargs_use['directory'], str):
+                        self.save(
+                            df=df,
+                            filename=f'gaia{dl_id[idx]}_{dl_prod[idx].lower()}',
+                            **save_kwargs,
+                        )
                     
         return result
 
