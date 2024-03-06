@@ -4,7 +4,7 @@ astroLuSt_testing.ipynb
 demos/data
 demos/wandb
 demos/*.gif
-demos/test.py
+demos/test.*
 maxsector.py
 mastDownload/
 training/data
