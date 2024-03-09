@@ -6,6 +6,7 @@ from joblib.parallel import Parallel, delayed
 import numpy as np
 import os
 import pandas as pd
+from requests import HTTPError
 import time
 
 from astroLuSt.monitoring import formatting as almofo
@@ -101,24 +102,47 @@ def query_upload_table(
         temp_filename:str,
         sleep:int,
         upload_table_name:str,
-        launch_job_async_kwargs:dict,
+        nsplits:int, idx:int=0,
+        verbose:int=0,
+        launch_job_async_kwargs:dict=None,
         ) -> pd.DataFrame:
         """
             - subroutine for parallelization
         """
 
+        if launch_job_async_kwargs is None: launch_job_async_kwargs = dict()
+
+        almofo.printf(
+            msg=f'Extracting split {idx+1}/{nsplits} (len(split): {len(s)})',
+            context=query_upload_table.__name__,
+            type='INFO',
+            level=0,
+            verbose=verbose
+        )
+
         #temporarily store in votable for upload
         Table().from_pandas(s).write(temp_filename, format='votable', overwrite=True)
 
-        #execute query
-        job = tap.launch_job_async(
-            query=query,
-            upload_resource=temp_filename,
-            upload_table_name=upload_table_name,
-            **launch_job_async_kwargs,
-        )
-        
-        df_res = job.get_results().to_pandas()
+        #execute query (ignore if query failed due to HTTPError, but log just in case)
+        try:        
+            job = tap.launch_job_async(
+                query=query,
+                upload_resource=temp_filename,
+                upload_table_name=upload_table_name,
+                **launch_job_async_kwargs,
+            )
+            df_res = job.get_results().to_pandas()
+        except HTTPError as e:
+            almofo.printf(
+                msg=(
+                    f'HTTPError when extracting split #{idx+1}/{nsplits}, hence ignoring. '
+                    f'{e}'
+                ),
+                context=query_upload_table.__name__,
+                type='WARNING', level=1,
+                verbose=verbose
+            )
+            df_res = None
 
         #clean up temporary files
         os.remove(temp_filename)
@@ -141,14 +165,18 @@ def query_upload_table(
             temp_filename=f'_query_upload_table_{idx:.0f}.vot',
             sleep=sleep,
             upload_table_name=upload_table_name,
+            nsplits=nsplits, idx=idx,
+            verbose=verbose,
             launch_job_async_kwargs=launch_job_async_kwargs,
         ) for idx, s in enumerate(splits)
     )
 
 
-    df_res = pd.concat(res)
+    df_res = pd.concat([r for r in res if r is not None])
 
 
     return df_res
 
 
+
+# %%
