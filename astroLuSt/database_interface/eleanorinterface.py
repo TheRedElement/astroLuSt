@@ -150,7 +150,7 @@ class EleanorDatabaseInterface:
                         - will be set to `'all'`
                         - i.e. all available sectors will be extracted
                 - `source_id`
-                    - dict, optional
+                    - `dict`, optional
                     - contains mission and keys available in `eleanor.multi_sectors()`
                     - keys of the dict have to be one of
                         - `'tic'`
@@ -165,7 +165,7 @@ class EleanorDatabaseInterface:
                     - whether to also extract the (sector-wise) normalized versions of the extracted fluxes
                     - the default is True
                 - `normfunc`
-                    - Callable, optional
+                    - `Callable`, optional
                     - function to execute the normalization
                     - has to take exactly two arguments
                         - `flux`
@@ -181,25 +181,18 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - uses aperture calcualted by `eleanor`
                 - `tpfs2store`
-                    - slice, optional
+                    - `slice`, optional
                     - which target-pixel-files to store
                     - if you want to store all pass `slice(None)`
                     - the default is `None`
                         - will be set to `slice(0)`
                         - no tpf extracted
                 - `store_aperture_masks`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also store aperture-masks
                     - the default is True
-                - `verbose`                - `save_kwargs`
-                    - dict, optional
-                    - kwargs to pass to `self.save()`
-                    - if entry for `save_kwargs['directory']` is `None`
-                        - will not save
-                    - the default is `None`
-                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory=None)`
-
-                    - int, optional
+                - `verbose`
+                    - `int`, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
@@ -229,7 +222,7 @@ class EleanorDatabaseInterface:
                     - if entry for `save_kwargs['directory']` is `None`
                         - will not save
                     - the default is `None`
-                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory=None)`
+                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()]), directory=None)`
 
             Raises
             ------
@@ -299,7 +292,7 @@ class EleanorDatabaseInterface:
         if 'height' not in targetdata_kwargs.keys(): targetdata_kwargs['height'] = 13
         if 'width' not in targetdata_kwargs.keys():  targetdata_kwargs['width']  = 13
 
-        if save_kwargs is None: save_kwargs_use = None
+        if save_kwargs is None: save_kwargs_use = dict(filename='_'.join([''.join(item) for item in source_id.items()]), directory=None)
         else:
             save_kwargs_use = save_kwargs.copy()
         if save_kwargs_use is not None:
@@ -562,7 +555,7 @@ class EleanorDatabaseInterface:
                     - if entry for `save_kwargs['directory']` is `None`
                         - will not save
                     - the default is `None`
-                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()], directory=None)`
+                        - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()]), directory=None)`
 
 
             Raises
