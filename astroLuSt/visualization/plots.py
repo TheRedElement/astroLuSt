@@ -1168,35 +1168,45 @@ class LatentSpaceExplorer:
         Attributes
         ----------
             - `plot_func`
-                - str, optional
+                - `Callable`, optional
                 - function to use for visualizing each individual sample
-                - has to be the string equivalent of any method that can be called on `plt.Axes`
-                - the corresponding function has to take at least one argument (the values to plot)
-                - the default is `'plot'`
+                - has to take at least 2 positional arguments
+                    - `ax`
+                        - `plt.Axes`
+                        - axis to plot onto
+                    - `X`
+                        - `np.ndarray`
+                        - dataseries to be plotted
+                - has to take `**kwargs`
+                - the default is `None`
+                    - will be set to `lambda ax, x, kwargs: ax.plot(x, **kwargs)`
             - `subplots_kwargs`
-                - dict, optional
+                - `dict`, optional
                 - kwargs to pass to `plt.subplots()`
                 - the default is `None`
-                    - will be initialized with `{}`
+                    - will be initialized with `dict()`
             - `predict_kwargs`
-                - dict, optional
+                - `dict`, optional
                 - kwargs to pass to `generator.predict()`
                     - generator is a parameter passed `self.plot()`
                 - the default is `None`
-                    - will be initialized with `{}`
+                    - will be initialized with `dict()`
             - `plot_func_kwargs`
-                - dict, optional
-                - kwargs to pass to the function passed to `plot_func`
+                - `dict`, optional
+                - kwargs to pass to `plot_func`
                 - the default is `None`
-                    - will be initialized with `{}`
+                    - will be initialized with `dict()`
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
                 - the default is 0
 
         Methods
         -------
-            - `plot()`
+            - `plot_dbe()`
+            - `corner_plot()`
+            - `generated_1d()`
+            - `generated_2d()`
 
         Dependencies
         ------------
@@ -1214,19 +1224,19 @@ class LatentSpaceExplorer:
     """
 
     def __init__(self,
-        plot_func:str='plot',
+        plot_func:Callable=None,
         subplots_kwargs:dict=None, predict_kwargs:dict=None, plot_func_kwargs:dict=None,
         verbose:int=0
         ) -> None:
 
-        self.plot_func = plot_func
-
-        if subplots_kwargs is None:     self.subplots_kwargs     = {}
-        else:                           self.subplots_kwargs     = subplots_kwargs
-        if predict_kwargs is None:      self.predict_kwargs      = {}
-        else:                           self.predict_kwargs      = predict_kwargs
-        if plot_func_kwargs is None:    self.plot_func_kwargs    = {}
-        else:                           self.plot_func_kwargs    = plot_func_kwargs
+        if plot_func is None:           self.plot_func              = lambda ax, x, **kwargs: ax.plot(x, **kwargs)
+        else:                           self.plot_func              = plot_func
+        if subplots_kwargs is None:     self.subplots_kwargs        = {}
+        else:                           self.subplots_kwargs        = subplots_kwargs
+        if predict_kwargs is None:      self.predict_kwargs         = {}
+        else:                           self.predict_kwargs         = predict_kwargs
+        if plot_func_kwargs is None:    self.plot_func_kwargs       = {}
+        else:                           self.plot_func_kwargs       = plot_func_kwargs
 
         self.verbose = verbose
 
@@ -1424,6 +1434,20 @@ class LatentSpaceExplorer:
                     - has to differ from `z1_idx`
                     - the deafult is 0
                         - will set `z0` as the first element of the latent vector 
+                - `plot_func`
+                    - `Callable`, optional
+                    - function to use for visualizing each individual sample
+                    - has to take at least 2 positional arguments
+                        - `ax`
+                            - `plt.Axes`
+                            - axis to plot onto
+                        - `X`
+                            - `np.ndarray`
+                            - dataseries to be plotted
+                    - has to take `**kwargs`
+                    - overrides `self.plot_func`
+                    - the default is `None`
+                        - will fall back to `self.plot_func()`
                 - `subplots_kwargs`
                     - dict, optional
                     - kwargs to pass to `plt.subplots()`
@@ -1485,6 +1509,7 @@ class LatentSpaceExplorer:
                 >>> plt.show()
                 ```
         """
+    
         #check shapes
         if np.any((np.diff(np.diff(z0))) > 1e-8):
              warnings.warn(f'"z0" has to be equally spaced!')
@@ -1541,8 +1566,7 @@ class LatentSpaceExplorer:
 
             if x_decoded.shape[0] == 1: x_decoded = x_decoded.flatten()
 
-
-            eval(f'axs[col].{plot_func}(x_decoded, **plot_func_kwargs)')
+            plot_func(axs[col], x_decoded, **plot_func_kwargs)
 
             #hide labels of latent samples
             # axs[col].set_title(z0i)
@@ -1567,7 +1591,7 @@ class LatentSpaceExplorer:
         z0:list, z1:list,
         zi_f:Union[list,int],
         z0_idx:int=0, z1_idx:int=1,
-        plot_func:str=None,
+        plot_func:Callable=None,
         subplots_kwargs:dict=None, predict_kwargs:dict=None, plot_func_kwargs:dict=None,
         verbose:int=None,
         ) -> Tuple[Figure, List[plt.Axes]]:
@@ -1613,6 +1637,20 @@ class LatentSpaceExplorer:
                     - has to differ from `z0_idx`
                     - the deafult is 1
                         - will set `z1` as the second element of the latent vector 
+                - `plot_func`
+                    - `Callable`, optional
+                    - function to use for visualizing each individual sample
+                    - has to take at least 2 positional arguments
+                        - `ax`
+                            - `plt.Axes`
+                            - axis to plot onto
+                        - `X`
+                            - `np.ndarray`
+                            - dataseries to be plotted
+                    - has to take `**kwargs`
+                    - overrides `self.plot_func`
+                    - the default is `None`
+                        - will fall back to `self.plot_func()`
                 - `subplots_kwargs`
                     - dict, optional
                     - kwargs to pass to `plt.subplots()`
@@ -1754,8 +1792,7 @@ class LatentSpaceExplorer:
 
                 if x_decoded.shape[0] == 1: x_decoded = x_decoded.flatten()
 
-
-                eval(f'axs[row, col].{plot_func}(x_decoded, **plot_func_kwargs)')
+                plot_func(axs[row,col], x_decoded, **plot_func_kwargs)
 
                 #hide labels of latent samples
                 # axs[row, col].set_title(f'{z0i},{z1i}')
