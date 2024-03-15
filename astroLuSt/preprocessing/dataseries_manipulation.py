@@ -232,9 +232,11 @@ class PeriodicExpansion:
                     - the default is `None`
                 - `y`
                     - np.ndarray, optional
-                    - not needed in this method
+                    - 1D array
                     - contains x-values for all dataseries/features contained in `X`
                     - the default is `None`
+                        - will generate x-values between 0 and 1
+                        - i.e. `y = np.linspace(0,1,X.shape[1])` will be called
                 - `fit_kwargs`
                     - dict, optional
                     - kwargs to pass to `self.fit()`
