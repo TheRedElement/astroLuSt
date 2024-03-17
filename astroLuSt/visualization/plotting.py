@@ -159,7 +159,7 @@ def generate_categorical_cmap(
 
 
 def merge_figures(
-    figs:List[Figure],
+    figs:List[Union[Figure,str]],
     fig:Figure=None,
     temp_fname:str=None,
     ) -> Tuple[Figure, plt.Axes]:
@@ -170,8 +170,10 @@ def merge_figures(
         Parameters
         ----------
             - `figs`
-                - `List[Figure]`
-                - list containing matplotlib figures to be merged
+                - `List[Union[Figure,str]]`
+                - list containing
+                    - matplotlib figures to be merged
+                    - paths to images of figures to be merged
                 - has to be 1d!
             - `fig`
                 - `Figure`, optional
@@ -226,14 +228,21 @@ def merge_figures(
 
     #merging
     for idx, f in enumerate(figs):
-        #temporarily save
-        f.savefig(temp_fname)
         
-        #load and plot into merge figure
-        fig.axes[idx].imshow(plt.imread(temp_fname))
+        #check if path of figure was passed
+        if isinstance(f, str):
+            cur_fname = f
+        else:
+            cur_fname = temp_fname
+            #temporarily save
+            f.savefig(cur_fname)
         
-        #delete temporary file
-        os.remove(temp_fname)
+        #load and plot into merged figure
+        fig.axes[idx].imshow(plt.imread(cur_fname))
+        
+        #delete temporary file (if figure was passed)
+        if not isinstance(f, str):
+            os.remove(temp_fname)
     
     axs = fig.axes
 
