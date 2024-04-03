@@ -1,6 +1,7 @@
 
 #%%imports
 import numpy as np
+import polars as pl
 
 from typing import Union, Tuple, Callable
 
@@ -244,7 +245,7 @@ class DistanceModule:
 
 def mags2fluxes(
     m:Union[np.ndarray,float],
-    m_ref:Union[np.ndarray,float],
+    m_ref:Union[np.ndarray,float]=0,
     f_ref:Union[np.ndarray,float]=1,
     dm:Union[np.ndarray,float]=None,
     dm_ref:Union[np.ndarray,float]=None,
@@ -259,9 +260,11 @@ def mags2fluxes(
                 - `float`, `np.ndarray`
                 - magnitudes to be converted
             - `m_ref`
-                - `float`, `np.ndarray`
+                - `float`, `np.ndarray`, optional
                 - reference magnitude for the conversion
                     - this value is dependent on the passband in use
+                - the default is 0
+                    - will interpret input as the difference `m - m_ref`
             - `f_ref`
                 - `float`, `np.ndarray`, optional
                 - reference flux for the conversion
@@ -324,7 +327,7 @@ def mags2fluxes(
 
 def fluxes2mags(
     f:Union[np.ndarray,float],
-    f_ref:Union[np.ndarray,float],
+    f_ref:Union[np.ndarray,float]=1,
     m_ref:Union[np.ndarray,float]=0,
     df:Union[np.ndarray,float]=None,
     df_ref:Union[np.ndarray,float]=None,
@@ -339,9 +342,11 @@ def fluxes2mags(
                 - `float`, `np.array`
                 - fluxes to be converted
             - `f_ref`
-                - `float`, `np.ndarray`
+                - `float`, `np.ndarray`, optional
                 - reference flux for the conversion
                     - this value is dependent on the passband in use
+                - the default is 1
+                    - will interpret input as the fraction `f/f_ref`
             - `m_ref`
                 - `float`, `np.ndarray`, optional
                 - reference magnitude for the conversion
@@ -795,3 +800,166 @@ def flux_contribution(
         dp = float(dp)
 
     return p, dp
+
+def mags_contribution_polars(
+    df:pl.DataFrame,
+    id_col_targ:str,
+    app_mag_col_targ:str,
+    app_mag_col_cont:str,
+    ) -> pl.DataFrame:
+    """
+        - polars compatible implementation of `mags_contribution()`
+
+        Parameters
+        ----------
+            - `df`
+                - `pl.DataFrame`
+                - dataframe containing at least the following columns
+                    - `id_col_targ`
+                        - unique ids of the targets to calculate the contribution factor of
+                        - in order to calculate the contribution factor
+                            - will be grouped by
+                    - `app_mag_col_targ`
+                        - apparent magnitudes of the targets
+                    - `app_mag_col_cont`
+                        - apparent magnitudes of the contaminants
+                        - in order to calculate the contribution factor
+                            - will be aggregated over                        
+            - id_col_targ
+                - `str`
+                - name of the column in the `df`
+            - app_mag_col_targ
+                - `str`
+                - name of the column in the `df`
+            - app_mag_col_cont
+                - `str`
+                - name of the column in the `df`
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - `df_cont`
+                - `pl.DataFrame`
+                - dataframe containing the result of the estimation
+                - has the following columns
+                    - `targ_id`
+                        - id of the target the contribution of which got calculated
+                    - `cont_mag`
+                        - total magnitude of the contaminants
+                    - `targ_mag`
+                        - magnitude of the target the contribution of which got calculated
+                    - `n_contaminants`
+                        - number of contaminants contributing their signal
+                    - `contribution`
+                        - calculated contribution factor
+
+        Dependencies
+        ------------
+            - `polars`
+
+        Comments
+        --------
+    """
+    
+    #exponention of distance module
+    df_cont = df.with_columns([
+        pl.lit(10).pow(-0.4*pl.col(app_mag_col_cont)).alias('__distmodexp'),
+    ])
+
+    #total contaminating magnitude
+    df_cont = df_cont.groupby(by=id_col_targ).agg([
+        pl.lit(-2.5).alias(app_mag_col_cont)*np.log10(pl.col('__distmodexp').sum()),    #total contaminating magnitude
+        pl.col(app_mag_col_targ).mode().first(),                                        #get first most common value in aggregated columns
+        pl.col(id_col_targ).alias('n_contaminants').count()-pl.lit(1),
+    ])
+
+    df_cont = df_cont.with_columns([
+        (1/(1 + 10**(-0.4*(pl.col(app_mag_col_cont) -pl.col(app_mag_col_targ))))).alias('contribution'),
+
+    ])
+
+    return df_cont
+
+def flux_contribution_polars(
+    df:pl.DataFrame,
+    id_col_targ:str,
+    flux_col_targ:str,
+    flux_col_cont:str,
+    ) -> pl.DataFrame:
+    """
+        - polars compatible implementation of `flux_contribution()`
+
+        Parameters
+        ----------
+            - `df`
+                - `pl.DataFrame`
+                - dataframe containing at least the following columns
+                    - `id_col_targ`
+                        - unique ids of the targets to calculate the contribution factor of
+                        - in order to calculate the contribution factor
+                            - will be grouped by
+                    - `flux_col_targ`
+                        - flux of the targets
+                    - `flux_col_cont`
+                        - flux of the contaminants
+                        - in order to calculate the contribution factor
+                            - will be aggregated over                        
+            - id_col_targ
+                - `str`
+                - name of the column in the `df`
+            - flux_col_targ
+                - `str`
+                - name of the column in the `df`
+            - flux_col_cont
+                - `str`
+                - name of the column in the `df`
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - `df_cont`
+                - `pl.DataFrame`
+                - dataframe containing the result of the estimation
+                - has the following columns
+                    - `targ_id`
+                        - id of the target the contribution of which got calculated
+                    - `cont_flux`
+                        - total flux of the contaminants
+                    - `targ_flux`
+                        - flux of the target the contribution of which got calculated
+                    - `n_contaminants`
+                        - number of contaminants contributing their signal
+                    - `contribution`
+                        - calculated contribution factor
+
+        Dependencies
+        ------------
+            - `polars`
+
+        Comments
+        --------
+    """
+    
+    #exponention of distance module
+    df_cont = df.with_columns([
+        pl.lit(10).pow(-0.4*pl.col(flux_col_cont)).alias('__distmodexp'),
+    ])
+
+    #total contaminating magnitude
+    df_cont = df_cont.groupby(by=id_col_targ).agg([
+        pl.col(flux_col_cont).sum(),    #total contaminating magnitude
+        pl.col(flux_col_targ).mode().first(),                                        #get first most common value in aggregated columns
+        pl.col(id_col_targ).alias('n_contaminants').count()-pl.lit(1),
+    ])
+
+    df_cont = df_cont.with_columns([
+        (1/(1 + pl.col(flux_col_cont) /pl.col(flux_col_targ) )).alias('contribution'),
+
+    ])
+
+    return df_cont
+
