@@ -1,4 +1,8 @@
 
+#TODO: rewrite using ADQL
+#       https://astroquery.readthedocs.io/en/latest/simbad/simbad.html
+#       see MasterThesis_ComputerScience (test.ipynb)
+
 #%%imports
 from astroquery.simbad import Simbad
 from joblib import Parallel, delayed
