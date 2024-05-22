@@ -189,6 +189,7 @@ class SimbadDatabaseInterface:
 
             almofo.printf(
                 msg=f'Working on parition {idx+1}/{npartitions}',
+                context=self.get_ids.__name__,
                 type='INFO',
                 level=0,
                 verbose=verbose,
