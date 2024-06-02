@@ -26,6 +26,11 @@ class SimbadDatabaseInterface:
                 - `int`, optional
                 - how many partitions to split the `input_ids` into
                 - useful for large queries
+                    - maximum number of rows to upload is 200000
+                - some working examples are
+                    - `len(input_ids)==160000`, `npartitions=10`
+                    - `len(input_ids)==320000`, `npartitions=20`
+                    - `len(input_ids)==440000`, `npartitions=25`                
                 - the default is 1      
             - `simbad_timeout`
                 - `int`, optional
@@ -119,6 +124,10 @@ class SimbadDatabaseInterface:
                     - how many partitions to split the `input_ids` into
                     - useful for large queries
                         - maximum number of rows to upload is 200000
+                    - some working examples are
+                        - `len(input_ids)==160000`, `npartitions=10`
+                        - `len(input_ids)==320000`, `npartitions=20`
+                        - `len(input_ids)==440000`, `npartitions=25`                
                     - overrides `self.npartitions`
                     - the default is `None`
                         - will fall back to `self.npartitions`
@@ -162,6 +171,14 @@ class SimbadDatabaseInterface:
 
             Comments
             --------
+                - it is important to tune `npartitions` in a way that
+                    - the table that has to be uploaded is not too large
+                    - the table that has to be uploaded contains at least target that is cataloged in SIMBAD
+                    - some working examples are
+                        - `len(input_ids)==160000`, `npartitions=10`
+                        - `len(input_ids)==320000`, `npartitions=20`
+                        - `len(input_ids)==440000`, `npartitions=25`
+                    
         """
         
         #default parameters
