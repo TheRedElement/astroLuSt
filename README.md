@@ -20,6 +20,11 @@ from your console.
 You might need to use pip3 instead of pip depending on your python version. <br>
 Make sure you have `git` installed before you intall __astroLuSt__!
 
+For installation without dependencies use
+```shell
+python -m pip install --no-dependencies git+https://github.com/TheRedElement/astroLuSt
+```
+
 ## Files
 
 The different parts of the module are saved in *./astroLuSt*.
