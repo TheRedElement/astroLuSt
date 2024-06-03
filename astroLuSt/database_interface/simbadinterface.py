@@ -31,7 +31,12 @@ class SimbadDatabaseInterface:
                     - `len(input_ids)==160000`, `npartitions=10`
                     - `len(input_ids)==320000`, `npartitions=20`
                     - `len(input_ids)==440000`, `npartitions=25`                
-                - the default is 1      
+                - the default is `1`
+            - `nperpartition`
+                - `int`, optional
+                - number of samples (ids) to extract per partition
+                - overrides `self.npartition`
+                - the default is `None`
             - `simbad_timeout`
                 - `int`, optional
                 - the timeout to allow for the SIMBAD database before an error is raised
@@ -73,12 +78,14 @@ class SimbadDatabaseInterface:
     
     def __init__(self,
         npartitions:int=1,
+        nperpartition:int=None,
         n_jobs:int=-1,
         simbad_timeout:int=120,
         verbose:int=0,
         ) -> None:
 
         self.npartitions    = npartitions
+        self.nperpartition  = nperpartition
         self.simbad_timeout = simbad_timeout
         self.n_jobs         = n_jobs
         self.verbose        = verbose
@@ -89,6 +96,7 @@ class SimbadDatabaseInterface:
         return (
             f'{self.__class__.__name__}(\n'
             f'    npartitions={self.npartitions},\n'
+            f'    nperpartition={self.nperpartition},\n'
             f'    n_jobs={self.n_jobs},\n'
             f'    simbad_timeout={self.simbad_timeout},\n'
             f'    verbose={self.verbose},\n'
@@ -101,6 +109,7 @@ class SimbadDatabaseInterface:
     def get_ids(self,
         input_ids:List[str],
         npartitions:int=None,
+        nperpartition:int=None,
         n_jobs:int=None,
         simbad_timeout:int=None,
         verbose:int=None,
@@ -131,6 +140,14 @@ class SimbadDatabaseInterface:
                     - overrides `self.npartitions`
                     - the default is `None`
                         - will fall back to `self.npartitions`
+                - `nperpartition`
+                    - `int`, optional
+                    - number of samples (ids) to extract per partition
+                    - overrides `self.nperpartition`
+                    - if set
+                        - will be used instead of `self.npartition` to generate partitions
+                    - the default is `None`
+                        - will fall back to `self.nperpartition`               
                 - `n_jobs`
                     - `int`, optional
                     - number of cores to use for parallel execution of partitions
@@ -183,6 +200,7 @@ class SimbadDatabaseInterface:
         
         #default parameters
         if npartitions is None:             npartitions             = self.npartitions
+        if nperpartition is None:           nperpartition           = self.nperpartition
         if n_jobs is None:                  n_jobs                  = self.n_jobs
         if simbad_timeout is None:          simbad_timeout          = self.simbad_timeout
         if verbose is None:                 verbose                 = self.verbose
@@ -192,6 +210,10 @@ class SimbadDatabaseInterface:
         if 'verbose' not in parallel_kwargs.keys():
             parallel_kwargs['verbose'] = verbose        
         if query_tap_kwargs is None:        query_tap_kwargs        = dict()
+
+        #override `npartitions` is specified
+        if nperpartition is not None:
+            npartitions = int(np.ceil(len(input_ids)/nperpartition))
 
         def get4partition(
             ids:List[str],
@@ -205,7 +227,7 @@ class SimbadDatabaseInterface:
             """
 
             almofo.printf(
-                msg=f'Working on parition {idx+1}/{npartitions}',
+                msg=f'Working on parition {idx+1}/{npartitions} ({len(ids):.0f} samples)',
                 context=self.get_ids.__name__,
                 type='INFO',
                 level=0,
