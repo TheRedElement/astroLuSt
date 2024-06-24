@@ -20,10 +20,11 @@ def query_upload_table(
     df_upload:pd.DataFrame,
     upload_table_name:str,
     nsplits:int=1,
+    query_async:bool=True,
     sleep:int=0,
     verbose:int=0,
     parallel_kwargs:dict=None,
-    launch_job_async_kwargs:dict=None,
+    launch_job_kwargs:dict=None,
     ) -> pd.DataFrame:
     """
         - function to execute a query requiring a large table to be uploaded
@@ -54,6 +55,16 @@ def query_upload_table(
                 - will be passed as `indices_or_sections` to `np.array_split()`
                 - the default is 1
                     - upload the whole `df_upload`
+            - `query_async`
+                - `bool`, optional
+                - whether to query in an
+                    - asynchronosous manner
+                        - will call `tap.launch_job_async()`
+                    - synchronosous manner
+                        - will call `tap.launch_job()`
+                - for small queries `tap.launch_job()` is much faster, as it utilizes the local memory
+                - the default is `True`
+                    - will use `tap.launch_job_async()`
             - `sleep`
                 - `float`, optional
                 - time to sleep after each iteration
@@ -68,9 +79,10 @@ def query_upload_table(
                 - kwargs to pass to `joblib.parallel.Parallel()`
                 - the default is `None`
                     - will be set to `dict()`
-            - `launch_job_async_kwargs`
+            - `launch_job_kwargs`
                 - `dict`, optional
-                - kwargs to pass to `tap.launch_job_async()`
+                - kwargs to pass to `tap.launch_job_async()` or `tap.launch_job()`
+                    - depending on which one got used
                 - the default is `None`
                     - will be set to `dict()`
 
@@ -100,17 +112,18 @@ def query_upload_table(
         s:pd.DataFrame,
         query:str,
         temp_filename:str,
+        query_async:bool,
         sleep:int,
         upload_table_name:str,
         nsplits:int, idx:int=0,
         verbose:int=0,
-        launch_job_async_kwargs:dict=None,
+        launch_job_kwargs:dict=None,
         ) -> pd.DataFrame:
         """
             - subroutine for parallelization
         """
 
-        if launch_job_async_kwargs is None: launch_job_async_kwargs = dict()
+        if launch_job_kwargs is None: launch_job_kwargs = dict()
 
         almofo.printf(
             msg=f'Extracting split {idx+1}/{nsplits} (len(split): {len(s)})',
@@ -124,13 +137,21 @@ def query_upload_table(
         Table().from_pandas(s).write(temp_filename, format='votable', overwrite=True)
 
         #execute query (ignore if query failed due to HTTPError, but log just in case)
-        try:        
-            job = tap.launch_job_async(
-                query=query,
-                upload_resource=temp_filename,
-                upload_table_name=upload_table_name,
-                **launch_job_async_kwargs,
-            )
+        try:
+            if query_async:
+                job = tap.launch_job_async(
+                    query=query,
+                    upload_resource=temp_filename,
+                    upload_table_name=upload_table_name,
+                    **launch_job_kwargs,
+                )
+            else:
+                job = tap.launch_job(
+                    query=query,
+                    upload_resource=temp_filename,
+                    upload_table_name=upload_table_name,
+                    **launch_job_kwargs,
+                )
             df_res = job.get_results().to_pandas()
         except HTTPError as e:
             almofo.printf(
@@ -152,7 +173,7 @@ def query_upload_table(
     
     #default parameters
     if parallel_kwargs is None:         parallel_kwargs = dict()
-    if launch_job_async_kwargs is None: launch_job_async_kwargs = dict()
+    if launch_job_kwargs is None: launch_job_kwargs = dict()
 
 
     
@@ -163,11 +184,12 @@ def query_upload_table(
             s=s,
             query=query,
             temp_filename=f'_query_upload_table_{idx:.0f}.vot',
+            query_async=query_async,
             sleep=sleep,
             upload_table_name=upload_table_name,
             nsplits=nsplits, idx=idx,
             verbose=verbose,
-            launch_job_async_kwargs=launch_job_async_kwargs,
+            launch_job_kwargs=launch_job_kwargs,
         ) for idx, s in enumerate(splits)
     )
 
