@@ -35,15 +35,7 @@ def get_dependencies():
 
 
 #%%module specifications
-# modulename = 'astroLuSt'
-# author = 'Lukas Steinwender'
-# author_email = 'lukas.steinwender99@gmail.com'
-# maintainer = 'Lukas Steinwender'
-# maintainer_email = 'lukas.steinwender99@gmail.com'
-# url = "https://github.com/TheRedElement/astroLuSt"
 lastupdate = str(datetime.date.today())
-# version = '0.0.3'
-
 
 #%%get dependencies
 dependencies = get_dependencies()
@@ -71,10 +63,10 @@ setup(
     packages=find_packages(),
     classifiers=[
         'Intended Audience :: Science/Research',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering :: Astronomy',
         'Natural Language :: English',
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
     ],
     platforms=[],
     keywords='Astronomy, Dataanalysis',
@@ -85,7 +77,7 @@ setup(
     ],
     # package_dir={"": "astroLuSt"},
     # packages=find_packages("astroLuSt", exclude=["__pycache__", "PHOEBE_astro_LuSt.py"]),
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=dependencies,
     # package_data={
     #     "astroLuSt": ['files/Colorcodes.txt'],
