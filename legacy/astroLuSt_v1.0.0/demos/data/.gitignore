@@ -1,0 +1,2 @@
+#to keep the directory on github even if empty
+!.gitignore

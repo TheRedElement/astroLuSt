@@ -14,10 +14,10 @@ demos/test.*
 
 ##also ignore in legacy
 legacy/*/demos/data/*
-legacy/demos/wandb/
-legacy/demos/*.gif
-legacy/demos/test.*
-legacy/maxsector.py
+legacy/*/demos/wandb/
+legacy/*/demos/*.gif
+legacy/*/demos/test.*
+legacy/*/maxsector.py
 
 ##do NOT ignore
 
