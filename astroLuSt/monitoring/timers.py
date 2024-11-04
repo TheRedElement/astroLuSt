@@ -17,12 +17,12 @@ class ExecTimer:
         Attributes
         ----------
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
                 - the higher the more information will be displayed
-                - the default is 1
+                - the default is `1`
             - `print_kwargs`
-                - dict, optional
+                - `dict`, optional
                 - kwargs to pass to `print()`
                 - the default is `None`
                     - will be set to `dict()`
@@ -30,7 +30,7 @@ class ExecTimer:
         Infered Attributes
         ------------------
             - `df_protocoll`
-                - pd.DataFrame
+                - `pd.DataFrame`
                 - dataframe storing all the tasks created with one instance of `ExecTimer()`
 
         Methods
@@ -39,15 +39,16 @@ class ExecTimer:
             - `checkpoint_start()`
             - `checkpoint_end()`
             - `estimate_runtime()`
+            - `time_exec()`
             - `get_execstats()`
 
         Dependencies
         ------------
-            - matplotlib
-            - numpy
-            - pandas
-            - time
-            - typing
+            - `matplotlib`
+            - `numpy`
+            - `pandas`
+            - `time`
+            - `typing`
 
         Comments
         --------
@@ -76,10 +77,13 @@ class ExecTimer:
     def __repr__(self) -> str:
         
         return (
-            f'ExecTimer(\n'
+            f'{self.__class__.__name__}(\n'
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
+    
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def check_taskname(self,
         taskname:str,
@@ -91,7 +95,7 @@ class ExecTimer:
             Parameters
             ----------
                 - `taskname`
-                    - str
+                    - `str`
                     - unique name given to the task
             
             Raises
@@ -100,7 +104,7 @@ class ExecTimer:
             Returns
             -------
                 - `taskname`
-                    - str
+                    - `str`
                     - modified input (`taskname`)
                         - if the input was unique, it will be returned as is
                         - otherwise an index will be appended to it
@@ -128,10 +132,10 @@ class ExecTimer:
             Parameters
             ----------
                 - `taskname`
-                    - str
+                    - `str`
                     - unique name given to the task
                 - `comment`
-                    - str, optional
+                    - `str`, optional
                     - some comment to starting the task
                     - the default is `None`
                         - will be set to `''`
@@ -181,10 +185,10 @@ class ExecTimer:
             Parameters
             ----------
                 - `taskname`
-                    - str
+                    - `str`
                     - unique name given to the task to finish
                 - `comment`
-                    - str, optional
+                    - `str`, optional
                     - some comment to wrapping up the task
                     - the default is `None`
                         - will be set to `''`
@@ -250,16 +254,16 @@ class ExecTimer:
             Parameters
             ----------
                 - `taskname_pat`
-                    - str
+                    - `str`
                     - regular expression to query the `self.df_protocoll['Task']`
                         - all tasks that contain `taskname_pat` will contribute to the runtime-estimate
                 - `nrepeats`
-                    - int
+                    - `int`
                     - how often the task will be repeated
                 - `ndone`
-                    - int, optional
+                    - `int`, optional
                     - how often the task has been executed already
-                    - the default is 1
+                    - the default is `1`
             
             Raises
             ------
@@ -293,16 +297,16 @@ class ExecTimer:
             Parameters
             ----------
                 - `taskname`
-                    - str, optional
+                    - `str`, optional
                     - unique name given to the task
                     - the default is `'Decorator Task'`
                 - `start_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.checkpoint_start()`
                     - the default is `None`
                         - will default to `{}`
                 - `end_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.checkpoint_end()`
                     - the default is `None`
                         - will default to `{}`
@@ -312,7 +316,7 @@ class ExecTimer:
             Returns
             -------
                 - `wrap`
-                    - Any
+                    - `Any`
                     - output of wrapped (decorated) function
 
             Comments
@@ -367,17 +371,17 @@ class ExecTimer:
             Parameters
             ----------
                 - `n`
-                    - int, optional
+                    - `int`, optional
                     - number of times the function shall be executed in order to get a statistics
-                    - the default is 500
+                    - the default is `500`
                 - `metrics`
-                    - list, optional
+                    - `list`, optional
                     - contains callables
                     - callables calculating the requested statistics
                     - the default is `None`
                         - defaults to `[np.nanmean, np.nanmedian, np.nanmin, np.nanmax]`
                 - `drop_from_df_protocoll`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to drop the related entries from `self.df_protocoll`
                     - the default is `True`
             
@@ -457,3 +461,5 @@ class ExecTimer:
         
         #return wrap (ultimately returns wrapped_func and thus func_res)
         return wrap
+    
+    
