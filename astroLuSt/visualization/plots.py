@@ -3331,3 +3331,126 @@ def plot_predictioneval(
     axs = fig.axes
 
     return fig, axs
+
+def plot_confusion_matrix(
+    X:np.ndarray, y:np.ndarray,
+    xlab:str="Class", ylab:str="Class",
+    cbarlabel:str=None, cmap:Union[str,mcolors.Colormap]="viridis",
+    annotate:bool=True, annotationcolor:Union[str,tuple]="w",
+    textfontsize:float=None,
+    ax:plt.Axes=None,
+    fontsize:float=16,
+    ) -> Tuple[Figure,plt.Axes]:
+    """
+        - function to plot a confusion matrix
+
+        Parameters
+        ----------
+            - `X`
+                - `np.ndarray`
+                    - 2d array
+                    - value assigned to each pair of classes
+            - `y`
+                - `np.ndarray`
+                    - 1d array
+                - classes the values got calculated for
+            - `xlab`
+                - `str`, optional
+                - x-axis label
+                - the default is `"Class"`
+            - `ylab`
+                - `str`, optional
+                - y-axis label
+                - the default is `"Class"`
+            - `cbarlab`
+                - `str`, optional
+                - colorbar label
+                - the default is `None`
+            - `cmap`
+                - `str`, `mcolors.Colormap` optional
+                - matplotlib colormap to use
+                - the default is `"viridis"`
+            - `annotate`
+                - bool, optional
+                - whether to depict the heatmap values in the individiual cells
+                - the default is `True`
+            - `annotationcolor`
+                - `str`, optional
+                - color of the heatmapvalues, when depicted in the cells
+                - the default is `"w"`
+            - `annotationfontsize`
+                - `float`, optional
+                - fontsize of the heatmapvalues, when depicted in the cells
+                - the default is `None`
+                    - will result in the same value as `fontsize`
+            - `fontsize`
+                - `float`, optional
+                - fontsize of labels
+                - the default is `16`
+        
+        Raises
+        ------
+
+        Returns
+        -------
+            - `fig`
+                - `Figure`
+                - created figure
+            - `axs`
+                - `plt.Axes`
+                - axes corresponding to `fig`
+
+        Dependencies
+        ------------
+            - `numpy`
+            - `matplotlib`
+
+        Comments
+        --------
+
+    """
+
+    #default paramaeters
+    if textfontsize is None: textfontsize = fontsize
+
+
+    #generate tick positions
+    tick_positions = np.arange(0, X.shape[0], 1)
+
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+    else:
+        fig = ax.get_figure()
+
+    #plot
+    im = ax.imshow(X, cmap=cmap)
+    cbar = fig.colorbar(im, ax=ax)
+
+    #annotating
+    if annotate:
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                text = ax.text(j, i, f"{X[i, j]:.1f}",
+                            ha="center", va="center", color=annotationcolor, fontsize=textfontsize)
+
+    #set locators
+    ax.xaxis.set_major_locator(plt.MaxNLocator(X.shape[0]))
+    ax.yaxis.set_major_locator(plt.MaxNLocator(X.shape[0]))
+    ax.set_xticks(tick_positions)
+    ax.set_yticks(tick_positions)
+    ax.set_xticklabels(y)
+    ax.set_yticklabels(y)
+    
+    #fontsize
+    ax.tick_params("both", labelsize=fontsize)
+    cbar.ax.tick_params(labelsize=fontsize)
+
+    #labelling
+    cbar.set_label(cbarlabel, fontsize=fontsize)
+    ax.set_xlabel(xlab, fontsize=fontsize)
+    ax.set_ylabel(ylab, fontsize=fontsize)
+
+    axs = fig.axes
+
+    return fig, axs
