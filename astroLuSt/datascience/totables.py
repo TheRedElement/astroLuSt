@@ -20,7 +20,7 @@ def hypergrid2latex(
                 - dictionary of hyperparameters to test
                 - has to have the parameter-names as keys and the values per parameter as values
             - `pd_to_latex_kwargs`
-                - dict, optional
+                - `dict`, optional
                 - kwargs to pass to `pd.DataFrame.to_latex()`
                 - the default is `None`
                     - will be set to `dict(buf=None, index=False, position='!th', label='tab:YOURLABEL', caption=f'Hyperparameter-Grid', escape=False)`
@@ -31,7 +31,7 @@ def hypergrid2latex(
         Returns
         -------
             - `hypergrid_str`
-                - str
+                - `str`
                 - string representation of the generated LaTeX table
 
         Comments
