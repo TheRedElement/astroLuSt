@@ -1,9 +1,10 @@
 
-#TODO: DTW, correct for wrong assignment of high correlation
+#TODO: `DTW`: correct for wrong assignment of high correlation
 
 
 #%%imports
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 from typing import Callable, Tuple, List
 
@@ -16,18 +17,18 @@ class DTW:
         Attributes
         ----------
             - `X_template`
-                - np.ndarray
+                - `np.ndarray`
                 - contains arrays of template data-series
                     - act as role models, to which new samples will be compared
                     - can have different lengths
             - `y_template`
-                - np.ndarray, optional
+                - `np.ndarray`, optional
                 - array of labels corresponding to `X_template`
                 - relevant in `self.predict()` if `threshold is not None`
                 - the default `None`
                     - will generate a unique label for every sampel in `X_template`
             - `window`
-                - int, optional
+                - `int`, optional
                 - locality-constraint for the distance determination
                 - i.e. a distance between the points `X[i,j]` and `X_template[k,l]` is not allowed to be larger than the window parameter
                     - `X` is hereby the training dataset
@@ -37,23 +38,23 @@ class DTW:
                 - the default is `None`
                     - allows any distance
             - `cost_fct`
-                - callable, optional
+                - `Callable`, optional
                 - cost function to use for the calculation
                     - calculates the distance between two points
                 - has to take two arguments
                     - `x`
-                        - float
+                        - `float`
                         - feature-value 1
                     - `y`
-                        - float
+                        - `float`
                         - feature-value 2
                 - the default is `None`
                     - Will use the euclidean distance
             - `threshold`
-                - float, optional
+                - `float`, optional
                 - a classification threshold
-                    - optimal warping path which has an absolute correlation coefficient (|r_P|) higher than `threshold` will be classified as being of the same type as the template-curve
-                - has to be value in the interval [0,1]
+                    - optimal warping path which has an absolute correlation coefficient (`|r_P|`) higher than `threshold` will be classified as being of the same type as the template-curve
+                - has to be value in the interval `[0,1]`
                 - the default is `None`
                     - will output correlations instead of binary classification during prediction
 
@@ -102,12 +103,14 @@ class DTW:
     
     def __repr__(self) -> str:
         return (
-            f'DTW(\n'
+            f'{self.__class__.__name__}(\n'
             f'    X_template={repr(self.X_template)}, y_template={repr(self.y_template)},\n'
             f'    threshold={repr(self.threshold)}, window={repr(self.window)}, cost_fct={repr(self.cost_fct)},\n'
             f')'
         )
 
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def accumulate_cost_matrix(self,
         x1:np.ndarray, x2:np.ndarray,
@@ -123,13 +126,13 @@ class DTW:
             Paramters
             ---------
                 - `x1`
-                    - np.ndarray
+                    - `np.ndarray`
                     - some 1D data series
                 - `x2`
-                    - np.ndarray
+                    - `np.ndarray`
                     - some 1D data series
                 - `window`
-                    - int, optional
+                    - `int`, optional
                     - locality-constraint for the distance determination
                     - i.e. a distance between the points `x1[j]` and `x2[l]` is not allowed to be larger than the window parameter
                         - `j`, `l` are feature-indices
@@ -139,15 +142,15 @@ class DTW:
                         - if that is `None` as well
                             - allows any distance
                 - `cost_fct`
-                    - callable, optional
+                    - `Callable`, optional
                     - cost function to use for the calculation
                         - calculates the distance between two points
                     - has to take two arguments
                         - `x`
-                            - float
+                            - `float`
                             - feature-value 1
                         - `y`
-                            - float
+                            - `float`
                             - feature-value 2
                     - overrides `self.cost_fct`
                     - the default is `None`
@@ -159,7 +162,7 @@ class DTW:
             Returns
             -------
                 - `C`
-                    - np.ndarray
+                    - `np.ndarray`
                     - 2D array
                     - cost-matrix of the differences between `x1` and `x2`
 
@@ -204,14 +207,12 @@ class DTW:
         ) -> np.ndarray:
         """
             - method to compute the optimal warping path given a cost matrix
-                - Based on Senin (2008)
-                    - https://www.researchgate.net/publication/228785661_Dynamic_Time_Warping_Algorithm_Review
-
+                - Based on [Senin (2008)](https://www.researchgate.net/publication/228785661_Dynamic_Time_Warping_Algorithm_Review)
 
             Parameters
             ----------
                 - `C`
-                    - np.ndarray
+                    - `np.ndarray`
                     - 2D array
                     - cost-matrix of the differences between `X[i]` and `X_template[k]`
                         - `X` is hereby the training dataset
@@ -224,7 +225,7 @@ class DTW:
             Returns
             -------
                 - `path`
-                    - np.ndarray
+                    - `np.ndarray`
                     - contains indices of the cost-matrix `C`
                         - the indices denote the optimal warping path
                         - the indices contain the indices of the best corresponding points from both data series
@@ -269,16 +270,16 @@ class DTW:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - can contain samples of different lengths
                     - training set to be compared to `self.X_template`
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - labels corresponding to `X`
                     - not used in the method
                     - the default is `None`
                 - `window`
-                    - int, optional
+                    - `int`, optional
                     - locality-constraint for the distance determination
                     - i.e. a distance between the points `x1[j]` and `x2[l]` is not allowed to be larger than the window parameter
                         - `j`, `l` are feature-indices
@@ -286,15 +287,15 @@ class DTW:
                     - the default is `None`
                         - will fallback to `self.window`
                 - `cost_fct`
-                    - callable, optional
+                    - `Callable`, optional
                     - cost function to use for the calculation
                         - calculates the distance between two points
                     - has to take two arguments
                         - `x`
-                            - float
+                            - `float`
                             - feature-value 1
                         - `y`
-                            - float
+                            - `float`
                             - feature-value 2
                     - overrides `self.cost_fct`
                     - the default is `None`
@@ -349,17 +350,17 @@ class DTW:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - not used in the method
                     - can contain samples of different lengths
                     - training set to be compared to `self.X_template`
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - labels corresponding to `X`
                     - not used in the method
                     - the default is `None`
                 - `threshold`
-                    - float, optional
+                    - `float`, optional
                     - a classification threshold
                         - optimal warping path which has an absolute correlation coefficient (|r_P|) higher than `threshold` will be classified as being of the same type as the template-curve
                     - has to be value in the interval [0,1]
@@ -367,7 +368,7 @@ class DTW:
                     - the default is `None`
                         - will fall back to `self.threshold`
                 - `multi_hot_encoded`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to convert the calculated correlations to a multi-hot encoded matrix
                         - will consider every unique class in `self.y_template`
                         - will calculate the overall correlation trend w.r.t. `threshold` for all template-curves
@@ -377,7 +378,7 @@ class DTW:
                             - if the the result is < 0 this means that (w.r.t. `threshold`) there is no correlation
                                 - Hence a 0 will be assigned for that class
                     - only relevant if `threshold` and `self.threshold` are not `None`
-                    - the default is False
+                    - the default is `False`
                         - will return the overall correlation trend instead
                         - i.e. $\sum_{class} r_P(class) - threshold$
 
@@ -387,12 +388,12 @@ class DTW:
             Returns
             -------
                 - `y_pred`
-                    - np.ndarray
+                    - `np.ndarray`
                     - array containing the labes for `X`
                     - has shape `(X.shape[0],self.X_template.shape[0])`
                     - returns matrix of 0 and 1 if `multi_hot_encoded == True`
-                        - 1 if the overall correlation exceeds `threshold`
-                        - 0 otherwise
+                        - `1` if the overall correlation exceeds `threshold`
+                        - `0` otherwise
                     - the second axis of `y_pred` will be sorted in ascending order w.r.t. the classlabels if `multi_hot_encoded == True`
                     - otherwise returns the overall correlation as entries
 
@@ -433,22 +434,22 @@ class DTW:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - not used in the method
                     - can contain samples of different lengths
                     - training set to be compared to `self.X_template`
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - labels corresponding to `X`
                     - not used in the method
                     - the default is `None`
                 - `fit_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.fit()`
                     - the default is `None`
                         - will be set to `{}`
                 - `predict_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.predict()`
                     - the default is `None`
                         - will be set to `{}`
@@ -459,12 +460,12 @@ class DTW:
             Returns
             -------
              - `y_pred`
-                    - np.ndarray
+                    - `np.ndarray`
                     - array containing the labes for `X`
                     - has shape `(X.shape[0],self.X_template.shape[0])`
                     - returns matrix of 0 and 1 if `multi_hot_encoded == True`
-                        - 1 if the overall correlation exceeds `threshold`
-                        - 0 otherwise
+                        - `1` if the overall correlation exceeds `threshold`
+                        - `0` otherwise
                     - the second axis of `y_pred` will be sorted in ascending order w.r.t. the classlabels if `multi_hot_encoded == True`
                     - otherwise returns the overall correlation as entries
 
@@ -484,34 +485,36 @@ class DTW:
     def plot_result(self,
         X:list,
         X_idx:int=0, Xtemp_idx:int=0,
-        ):
+        ) -> Tuple[Figure,plt.Axes]:
         """
             - method to display a brief summary plot of the DTW-result for an example combination of template- and train- curve
 
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - can contain samples of different lengths
                     - training set to be compared to `self.X_template`
                     - should be same array as used to fit the classifier
                 - `X_idx`
-                    - int, optional
+                    - `int`, optional
                     - index of the sample in `X` to plot
-                    - the default is 0
+                    - the default is `0`
                 - `Xtemp_idx`
-                    - int, optional
+                    - `int`, optional
                     - index of the sample in `self.X_template` to plot
-                    - the default is 0
+                    - the default is `0`
             
             Raises
             ------
 
             Returns
             -------
-                - fig
+                - `fig`
+                    - `Figure`
                     - matplotlib figure object
-                - axs
+                - `axs`
+                    - `plt.Axes`
                     - list of matpotlib axes object
 
             Comments

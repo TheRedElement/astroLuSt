@@ -8,7 +8,7 @@ mastDownload/
 
 ##ignore in main module
 demos/data/*
-demos/wandb/
+demos/wandb
 demos/*.gif
 demos/test.*
 
