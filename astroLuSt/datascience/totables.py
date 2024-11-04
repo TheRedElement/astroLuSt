@@ -3,10 +3,11 @@
 import pandas as pd
 import re
 from tensorflow.keras import Model
+from typing import Dict
 
 #%%definitions
 def hypergrid2latex(
-    hypergrid:dict,
+    hypergrid:Dict[str,list],
     pd_to_latex_kwargs:dict=None
     ) -> str:
     """
@@ -15,7 +16,7 @@ def hypergrid2latex(
         Parameters
         ----------
             - `hypergrid`
-                - dict
+                - `Dict[str,list]`
                 - dictionary of hyperparameters to test
                 - has to have the parameter-names as keys and the values per parameter as values
             - `pd_to_latex_kwargs`
@@ -75,34 +76,40 @@ def summary2pandas_keras(
                 - `tf.keras.Model`
                 - model to extract the summary of
             - `width`
-                - int, optional
+                - `int`, optional
                 - width used in the `model.summary()` function
                 - the default is 250
             - `latex_to_file`
-                - str, bool, optional
+                - `str`, `bool`, optional
                 - filename of the file to export the latex-representation of the table to
                 - the default is `False`
                     - will not export the representation
             - `write_mode`
-                - str, optional
+                - `str`, optional
                 - mode to use for writing to `latex_to_file`
                 - the default is `a`
                     - will append to the file
             - `save`
-                - str, optional
+                - `str`, optional
                 - path to location of where to save the model summary
                 - the default is `False`
                     - will not be saved
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
         
+        Raises
+        ------
+                
         Returns
         -------
             - `df_summary`
-                - pd.DataFrame
+                - `pd.DataFrame`
                 - contains the table created with `model.summary()`
+        
+        Comments
+        --------
     """
 
     #rewrite info to list
@@ -126,7 +133,7 @@ def summary2pandas_keras(
         (model.name, "Filters"):[],
         (model.name, "Kernel Size"):[],
         (model.name, "Units"):[],
-    })
+    }, dtype=str)
     
     #extract some additional information for each layer
     activations = []
@@ -174,9 +181,9 @@ def summary2pandas_keras(
 
     #extract paramter summary and format as pandas dataframe
     df_params = pd.DataFrame({
-        "Total Parameters":[int(re.sub(r"\,", "", footer[0][14:]))],
-        "Trainable Parameters":[int(re.sub(r"\,", "", footer[1][18:]))],
-        "Non-Trainable Parameters":[int(re.sub(r"\,", "", footer[2][22:]))],
+        "Total Parameters":[re.sub(r"\,", "", footer[0][14:])],
+        "Trainable Parameters":[re.sub(r"\,", "", footer[1][18:])],
+        "Non-Trainable Parameters":[re.sub(r"\,", "", footer[2][22:])],
     })
     if verbose > 0: print(df_params)
 
