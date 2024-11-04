@@ -8,26 +8,26 @@ import numpy as np
 def angular_distance(
     ra:np.ndarray, dec:np.ndarray,
     approx:str=None,
-    ):
+    ) -> np.ndarray:
     """
         - function to calcualte the angular distance between two objects on the night-sky
 
         Parameters
         ----------
             - `ra`
-                - np.ndarray
+                - `np.ndarray`
                     - 2d
                     - each row contains ra for target1 and target2, respectively
                 - right ascension of the object(s)
-                - has to be between 0 and 2*pi
+                - has to be between `0` and `2*pi`
             - `dec`
-                - np.ndarray
+                - `np.ndarray`
                     - 2d
                     - each row contains dec for target1 and target2, respectively
                 - declination of the object(s)
-                - has to be between -pi/2 and pi/2
+                - has to be between `-pi/2` and `pi/2`
             - `approx`
-                - str, optional
+                - `str`, optional
                 - which approximation to use
                 - the default is `None`
                     - will use the general case
@@ -38,13 +38,13 @@ def angular_distance(
         Returns
         -------
             - `theta`
-                - np.ndarray
+                - `np.ndarray`
                 - same shape as `ra` and `dec` along the first axis
                 - angular distance between each sample in `ra` and `dec`
 
         Dependencies
         ------------
-            - numpy
+            - `numpy`
 
         Comments
         --------
