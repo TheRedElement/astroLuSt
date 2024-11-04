@@ -3,7 +3,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
-import scipy.stats as stats
 from typing import Union, Tuple
 
 from astroLuSt.visualization.plots import CornerPlot
@@ -20,16 +19,16 @@ class MLE:
         Infered Attributes
         ------------------
             - `mus`
-                - np.ndarray
+                - `np.ndarray`
                 - array containing the mean of the gaussians
             - `sigmas`
-                - np.ndarray
+                - `np.ndarray`
                 - array containing the standard-deviations of the gaussians
             - `covmat`
-                - np.ndarray
+                - `np.ndarray`
                 - covariance matrix of the input data
             - `corrcoeff`
-                - np.ndarray
+                - `np.ndarray`
                 - correlation matrix containing pearson correlation coefficient
 
         Methods
@@ -44,10 +43,10 @@ class MLE:
 
         Dependencies
         ------------
-            - matplotlib
-            - numpy
-            - scipy
-            - typing
+            - `matplotlib`
+            - `numpy`
+            - `scipy`
+            - `typing`
     
     """
 
@@ -67,6 +66,9 @@ class MLE:
             f'MLE(\n'
             f')'
         )
+        
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def get_mu(self,
         X:np.ndarray
@@ -77,7 +79,7 @@ class MLE:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input dataset
                     - contains samples as rows and features as columns
 
@@ -87,7 +89,7 @@ class MLE:
             Returns
             -------
                 - `mus`
-                    - np.ndarray
+                    - `np.ndarray`
                     - estimated means
 
             Comments
@@ -108,7 +110,7 @@ class MLE:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input dataset
                     - contains samples as rows and features as columns
             Raises
@@ -117,7 +119,7 @@ class MLE:
             Returns
             -------
                 - `sigmas`
-                    - np.ndarray
+                    - `np.ndarray`
                     - standard deviation for every feature
 
             Comments
@@ -137,7 +139,7 @@ class MLE:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray, optional
+                    - `np.ndarray`
                     - input dataset
                     - contains samples as rows and features as columns
                 
@@ -147,7 +149,7 @@ class MLE:
             Returns
             -------
                 - `covmat`
-                    - np.ndarray
+                    - `np.ndarray`
                     - covariance matrix for a given set of datasets (`X`)
                 
             Comments
@@ -170,11 +172,11 @@ class MLE:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input dataset
                     - contains samples as rows and features as columns
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - labels corresponding to `X`
                     - not needed for actual calculation
                         - only used for plotting
@@ -212,13 +214,13 @@ class MLE:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - input dataset
                     - contains samples as rows and features as columns
                     - not needed for prediction
                     - the default is `None`
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - labels corresponding to `X`
                     - not needed for prediction
                         - only used for plotting
@@ -230,13 +232,13 @@ class MLE:
             Returns
             -------
                 - `mus`
-                    - np.ndarray
+                    - `np.ndarray`
                     - array containing the mean of the gaussians
                 - `sigmas`
-                    - np.ndarray
+                    - `np.ndarray`
                     - array containing the standard-deviations of the gaussians
                 - `covmat`
-                    - np.ndarray
+                    - `np.ndarray`
                     - covariance matrix of the input data
 
             Comments
@@ -256,11 +258,11 @@ class MLE:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input dataset
                     - contains samples as rows and features as columns
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - labels corresponding to `X`
                     - not needed for actual calculation
                         - only used for plotting
@@ -272,13 +274,13 @@ class MLE:
             Returns
             -------
                 - `mus`
-                    - np.ndarray
+                    - `np.ndarray`
                     - array containing the mean of the gaussians
                 - `sigmas`
-                    - np.ndarray
+                    - `np.ndarray`
                     - array containing the standard-deviations of the gaussians
                 - `covmat`
-                    - np.ndarray
+                    - `np.ndarray`
                     - covariance matrix of the input data
 
             Comments
@@ -301,14 +303,14 @@ class MLE:
             Parameters
             ----------
                 - `featurenames`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - names to give to the features present in `self.X`
                     - the deafault is `None`
                 - `corner_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `astroLuSt.visualization.plots.CornerPlot().plot()`
                     - the default is `None`
-                        - will initialize with `{}`
+                        - will initialize with `dict()`
 
             Raises
             ------
@@ -316,17 +318,17 @@ class MLE:
             Returns
             -------
                 - `fig`
-                    - Figure
+                    - `Figure`
                     - the created matplotlib figure
                 - `axs`
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
                     
             Comments
             --------
         """
 
-        if corner_kwargs is None: corner_kwargs = {}
+        if corner_kwargs is None: corner_kwargs = dict()
 
         CP = CornerPlot()
         fig, axs = CP.plot(
