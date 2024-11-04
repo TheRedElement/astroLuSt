@@ -53,7 +53,7 @@ def query_upload_table(
                 - `int`, optional
                 - number of splits to generate of the input table
                 - will be passed as `indices_or_sections` to `np.array_split()`
-                - the default is 1
+                - the default is `1`
                     - upload the whole `df_upload`
             - `query_async`
                 - `bool`, optional
@@ -69,11 +69,11 @@ def query_upload_table(
                 - `float`, optional
                 - time to sleep after each iteration
                 - will be passed to `time.sleep()`
-                - the deafault is 0
+                - the deafault is `0`
             - `verbose`
                 - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
             - `parallel_kwargs`
                 - `dict`, optional
                 - kwargs to pass to `joblib.parallel.Parallel()`
@@ -97,12 +97,12 @@ def query_upload_table(
 
         Dependencies
         ------------
-            - astroquery
-            - astropy
-            - joblib
-            - numpy
-            - pandas
-            - os
+            - `astroquery`
+            - `astropy`
+            - `joblib`
+            - `numpy`
+            - `pandas`
+            - `os`
         
         Comments
         --------
@@ -199,6 +199,3 @@ def query_upload_table(
 
     return df_res
 
-
-
-# %%
