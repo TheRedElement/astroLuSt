@@ -59,7 +59,7 @@ class EleanorDatabaseInterface:
         Infered Attributes
         ------------------
             - `self.LE`
-                - `astroLuSt.monitoring.errorloggin.LogErrors` instance
+                - `astroLuSt.monitoring.errorlogging.LogErrors` instance
                 - used to log and display caught errors
 
         Methods

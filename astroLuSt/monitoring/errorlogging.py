@@ -274,7 +274,8 @@ class LogErrors:
         df_temp.index = [idx]*df_temp.shape[0]
 
         if store:
-            self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
+            dfs2cat = [self.df_errorlog, df_temp]
+            self.df_errorlog = pd.concat([df for df in dfs2cat if not df.empty])
 
         return df_temp
 

@@ -157,7 +157,6 @@ def generate_categorical_cmap(
 
     return cmap
 
-
 def merge_figures(
     figs:List[Union[Figure,str]],
     fig:Figure=None,

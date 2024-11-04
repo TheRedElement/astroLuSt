@@ -5,7 +5,7 @@ import numpy as np
 #%%definitions
 def kdist(X:np.ndarray, k:int=4) -> np.ndarray:
     """
-        - function to return the distance of every datapoint in "X" to its k-th nearest neighbour
+        - function to return the distance of every datapoint in `X` to its k-th nearest neighbour
         - useful for generating kdist-graphs ([Ester et al., 1996](https://ui.adsabs.harvard.edu/abs/1996kddm.conf..226E/abstract))
             - kdist-plots are used to determing the epsilon environment for DBSCAN
 
