@@ -20,7 +20,7 @@ class Binning:
         ----------
             - `nintervals`
                 - `float`, `int` optional
-                - nuber of intervals/bins to generate
+                - number of intervals/bins to generate
                 - if a value between `0` and `1` is passed
                     - will be interpreted as fraction of input dataseries length
                 - if a value greater than `1` is passed

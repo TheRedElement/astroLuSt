@@ -13,6 +13,311 @@ from astroLuSt.preprocessing.binning import Binning
 
 
 #%%definitions
+class PercentileClipping:
+    """
+        - class to remove outliers
+        - will clip all outliers that are lower than the `pmin`-th percentile or higher than the `pmax`-th percentile of the `y` values of a given dataseries
+        - follows a similar convention as the scikit-learn library
+
+        Attributes
+        ----------
+            - `pmin`
+                - `int`, optional
+                - lower bound of the percentile interval
+                    - value from `0` to `100` inclusive
+                - the default is `5`
+            - `pmin`
+                - `int`, optional
+                - upper bound of the percentile interval
+                    - value from `0` to `100` inclusive
+                - the default is `95`
+            - `verbose`   
+                - `int`, optional
+                - verbosity level
+                - the default is `0`
+
+        Infered Attributes
+        ------------------
+            - `clip_mask`
+                - `np.ndarray`
+                - final mask for the retained values
+                - `1` for every value that got retained
+                - `0` for every value that got cut
+            - `percentiles`
+                - `np.ndarray`
+                - array containing the upper and lower value corresponding to the `pmin`-th and `pmax`-th percentile, respectively
+
+        Methods
+        -------
+            - `fit()`
+            - `transform()`
+            - `fit_transform()`
+            - `plot_result()`
+
+        Dependencies
+        ------------
+            - `matplotlib`
+            - `numpy`
+            - `typing`
+            - `warnings`
+        
+        Comments
+        --------
+
+
+    """
+
+    def __init__(self,
+        pmin:int=5, pmax:int=95,
+        verbose:int=0,
+        ) -> None:
+
+        self.pmin = pmin
+        self.pmax = pmax
+
+        self.verbose = verbose
+
+        return
+    
+    def __repr__(self) -> str:
+        
+        return (
+            f'{self.__class__.__name__}(\n'
+            f'    pmin={repr(self.pmin)},\n'
+            f'    pmax={repr(self.pmax)},\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
+
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
+    def fit(self,
+        x:np.ndarray, y:np.ndarray,
+        pmin:int=None, pmax:int=None,
+        verbose:int=None
+        ) -> None:
+        """
+            - method to apply `PercentileClipping`
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - `x`
+                    - `np.ndarray`
+                    - x-values of the dataseries to clip
+                - `y`
+                    - `np.ndarray`
+                    - y-values of the dataseries to clip
+            - `pmin`
+                - `int`, optional
+                - lower bound of the percentile interval
+                    - value from `0` to `100` inclusive
+                - will overwrite `self.pmin` if set
+                - the default is `None`
+                    - will use `self.pmin`
+            - `pmax`
+                - `int`, optional
+                - upper bound of the percentile interval
+                    - value from `0` to `100` inclusive
+                - will overwrite `self.pmax` if set
+                - the default is `None`
+                    - will use `self.pmax`
+            - `verbose`
+                - `int`, optional
+                - verbosity level
+                - overwrites `self.verbose`
+                - the default is `None`
+                    - will use `self.verbose`
+
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+    
+        if verbose is None:
+            verbose = self.verbose
+
+        if pmin is None: pmin = self.pmin
+        if pmax is None: pmax = self.pmax
+
+        #assign input values
+        self.x = x
+        self.y = y
+       
+        self.percentiles = np.percentile(y, q=[pmin, pmax])
+        self.clip_mask = ((self.percentiles[0]<y)&(y<self.percentiles[1]))
+
+        return
+    
+    def transform(self,
+        x:np.ndarray=None, y:np.ndarray=None,
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to transform the input-dataseries
+            - similar to scikit-learn scalers
+
+            Parameters
+            ----------
+                - `x`
+                    - `np.ndarray`
+                    - x-values of the dataseries to clip
+                    - preferably sorted
+                    - the default is `None`
+                        - will return the clipped version of the array's passed to last call of `self.fit()`
+                - `y`
+                    - `np.ndarray`
+                    - y-values of the dataseries to clip
+                    - preferably sorted w.r.t. `x`
+                    - the default is `None`
+                        - will return the clipped version of the array's passed to last call of `self.fit()`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_clipped`
+                    - `np.ndarray`
+                    - the clipped version of the x-values of the input dataseries
+                - `y_clipped`
+                    - `np.ndarray`
+                    - the clipped version of the y-values of the input dataseries 
+
+            Comments
+            --------
+        """
+
+        if x is None: x = self.x
+        if y is None: y = self.y
+
+        x_clipped = x[self.clip_mask]
+        y_clipped = y[self.clip_mask]        
+        
+        return x_clipped, y_clipped
+
+    def fit_transform(self,
+        x:np.ndarray, y:np.ndarray,
+        fit_kwargs:dict=None
+        ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+            - method to fit the transformer and transform the data in one go
+            - similar to scikit-learn scalers
+            
+            Parameters
+            ----------
+                - `x`
+                    - `np.ndarray`
+                    - x-values of the dataseries to clip
+                    - preferably sorted
+                - `y`
+                    - `np.ndarray`
+                    - y-values of the dataseries to clip
+                    - preferably sorted w.r.t. `x`
+                - `fit_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `self.fit()`
+                    - the default is `None`
+                        - will be set to `{}`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_clipped`
+                    - `np.ndarray`
+                    - the clipped version of the x-values of the input dataseries
+                - `y_clipped`
+                    - `np.ndarray`
+                    - the clipped version of the y-values of the input dataseries
+
+            Comments
+            --------
+
+        """
+
+        if fit_kwargs is None:
+            fit_kwargs = {}
+
+        self.fit(x, y, **fit_kwargs)
+        x_clipped, y_clipped = self.transform(x, y)
+
+        return x_clipped, y_clipped
+    
+    def plot_result(self,
+        show_cut:bool=True,
+        show_bounds:bool=True,
+        ) -> Tuple[Figure, plt.Axes]:
+        """
+           - method to create a plot visualizing the sigma-clipping result
+
+            Parameters
+            ----------
+                - `show_cut`
+                    - `bool`, optional
+                    - whether to also display the cut datapoints in the summary
+                    - the default is `True`
+                - `show_bounds`
+                    - `bool`, optional
+                    - whether to also display the percentile boundaries
+                    - the default is `True`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - `Figure`
+                    - figure created if verbosity level specified accordingly
+                - `axs`
+                    - `plt.Axes`
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
+
+        """
+        ret_color = "tab:blue"
+        cut_color = "tab:grey"
+        per_color = 'tab:orange'
+
+
+        patches = []
+        #plot
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+
+        #sort axis
+        ax1.set_zorder(3)
+        # ax1.patch.set_visible(False)
+
+
+        patches.append(    ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],      color=ret_color, alpha=1.0, zorder=3, label='Retained'))
+        if show_cut:
+            patches.append(ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],     color=cut_color, alpha=0.7, zorder=2, label='Clipped'))
+        if show_bounds:
+            patches.append(ax1.axhline(self.percentiles[0],     linestyle='--',              color=per_color, alpha=1.0, zorder=2, label='Chosen Percentile'))
+            patches.append(ax1.axhline(self.percentiles[1],     linestyle='--',              color=per_color, alpha=1.0, zorder=2))
+
+        
+        ax1.set_xlabel('x')
+        ax1.set_ylabel('y')
+
+        ax1.legend(patches, [s.get_label() for s in patches])
+
+        plt.tight_layout()
+
+        axs = fig.axes
+
+        return fig, axs
+    
 class SigmaClipping:
     """
         - class to execute sigma-clipping on `x` and `y`
@@ -21,122 +326,140 @@ class SigmaClipping:
         Attributes
         ----------
             - `sigma_bottom`
-                - float, optional
+                - `float`, optional
                 - multiplier for the bottom boundary
                 - i.e. `bottom boundary = mean_y - sigma_bottom*std_y`
-                - the default is 2
+                - the default is `2`
                     - i.e. `2*sigma`
             - `sigma_top`
-                - float, optional
+                - `float`, optional
                 - multiplier for the top boundary
                 - i.e. `top boundary = mean_y + sigma_top*std_y`
-                - the default is 2
+                - the default is `2`
                     - i.e. `2*sigma`
+            - `nintervals`
+                - `float`, `int` optional
+                - attribute of `astroLuSt.preprocessing.binning.Binning`
+                - number of intervals/bins to generate
+                - the default is `0.5`
+            - `npoints_per_interval`
+                - `float`, `int`, optional
+                - attribute of `astroLuSt.preprocessing.binning.Binning`
+                - generate intervals/bins automatically such that each bin contains `npoints_per_interval` datapoints
+                    - the last interval will contain all datapoints until the end of the dataseries
+                - the default is `None`
+                    - will use `nintervals` to generate the bins
             - `use_polynomial`
-                - bool, optional
+                - `bool`, optional
                 - whether to use a polynomial fit instead of binning to estimate the mean curve
                 - will use the std of the whole current curve and define upper and lower boundary by
                     - `upper_bound := y_mean + sigma_top    * np.nanstd(y_cur)`
                     - `lower_bound := y_mean - sigma_bottom * np.nanstd(y_cur)`
                     - `y_cur` is the clipped curve after the n-th iteration
                 - the default is `False`
+            - `poly_degree`
+                - `int`, optional
+                - degree of the legendre polynomial to use
+                - only applies if `use_polynomial==True`
+                - the default is `10`
             - `use_init_curve_sigma`
-                - bool, optional
+                - `bool`, optional
                 - whether to use the standard deviation of the initial curve accross all iterations to generate boundaries
                 - if `False` will recalculate the standard deviation for each iteration anew and adjust the boundaries accordingly
                 - the default is `False` 
             - `bound_history`
-                - bool, optional
+                - `bool`, optional
                 - whether to store a history of all upper and lower bounds created during `self.fit()`
                 - the default is `False`
             - `clipmask_history`
-                - bool, optional
+                - `bool`, optional
                 - whether to store a history of all clip_mask created during `self.fit()`
                 - the default is `False`
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
             - `binning_kwargs`
-                - dict, optional
+                - `dict`, optional
                 - kwargs for the `Binning` class
                 - used to generate mean curves if none are provided
                 - the default is `None`
-                    - will initialize with `{'nintervals':0.1, 'ddof':1}`
+                    - will initialize with `dict(ddof=1)`
 
         Infered Attributes
         ------------------
             - `clip_mask`
-                - np.ndarray
+                - `np.ndarray`
                 - final mask for the retained values
-                - 1 for every value that got retained
-                - 0 for every value that got cut
+                - `1` for every value that got retained
+                - `0` for every value that got cut
             - `clip_masks`
-                - list
+                - `list`
                     - contains np.ndarrays
                     - every `clip_mask` created while fitting transformer
                 - only will be filled if `clipmask_history == True`
             - `lower_bound`
-                - np.ndarray
+                - `np.ndarray`
                 - traces out the lower bound to be considered for the sigma-clipping
             - `lower_bounds`
-                - list
+                - `list`
                     - contains np.ndarrays
                     - every `lower_bound` created while fitting the transformer
                 - only will be filled if `bound_history == True`
             - `mean_x`
-                - np.ndarray
+                - `np.ndarray`
                 - x-values of the mean curve created in the last iteration of `self.fit()`
             - `mean_y`
-                - np.ndarray
+                - `np.ndarray`
                 - y-values of the mean curve created in the last iteration of `self.fit()`
             - `std_y`
-                - np.ndarray
+                - `np.ndarray`
                 - standard deviation of the y-values of the mean curve created in the last iteration of `self.fit()`
             - `upper_bound`
-                - np.ndarray
+                - `np.ndarray`
                 - traces out the upper bound to be considered for the sigma-clipping
             - `upper_bounds`
-                - list
-                    - contains np.ndarrays
+                - `list`
+                    - contains `np.ndarrays`
                     - every upper_bound created while fitting the transformer
                 - only will be filled if `bound_history == True`
             - `x`
-                - np.ndarray
+                - `np.ndarray`
                 - x values of the input data series
             - `y`
-                - np.ndarray
+                - `np.ndarray`
                 - y values of the input data series
             - `y_mean_interp`
-                - np.ndarray
+                - 'np.ndarray'
                 - traces out the interpolated mean representative curve (resulting from binning)
             - `y_std_interp`
-                - np.ndarray
+                - `np.ndarray`
                 - traces out the interpolated standard deviation of the mean representative curve
 
         Methods
         -------
             - `get_mean_curve()`
             - `clip_curve()`
-            - `plot_result()`
             - `fit()`
             - `transform()`
             - `fit_transform()`
+            - `plot_result()`
 
         Dependencies
         ------------
-            - matplotlib
-            - numpy
-            - re
-            - typing
+            - `matplotlib`
+            - `numpy`
+            - `re`
+            - `typing`
 
         Comments
         --------
     """
 
-
     def __init__(self,
         sigma_bottom:float=2, sigma_top:float=2,
+        nintervals:Union[float,int]=0.2, npoints_per_interval:Union[float,int]=None,
         use_polynomial:bool=False,
+        poly_degree:int=10,
         use_init_curve_sigma:bool=True,
         bound_history:bool=False, clipmask_history:bool=False,
         verbose:int=0,
@@ -146,13 +469,15 @@ class SigmaClipping:
         self.sigma_bottom = sigma_bottom
         self.sigma_top = sigma_top
 
+        self.nintervals = nintervals
+        self.npoints_per_interval = npoints_per_interval
+
         self.use_polynomial = use_polynomial
+        self.poly_degree = poly_degree
         self.use_init_curve_sigma = use_init_curve_sigma
 
-        if binning_kwargs is None:
-            self.binning_kwargs = {'nintervals':0.1, 'ddof':1}
-        else:
-            self.binning_kwargs = binning_kwargs
+        if binning_kwargs is None:  self.binning_kwargs = dict(ddof=1)
+        else:                       self.binning_kwargs = binning_kwargs
 
         self.clipmask_history = clipmask_history
         self.bound_history = bound_history
@@ -178,8 +503,9 @@ class SigmaClipping:
     
     def __repr__(self) -> str:
         return (
-            f'SigmaClipping(\n'
+            f'{self.__class__.__name__}(\n'
             f'    sigma_bottom={repr(self.sigma_bottom)}, sigma_top={repr(self.sigma_top)},\n'
+            f'    nintervals={repr(self.nintervals)}, npoints_per_interval={repr(self.npoints_per_interval)},\n'
             f'    use_polynomial={repr(self.use_polynomial)},\n'
             f'    use_init_curve_sigma={repr(self.use_init_curve_sigma)},\n'
             f'    bound_history={repr(self.bound_history)}, clipmask_history={repr(self.clipmask_history)},\n'
@@ -188,11 +514,13 @@ class SigmaClipping:
             f')'
         )
     
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
     def get_mean_curve(self,
         x:np.ndarray, y:np.ndarray,
         mean_x:np.ndarray=None, mean_y:np.ndarray=None, std_y:np.ndarray=None,
         verbose:int=None,
-        legfit_kwargs:dict=None,
         ) -> None:
         """
             - method to adopt the mean curves if provided and generate some if not
@@ -200,43 +528,38 @@ class SigmaClipping:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - x-values of the dataseries to generate the mean curve for
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - y-values of the dataseries to generate the mean curve for
                 - `mean_x`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - x-values of a representative mean curve
                     - does not have to have the same shape as `x`
                     - same shape as `mean_y` and `std_y`
                     - if `None` will infer a mean curve via data-binning
                     - the default is `None`
                 - `mean_y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - y-values of a representative mean curve
                     - does not have to have the same shape as `y`
                     - same shape as `mean_x` and `std_y`
                     - if `None` will infer a mean curve via data-binning
                     - the default is `None`
                 - `std_y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - standard deviation/errorbars of the representative mean curve in y-direction
                     - does not have to have the same shape as `y`
                     - same shape as `mean_x` and `mean_y`
                     - if `None` will be infered via data-binning
                     - the default is `None`
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overwrites `self.verbose`
                     - the default is `None`
                         - will use `self.verbose`
-                - `legfit_kwargs`
-                    - dict, optional
-                    - kwargs to pass to `np.polynomial.legfit()`
-                    - the default is None
-                        - will be set to `{'deg':10}`
             
             Raises
             ------
@@ -248,8 +571,6 @@ class SigmaClipping:
             --------
         """
         
-        if legfit_kwargs is None:
-            legfit_kwargs = {'deg':10}            
         if verbose is None:
             verbose = self.verbose
 
@@ -261,13 +582,13 @@ class SigmaClipping:
             
             if verbose > 0:
                 print(
-                    f"INFO(SigmaClipping): Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
+                    f"INFO({self.__class__.__name__}): Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
                 )
             
             #fit legendre polynomial
             if self.use_polynomial:
                 nanbool = (np.isfinite(x)&np.isfinite(y))   #get rid of np.nan for the fit
-                coeffs = np.polynomial.legendre.legfit(x[nanbool], y[nanbool], **legfit_kwargs)
+                coeffs = np.polynomial.legendre.legfit(x[nanbool], y[nanbool], deg=self.poly_degree)
                 mean_x = x.copy()
                 mean_y = np.polynomial.legendre.legval(x, coeffs, tensor=False)
                 std_y  = np.zeros_like(mean_y)+np.nanstd(y.copy(), ddof=cur_ddof)
@@ -275,6 +596,7 @@ class SigmaClipping:
             #use binning in phase to obtain the mean curve
             else:
                 binning = Binning(
+                    nintervals=self.nintervals, npoints_per_interval=self.npoints_per_interval,
                     verbose=verbose-1,
                     **self.binning_kwargs
                 )
@@ -305,7 +627,6 @@ class SigmaClipping:
         sigma_bottom:float=None, sigma_top:float=None,
         prev_clip_mask:np.ndarray=None,
         verbose:int=None,
-        legfit_kwargs:dict=None,
         ) -> None:
         """
             - method to actually execute sigma-clipping on `x` and `y` (once)
@@ -314,65 +635,60 @@ class SigmaClipping:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - x-values of the dataseries to generate the mean curve for
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - y-values of the dataseries to generate the mean curve for
                 - `mean_x`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - x-values of a representative mean curve
                     - does not have to have the same shape as `x`
                     - same shape as `mean_y` and `std_y`
                     - if `None` will infer a mean curve via data-binning
                     - the default is `None`
                 - `mean_y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - y-values of a representative mean curve
                     - does not have to have the same shape as `y`
                     - same shape as `mean_x` and `std_y`
                     - if `None` will infer a mean curve via data-binning
                     - the default is `None`
                 - `std_y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - standard deviation/errorbars of the representative mean curve in y-direction
                     - does not have to have the same shape as `y`
                     - same shape as `mean_x` and `mean_y`
                     - if `None` will be infered via data-binning
                     - the default is `None`
                 - `sigma_bottom`
-                    - float, optional
+                    - `float`, optional
                     - multiplier for the bottom boundary
                     - i.e. `bottom boundary = mean_y - sigma_bottom*std_y`
                     - if set will completely overwrite the existing attribute `self.sigma_bottom`
                         - i.e. `self.sigma_bottom` will be set as sigma_bottom
-                    - the default is 2
+                    - the default is `2`
                         - i.e. `2*sigma`
                 - `sigma_top`
-                    - float, optional
+                    - `float`, optional
                     - multiplier for the top boundary
                     - i.e. `top boundary = mean_y + sigma_top*std_y`
                     - if set will completely overwrite the existing attribute `self.sigma_top`
                         - i.e. `self.sigma_top` will be set as `sigma_top`
-                    - the default is 2
+                    - the default is `2`
                         - i.e. `2*sigma`
                 - `prev_clip_mask`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - boolean array
                     - contains any previously used `clip_mask`
                     - before the clipping will be applied, `x` and `y` will be masked by `prev_clip_mask`
                     - the default is `None`
                         - no masking applied
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overwrites `self.verbose`
                     - the default is `None`                   
-                - `legfit_kwargs`
-                    - dict, optional
-                    - kwargs to pass to `np.polynomial.legfit()`
-                    - the default is `None`
-                        - will be set to `{'deg':10}`
 
             Raises
             ------
@@ -397,8 +713,6 @@ class SigmaClipping:
             self.sigma_top = sigma_top
 
         #initialize parameters
-        if legfit_kwargs is None:
-            legfit_kwargs = {'deg':10}
         if prev_clip_mask is None: prev_clip_mask = np.ones_like(self.x, dtype=bool)
 
         #create copy of input arrays to not overwrite them during execution
@@ -415,7 +729,7 @@ class SigmaClipping:
 
 
         #obtain mean (binned) curves
-        self.get_mean_curve(x_cur, y_cur, mean_x, mean_y, std_y, verbose=verbose, legfit_kwargs=legfit_kwargs)
+        self.get_mean_curve(x_cur, y_cur, mean_x, mean_y, std_y, verbose=verbose)
 
         #mask of what to retain
         self.lower_bound = self.y_mean_interp-sigma_bottom*self.y_std_interp 
@@ -448,38 +762,38 @@ class SigmaClipping:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - x-values of the dataseries to clip
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - y-values of the dataseries to clip
                 - `mean_x`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - x-values of a representative mean curve
                     - does not have to have the same shape as `x`
                     - same shape as `mean_y` and `std_y`
                     - if `None` will infer a mean curve via data-binning
                     - the default is `None`
                 - `mean_y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - y-values of a representative mean curve
                     - does not have to have the same shape as `y`
                     - same shape as `mean_x` and `std_y`
                     - if `None` will infer a mean curve via data-binning
                     - the default is `None`
                 - `std_y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - standard deviation/errorbars of the representative mean curve in y-direction
                     - does not have to have the same shape as `y`
                     - same shape as `mean_x` and `mean_y`
                     - if `None` will be infered via data-binning
                     - the default is `None`
                 - `n_iter`
-                    - int, optional
+                    - `int`, optional
                     - how often to apply `SigmaClipping` recursively
-                    - the default is 1
+                    - the default is `1`
                 - `stopping_crit`
-                    - str, optional
+                    - `str`, optional
                     - stopping criterion to exit the `SigmaClipping` loop
                     - will be evaluated
                         - i.e. `eval(stopping_crit)` will be called
@@ -504,12 +818,12 @@ class SigmaClipping:
                     - the default is `None`
                         - will continue until `n_iter` is reached
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overwrites `self.verbose`
                     - the default is `None`
                 - `clip_curve_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.clip_curve()`
                     - the default is None
                         - will be set to `{}`
@@ -525,7 +839,7 @@ class SigmaClipping:
         """
 
         if clip_curve_kwargs is None:
-            clip_curve_kwargs = {}
+            clip_curve_kwargs = dict()
 
         #check types
         if not isinstance(x, np.ndarray):
@@ -567,15 +881,15 @@ class SigmaClipping:
 
         for n in range(n_iter):
             if verbose > 0:
-                print(f'INFO(SigmaClipping): Executing iteration #{n+1}/{n_iter}')
+                print(f'INFO({self.__class__.__name__}): Executing iteration #{n+1}/{n_iter}')
 
             self.clip_curve(mean_x, mean_y, std_y, **cur_clip_curve_kwargs)
 
             #print the output of the stopping criterion
-            if verbose > 2: print('INFO(SigmaClipping): stopping_crit evaluated to: %g'%(eval(re.findall(r'^[^<>=!]+', stopping_crit)[0])))
+            if verbose > 2: print(f'INFO({self.__class__.__name__}): stopping_crit evaluated to: %g'%(eval(re.findall(r'^[^<>=!]+', stopping_crit)[0])))
             if eval(stopping_crit):
                 if verbose > 0:
-                    print(f'INFO(SigmaClipping): stopping_crit fullfilled... Exiting after iteration #{n+1}/{n_iter}')
+                    print(f'INFO({self.__class__.__name__}): stopping_crit fullfilled... Exiting after iteration #{n+1}/{n_iter}')
                 
                 #restore values of previous iteration
                 
@@ -601,12 +915,12 @@ class SigmaClipping:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - x-values of the dataseries to clip
                     - the default is `None`
                         - will return the clipped version of the array's passed to last call of `self.fit()`
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - y-values of the dataseries to clip
                     - the default is `None`
                         - will return the clipped version of the array's passed to last call of `self.fit()`
@@ -616,10 +930,10 @@ class SigmaClipping:
             Returns
             -------
                 - `x_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the x-values of the input dataseries
                 - `y_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the y-values of the input dataseries
 
             Comments
@@ -646,13 +960,13 @@ class SigmaClipping:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - x-values of the dataseries to clip
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - y-values of the dataseries to clip
                 - `fit_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.fit()`
                     - the default is `None`
                         - will be set to `{}`
@@ -663,10 +977,10 @@ class SigmaClipping:
             Returns
             -------
                 - `x_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the x-values of the input dataseries
                 - `y_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the y-values of the input dataseries                
             
             Comments
@@ -695,15 +1009,15 @@ class SigmaClipping:
             Parameters
             ----------
                 - `show_cut`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also display the cut datapoints in the summary
                     - the default is `True`
                 - `iteration`
-                    - int, optional
+                    - `int`, optional
                     - which iteration of the `SigmaClipping` to display when plotting
                     - only usable if `self.clipmask_history` AND `self.bound_history` are `True`
                         - serves as index to the lists containing the histories
-                    - the default is -1
+                    - the default is `-1`
                         - i.e. the last iterations
 
             Raises
@@ -712,10 +1026,10 @@ class SigmaClipping:
             Returns
             -------
                 - `fig`
-                    - matplotlib Figure
+                    - `Figure`
                     - figure created if verbosity level specified accordingly
                 - axs
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
 
             Comments
@@ -762,7 +1076,6 @@ class SigmaClipping:
 
         return fig, axs
 
-
 class StringOfPearls:
     """
         - class to remove outliers which are at consecutive positions on the input dataseries and the `metric` of which does not exceed a threshold `th`
@@ -771,59 +1084,58 @@ class StringOfPearls:
         Attributes
         ----------
             - `window_size`
-                - int, optional
+                - `int`
                 - minimum number of consecutive datapoints the `metric` of which shall not exceed `th`
                 - if `th` gets exceeded by `window_size` consecutive points, the respective points get clipped 
-                - the default is 3
             - `th`
-                - float, callable, optional
+                - `float`, `Callable`
                 - threshold defining the lower boundary of the value the consecutive elements shall not exceed
-                - if a callable is passed
+                - if a `Callable` is passed
                     - the callable has to take two arguments (`x`, and `y`)
-                    - the callable has to return a float
-                - the default is 0.01
+                    - the callable has to return a `float`
             - `metric`
-                - callable, optional
+                - `Callable`, optional
                 - metric to use for comparison with `th`
-                - the passed callable has to
+                - the passed `Callable` has to
                     - take two arguments (`x`, and `y`)
                     - return an array of the same size as `x` and `y`
                 - the default is `None`
                     - will use the absolute gradient in `y` direction
                     - i.e. `np.abs(np.gradient(y))` will be called
             - `looseness`
-                - float, int, optional
+                - `float`, `int`, optional
                 - number of points in a window that are allowed not to exceed `th` for the series to still get clipped
-                - if an int is passed
+                - if an `int` is passed
                     - interpreted as the number of points that are allowed to not exceed `th`
-                - if a float is passed
-                    - if between 0 and 1
+                - if a `float` is passed
+                    - if between `0` and `1`
                         - interpreted as the fraction of `window_size`
-                    - if > 1
+                    - `if > 1`
                         - will be converted to an int and then interpreted as if an int was passed
-                - the default is 0
-                    - all points in a window much exceed `th`
+                - the default is `0`
+                    - all points in a window must exceed `th`
             - `window`
-                - np.ndarray, optoinal
+                - `np.ndarray`, optional
                 - window to use for the convolution of the boolean
                 - if passed, will overwrite `window_size`
+                    - pass an arbitrary `window_size` if you want to use `window`
                 - the default is `None`
                     - will result in a window of `[1]*window_size`
-                    - i.e. `window_size` consecutive entries have to be greater than th to be clipped
+                    - i.e. `window_size` consecutive entries have to be greater than `th` to be clipped
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Infered Attributes
         ------------------
             - `clip_mask`
-                - np.ndarray
+                - `np.ndarray`
                 - final mask for the retained values
-                - 1 for every value that got retained
-                - 0 for every value that got cut
+                - `1` for every value that got retained
+                - `0` for every value that got cut
             - `th_float`
-                - float
+                - `float`
                 - floating point representation of the used threshold given `x` and `y` used during the call of `self.fit()`
 
         Methods
@@ -835,10 +1147,10 @@ class StringOfPearls:
 
         Dependencies
         ------------
-            - matplotlib
-            - numpy
-            - typing
-            - warnings
+            - `matplotlib`
+            - `numpy`
+            - `typing`
+            - `warnings`
         
         Comments
         --------
@@ -847,8 +1159,8 @@ class StringOfPearls:
     """
 
     def __init__(self,
-        window_size:int=3,
-        th:Union[float,Callable[[np.ndarray, np.ndarray],float]]=0.01,
+        window_size:int,
+        th:Union[float,Callable[[np.ndarray, np.ndarray],float]],
         metric:Callable[[np.ndarray, np.ndarray],np.ndarray]=None,
         looseness:Union[int,float]=0,
         window:np.ndarray=None,
@@ -881,12 +1193,11 @@ class StringOfPearls:
             )
         self.verbose = verbose
         
-
-        pass
+        return
 
     def __repr__(self) -> str:
         return (
-            f'StringOfPearls(\n'
+            f'{self.__class__.__name__}(\n'
             f'    window_size={repr(self.window_size)},\n'
             f'    th={repr(self.th)},\n'
             f'    metric={repr(self.metric)},\n'
@@ -895,6 +1206,9 @@ class StringOfPearls:
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
+
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def fit(self,
         x:np.ndarray, y:np.ndarray,
@@ -907,15 +1221,15 @@ class StringOfPearls:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - x-values of the dataseries to clip
                     - preferably sorted
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - y-values of the dataseries to clip
                     - preferably sorted w.r.t. `x`
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overwrites `self.verbose`
                     - the default is `None`
@@ -969,7 +1283,7 @@ class StringOfPearls:
             self.clip_mask[idxs] = False
         
         if verbose > 1:
-            print(f'INFO(StringOfPearls): Number of clipped entries: {(~self.clip_mask).sum()}/{len(self.x)}')
+            print(f'INFO({self.__class__.__name__}): Number of clipped entries: {(~self.clip_mask).sum()}/{len(self.x)}')
 
         return
 
@@ -983,13 +1297,13 @@ class StringOfPearls:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - x-values of the dataseries to clip
                     - preferably sorted
                     - the default is `None`
                         - will return the clipped version of the array's passed to last call of `self.fit()`
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - y-values of the dataseries to clip
                     - preferably sorted w.r.t. `x`
                     - the default is `None`
@@ -1001,10 +1315,10 @@ class StringOfPearls:
             Returns
             -------
                 - `x_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the x-values of the input dataseries
                 - `y_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the y-values of the input dataseries 
 
             Comments
@@ -1030,15 +1344,15 @@ class StringOfPearls:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - x-values of the dataseries to clip
                     - preferably sorted
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - y-values of the dataseries to clip
                     - preferably sorted w.r.t. `x`        
                 - `fit_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.fit()`
                     - the default is `None`
                         - will be set to `{}`
@@ -1049,10 +1363,10 @@ class StringOfPearls:
             Returns
             -------
                 - `x_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the x-values of the input dataseries
                 - `y_clipped`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the clipped version of the y-values of the input dataseries               
             
             Comments
@@ -1077,11 +1391,11 @@ class StringOfPearls:
             Parameters
             ----------
                 - `show_cut`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also display the cut datapoints in the summary
                     - the default is `True`
                 - `show_metric`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also display the metric used to compare against `th` in the plot
                     - the default is `False`
 
@@ -1091,10 +1405,10 @@ class StringOfPearls:
             Returns
             -------
                 - `fig`
-                    - matplotlib Figure
+                    - `Figure`
                     - figure created if verbosity level specified accordingly
                 - `axs`
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
 
             Comments
@@ -1146,307 +1460,3 @@ class StringOfPearls:
         axs = fig.axes
 
         return fig, axs
-    
-
-class PercentileClipping:
-    """
-        - class to remove outliers
-        - will clip all outliers that are lower than the `pmin`-th percentile or higher than the `pmax`-th percentile of the `y` values of a given dataseries
-        - follows a similar convention as the scikit-learn library
-
-        Attributes
-        ----------
-            - `pmin`
-                - int, optional
-                - lower bound of the percentile interval
-                    - value from 0 to 100 inclusive
-                - the default is 5
-            - `pmin`
-                - int, optional
-                - upper bound of the percentile interval
-                    - value from 0 to 100 inclusive
-                - the default is 95
-            - `verbose`   
-                - int, optional
-                - verbosity level
-                - the default is 0
-
-        Infered Attributes
-        ------------------
-            - `clip_mask`
-                - np.ndarray
-                - final mask for the retained values
-                - 1 for every value that got retained
-                - 0 for every value that got cut
-            - `percentiles`
-                - np.ndarray
-                - array containing the upper and lower value corresponding to the `pmin`-th and `pmax`-th percentile, respectively
-
-        Methods
-        -------
-            - `fit()`
-            - `transform()`
-            - `fit_transform()`
-            - `plot_result()`
-
-        Dependencies
-        ------------
-            - matplotlib
-            - numpy
-            - typing
-            - warnings
-        
-        Comments
-        --------
-
-
-    """
-
-    def __init__(self,
-        pmin:int=5, pmax:int=95,
-        verbose:int=0,
-        ) -> None:
-
-        self.pmin = pmin
-        self.pmax = pmax
-
-        self.verbose = verbose
-
-        return
-    
-    def __repr__(self) -> str:
-        
-        return (
-            f'PercentileClipping(\n'
-            f'    pmin={repr(self.pmin)},\n'
-            f'    pmax={repr(self.pmax)},\n'
-            f'    verbose={repr(self.verbose)},\n'
-            f')'
-        )
-
-    def fit(self,
-        x:np.ndarray, y:np.ndarray,
-        pmin:int=None, pmax:int=None,
-        verbose:int=None
-        ) -> None:
-        """
-            - method to apply `PercentileClipping`
-            - similar to scikit-learn scalers
-
-            Parameters
-            ----------
-                - `x`
-                    - np.ndarray
-                    - x-values of the dataseries to clip
-                - `y`
-                    - np.ndarray
-                    - y-values of the dataseries to clip
-            - `pmin`
-                - int, optional
-                - lower bound of the percentile interval
-                    - value from 0 to 100 inclusive
-                - will overwrite `self.pmin` if set
-                - the default is `None`
-                    - will use `self.pmin`
-            - `pmax`
-                - int, optional
-                - upper bound of the percentile interval
-                    - value from 0 to 100 inclusive
-                - will overwrite `self.pmax` if set
-                - the default is `None`
-                    - will use `self.pmax`
-            - `verbose`
-                - int, optional
-                - verbosity level
-                - overwrites `self.verbose`
-                - the default is `None`
-                    - will use `self.verbose`
-
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-        """
-    
-        if verbose is None:
-            verbose = self.verbose
-
-        if pmin is None: pmin = self.pmin
-        if pmax is None: pmax = self.pmax
-
-        #assign input values
-        self.x = x
-        self.y = y
-       
-        self.percentiles = np.percentile(y, q=[pmin, pmax])
-        self.clip_mask = ((self.percentiles[0]<y)&(y<self.percentiles[1]))
-
-        return
-    
-    def transform(self,
-        x:np.ndarray=None, y:np.ndarray=None,
-        ) -> Tuple[np.ndarray,np.ndarray]:
-        """
-            - method to transform the input-dataseries
-            - similar to scikit-learn scalers
-
-            Parameters
-            ----------
-                - `x`
-                    - np.ndarray
-                    - x-values of the dataseries to clip
-                    - preferably sorted
-                    - the default is `None`
-                        - will return the clipped version of the array's passed to last call of `self.fit()`
-                - `y`
-                    - np.ndarray
-                    - y-values of the dataseries to clip
-                    - preferably sorted w.r.t. `x`
-                    - the default is `None`
-                        - will return the clipped version of the array's passed to last call of `self.fit()`
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `x_clipped`
-                    - np.ndarray
-                    - the clipped version of the x-values of the input dataseries
-                - `y_clipped`
-                    - np.ndarray
-                    - the clipped version of the y-values of the input dataseries 
-
-            Comments
-            --------
-        """
-
-        if x is None: x = self.x
-        if y is None: y = self.y
-
-        x_clipped = x[self.clip_mask]
-        y_clipped = y[self.clip_mask]        
-        
-        return x_clipped, y_clipped
-
-    def fit_transform(self,
-        x:np.ndarray, y:np.ndarray,
-        fit_kwargs:dict=None
-        ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-            - method to fit the transformer and transform the data in one go
-            - similar to scikit-learn scalers
-            
-            Parameters
-            ----------
-                - `x`
-                    - np.ndarray
-                    - x-values of the dataseries to clip
-                    - preferably sorted
-                - `y`
-                    - np.ndarray
-                    - y-values of the dataseries to clip
-                    - preferably sorted w.r.t. `x`
-                - `fit_kwargs`
-                    - dict, optional
-                    - kwargs to pass to `self.fit()`
-                    - the default is `None`
-                        - will be set to `{}`
-            
-            Raises
-            ------
-
-            Returns
-            -------
-                - x_clipped
-                    - np.ndarray
-                    - the clipped version of the x-values of the input dataseries
-                - y_clipped
-                    - np.ndarray
-                    - the clipped version of the y-values of the input dataseries
-
-            Comments
-            --------
-
-        """
-
-        if fit_kwargs is None:
-            fit_kwargs = {}
-
-        self.fit(x, y, **fit_kwargs)
-        x_clipped, y_clipped = self.transform(x, y)
-
-        return x_clipped, y_clipped
-    
-    def plot_result(self,
-        show_cut:bool=True,
-        show_bounds:bool=True,
-        ) -> Tuple[Figure, plt.Axes]:
-        """
-           - method to create a plot visualizing the sigma-clipping result
-
-            Parameters
-            ----------
-                - `show_cut`
-                    - bool, optional
-                    - whether to also display the cut datapoints in the summary
-                    - the default is `True`
-                - `show_bounds`
-                    - bool, optional
-                    - whether to also display the percentile boundaries
-                    - the default is `True`
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `fig`
-                    - matplotlib Figure
-                    - figure created if verbosity level specified accordingly
-                - `axs`
-                    - plt.Axes
-                    - axes corresponding to `fig`
-
-            Comments
-            --------
-
-        """
-        ret_color = "tab:blue"
-        cut_color = "tab:grey"
-        per_color = 'tab:orange'
-
-
-        patches = []
-        #plot
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-
-        #sort axis
-        ax1.set_zorder(3)
-        # ax1.patch.set_visible(False)
-
-
-        patches.append(    ax1.scatter(self.x[self.clip_mask],  self.y[self.clip_mask],      color=ret_color, alpha=1.0, zorder=3, label='Retained'))
-        if show_cut:
-            patches.append(ax1.scatter(self.x[~self.clip_mask], self.y[~self.clip_mask],     color=cut_color, alpha=0.7, zorder=2, label='Clipped'))
-        if show_bounds:
-            patches.append(ax1.axhline(self.percentiles[0],     linestyle='--',              color=per_color, alpha=1.0, zorder=2, label='Chosen Percentile'))
-            patches.append(ax1.axhline(self.percentiles[1],     linestyle='--',              color=per_color, alpha=1.0, zorder=2))
-
-        
-        ax1.set_xlabel('x')
-        ax1.set_ylabel('y')
-
-        ax1.legend(patches, [s.get_label() for s in patches])
-
-        plt.tight_layout()
-
-        axs = fig.axes
-
-        return fig, axs
-    

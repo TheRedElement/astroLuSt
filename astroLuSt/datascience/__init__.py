@@ -1,6 +1,7 @@
-# from astroLuSt.datascience import clustering 
-# from astroLuSt.datascience import dataaugmentation
-# from astroLuSt.datascience import dtw
-# from astroLuSt.datascience import keras_utils
-# from astroLuSt.datascience import visualization
+
+from astroLuSt.datascience import clustering 
+from astroLuSt.datascience import dtw
+from astroLuSt.datascience import layers
+from astroLuSt.datascience import mle
+from astroLuSt.datascience import totables
 
