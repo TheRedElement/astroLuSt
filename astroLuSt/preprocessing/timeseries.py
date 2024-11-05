@@ -7,7 +7,6 @@ import numpy as np
 from typing import Union, Tuple, Callable, List, Literal
 
 from astroLuSt.visualization.plotting import generate_colors
-from astroLuSt.monitoring import formatting as almof
 
 
 #%%classes
@@ -993,10 +992,10 @@ class Periodize:
             ----------
                 - `x`
                     - `np.ndarray`
-                    - x-values of the input series periodized
+                    - x-values of the input series to be periodized
                 - `y`
                     - `np.ndarray`
-                    - y-values of the input series periodized
+                    - y-values of the input series to be periodized
                 - `repetitions`
                     - `float`, optional
                     - number of periodic repetitions of the signal
@@ -1054,10 +1053,10 @@ class Periodize:
             ----------
                 - `x`
                     - `np.ndarray`
-                    - x-values of the input series periodized
+                    - x-values of the input series to be periodized
                 - `y`
                     - `np.ndarray`
-                    - y-values of the input series periodized
+                    - y-values of the input series to be periodized
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -1115,10 +1114,10 @@ class Periodize:
             ----------
                 - `x`
                     - `np.ndarray`
-                    - x-values of the input series periodized
+                    - x-values of the input series to be periodized
                 - `y`
                     - `np.ndarray`
-                    - y-values of the input series periodized
+                    - y-values of the input series to be periodized
                 - `repetitions`
                     - `float`, optional
                     - number of periodic repetitions of the signal
@@ -1217,6 +1216,268 @@ class Periodize:
 
         return fig, axs
 
+class Resample:
+    """
+        - class to resample some dataseries based on linear interpolation
+
+        Attributes
+        ----------
+            - `size`
+                - `int`
+                - desired output size of the signal after resampling
+            - `verbose`
+                - `int`, optional
+                - verbosity level
+                - the default is `0`
+
+        Methods
+        -------
+            - `fit()`
+            - `transform()`
+            - `fit_transform()`
+            - `plot_result()`
+
+        Dependencies
+        ------------
+            - `matplotlib`
+            - `numpy`
+            - `typing`
+
+        Comments
+        --------
+
+    """
+    def __init__(self,
+        size:int,
+        verbose:int=0,
+        ) -> None:
+        
+        self.size           = size
+        self.verbose        = verbose
+
+        return
+    
+    def __repr__(self) -> str:
+        return (
+            f'{self.__class__.__name__}(\n'
+            f'    size={repr(self.size)},\n'
+            f'    verbose={repr(self.verbose)},\n'
+            f')'
+        )
+
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
+    def fit(self,
+        x:np.ndarray=None, y:np.ndarray=None,
+        size:int=None,
+        verbose:int=None,
+        ) -> None:
+        """
+            - method to fit the transformer
+
+            Parameters
+            ----------
+                - `x`
+                    - `np.ndarray`
+                    - x-values of the input series to be resampled
+                - `y`
+                    - `np.ndarray`
+                    - y-values of the input series to be resampled
+                - `size`
+                    - `int`, optional
+                    - desired output size of the signal after resampling
+                    - the default is `None`
+                        - will fall back to `self.size`
+                - `verbose`
+                    - `int`, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """        
+        if size is not None: self.size = size
+
+        return
+
+    def transform(self,
+        x:np.ndarray, y:np.ndarray,
+        sort_before:bool=True,
+        verbose:int=None,
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to fit the transformer and transform the input
+
+            Parameters
+            ----------
+                - `x`
+                    - `np.ndarray`
+                    - x-values of the input series to be resampled
+                - `y`
+                    - `np.ndarray`
+                    - y-values of the input series to be resampled
+                - `size`
+                    - `int`, optional
+                    - desired output size of the signal after resampling
+                    - the default is `None`
+                        - will fall back to `self.size`
+                - `sort_before`
+                    - `bool`, optional
+                    - whether to sort the input based on `x` before transforming
+                    - the default is `True`
+                - `verbose`
+                    - `int`, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_res`
+                    - `np.ndarray`
+                    - resampled version of `x`
+                - `y_res`
+                    - `np.ndarray`
+                    - resampled version of `y`
+
+            Comments
+            --------
+        """
+        if sort_before:
+            idxs = np.argsort(x)
+            x_, y_ = x[idxs], y[idxs]
+
+        x_res = np.linspace(np.nanmin(x), np.nanmax(x), self.size)
+
+        y_res =  np.interp(x_res, x_, y_)
+
+        return x_res, y_res
+
+    def fit_transform(self,
+        x:np.ndarray, y:np.ndarray,
+        size:int=None,
+        verbose:int=None,
+        transform_kwargs:dict=None
+        ) -> Tuple[np.ndarray,np.ndarray]:
+        """
+            - method to fit the transformer and transform the input
+
+            Parameters
+            ----------
+                - `x`
+                    - `np.ndarray`
+                    - x-values of the input series to be resampled
+                - `y`
+                    - `np.ndarray`
+                    - y-values of the input series to be resampled
+                - `size`
+                    - `int`, optional
+                    - desired output size of the signal after resampling
+                    - the default is `None`
+                        - will fall back to `self.size`
+                - `verbose`
+                    - `int`, optional
+                    - verbosity level
+                    - overrides `self.verbose`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `transform_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `self.transform()`
+                    - the default is `None`
+                        - will be set to `dict()`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `x_res`
+                    - `np.ndarray`
+                    - resampled version of `x`
+                - `y_res`
+                    - `np.ndarray`
+                    - resampled version of `y`
+
+            Comments
+            --------
+        """
+        if transform_kwargs is None: transform_kwargs = dict()
+
+        self.fit(x, y, size)
+        x_res, y_res = self.transform(x, y, **transform_kwargs)
+
+
+        return x_res, y_res
+    
+    def plot_result(self,
+        x:np.ndarray, y:np.ndarray,
+        ax:plt.Axes=None,
+        ) -> Tuple[Figure,plt.Axes]:
+        """
+            - method to visualize the current result when applying the transformer
+
+            Parameters
+            ----------
+                - `x`
+                    - `np.ndarray`
+                    - array to be transformed
+                - `y`
+                    - `np.ndarray`
+                    - y-values corresponding to `x`
+                - `ax`
+                    - `plt.Axes`, optional
+                    - axes to plot into
+                    - the default is `None`
+                        - will generate new `fig` and `axs`
+            
+            Raises
+            ------
+
+            Returns
+            -------
+                - `fig`
+                    - `Figure`
+                    - the created figure
+                - `axs`
+                    - `plt.Axes`
+                    - axes corresponding to `fig`
+
+            Comments
+            --------
+
+        """        
+        x_res, y_res = self.transform(x, y)
+
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+        else:
+            fig = ax.get_figure()
+        ax.scatter(x, y, label="Input")
+        ax.scatter(x_res, y_res, label="Resampled")
+
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.legend()
+
+        axs = fig.axes        
+
+        return fig, axs
+    
 #%%functions
 def fold(
     time:np.ndarray,
@@ -1328,101 +1589,6 @@ def phase2time(
     time = phase*period + tref
     
     return time
-
-def resample(
-    x:np.ndarray, y:np.ndarray,
-    ndatapoints:int=50,
-    sort_before:bool=True,
-    verbose:int=0
-    ) -> Tuple[np.ndarray,np.ndarray,Figure,plt.Axes]:
-    """
-        - function to resample a dataseries `y(x)` to nfeatures new datapoints via interpolation
-
-        Parameters
-        ----------
-            - `x`
-                - np.ndarray
-                - independent input variable x
-            - `y`
-                - np.ndarray
-                - dependent variable (`y(x)`)
-            - `ndatapoints`
-                - int, optional
-                - number of datapoints of the resampled dataseries
-                - the default is 50
-            - `sort_before`
-                - bool, optional
-                - whether to sort the input arrays `x` and `y` with regards to `x` before resampling
-                - the default is `True`
-            - `verbose`
-                - int optional
-                - verbosity level
-                - the default is 0
-            
-        Raises
-        ------
-
-        Returns
-        -------
-            - `interp_x`
-                - np.ndarray
-                - resamples array of `x`
-            - `interp_y`
-                - np.ndarray
-                - resamples array of `y`
-
-        Dependencies
-        ------------
-            - matplotlib
-            - numpy
-            - typing
-        
-        Comments
-        --------
-
-    """
-
-    #try converting to numpy (otherwise bin generation might fail)
-    if not isinstance(x, np.ndarray):
-        try:
-            x = x.to_numpy()
-        except:
-            raise TypeError(f'"x" hat to be of type np.ndarray and not {type(x)}')
-    if not isinstance(y, np.ndarray):
-        try:
-            y = y.to_numpy()
-        except:
-            raise TypeError(f'"y" hat to be of type np.ndarray and not {type(y)}')
-            
-
-    if sort_before:
-        idxs = np.argsort(x)
-        x_, y_ = x[idxs], y[idxs]
-
-    interp_x = np.linspace(0, 1, ndatapoints)
-
-    interp_y =  np.interp(interp_x, x_, y_)
-
-    if verbose > 1:
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.scatter(x, y, label="Input")
-        ax1.scatter(interp_x, interp_y, label="Resampled")
-
-        ax1.set_xlabel("x")
-        ax1.set_ylabel("y")
-        ax1.legend()
-
-        plt.tight_layout()
-        plt.show()
-
-        axs = fig.axes
-    else:
-        fig = None
-        axs = None
-    
-
-    return interp_x, interp_y, fig, axs
 
 def time2phase(
     time:np.ndarray,
