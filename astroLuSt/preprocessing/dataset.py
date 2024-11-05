@@ -6,7 +6,7 @@ from typing import Union, Tuple, Callable, List, Literal
 #%%definitions
 def data_split(
     arrays:List[np.ndarray],
-    split_fractions:np.ndarray,
+    split_fractions:list,
     shuffle:bool=True,
     random_state:int=None,
     verbose:int=0,
@@ -18,47 +18,28 @@ def data_split(
         Parameters
         ----------
             - `arrays`
-                - list
-                - contains np.ndarrays
+                - `List[np.ndarray]`
+                - contains `np.ndarrays`
                     - have to have the same length
                     - will get split according to specification
-            - split_fractions
-                - list
+            - `split_fractions`
+                - `list`
                 - fraction of the total dataset each partition shall have
                 - all entries have to be smaller than 1
                 - the total (`np.sum(split_fractions)`) has to be smaller than 1
                 - the remainder (`1 - np.sum(split_fractions)`) will get assigned to the last created partition
-            - `train_size`
-                - float
-                - has to be between 0 and 1
-                - fraction of the dataset to use as trainining data
-                - the default is 0.6 (60%)
-            - `validation_size`
-                - float, optional
-                - has to be between 0 and 1
-                - fraction of the dataset to use as validation data
-                - the default is `None`
-                    - will be set to 0
-                    - will infer `validation_size` based on `train_size`
-            - `test_size`
-                - float, optional
-                - has to be between 0 and 1
-                - fraction of the dataset to use as training data
-                - the default is `None`
-                    - will be set to 0
-                    - will infer `test_size` based on `train_size`
             - `shuffle`
-                - bool, optional
+                - `bool`, optional
                 - whether to randomly shuffle the data before applying the split
-                - the default is True
+                - the default is `True`
             - `random_state`
-                - int, optional
+                - `int`, optional
                 - random seed to use for shuffling the data
                 - the default is `None`
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
         
         Raises
         ------
@@ -70,13 +51,13 @@ def data_split(
         Returns
         -------
             - `splits`
-                - list
+                - `list`
                     - has length of `len(arrays)*(len(split_fractions)+1)`
                 - contains splits of input data with elements according to `split_fractions`
 
         Dependencies
         ------------
-            - numpy
+            - `numpy`
         
         Comments
         --------
@@ -95,8 +76,6 @@ def data_split(
     if np.any(split_fractions >= 1):
         raise ValueError('all entries of `split_fractions` have to be less than 1!')
 
-
-    
 
     #generate array of (random) indices
     rand_idxs = np.arange(len(arrays[0]))

@@ -9,7 +9,7 @@ from typing import Union, Tuple, Callable
 import warnings
 
 
-from astroLuSt.preprocessing.timeseries import periodic_shift
+from astroLuSt.preprocessing.timeseries import PeriodicShift
 
 
 #%%definitions
@@ -103,11 +103,12 @@ class SnythEB:
 
         #set some initialization variables
         phases = np.linspace(-0.5, 0.5, self.resolution)
+        PS = PeriodicShift(self.total_shift, borders=[-0.5, 0.5])   #init class for shifting
 
         #shift x_vals to enable dip reaching over boundary
-        phases_shifted = periodic_shift(phases,               self.total_shift, [-0.5,0.5])
-        mu1_shifted    = periodic_shift(np.array([self.mu1]), self.total_shift, [-0.5,0.5])[0]
-        mu2_shifted    = periodic_shift(np.array([self.mu2]), self.total_shift, [-0.5,0.5])[0]
+        phases_shifted = PS.fit_transform(phases,              )
+        mu1_shifted    = PS.fit_transform(np.array([self.mu1]),)[0]
+        mu2_shifted    = PS.fit_transform(np.array([self.mu2]),)[0]
         
         #first dip
         if self.total_eclipse1:
@@ -136,10 +137,11 @@ class SnythEB:
         relative_fluxes += noise   #add some noise
 
         #classify dip borders
-        dip1_border1 = periodic_shift(np.array([self.mu1-np.abs(self.dip_border_factor*sigma1)]), self.total_shift, [-0.5,0.5])[0]
-        dip1_border2 = periodic_shift(np.array([self.mu1+np.abs(self.dip_border_factor*sigma1)]), self.total_shift, [-0.5,0.5])[0]
-        dip2_border1 = periodic_shift(np.array([self.mu2-np.abs(self.dip_border_factor*sigma2)]), self.total_shift, [-0.5,0.5])[0]
-        dip2_border2 = periodic_shift(np.array([self.mu2+np.abs(self.dip_border_factor*sigma2)]), self.total_shift, [-0.5,0.5])[0]
+        
+        dip1_border1 = PS.fit_transform(np.array([self.mu1-np.abs(self.dip_border_factor*sigma1)]))[0]
+        dip1_border2 = PS.fit_transform(np.array([self.mu1+np.abs(self.dip_border_factor*sigma1)]))[0]
+        dip2_border1 = PS.fit_transform(np.array([self.mu2-np.abs(self.dip_border_factor*sigma2)]))[0]
+        dip2_border2 = PS.fit_transform(np.array([self.mu2+np.abs(self.dip_border_factor*sigma2)]))[0]
 
         #masks to separate dips 
         if dip1_border1 < dip1_border2:
