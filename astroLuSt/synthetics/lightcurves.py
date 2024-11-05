@@ -9,7 +9,7 @@ from typing import Union, Tuple, Callable
 import warnings
 
 
-from astroLuSt.preprocessing.dataseries_manipulation import periodic_shift
+from astroLuSt.preprocessing.timeseries import periodic_shift
 
 
 #%%definitions

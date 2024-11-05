@@ -10,7 +10,7 @@ from typing import Union, Tuple, Callable
 import warnings
 
 from astroLuSt.preprocessing.binning import Binning
-from astroLuSt.preprocessing.dataseries_manipulation import fold
+from astroLuSt.preprocessing.timeseries import fold
 
 
 #%%definitions

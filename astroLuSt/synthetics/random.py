@@ -8,7 +8,7 @@ from scipy.stats import norm
 import string
 from typing import Union, Tuple, List, Callable
 
-from astroLuSt.preprocessing import dataseries_manipulation as alpdm
+from astroLuSt.preprocessing import timeseries as alpdm
 from astroLuSt.monitoring import formatting as almof
 
 #%%definitions

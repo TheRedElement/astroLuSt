@@ -12,7 +12,7 @@ import warnings
 
 
 from astroLuSt.preprocessing.pdm import PDM
-from astroLuSt.preprocessing.dataseries_manipulation import fold
+from astroLuSt.preprocessing.timeseries import fold
 
 
 #%%definitions
