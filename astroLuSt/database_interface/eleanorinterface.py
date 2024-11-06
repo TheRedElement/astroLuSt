@@ -34,8 +34,7 @@ class EleanorDatabaseInterface:
                 - `int`, optional
                 - number of jobs to use for the parallel extraction
                 - will be passed to `joblib.Parallel`
-                - the default is `-1`
-                    - will use all avaliable cpus
+                - the default is `1`
             - `metadata_path`
                 - `str`, optional
                 - path where the metadata is stored
@@ -87,7 +86,7 @@ class EleanorDatabaseInterface:
 
     def __init__(self,
         sleep:float=0,
-        n_jobs:int=-1,
+        n_jobs:int=1,
         metadata_path:str=None,
         clear_metadata:bool=False,
         redownload:bool=False,

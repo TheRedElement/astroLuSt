@@ -1,7 +1,10 @@
 
 #%%imports
+from astropy.coordinates import SkyCoord
+from astropy import units as u
 from astropy.table import Table
 from astroquery.utils.tap.core import TapPlus
+from astroquery.simbad import Simbad
 from joblib.parallel import Parallel, delayed
 import numpy as np
 import os
@@ -14,6 +17,114 @@ from astroLuSt.monitoring import formatting as almofo
 
 
 #%%functions
+def get_reference_objects(
+    coords:SkyCoord,
+    radius:float,
+    verbose:int=0,
+    ) -> Table:
+    """
+        - function to extract the coordinates of reference targets given coordinates of a science target
+        - reference targets are constant stars that are close to the science target
+
+        Parameters
+        ----------
+            - `coords`
+                - `SkyCoord`
+                - coordinates of the science target
+                - will be used as center point around which to search for reference targets
+            - `radius`
+                - `float`
+                - radius in degrees that defines the size of the (circular) search region around `coords`
+                    - this region is considered to find reference targets
+            - `verbose`
+                - `int`, optional
+                - verbosity level
+                - the default is `0`
+
+        Raises
+        ------
+
+        Returns
+        -------
+            - `res_tab`
+                - `astropy.tables.Table()`
+                - table resulting from a Simbad query
+                - contains potentially constant stars within `radius` around `coords`
+
+        Dependencies
+        ------------
+            - `astropy`
+            - `astroquery`
+            - `typing`
+
+        Comments
+        --------
+            - assumes that
+                - reference targets close to the science target experience the same (local) effects
+                - the camera and CCD for science and reference target are identical
+                    - therefore, also the timestamps will be identical
+    """
+
+    ra = coords.ra.to(u.deg).value
+    dec = coords.dec.to(u.deg).value
+
+    q = f"""
+        SELECT
+            subquery.*,
+            mesvar.vartyp AS vartyp_mesvar
+        FROM (
+            SELECT TOP 100
+                basic.oid,
+                basic.ra, basic.dec,
+                basic.main_id, basic.otype, ids.ids,
+                DISTANCE(
+                    POINT('ICRS', basic.ra, basic.dec),
+                    POINT('ICRS', {ra}, {dec})
+                ) AS "distance"
+            FROM basic
+                INNER JOIN ids
+                    ON basic.oid = ids.oidref
+            WHERE
+                (otype != 'V*..') AND (otype = '*')
+                AND 1 = CONTAINS(
+                        POINT('ICRS', basic.ra, basic.dec),
+                        CIRCLE('ICRS', {ra}, {dec}, {radius:g})
+                )
+            ORDER BY
+                "distance" ASC
+        ) AS subquery
+            LEFT JOIN mesVar
+                on subquery.oid = mesVar.oidref
+    """
+
+    #query for potential reference targets
+    res_tab = Simbad.query_tap(query=q, maxrec=1000)
+
+    almofo.printf(
+        msg=f'Found {len(res_tab)} reference star candidate(s).',
+        context=f'{get_reference_objects.__name__}()',
+        type='INFO',
+        level=0,
+        verbose=verbose,
+    )
+            
+    if len(res_tab) == 0:
+        almofo.printf(
+            msg=(
+                f'WARNING: did not find any nearby constant stars for {ra=} deg, {dec=} deg, {radius=} deg.'
+                f' Consider increasing `radius` or choose a different method for background-correction.'
+                f' Returning `None` for that matter.'
+            ),
+            context=f'{get_reference_objects.__name__}()',
+            type='WARNING',
+            level=0,
+            verbose=verbose,
+        )
+
+        res_tab = None
+
+    return res_tab
+
 def query_upload_table(
     tap:TapPlus,
     query:str,
@@ -198,4 +309,3 @@ def query_upload_table(
 
 
     return df_res
-

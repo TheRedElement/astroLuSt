@@ -28,7 +28,7 @@ class AlerceDatabaseInterface:
             - `n_jobs`
                 - `int`, optional
                 - number of jobs to be used by `joblib.Parallel()`
-                - the default is `-1`
+                - the default is `1`
             -  `verbose`
                 - `int`, optional
                 - verbosity level
@@ -67,7 +67,7 @@ class AlerceDatabaseInterface:
 
     def __init__(self,
         sleep:float=0,
-        n_jobs:int=-1,
+        n_jobs:int=1,
         verbose:int=0,
         ) -> None:
 

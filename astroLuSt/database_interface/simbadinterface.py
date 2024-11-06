@@ -41,8 +41,7 @@ class SimbadDatabaseInterface:
                 - `int`, optional
                 - number of jobs to use for the query
                 - will be passed to `joblib.parallel.Parallel()`
-                - the default is `-1`
-                    - will use all available cores
+                - the default is `1`
             - `verbose`
                 - `int`, optional
                 - verbosity level
@@ -73,7 +72,7 @@ class SimbadDatabaseInterface:
     def __init__(self,
         npartitions:int=1,
         nperpartition:int=None,
-        n_jobs:int=-1,
+        n_jobs:int=1,
         simbad_timeout:int=120,
         verbose:int=0,
         ) -> None:
