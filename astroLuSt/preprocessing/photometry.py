@@ -1,10 +1,17 @@
+#TODO: `Aperture`: Implement `water_shed_mask()`
+#TODO: `BestAperture.fit()`: add alternate background estimate options
+
 
 #%%imports
+from joblib.parallel import Parallel, delayed
 import matplotlib.pyplot as plt
+import matplotlib.animation as manimation
 import matplotlib.colors as mcolors
+from matplotlib import patheffects
 from matplotlib.figure import Figure
 import numpy as np
-from typing import Union, Literal
+from typing import Union, Literal, Tuple, Callable, Any, List
+import warnings
 
 from astroLuSt.monitoring import errorlogging as alme, formatting as almf
 from astroLuSt.physics import photometry as alpp
@@ -21,12 +28,6 @@ class Aperture:
                 - `Tuple[int,int]`
                 - size of the aperture in pixels
                 - will generate frame (`np.ndarray`) with shape = `size`
-            - `position`
-                - `np.ndarray[float,float]`, optional
-                - position of the aperture on the frame relative to the frame's center
-                - the default is `None`
-                    - will be set to `np.array([0,0])`
-                    - right in the center of the frame
             - `npixels`
                 - `float`, optional
                 - to how many pixels the aperture shall be normalized to
@@ -35,6 +36,12 @@ class Aperture:
                     - i.e. set `npixels >= 2`
                 - the default is `None`
                     - no normalization
+            - `position`
+                - `np.ndarray[float,float]`, optional
+                - position of the aperture on the frame relative to the frame's center
+                - the default is `None`
+                    - will be set to `np.array([0,0])`
+                    - right in the center of the frame
             - `outside`
                 - `float`, optional
                 - value to set pixels outside of the aperture to
@@ -45,7 +52,7 @@ class Aperture:
             - `verbose`
                 - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
         
         Methods
         -------
@@ -69,11 +76,9 @@ class Aperture:
     """
 
     def __init__(self,
-        size:Tuple,
-        # size:Tuple[int,int],
+        size:Tuple[int,int],
         npixels:float=None,
-        position:np.ndarray=None,
-        # position:np.ndarray[float,float]=None,
+        position:np.ndarray[float,float]=None,
         outside:float=0.0,
         verbose:int=0,
         ) -> None:
@@ -215,7 +220,7 @@ class Aperture:
                     - p-parameter in the L_p norm
                     - will be passed to `np.linalg.norm()` as `ord`
                         - `np.linalg.norm(..., ord=p, ...)`
-                    - the default is 2
+                    - the default is `2`
                         - L2-norm
                         - circular aperture
                 - `poly_coeffs
@@ -231,7 +236,7 @@ class Aperture:
                     - will create a sky-ring (donut-like shape) with
                         - inner radius = `inner_radius`
                         - outer radius = `radius`
-                    - the default is 0
+                    - the default is `0`
                         - creates standard aperture
 
             Raises
@@ -293,7 +298,7 @@ class Aperture:
                     - will create a sky-ring (donut-like shape) with
                         - inner width = `inner_width`
                         - outer width = `width`
-                    - the default is 0
+                    - the default is `0`
                         - creates standard aperture
                 - `height_inner`
                     - `float`, optional
@@ -301,7 +306,7 @@ class Aperture:
                     - will create a sky-ring (donut-like shape) with
                         - inner height = `inner_height`
                         - outer height = `height`
-                    - the default is 0
+                    - the default is `0`
                         - creates standard aperture
 
             Raises
@@ -353,7 +358,7 @@ class Aperture:
         """
             - method to generate apertures based on gaussian distributions
             - returns aperture normalized to `self.npixels`
-                - normalized to 1 in case `self.npixels` is `None`
+                - normalized to `1` in case `self.npixels` is `None`
 
             Parameters
             ----------
@@ -374,7 +379,7 @@ class Aperture:
                         - as norm in the exponent of the gaussian if `lp==True`
                             - will use L-p norm at expense of utilizing a covariance matrix
                             - useful to generate balls with gaussian-like decaying mask-values
-                    - the default is 2
+                    - the default is `2`
                         - L2-norm
                         - circular aperture
                 - `covariance`
@@ -385,7 +390,7 @@ class Aperture:
                         - will be interpreted as matrix with diagnoal values set to `covariance`
                     - otherwise
                         - will be interpreted as the covariance matrix
-                    - the default is 1
+                    - the default is `1`
                 - `lp`
                     - `bool`, optional
                     - whether to use the L-p norm in the exponent of the gaussian instead of the standard expression
@@ -397,7 +402,7 @@ class Aperture:
                         - inner radius = `inner_radius`
                         - outer radius = `radius`
                     - only applied if `p!=0`
-                    - the default is 0
+                    - the default is `0`
                         - creates standard aperture                 
 
             Raises
@@ -457,7 +462,7 @@ class Aperture:
         """
             - method to generate apertures following a 2d Lorentzian-profile
             - returns aperture normalized to `self.npixels`
-                - normalized to 1 in case `self.npixels` is `None`
+                - normalized to `1` in case `self.npixels` is `None`
 
             Parameters
             ----------
@@ -480,7 +485,7 @@ class Aperture:
                     - p-parameter in the L_p norm
                     - will be passed to `np.linalg.norm()` as `ord`
                         - `np.linalg.norm(..., ord=p, ...)`
-                    - the default is 2
+                    - the default is `2`
                         - L2-norm
                         - circular aperture
                 - `radius_inner`
@@ -490,7 +495,7 @@ class Aperture:
                         - inner radius = `inner_radius`
                         - outer radius = `radius`
                     - only applied if `p!=0`
-                    - the default is 0
+                    - the default is `0`
                         - creates standard aperture
 
             Raises
@@ -528,7 +533,28 @@ class Aperture:
         aperture = self.post_process(aperture=aperture, npixels=npixels, outside=outside)
 
         return aperture
-    
+
+    def water_shed_mask(self,
+        X:np.ndarray
+        ) -> np.ndarray:
+        """
+            - algorithm to separate source from nearby stars
+
+            Parameters
+            ----------
+
+            Raiese
+            ------
+
+            Returns
+            -------
+
+            Comments
+            --------
+        """
+        warnings.warn("Not implemented yet", UserWarning)
+        return    
+
     def plot_result(self,
         X:np.ndarray,
         ax:plt.Axes=None,
@@ -623,20 +649,14 @@ class AperturePhotometry:
 
         Attributes
         ----------
-            - `n_jobs`
-                - `int`, optional
-                - number of jobs to use when executing parallelized computations
-                - will be passed to `joblib.Parallel()`
             - `verbose`
                 - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Methods
         -------
-            - `_check_quality()`
             - `reduce_func_nansum()`
-            - `water_shed_mask()`
             - `lc_from_frames()`
             - `fit()`
             - `transform()`
@@ -655,11 +675,9 @@ class AperturePhotometry:
 
     """
     def __init__(self,
-        n_jobs:int=-1,
         verbose:int=0,
         ) -> None:
         
-        self.n_jobs     = n_jobs
         self.verbose    = verbose
 
         self.X_transformed = None
@@ -669,43 +687,12 @@ class AperturePhotometry:
     def __repr__(self) -> str:
         return (
             f'{self.__class__.__name__}(\n'
-            f'    n_jobs={repr(self.n_jobs)},\n'
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
         
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
-
-    def _check_quality(self,
-        verbose:int=None,
-        ):
-        """
-            - method to assess the quality of individual datapoints/frames
-
-            Parameters
-            ----------
-                - `verbose`
-                    - `int`, optional
-                    - verbosity level
-                    - overrides `self.verbose`
-                    - the default is `None`
-                        - will fall back to `self.verbose`
-
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-        """
-        #TODO: impement
-
-        if verbose is None: verbose = self.verbose
-
-        return
 
     def reduce_func_nansum(self,
         p:np.ndarray, p_e:np.ndarray=None,
@@ -754,17 +741,7 @@ class AperturePhotometry:
             flux_e = np.zeros_like(flux)*np.nan
         return flux, flux_e
 
-    def water_shed_mask(self,
-        X:np.ndarray
-        ) -> np.ndarray:
-        """
-            - algorithm to separate source from nearby stars
-        """
-        #TODO: implement
-
-        return
-
-    def lc_from_frames(self,
+    def fit(self,
         X:np.ndarray, X_e:np.ndarray=None,
         aperture:Union[float,np.ndarray]=2.0,
         reduce_func:Callable[[np.ndarray,np.ndarray,Any],Tuple[np.ndarray,np.ndarray]]=None,
@@ -772,7 +749,8 @@ class AperturePhotometry:
         verbose:int=None,
         reduce_func_kwargs:dict=None,
         fluxvars_kwargs:dict=None,
-        ) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
+        *args, **kwargs,
+        ) -> None:
         """
             - method to generate a lightcurve from a series of frames
 
@@ -797,7 +775,7 @@ class AperturePhotometry:
                         - passed as `radius` to `astroLuSt.Aperture().lp_aperture()`
                             - other than `radius` will be called with default parameters
                     - if `np.ndarray`
-                        - has to have the shape 'X.shape[1:3]`
+                        - has to have the shape `X.shape[1:3]`
                         - will be interpreted as the actual aperture mask to be used
                     - the default is `2.0`
                 - `reduce_func`
@@ -875,21 +853,6 @@ class AperturePhotometry:
 
             Returns
             -------
-                - `flux`
-                    - `np.ndarray`
-                    - fluxes constituting the lightcurve resulting from the series of frames `X`
-                    - has shape `(len(X),nfeatures)`
-                        - the first feature is hereby the unnormalized extracted flux
-                        - all other features are the ones computed via `fluxvars()`
-                - `flux_e`
-                    - `np.ndarray`
-                    - errors corresponding to `flux`
-                    - has shape `(len(X),nfeatures)` (same as `flux`)
-                        - the first feature is hereby the error corresponding to the unnormalized extracted flux
-                        - all other features are the ones computed via `fluxvars()`
-                - `aperture`
-                    - `np.ndarray`
-                    - the ultimately used aperture for the creation of LC
 
             Comments
             --------
@@ -924,208 +887,22 @@ class AperturePhotometry:
             flux    = np.append(flux,   flux_norm,  axis=1)
             flux_e  = np.append(flux_e, flux_norm_e,axis=1)
 
-        return flux, flux_e, aperture
-    
-    def fit(self,
-        X:List[np.ndarray], y:np.ndarray=None, X_e:np.ndarray=None,
-        apertures:Union[float,List[float],List[np.ndarray]]=2.0,
-        reduce_func:Callable[[np.ndarray,np.ndarray,Any],Tuple[np.ndarray,np.ndarray]]=None,
-        fluxvars:Callable=None,
-        n_jobs:int=None,
-        verbose:int=None,
-        reduce_func_kwargs:List[dict]=None,
-        fluxvars_kwargs:List[dict]=None,
-        parallel_kwargs:dict=None,
-        ) -> None:
-        """
-            - method to fit the transformer and generate a lightcurve for each sample in `X`
-
-            Parameters
-            ----------
-                - `X`
-                    - `List[np.ndarray]`
-                    - contains samples to transform into a LC
-                    - each sample is series of frames to generate lightcurve from
-                        - has shape `(nframes, npixelsx, npixelsy)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - only implemented for consistency
-                    - not used in fitting
-                    - the default is `None`
-                - `X_e`
-                    - `List[np.ndarray]`, optional
-                    - contains pixel-wise errors for samples in `X`
-                    - each sample is series of frames with the pixel-wise error
-                        - has shape `(nframes, npixelsx, npixelsy)`                    
-                    - same shape as `X`
-                    - the default is `None`
-                        - no errors considered
-                - `apertures`
-                    - `float`, `List[float]`, `List[np.ndarray]`, optional
-                    - apertures to use for the creation of the lightcurve
-                    - if `float`
-                        - will be interpreted as the radius of a circular aperture
-                        - passed as `radius` to `astroLuSt.Aperture().lp_aperture()`
-                        - will be used for all samples in `X`
-                    - if `List[float]`
-                        - has to have same length as `X`
-                        - contains radiii of the circular apertures to use on each sample
-                        - entries get passed as `radius` to `astroLuSt.Aperture().lp_aperture()`
-                        - will be used for each sample in `X` individually
-                    - if `List[np.ndarray]`
-                        - has to have same length as `X`
-                        - contains actual aperture masks to use for every single sample in `X`
-                        - each entry has to have the same shape as the corresponding frames in `X`
-                        - will be used for each sample in `X` individually
-                    - the default is `2.0`
-                - `reduce_func`
-                    - `Callable(np.ndarray,np.ndarray,Any) -> Tuple[np.ndarray,np.ndarray]`, optional
-                    - function to use for reducing
-                        - `X*aperture` to a 1-d series of fluxes
-                        - `X_e*aperture` to a 1-d series of flux errors
-                    - has to take at least two arguments
-                        - `X*aperture`
-                        - `X_e*aperture`
-                    - has to return two 1-d arrays
-                        - `X*aperture` reduced to a 1-d series of fluxes
-                        - `X_e*aperture` reduced to a 1-d series of flux errors corresponding to `X`
-                    - common options are
-                        - `self.reduce_func_nansum`
-                            - total flux in aperture
-                    - the default is `None`
-                        - will be set `self.reduce_func_nansum()`               
-                - `fluxvars`
-                    - `Callable(np.ndarray,Any) -> Tuple[np.ndarray,np.ndarray]`, optional
-                    - function to use for calculating variations of the extracted flux (and corresponding errors)
-                    - useful for i.e.
-                        - normalizing the flux
-                        - modifying other parameters within the parallelized extraction loop
-                            - calculating custom quality flags
-                            - normalizing fluxes w.r.t. another quantity (i.e., sectorwise)
-                                - one has to pass the sector-mask via `fluxvars_kwargs` in that case
-                            - converting times to phases
-                                - one has to pass the times via `fluxvars_kwargs` in that case
-                    - has to take 2 arguments
-                        - `x`
-                            - `np.ndarray`
-                            - array of flux values (LC)
-                        - `x_e`
-                            - `np.ndarray`
-                            - array of flux errors (LC)
-                    - has to return two `np.ndarray`s (flux variations, errors of flux variations)
-                        - have to have shape `(len(X),nfluxvars)`
-                            - `nfluxvars` contains the number of variations that have been calculated
-                    - an example for returning two variations (globally normalized and sector-wise normalized)
-                        >>> def sectornorm(X:np.ndarray, X_e:np.ndarray, sector:np.ndarray):
-                        >>>     X_norm = np.empty((X.shape[0],2))
-                        >>>     X_norm_e = np.zeros_like(X_norm)*np.nan
-                        >>>     X_norm[:,0] = X/np.nanmedian(X)
-                        >>>     X_norm_e[:,0] = X_e/np.nanmedian(X)
-                        >>>     for s in np.unique(sector):
-                        >>>         sbool = (sector==s)
-                        >>>         X_norm[sbool,1] = X[sbool] / np.median(X[sbool])
-                        >>>         X_norm_e[sbool,1] = X_e[sbool] / np.median(X[sbool])
-                        >>>     return X_norm, X_norm_e
-                    - if you want to return only the raw flux pass `lambda x, x_e, **kwargs:(None, None)`
-                    - the default is `None`
-                        - will be set to `lambda x, x_e, **kwargs: ((x/np.nanmedian(x)).reshape(-1,1), (x_e/np.nanmedian(x)).reshape(-1,1))`
-                            - i.e. global normalization by the median
-                - `n_jobs`
-                    - `int`, optional
-                    - number of jobs to use when executing parallelized computations
-                    - will be passed to `joblib.Parallel()`
-                    - overrides `self.n_jobs`
-                    - the default is `None`
-                        - will fall back to `self.n_jobs`
-                - `verbose`
-                    - `int`, optional
-                    - verbosity level
-                    - overrides `self.verbose`
-                    - the default is `None`
-                        - falls back to `self.verbose`
-                - `reduce_func_kwargs`
-                    - `List[dict]`, optional
-                    - kwargs to pass to `reduce_func`
-                    - each list entry contains the kwargs for the respective sample in `X`
-                    - useful for i.e. including additional parameters in the reduction function
-                    - the default is `None`
-                        - will be set to `dict(axis=(1,2)`
-                - `fluxvars_kwargs`
-                    - `List[dict]`, optional
-                    - kwargs to pass to `fluxvars()`
-                    - each list entry contains the kwargs for the respective sample in `X`
-                    - useful for i.e. including additional quantities in the normalization
-                    - the default is `None`
-                        - will be set to `[dict()]*len(X)`
-                - `parallel_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `joblib.parallel.Parallel()`
-                    - the default is `None`
-                        - will be set to `dict(verbose=verbose)`
-
-            Raises
-            ------
-
-            Returns
-            -------
-                    
-            Comments
-            --------
-        """
-
-        if X_e is None:                             X_e                 = [None]*len(X)
-        if isinstance(apertures, (int,float)):      apertures           = [apertures]*len(X)    
-        if n_jobs is None:                          n_jobs              = self.n_jobs
-        if verbose is None:                         verbose             = self.verbose
-        if isinstance(reduce_func_kwargs, dict):    reduce_func_kwargs  = [reduce_func_kwargs]*len(X)
-        elif reduce_func_kwargs is None:            reduce_func_kwargs  = [dict(axis=(1,2))]*len(X)
-        if isinstance(fluxvars_kwargs, dict):       fluxvars_kwargs     = [fluxvars_kwargs]*len(X)
-        elif fluxvars_kwargs is None:               fluxvars_kwargs     = [dict()]*len(X)
-        if parallel_kwargs is None:                 parallel_kwargs     = dict(verbose=verbose)
-
-        res = Parallel(n_jobs=n_jobs, **parallel_kwargs)(
-            delayed(self.lc_from_frames)(
-                X=frame, X_e=frame_e,
-                aperture=ap,
-                reduce_func=reduce_func,
-                fluxvars=fluxvars,
-                verbose=verbose,
-                reduce_func_kwargs=rfk,
-                fluxvars_kwargs=nfk,
-            ) for frame, frame_e, ap, rfk, nfk in zip(X, X_e, apertures, reduce_func_kwargs, fluxvars_kwargs)
-        )
-
-        X_transformed  = [np.array(r[0]) for r in res]
-        X_transformed_e = [np.array(r[1]) for r in res]
-        apertures = [np.array(r[-1]) for r in res]
-
-        self.X_transformed      = X_transformed
-        self.X_transformed_e    = X_transformed_e
-        self.apertures          = apertures
-
+        self.X_transformed      = flux
+        self.X_transformed_e    = flux_e
+        self.aperture          = aperture
 
         return
-
+   
     def transform(self,
-        X:List[np.ndarray]=None, y:np.ndarray=None,
         verbose:int=None,
-        ) -> Tuple[List[np.ndarray],List[np.ndarray],List[np.ndarray]]:
+        *args, **kwargs,
+        ) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         """
             - method to transform a given set of samples `X` to lightcurves
             - does not execute computation but only returns the results from fitting
 
             Parameters
             ----------
-                - `X`
-                    - `List[np.ndarray]`, optional
-                    - only implemented for consistency
-                    - not needed in calcualtions
-                    - the default is `None`
-                - `y`
-                    - `np.ndarray`, optional
-                    - only implemented for consistency
-                    - not used in fitting
-                    - the default is `None`
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -1139,27 +916,20 @@ class AperturePhotometry:
             Returns
             -------
                 - `X_transformed`
-                    - `List[np.ndarray]`
-                    - transformed version of the original input passed to `self.fit()`
-                    - i.e. LCs corresponding to those frames
-                    - each element contains
-                        - fluxes constituting the lightcurve resulting from the series of frames `X`
-                        - entry `i` has shape `(len(X[i]),nfeatures)`
-                            - the first feature is hereby the unnormalized extracted flux
-                            - all other features are the ones computed via `fluxvars()`                    
+                    - `np.ndarray`
+                    - fluxes constituting the lightcurve resulting from the series of frames `X`
+                    - has shape `(len(X),nfeatures)`
+                        - the first feature is hereby the unnormalized extracted flux
+                        - all other features are the ones computed via `fluxvars()`
                 - `X_transformed_e`
-                    - `List[np.ndarray]`
+                    - `np.ndarray`
                     - errors corresponding to `X_transformed`
-                    - each element contains
-                        - flux errors for  the lightcurve resulting from the series of frames `X`
-                        - entry `i` has shape `(len(X[i]),nfeatures)`
-                            - the first feature is hereby the error corresponding to the unnormalized extracted flux
-                            - all other features correspond to the the fluxes computed via `fluxvars()`
-                    - has same shape as `X_transformed`
-                    - wherever no errors have been passed, the respective entry will be set to an array filled with `np.nan`
-                - `apertures`
-                    - `List[np.ndarray]`
-                    - apertures used to transform `X` to `X_transformed`
+                    - has shape `(len(X),nfeatures)` (same as `X_transformed`)
+                        - the first feature is hereby the error corresponding to the unnormalized extracted flux
+                        - all other features are the ones computed via `fluxvars()`
+                - `aperture`
+                    - `np.ndarray`
+                    - the ultimately used aperture for the creation of LC                    
 
             Comments
             --------                    
@@ -1175,15 +945,16 @@ class AperturePhotometry:
 
         X_transformed   = self.X_transformed
         X_transformed_e = self.X_transformed_e
-        apertures       = self.apertures
+        aperture        = self.aperture
 
-        return X_transformed, X_transformed_e, apertures
+        return X_transformed, X_transformed_e, aperture
     
     def fit_transform(self,
-        X:List[np.ndarray], y:List[np.ndarray]=None, X_e:List[np.ndarray]=None,
+        X:List[np.ndarray], X_e:List[np.ndarray]=None,
         verbose:int=None,
         fit_kwargs:dict=None,
-        ) -> Tuple[List[np.ndarray],List[np.ndarray]]:
+        *args, **kwargs,
+        ) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         """
             - method to transform a given set of samples `X` to lightcurves
             - fits the transformer and transforms the data in one go
@@ -1191,23 +962,16 @@ class AperturePhotometry:
             Parameters
             ----------
                 - `X`
-                    - `List[np.ndarray]`
-                    - contains samples to transform into a LC
-                    - each sample is series of frames to generate lightcurve from
-                        - has shape `(nframes, npixelsx, npixelsy)`                
-                - `y`
-                    - `np.ndarray`, optional
-                    - only implemented for consistency
-                    - not used in fitting
-                    - the default is `None`
+                    - `np.ndarray`
+                    - series of frames to generate lightcurve from
+                    - has shape `(nframes, npixelsx, npixelsy)`
                 - `X_e`
-                    - `List[np.ndarray]`, optional
-                    - contains pixel-wise errors for samples in `X`
-                    - each sample is series of frames with the pixel-wise error
-                        - has shape `(nframes, npixelsx, npixelsy)`                    
-                    - same shape as `X`
+                    - `np.ndarray`, optional
+                    - series of frames containing errors for each pixel corresponding to `X`
+                    - has shape `(nframes, npixelsx, npixelsy)`
+                        - same as `X`
                     - the default is `None`
-                        - no errors considered                    
+                        - no errors considered                   
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -1226,27 +990,20 @@ class AperturePhotometry:
             Returns
             -------
                 - `X_transformed`
-                    - `List[np.ndarray]`
-                    - transformed version of the original input passed to `self.fit()`
-                    - i.e. LCs corresponding to those frames
-                    - each element contains
-                        - fluxes constituting the lightcurve resulting from the series of frames `X`
-                        - entry `i` has shape `(len(X[i]),nfeatures)`
-                            - the first feature is hereby the unnormalized extracted flux
-                            - all other features are the ones computed via `fluxvars()` 
+                    - `np.ndarray`
+                    - fluxes constituting the lightcurve resulting from the series of frames `X`
+                    - has shape `(len(X),nfeatures)`
+                        - the first feature is hereby the unnormalized extracted flux
+                        - all other features are the ones computed via `fluxvars()`
                 - `X_transformed_e`
-                    - `List[np.ndarray]`
+                    - `np.ndarray`
                     - errors corresponding to `X_transformed`
-                    - each element contains
-                        - flux errors for  the lightcurve resulting from the series of frames `X`
-                        - entry `i` has shape `(len(X[i]),nfeatures)`
-                            - the first feature is hereby the error corresponding to the unnormalized extracted flux
-                            - all other features correspond to the the fluxes computed via `fluxvars()`
-                    - has same shape as `X_transformed`
-                    - wherever no errors have been passed, the respective entry will be set to an array filled with `np.nan`                
-                - `apertures`
-                    - `List[np.ndarray]`
-                    - apertures used to transform `X` to `X_transformed`
+                    - has shape `(len(X),nfeatures)` (same as `X_transformed`)
+                        - the first feature is hereby the error corresponding to the unnormalized extracted flux
+                        - all other features are the ones computed via `fluxvars()`
+                - `aperture`
+                    - `np.ndarray`
+                    - the ultimately used aperture for the creation of LC   
 
             Comments
             --------                    
@@ -1256,13 +1013,13 @@ class AperturePhotometry:
         if verbose is None:             verbose             = self.verbose
         if fit_kwargs is None:          fit_kwargs          = dict()
 
-        self.fit(X=X, y=y, X_e=X_e, verbose=verbose, **fit_kwargs)
-        X_transformed, X_transformed_e, apertures = self.transform(X=X, y=y, verbose=verbose)
+        self.fit(X=X, X_e=X_e, verbose=verbose, **fit_kwargs)
+        X_transformed, X_transformed_e, apertures = self.transform(X=X, verbose=verbose)
 
         return X_transformed, X_transformed_e, apertures
 
     def plot_result(self,
-        X:np.ndarray, y:np.ndarray=None, X_e:np.ndarray=None,
+        X:np.ndarray, X_e:np.ndarray=None,
         x_vals:np.ndarray=None, X_in:np.ndarray=None, aperture:np.ndarray=None,
         fig=None,
         animate:bool=True,
@@ -1275,7 +1032,6 @@ class AperturePhotometry:
         ) -> Tuple[Figure, plt.Axes, manimation.FuncAnimation]:
         """
             - method to visualize the generated result
-            - one can only visualize one sample!
 
             Parameters
             ----------
@@ -1302,11 +1058,6 @@ class AperturePhotometry:
                             - the standard output of `self.transform()` has `nfeatures=2`
                     - the default is `None`
                         - no errors visualized
-                - `y`
-                    - `np.ndarray`, optional
-                    - only implemented for consistency
-                    - not used in fitting
-                    - the default is `None`
                 - `x_vals`
                     - `np.ndarray`, optional
                     - has to have same length as `X`
@@ -1492,7 +1243,7 @@ class BestAperture:
         Attributes
         ----------
             - `mode`
-                - Literal, optional
+                - `Literal["flux","mag"]`, optional
                 - mode to use
                 - can be one of
                     - `'flux'`
@@ -1500,24 +1251,24 @@ class BestAperture:
                     - `'mag'`
                         - will consider equations for magnitudes to execute calculations
             - `store_ring_masks`
-                - bool, optional
+                - `bool`, optional
                 - whether to store all sky-ring masks created during calculations
                     - those will be used during i.e., plotting
-                - the default is True
+                - the default is `True`
             - `store_aperture_masks`
-                - bool, optional
+                - `bool`, optional
                 - whether to store all aperture masks created during calculations
                     - those will be used during i.e., plotting
-                - the default is True
+                - the default is `True`
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Infered Attributes
         ------------------
             - `aperture_res`
-                - np.ndarray
+                - `np.ndarray`
                 - contains results for the analysis of the aperture
                 - has shape `(nradii,3)`
                     - `nradii` is the number of tested radii
@@ -1526,7 +1277,7 @@ class BestAperture:
                         - element 1: total flux/magnitude within aperture
                         - element 2: number of enclosed pixels
             - `ring_res`
-                - np.ndarray
+                - `np.ndarray`
                 - contains results for the analysis of the sky-ring
                 - has shape `(nradii*nwidths,4)`
                     - `nradii` is the number of tested radii
@@ -1537,10 +1288,10 @@ class BestAperture:
                         - element 2: total flux/magnitude within aperture (dependent on `self.mode`)
                         - element 3: number of enclosed pixels
             - `aperture_masks`
-                - np.ndarray
+                - `np.ndarray`
                 - contains boolean arrays of all tested apertures
             - `ring_masks`
-                - np.ndarray
+                - `np.ndarray`
                 - contains boolean arrays of all tested sky-rings
 
         Methods
@@ -1557,9 +1308,9 @@ class BestAperture:
 
         Dependencies
         ------------
-            - matplotlib
-            - numpy
-            - typing
+            - `matplotlib`
+            - `numpy`
+            - `typing`
 
         Comments
         --------
@@ -1587,7 +1338,7 @@ class BestAperture:
         self.ring_masks     = np.empty((0,0,0))
         
 
-        pass
+        return
 
     def __repr__(self) -> str:
         return (
@@ -1611,7 +1362,7 @@ class BestAperture:
             Parameters
             ----------
                 - `frames`
-                    - np.ndarray
+                    - `np.ndarray`
                     - series of frames to consider for the analysis
                     - has to have shape `(nframes,npixels,npixels,3)`
                         - the last axis contains
@@ -1651,7 +1402,7 @@ class BestAperture:
             Parameters
             ----------
                 - `frames`
-                    - np.ndarray
+                    - `np.ndarray`
                     - series of frames to consider for the analysis
                     - has to have shape `(nframes,npixels,npixels,3)`
                         - the last axis contains
@@ -1697,7 +1448,7 @@ class BestAperture:
             Returns
             -------
                 - `sum_frame`
-                    - np.ndarray
+                    - `np.ndarray`
                     - frame consisting of the pixel wise total flux/magnitude
 
             Comments
@@ -1724,7 +1475,7 @@ class BestAperture:
             Parameters
             ----------
                 - `frames`
-                    - np.ndarray
+                    - `np.ndarray`
                     - series of frames to consider for the analysis
                     - has to have shape `(nframes,npixels,npixels,3)`
                         - the last axis contains
@@ -1732,13 +1483,13 @@ class BestAperture:
                             - element 1: posistion in y direction
                             - element 2: flux/magnitude values
                 - `posx`
-                    - float
+                    - `float`
                     - position of the aperture in x direction
                 - `posy`
-                    - float
+                    - `float`
                     - position of the aperture in y direction
                 - `r_aperture`
-                    - np.ndarray
+                    - `np.ndarray`
                     - test radii of the aperture
                     - will test every radius and calculate total flux/magnitude contained within that radius
             
@@ -1794,7 +1545,7 @@ class BestAperture:
             Parameters
             ----------
                 - `frames`
-                    - np.ndarray
+                    - `np.ndarray`
                     - series of frames to consider for the analysis
                     - has to have shape `(nframes,npixels,npixels,3)`
                         - the last axis contains
@@ -1802,13 +1553,13 @@ class BestAperture:
                             - element 1: posistion in y direction
                             - element 2: flux/magnitude values
                 - `posx`
-                    - float
+                    - `float`
                     - position of the sky-ring in x direction
                 - `posy`
-                    - float
+                    - `float`
                     - position of the sky-ring in y direction
                 - `rw_sky`
-                    - np.ndarray
+                    - `np.ndarray`
                     - test specifications for sky-rings to test
                     - has to have shape `(nrings,2)`
                         - element 0: radii of the sky-rings
@@ -1863,9 +1614,9 @@ class BestAperture:
         posy:float,
         r_aperture:np.ndarray,
         rw_sky:np.ndarray,
-        y:np.ndarray=None,
         test_aperture_kwargs:dict=None,
         test_background_kwargs:dict=None,
+        *args, **kwargs
         ) -> None:
         """
             - method to fit the estimator
@@ -1873,38 +1624,32 @@ class BestAperture:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input values to apply estimator on
                     - i.e. frames of the timeseries
                 - `posx`
-                    - float
+                    - `float`
                     - position of aperture and sky-ring in x direction
                 - `posy`
-                    - float
+                    - `float`
                     - position of aperture and sky-ring in y direction
                 - `r_aperture`
-                    - np.ndarray
+                    - `np.ndarray`
                     - test radii of the aperture
                     - will test every radius and calculate total flux/magnitude contained within that radius
                 - `rw_sky`
-                    - np.ndarray
+                    - `np.ndarray`
                     - test specifications for sky-rings to test
                     - has to have shape `(nrings,2)`
                         - element 0: radii of the sky-rings
                         - element 1: widths of the sky-rings
-                - `y`
-                    - np.ndarray, optional
-                    - y values
-                    - just here for consistency
-                    - not used in calculation
-                    - the default is `None`
                 - `test_aperture_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.test_aperture()`
                     - the default is `None`
                         - will be set to `dict()`
                 - `test_background_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.test_background()`
                     - the default is `None`
                         - will be set to `dict()`
@@ -1918,8 +1663,6 @@ class BestAperture:
             Comments
             --------
         """
-        #TODO: Add alternate background estimate options
-
         if test_aperture_kwargs is None:    test_aperture_kwargs    = dict()
         if test_background_kwargs is None:  test_background_kwargs  = dict()
 
@@ -1942,6 +1685,7 @@ class BestAperture:
         return
     
     def predict(self,
+        *args, **kwargs
         ) -> None:
         """
             - NOT IMPLEMENTED
@@ -1974,8 +1718,6 @@ class BestAperture:
         posy:float,
         r_aperture:np.ndarray,
         rw_sky:np.ndarray,
-        # r_sky:np.ndarray,
-        # w_sky:np.ndarray,
         fit_kwargs:dict=None,
         predict_kwargs:dict=None,
         ) -> None:
@@ -1985,38 +1727,32 @@ class BestAperture:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input values to apply estimator on
                     - i.e. frames of the timeseries
                 - `posx`
-                    - float
+                    - `float`
                     - position of aperture and sky-ring in x direction
                 - `posy`
-                    - float
+                    - `float`
                     - position of aperture and sky-ring in y direction
                 - `r_aperture`
-                    - np.ndarray
+                    - `np.ndarray`
                     - test radii of the aperture
                     - will test every radius and calculate total flux/magnitude contained within that radius
                 - `rw_sky`
-                    - np.ndarray
+                    - `np.ndarray`
                     - test specifications for sky-rings to test
                     - has to have shape `(nrings,2)`
                         - element 0: radii of the sky-rings
                         - element 1: widths of the sky-rings
-                - `y`
-                    - np.ndarray, optional
-                    - y values
-                    - just here for consistency
-                    - not used in calculation
-                    - the default is `None`
                 - `test_aperture_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.test_aperture()`
                     - the default is `None`
                         - will be set to `dict()`
                 - `test_background_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.test_background()`
                     - the default is `None`
                         - will be set to `dict()`
@@ -2064,12 +1800,12 @@ class BestAperture:
             Parameters
             ----------
                 - `plot_aperture_r`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - radii to visualize the aperture for in the frame of total magnitudes/fluxes
                     - the default is `None`
                         - will be set to `[]`
                 - `plot_sky_rings_rw`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - radii-width combinations to visualize the sky-ring for in the frame of total magnitudes/fluxes
                     - has to have shape `(n2plot,2)`
                         - element 0: sky-ring radius
@@ -2077,33 +1813,33 @@ class BestAperture:
                     - the default is `None`
                         - will be set to `[]`
                 - `aperture_cmap`
-                    - str, mcolors.Colormap, optional
+                    - `str`, `mcolors.Colormap`, optional
                     - colormap to use for colorcoding apertures
                     - the default is `None`
                         - will be set to `autumn`
                 - `sky_rings_cmap`
-                    - str, mcolors.Colormap, optional
+                    - `str`, `mcolors.Colormap`, optional
                     - colormap to use for colorcoding apertures
                     - the default is `None`
                         - will be set to `winter`
                 - `fig`
-                    - Figure, optional
+                    - `Figure`, optional
                     - figure to plot into
                     - the default is `None`
                         - will create a new figure
                 - `sort_rings_apertures`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to sort the passed rings and apertures before plotting
                     - recommended because then it is more likely that all requested apertures/sky-rings are visible
                         - if they are not sorted, it could be that a large aperture is plot on top of a smaller one, essentially covering it
                 - `plot_kwargs`
-                    - dict, optional
-                    - kwargs to pass to ´ax.plot()`
+                    - `dict`, optional
+                    - kwargs to pass to`ax.plot()`
                     - the default is `None`
                         - will be set to `dict()`
                 - `scatter_kwargs`
-                    - dict, optional
-                    - kwargs to pass to ´ax.scatter()`
+                    - `dict`, optional
+                    - kwargs to pass to `ax.scatter()`
                     - the default is `None`
                         - will be set to `dict()`
 
@@ -2113,10 +1849,10 @@ class BestAperture:
             Returns
             -------
                 - `fig`
-                    - Figure
+                    - `Figure`
                     - created figure
                 - `axs`
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
 
             Comments
@@ -2242,18 +1978,13 @@ class DifferentialPhotometryImage:
 
         Attributes
         ----------
-            - `n_jobs`
-                - `int`, optional
-                - number of jobs to use when executing parallelized computations
-                - will be passed to `joblib.Parallel()`
             - `verbose`
                 - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Methods
         -------
-            - `fit_one()`
             - `fit()`
             - `transform()`
             - `fit_transform()`
@@ -2271,11 +2002,9 @@ class DifferentialPhotometryImage:
     """
 
     def __init__(self,
-        n_jobs:int=-1,
         verbose:int=0,
         ) -> None:
         
-        self.n_jobs     = n_jobs
         self.verbose    = verbose
 
         return
@@ -2283,7 +2012,6 @@ class DifferentialPhotometryImage:
     def __repr__(self) -> str:
         return (
             f'{self.__class__.__name__}(\n'
-            f'    n_jobs={repr(self.n_jobs)},\n'
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
@@ -2291,13 +2019,14 @@ class DifferentialPhotometryImage:
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
     
-    def fit_one(self,
+    def fit(self,
         X:np.ndarray, X_ref:Union[np.ndarray,int]=None,
         X_e:np.ndarray=None, X_ref_e:np.ndarray=None,
         strategy:Union[Callable,Literal['previous']]=None,
         verbose:int=None,
         strategy_kwargs:dict=None,
-        ) -> List[np.ndarray]:
+        *args, **kwargs
+        ) -> None:
         """
             - method to execute differential photometry on one particular target `X`
 
@@ -2319,14 +2048,14 @@ class DifferentialPhotometryImage:
                     - the default is `None`
                         - will be ignored
                 - `X_e`
-                    - 'np.ndarray`, optional
+                    - `np.ndarray`, optional
                     - errors corresponding to `X`
                     - has shape `(nframes,xpixels,ypixels)`
                     - the default is `None`
                         - will be set to array containing only `np.nan`
                         - no errors considered
                 - `X_ref_e`
-                    - 'np.ndarray`, optional
+                    - `np.ndarray`, optional
                     - errors corresponding to `X_ref`
                     - has to have same shape as `X_ref`
                     - the default is `None`
@@ -2370,17 +2099,6 @@ class DifferentialPhotometryImage:
 
             Returns
             -------
-                - `X_dp`
-                    - `np.ndarray`
-                    - frames after applying differential photometry
-                    - has same shape as `X` (in general)
-                    - if `strategy=='previous'`
-                        - has shape `(X.shape[0]-1,X.shape[1],X-shape[2])`
-                        - one frame less than `X`
-                    - if `strategy` is a `Callable`
-                        - has custom output shape
-                - `X_dp_e`
-                    - TODO
 
             Comments
             --------
@@ -2413,151 +2131,19 @@ class DifferentialPhotometryImage:
                 X_dp = None
                 X_dp_e = None
         
-        return X_dp, X_dp_e
-
-    def fit(self,
-        X:List[np.ndarray], y:np.ndarray=None, X_ref:List[Union[np.ndarray,int]]=None,
-        X_e:np.ndarray=None, X_ref_e:np.ndarray=None,
-        strategy:Union[Callable,Literal['previous']]=None,
-        n_jobs=None,
-        verbose:int=None,
-        parallel_kwargs:dict=None,
-        strategy_kwargs:dict=None,        
-        ) -> None:
-        """
-            - method to fit the transformer
-
-            Parameters
-            ----------
-                `X`
-                    - `List[np.ndarray]`
-                    - list of input frame-series to apply differential photometry to
-                    - each entry has to have shape `(nframes,xpixels,ypixels)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - only here for consistency
-                    - not used
-                    - the default is `None`
-                - `X_ref`
-                    - `List[np.ndarray]`, `List[int]`, optional
-                    - list of reference frame-series to use as reference targets for differential photometry
-                    - has to have same length as `X`
-                    - if `List[int]`
-                        - will be interpreted as indices of frame in the elements of `X` to use as reference frames
-                    - if `List[np.ndarray]`
-                        - will be interpreted as actual reference frame-series
-                    - the default is `None`
-                        - only recommended to use if `strategy` is a `Callable`
-                - `X_e`
-                    - 'List[np.ndarray]`, optional
-                    - errors corresponding to `X`
-                    - each entry has shape `(nframes,xpixels,ypixels)`
-                    - the default is `None`
-                        - will be set to `None` for all entries in `X`
-                        - no errors considered
-                - `X_ref_e`
-                    - 'List[np.ndarray]`, optional
-                    - errors corresponding to `X_ref`
-                    - each entry has the same shape as the corresponding entry in `X_ref`
-                    - the default is `None`
-                        - will be set to `None` for all entries in `X`
-                        - no errors considered
-                - `strategy`
-                    - `Callable(np.ndarray,np.ndarray,np.ndarray,np.ndarray,Any) -> (np.ndarray,np.ndarray)`, `Literal['previous']`, optional
-                    - strategy to envoke for executing the differential photometry
-                    - if `Callable`
-                        - has to take 4 arguments
-                            - `X`
-                            - `X_ref`
-                            - `X_e`
-                            - `X_ref_e`
-                        - has to return 2 `np.ndarray`s
-                            - frames after applying differential photmetry
-                            - propagated uncertainties for the resulting frame after differential photometry
-                                - return array filled with `np.nan` in case no errors are computed
-                        - will call `strategy(X, X_ref, X_e, X_ref_e, **strategy_kwargs)` instead of the default implementation
-                        - used to execute custom strategies
-                    - if `previous`
-                        - only executed if `X_ref` is `None`
-                        - will call `np.diff(X, axis=0)`
-                        - will consider the previous frame as the reference
-                    - the default is `None`
-                        - will be set to `previous`
-                - `n_jobs`
-                    - `int`, optional
-                    - number of cores to use for parallel execution
-                    - overrides `self.n_jobs`
-                    - the default is `None`
-                        - falls back to `self.n_jobs`
-                - `verbose`
-                    - `int`, optional
-                    - verbosity level
-                    - overrides `self.verbose`
-                    - the default is `None`
-                        - will fall back to `self.verbose`
-                - `parallel_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `joblib.parallel.Parallel()`
-                    - the default is `None`
-                        - will be set to `dict()`
-                - `strategy_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `strategy`
-                    - the default is `None`
-                        - will be set to `dict()`
-            
-            Raises
-            ------
-            
-            Returns
-            -------
-
-            Comments
-            --------
-        """
-
-        if y is None:               y               = [None]*len(X)
-        if X_e is None:             X_e             = [None]*len(X)
-        if X_ref is None:           X_ref           = [None]*len(X)
-        if X_ref_e is None:         X_ref_e         = [None]*len(X)
-        elif isinstance(X_ref,int): X_ref           = [X_ref]*len(X)
-        if n_jobs is None:          n_jobs          = self.n_jobs
-        if verbose is None:         verbose         = self.verbose
-        if parallel_kwargs is None: parallel_kwargs = dict()
-
-        self.idx = 0
-
-        res = Parallel(n_jobs=n_jobs, **parallel_kwargs)(
-            delayed(self.fit_one)(
-                X=Xi, X_ref=Xi_ref,
-                X_e=Xi_e, X_ref_e=Xi_ref_e,
-                strategy=strategy,
-                verbose=verbose,
-                strategy_kwargs=strategy_kwargs,
-            ) for idx, (Xi, Xi_ref, Xi_e, Xi_ref_e) in enumerate(zip(X, X_ref, X_e, X_ref_e))
-        )
-
-
-        self.X_dp   = [np.array(r[0]) for r in res]
-        self.X_dp_e = [np.array(r[1]) for r in res]
+        self.X_dp   = X_dp
+        self.X_dp_e = X_dp_e
 
         return
-    
+
     def transform(self,
-        X:List[np.ndarray]=None, y:np.ndarray=None,
-        ) -> Tuple[List[np.ndarray],List[np.ndarray]]:
+        *args, **kwargs
+        ) -> Tuple[np.ndarray,np.ndarray]:
         """
             - method to transform the input
 
             Parameters
             ----------
-                `X`
-                    - `List[np.ndarray]`
-                    - only here for consistency
-                    - not used
-                    - the default is `None`            
-                - `y`
-                    - `np.ndarray`, optional
 
             Raises
             ------
@@ -2565,21 +2151,19 @@ class DifferentialPhotometryImage:
             Returns
             -------
                 - `X_dp`
-                    - `List[np.ndarray]`
-                    - list containing for each element in the input `X`
-                        - frames after applying differential photometry
-                        - entries `Xi`
-                            - have same shape as entries in `X` (in general)
-                            - if `strategy=='previous'`
-                                - has shape `(Xi.shape[0]-1,Xi.shape[1],Xi-shape[2])`
-                                - one frame less than `Xi`
-                            - if `strategy` is a `Callable`
-                                - has custom output shape
+                    - `np.ndarray`
+                    - frames after applying differential photometry
+                    - has same shape as `X` (in general)
+                        - if `strategy=='previous'`
+                            - has shape `(X.shape[0]-1,X.shape[1],X-shape[2])`
+                            - one frame less than `X`
+                        - if `strategy` is a `Callable`
+                            - has custom output shape
+                            - entries `X`
                 - `X_dp_e`
-                    - 'List[np.ndarray]`
-                    - list containing for each element in the input `X`
-                        - uncertainty estimate for frames after applying differential photometry
-                        - entries have same shape as entries in `X` (in general)
+                    - 'np.ndarray`
+                    - uncertainty estimate for frames after applying differential photometry
+                    - same shape as `X_dp`
 
             Comments
             --------
@@ -2590,48 +2174,45 @@ class DifferentialPhotometryImage:
         return X_dp, X_dp_e
     
     def fit_transform(self,
-        X:List[np.ndarray], y:np.ndarray=None, X_ref:List[Union[np.ndarray,int]]=None,
-        X_e:List[np.ndarray]=None, X_ref_e:List[np.ndarray]=None,
+        X:np.ndarray, X_ref:Union[np.ndarray,int]=None,
+        X_e:np.ndarray=None, X_ref_e:np.ndarray=None,
         verbose:int=None,
         fit_kwargs:dict=None,
-        ) -> Tuple[List[np.ndarray],List[np.ndarray]]:
+        *args, **kwargs
+        ) -> Tuple[np.ndarray,np.ndarray]:
         """
             - method to fit the transformer
 
             Parameters
             ----------
-                `X`
-                    - `List[np.ndarray]`
-                    - list of input frame-series to apply differential photometry to
-                    - each entry has to have shape `(nframes,xpixels,ypixels)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - only here for consistency
-                    - not used
-                    - the default is `None`
+                - `X`
+                    - `np.ndarray`
+                    - series of frames of the science target
+                    - has shape `(nframes,xpixels,ypixels)`
                 - `X_ref`
-                    - `List[np.ndarray]`, `List[int]`, optional
-                    - list of reference frame-series to use as reference targets for differential photometry
-                    - has to have same length as `X`
-                    - if `List[int]`
-                        - will be interpreted as indices of frame in the elements of `X` to use as reference frames
-                    - if `List[np.ndarray]`
-                        - will be interpreted as actual reference frame-series
+                    - `np.ndarray`, `int`, optional
+                    - reference frame or series to utilize for executing differential photometry
+                    - if `np.ndarray`
+                        - calls `X - X_ref`
+                        - will subtract reference frame(s) from `X`
+                    - if `int`
+                        - calls `X - X[X_ref]`
+                        - will be interpreted as the index of the reference frame in `X`
                     - the default is `None`
-                        - only recommended to use if `fit_kwargs['strategy']` is a `Callable`
+                        - will be ignored
                 - `X_e`
-                    - 'List[np.ndarray]`, optional
+                    - `np.ndarray`, optional
                     - errors corresponding to `X`
-                    - each entry has shape `(nframes,xpixels,ypixels)`
+                    - has shape `(nframes,xpixels,ypixels)`
                     - the default is `None`
-                        - will be set to `None` for all entries in `X`
+                        - will be set to array containing only `np.nan`
                         - no errors considered
                 - `X_ref_e`
-                    - 'List[np.ndarray]`, optional
+                    - `np.ndarray`, optional
                     - errors corresponding to `X_ref`
-                    - each entry has the same shape as the corresponding entry in `X_ref`
+                    - has to have same shape as `X_ref`
                     - the default is `None`
-                        - will be set to `None` for all entries in `X`
+                        - will be set to array containing only `np.nan`
                         - no errors considered
                 - `verbose`
                     - `int`, optional
@@ -2651,22 +2232,19 @@ class DifferentialPhotometryImage:
             Returns
             -------
                 - `X_dp`
-                    - `List[np.ndarray]`
-                    - list containing for each element in the input `X`
-                        - frames after applying differential photometry
-                        - entries `Xi`
-                            - have same shape as entries in `X` (in general)
-                            - if `strategy=='previous'`
-                                - has shape `(Xi.shape[0]-1,Xi.shape[1],Xi-shape[2])`
-                                - one frame less than `Xi`
-                            - if `fit_kwargs['strategy']` is a `Callable`
-                                - has custom output shape
+                    - `np.ndarray`
+                    - frames after applying differential photometry
+                    - has same shape as `X` (in general)
+                        - if `strategy=='previous'`
+                            - has shape `(X.shape[0]-1,X.shape[1],X-shape[2])`
+                            - one frame less than `X`
+                        - if `strategy` is a `Callable`
+                            - has custom output shape
+                            - entries `X`
                 - `X_dp_e`
-                    - 'List[np.ndarray]`
-                    - list containing for each element in the input `X`
-                        - uncertainty estimate for frames after applying differential photometry
-                        - entries have same shape as entries in `X` (in general)
-
+                    - 'np.ndarray`
+                    - uncertainty estimate for frames after applying differential photometry
+                    - same shape as `X_dp`
 
             Comments
             --------
@@ -2674,8 +2252,8 @@ class DifferentialPhotometryImage:
         if verbose is None:     verbose     = self.verbose
         if fit_kwargs is None:  fit_kwargs  = dict()
         
-        self.fit(X, y, X_ref, X_e, X_ref_e, verbose=verbose, **fit_kwargs)
-        X_dp, X_dp_e = self.transform(X, y)
+        self.fit(X, X_ref, X_e, X_ref_e, verbose=verbose, **fit_kwargs)
+        X_dp, X_dp_e = self.transform()
 
         return X_dp, X_dp_e
     
@@ -2703,11 +2281,6 @@ class DifferentialPhotometryImage:
                     - `np.ndarray`
                     - transformed input
                     - has shape `(nframes,xpixels,ypixels)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - not needed
-                    - only implemented for consistency
-                    - the default is `None`
                 - `X_e`
                     - `np.ndarray`, optional
                     - pixel-wise errors corresponding to `X`
@@ -2848,15 +2421,21 @@ class DifferentialPhotometryImage:
             errs2plot.append(X_ref_e)
 
         #LCs
-        AP = AperturePhotometry(n_jobs=len(frames2plot), verbose=0)
-        lcs, lcs_e, aps = AP.fit_transform(
-            X=frames2plot, X_e=errs2plot,
-            fit_kwargs=dict(
-                apertures=[aperture]*len(frames2plot),
-                # fluxvars=lambda x, x_e, **kwargs: ((x/np.nanmedian(x)).reshape(-1,1),(x_e/np.nanmedian(x)).reshape(-1,1)),
-                parallel_kwargs=dict(backend='threading')
-            ),
-        )
+        AP = AperturePhotometry(verbose=0)
+        lcs = []
+        lcs_e = []
+        aps = []
+        for f2p, f2pe in zip(frames2plot, errs2plot):
+            lcs_i, lcs_i_e, aps_i = AP.fit_transform(
+                X=f2p, X_e=f2pe,
+                fit_kwargs=dict(
+                    aperture=aperture,
+                    # fluxvars=lambda x, x_e, **kwargs: ((x/np.nanmedian(x)).reshape(-1,1),(x_e/np.nanmedian(x)).reshape(-1,1)),
+                ),
+            )
+            lcs.append(lcs_i)
+            lcs_e.append(lcs_i_e)
+            aps.append(aps_i)
         
 
         meshes = []
@@ -2928,18 +2507,13 @@ class DifferentialPhotometryLC:
 
         Attributes
         ----------
-            - `n_jobs`
-                - `int`, optional
-                - number of jobs to use when executing parallelized computations
-                - will be passed to `joblib.Parallel()`
             - `verbose`
                 - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Methods
         -------
-            - `fit_one()`
             - `fit()`
             - `transform()`
             - `fit_transform()`
@@ -2953,11 +2527,9 @@ class DifferentialPhotometryLC:
     """
 
     def __init__(self,
-        n_jobs:int=-1,
         verbose:int=0,
         ) -> None:
         
-        self.n_jobs     = n_jobs
         self.verbose    = verbose
 
         return
@@ -2965,7 +2537,6 @@ class DifferentialPhotometryLC:
     def __repr__(self) -> str:
         return (
             f'{self.__class__.__name__}(\n'
-            f'    n_jobs={repr(self.n_jobs)},\n'
             f'    verbose={repr(self.verbose)},\n'
             f')'
         )
@@ -2973,13 +2544,14 @@ class DifferentialPhotometryLC:
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
-    def fit_one(self,
+    def fit(self,
         X:np.ndarray, X_ref:np.ndarray,
         X_e:np.ndarray=None, X_ref_e:np.ndarray=None,
         strategy:Callable[[np.ndarray,np.ndarray,np.ndarray,np.ndarray,Any],Tuple[np.ndarray,np.ndarray]]=None,
         verbose:int=None,
         strategy_kwargs:dict=None,
-        ) -> List[np.ndarray]:
+        *args, **kwargs,
+        ) -> None:
         """
             - method to execute differential photometry on one particular target `X`
 
@@ -3041,19 +2613,6 @@ class DifferentialPhotometryLC:
 
             Returns
             -------
-                - `X_dp`
-                    - `np.ndarray`
-                    - LC after applying differential photometry
-                    - has same shape as `X` (in general)
-                    - if `strategy` is a `Callable`
-                        - has custom output shape
-                -`X_dp_e`
-                    - `np.ndarray`
-                    - propagated uncertainties corresponding to `X_dp`
-                    - has same shape as `X_dp`
-                    - will be filled with `np.nan` in case one of the following applies
-                        - `X_e is None`
-                        - `X_ref_e is None`
                         
             Comments
             --------
@@ -3072,147 +2631,19 @@ class DifferentialPhotometryLC:
             X_dp = X - X_ref                #element-wise subtract reference LC from input
             X_dp_e = np.sqrt(X_e**2 + X_ref_e**2)          #uncertainty propagation for X_dp
 
-        return X_dp, X_dp_e
-
-    def fit(self,
-        X:List[np.ndarray], y:np.ndarray=None, X_ref:List[np.ndarray]=None,
-        X_e:List[np.ndarray]=None, X_ref_e:List[np.ndarray]=None,
-        strategy:Callable[[np.ndarray,np.ndarray,np.ndarray,np.ndarray,Any],Tuple[np.ndarray,np.ndarray]]=None,
-        n_jobs=None,
-        verbose:int=None,
-        parallel_kwargs:dict=None,
-        strategy_kwargs:dict=None,        
-        ) -> None:
-        """
-            - method to fit the transformer
-
-            Parameters
-            ----------
-                `X`
-                    - `List[np.ndarray]`
-                    - list of input lcs to apply differential photometry to
-                    - each entry has to have shape `(nobservations)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - only here for consistency
-                    - not used
-                    - the default is `None`
-                - `X_ref`
-                    - `List[np.ndarray]`, optional
-                    - list of reference lcs to use as reference targets for differential photometry
-                    - has to have same length as `X`
-                    - the default is `None`
-                        - only recommended to use if `strategy` is a `Callable`
-                - `X_e`
-                    - `List[np.ndarray]`, optional
-                    - uncertainties of observations in `X`
-                    - has same shape as `X`
-                    - the default is `None`
-                        - will not consider errors in computation
-                        - set to `[None]*len(X)`
-                - `X_ref_e`
-                    - `List[np.ndarray]`, optional
-                    - uncertainties of observations in `X_ref`
-                    - has same shape as `X_ref`
-                    - the default is `None`
-                        - will not consider errors in computation
-                        - set to `[None]*len(X)`
-                - `strategy`
-                    - `Callable(np.ndarray,np.ndarray,np.ndarray,np.ndarray,Any) -> (np.ndarray,np.ndarray)`, optional
-                    - strategy to envoke for executing the differential photometry
-                    - has to take 4 arguments
-                        - `X`
-                        - `X_ref`
-                        - `X_e`
-                        - `X_ref_e`
-                    - has to return two `np.ndarray`s
-                        - LC after applying differential photmetry
-                        - Errors related to LC after differential photometry
-                            - return array filled with `np.nan` in case no errors are computed
-                    - will call `strategy(X, X_ref, X_e, X_ref_e, **strategy_kwargs)` instead of the default implementation
-                    - used to execute custom strategies
-                    - the default is `None`
-                        - will use default implementation instead
-                - `n_jobs`
-                    - `int`, optional
-                    - number of cores to use for parallel execution
-                    - overrides `self.n_jobs`
-                    - the default is `None`
-                        - falls back to `self.n_jobs`
-                - `verbose`
-                    - `int`, optional
-                    - verbosity level
-                    - overrides `self.verbose`
-                    - the default is `None`
-                        - will fall back to `self.verbose`
-                - `parallel_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `joblib.parallel.Parallel()`
-                    - the default is `None`
-                        - will be set to `dict()`
-                - `strategy_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `strategy`
-                    - the default is `None`
-                        - will be set to `dict()`
-            
-            Raises
-            ------
-            
-            Returns
-            -------
-
-            Comments
-            --------
-        """
-        
-        if y is None:               y               = [None]*len(X)
-        if X_e is None:             X_e             = [None]*len(X)
-        if X_ref is None:           X_ref           = [None]*len(X)
-        if X_ref_e is None:         X_ref_e         = [None]*len(X)
-        if n_jobs is None:          n_jobs          = self.n_jobs
-        if verbose is None:         verbose         = self.verbose
-        if parallel_kwargs is None: parallel_kwargs = dict()
-
-
-        #check shapes
-        X_dims      = np.array([Xi.ndim for Xi in X])
-        X_ref_dims  = np.array([Xi.ndim for Xi in X_ref])
-        assert np.all(X_dims==1), '`X` has to be a list of 1d arrays!'
-        assert np.all(X_ref_dims==1), '`X_ref` has to be a list of 1d arrays!'
-
-        self.idx = 0
-
-        res = Parallel(n_jobs=n_jobs, **parallel_kwargs)(
-            delayed(self.fit_one)(
-                X=Xi, X_ref=Xi_ref,
-                X_e=Xi_e, X_ref_e=Xi_ref_e,
-                strategy=strategy,
-                verbose=verbose,
-                strategy_kwargs=strategy_kwargs,
-            ) for idx, (Xi, Xi_ref, Xi_e, Xi_ref_e) in enumerate(zip(X, X_ref, X_e, X_ref_e))
-        )
-
-        self.X_dp   = [np.array(r[0]) for r in res]
-        self.X_dp_e = [np.array(r[1]) for r in res]
+        self.X_dp   = X_dp
+        self.X_dp_e = X_dp_e
 
         return
     
     def transform(self,
-        X:List[np.ndarray]=None, y:np.ndarray=None,
+        *args, **kwargs,
         ) -> Tuple[List[np.ndarray],List[np.ndarray]]:
         """
             - method to transform the input
 
             Parameters
             ----------
-                `X`
-                    - `List[np.ndarray]`
-                    - only here for consistency
-                    - not used
-                    - the default is `None`            
-                - `y`
-                    - `np.ndarray`, optional
 
             Raises
             ------
@@ -3220,71 +2651,62 @@ class DifferentialPhotometryLC:
             Returns
             -------
                 - `X_dp`
-                    - `List[np.ndarray]`
-                    - list containing for each element in the input `X`
-                        - lcs after applying differential photometry
-                        - entries `Xi`
-                            - have same shape as entries in `X` (in general)
-                            - if `strategy` is a `Callable`
-                                - has custom output shape
-                - `X_dp_e`
-                    - `List[np.ndarray]`
-                    - lost containing for each element in `X_dp`
-                        - propagated uncertainties corresponding to said element in `X_dp`
-                        - entries
-                            - have same shape as corresponding entries `Xi` in `X_dp`
-                            - will be filled with `np.nan` in case one of the following applies to the respective element in `X_dp`
-                                - `X_e is None`
-                                - `X_ref_e is None`
+                    - `np.ndarray`
+                    - LC after applying differential photometry
+                    - has same shape as `X` (in general)
+                    - if `strategy` is a `Callable`
+                        - has custom output shape
+                -`X_dp_e`
+                    - `np.ndarray`
+                    - propagated uncertainties corresponding to `X_dp`
+                    - has same shape as `X_dp`
+                    - will be filled with `np.nan` in case one of the following applies
+                        - `X_e is None`
+                        - `X_ref_e is None`            
 
             Comments
             --------
         """
-        X_dp = self.X_dp
-        X_dp_e = self.X_dp_e
+        X_dp    = self.X_dp
+        X_dp_e  = self.X_dp_e
         
         return X_dp, X_dp_e
     
     def fit_transform(self,
-        X:List[np.ndarray], y:np.ndarray=None, X_e:List[np.ndarray]=None,
-        X_ref:List[np.ndarray]=None, X_ref_e:List[np.ndarray]=None,
+        X:np.ndarray, X_ref:np.ndarray=None,
+        X_e:np.ndarray=None, X_ref_e:np.ndarray=None,
         verbose:int=None,
         fit_kwargs:dict=None,
+        *args, **kwargs,
         ) -> np.ndarray:
         """
             - method to fit the transformer
 
             Parameters
             ----------
-                `X`
-                    - `List[np.ndarray]`
-                    - list of input lcs to apply differential photometry to
-                    - each entry has to have shape `(nobservations)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - only here for consistency
-                    - not used
-                    - the default is `None`
+                - `X`
+                    - `np.ndarray`
+                    - input lightcurve to apply differential photometry to
+                    - has shape `(nobservations)`
                 - `X_ref`
-                    - `List[np.ndarray]`, optional
-                    - list of reference lcs to use as reference targets for differential photometry
-                    - has to have same length as `X`
-                    - the default is `None`
-                        - only recommended to use if `fit_kwargs['strategy']` is a `Callable`
+                    - `np.ndarray`
+                    - reference lightcurve to utilize for executing differential photometry
+                        - calls `X - X_ref`
+                        - will subtract reference LC from `X`
                 - `X_e`
-                    - `List[np.ndarray]`, optional
+                    - `np.ndarray`, optional
                     - uncertainties of observations in `X`
-                    - has same shape as `X`
+                    - has shape `(nobservations)`
                     - the default is `None`
                         - will not consider errors in computation
-                        - set to `[None]*len(X)`
+                        - outputs array filled with `np.nan` for `X_dp_e`
                 - `X_ref_e`
-                    - `List[np.ndarray]`, optional
+                    - `np.ndarray`, optional
                     - uncertainties of observations in `X_ref`
-                    - has same shape as `X_ref`
+                    - has shape `(nobservations)`
                     - the default is `None`
                         - will not consider errors in computation
-                        - set to `[None]*len(X)`
+                        - outputs array filled with `np.nan` for `X_dp_e`
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -3303,22 +2725,18 @@ class DifferentialPhotometryLC:
             Returns
             -------
                 - `X_dp`
-                    - `List[np.ndarray]`
-                    - list containing for each element in the input `X`
-                        - lc after applying differential photometry
-                        - entries `Xi`
-                            - have same shape as entries in `X` (in general)
-                            - if `fit_kwargs['strategy']` is a `Callable`
-                                - has custom output shape
-                - `X_dp_e`
-                    - `List[np.ndarray]`
-                    - lost containing for each element in `X_dp`
-                        - propagated uncertainties corresponding to said element in `X_dp`
-                        - entries
-                            - have same shape as corresponding entries `Xi` in `X_dp`
-                            - will be filled with `np.nan` in case one of the following applies to the respective element in `X_dp`
-                                - `X_e is None`
-                                - `X_ref_e is None`
+                    - `np.ndarray`
+                    - LC after applying differential photometry
+                    - has same shape as `X` (in general)
+                    - if `strategy` is a `Callable`
+                        - has custom output shape
+                -`X_dp_e`
+                    - `np.ndarray`
+                    - propagated uncertainties corresponding to `X_dp`
+                    - has same shape as `X_dp`
+                    - will be filled with `np.nan` in case one of the following applies
+                        - `X_e is None`
+                        - `X_ref_e is None`  
 
             Comments
             --------
@@ -3327,13 +2745,13 @@ class DifferentialPhotometryLC:
         if verbose is None:     verbose     = self.verbose
         if fit_kwargs is None:  fit_kwargs  = dict()
         
-        self.fit(X, y, X_ref, X_e, X_ref_e, verbose=verbose, **fit_kwargs)
-        X_dp, X_dp_e = self.transform(X, y)
+        self.fit(X, X_ref, X_e, X_ref_e, verbose=verbose, **fit_kwargs)
+        X_dp, X_dp_e = self.transform()
 
         return X_dp, X_dp_e
     
     def plot_result(self,
-        X:np.ndarray, y:np.ndarray=None, X_e:np.ndarray=None,
+        X:np.ndarray, X_e:np.ndarray=None,
         X_in:np.ndarray=None, X_in_e:np.ndarray=None,
         X_ref:np.ndarray=None, X_ref_e:np.ndarray=None,
         x_vals:np.ndarray=None,
@@ -3351,11 +2769,6 @@ class DifferentialPhotometryLC:
                     - `np.ndarray`
                     - transformed input
                     - has shape `(nobservations)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - not needed
-                    - only implemented for consistency
-                    - the default is `None`
                 - `X_e`
                     - `np.ndarray`, optional
                     - uncertainties associated with `X`

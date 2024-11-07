@@ -1,5 +1,11 @@
 
+#%%imports
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import numpy as np
+from typing import Tuple
 
+#%%classes
 class Images2Patches:
     """
         - class to take a series of input images and split each of them into patches of size `(xpatches,ypatches)`
@@ -9,9 +15,11 @@ class Images2Patches:
             - `xpatches`
                 - `int`
                 - number of patches to split the images into along their width (axis 1)
+                - axis 1 has to be divisible by `xpatches`
             - `ypatches`
                 - `int`
                 - number of patches to split the images into along their height (axis 0)
+                - axis 0 has to be divisible by `ypatches`
             - `verbose`
                 - `int`, optional
                 -  verbosity level
