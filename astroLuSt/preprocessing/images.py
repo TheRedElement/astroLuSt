@@ -66,9 +66,10 @@ class Images2Patches:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
     
     def fit(self,
-        X:np.ndarray, y:np.ndarray=None,
+        X:np.ndarray,
         xpatches:int=None, ypatches:int=None,
         verbose:int=None,
+        *args, **kwargs
         ) -> None:
         """
             - method to fit the transformer
@@ -79,11 +80,6 @@ class Images2Patches:
                     - `np.ndarray`
                     - series of images to be split into patches
                     - has to have shape `(nsamples,xpixels,ypixels)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - not needed
-                    - only implemented for consitency
-                    - the default is `None`
                 - `xpatches`
                     - `int`, optional
                     - number of patches to split the images into along their width (axis 1)
@@ -126,26 +122,14 @@ class Images2Patches:
         return
     
     def transform(self,
-        X:np.ndarray=None, y:np.ndarray=None,
         verbose:int=None,
+        *args, **kwargs
         ) -> np.ndarray:
         """
             - method to transform the input data
                 
             Parameters
             ----------
-                - `X`
-                    - `np.ndarray`, optional
-                    - not needed here
-                    - only implemented for consistency
-                    - series of images to be split into patches
-                    - has to have shape `(nsamples,xpixels,ypixels)`
-                    - the default is `None`
-                - `y`
-                    - `np.ndarray`, optional
-                    - not needed
-                    - only implemented for consitency
-                    - the default is `None`
                 - `verbose`
                     - `int`, optional
                     -  verbosity level
@@ -177,9 +161,10 @@ class Images2Patches:
         return X_patched
     
     def fit_transform(self,
-        X:np.ndarray, y:np.ndarray=None,
+        X:np.ndarray,
         xpatches:int=None, ypatches:int=None,
         verbose:int=None,
+        *args, **kwargs
         ) -> np.ndarray:
         """
             - method to fit the transforme and transform the input data in one go
@@ -190,11 +175,6 @@ class Images2Patches:
                     - `np.ndarray`
                     - series of images to be split into patches
                     - has to have shape `(nsamples,xpixels,ypixels)`
-                - `y`
-                    - `np.ndarray`, optional
-                    - not needed
-                    - only implemented for consitency
-                    - the default is `None`
                 - `xpatches`
                     - `int`, optional
                     - number of patches to split the images into along their width (axis 1)
@@ -236,8 +216,8 @@ class Images2Patches:
         if verbose is None:     verbose     = self.verbose
         if fit_kwargs is None:  fit_kwargs  = dict()
         
-        self.fit(X, y, xpatches=xpatches, ypatches=ypatches, verbose=verbose)
-        X_patched = self.transform(X, y, verbose=verbose)
+        self.fit(X, xpatches=xpatches, ypatches=ypatches, verbose=verbose)
+        X_patched = self.transform(X, verbose=verbose)
 
         return X_patched
     
