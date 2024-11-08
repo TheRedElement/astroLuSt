@@ -35,7 +35,7 @@ def soft_thresholding(
                 - `float`, optional
                 - threshold parameter
                 - scales width of thresholding region
-                - the default is 1
+                - the default is `1`
             - `z`
                 - `np.ndarray`, optional
                 - same shape as `xbar`
