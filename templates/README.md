@@ -3,13 +3,13 @@
 A collection of functions useful for dataprocessing especially in astronomy.
 This module started out as a central space for all code generated in the frame of my theses.
 
-Author: <author>
-Author Email: <author_email>
-Maintainer: <maintainer>
-Maintiner Email: <maintainer_email>
-Last Update: <lastupdate>
-Version: <version>
-URL: <url>
+* Author: <author>
+* Author Email: <author_email>
+* Maintainer: <maintainer>
+* Maintiner Email: <maintainer_email>
+* Last Update: <lastupdate>
+* Version: <version>
+* URL: <url>
 
 ## Installation
 
