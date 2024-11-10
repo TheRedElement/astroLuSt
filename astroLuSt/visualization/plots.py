@@ -138,6 +138,7 @@ class CornerPlot:
         fig:Figure, nrowscols:int,
         sctr_kwargs:dict=None,
         contour_kwargs:dict=None,
+        axvline_kwargs:dict=None,
         ) -> plt.Axes:
         """
             - method to generate the (off-diagonal) 2d distributions
@@ -211,7 +212,8 @@ class CornerPlot:
                     - `dict`, optional
                     - kwargs to pass to `ax.contour()`
                     - the default is `None`
-                        - will be set to `dict(cmap='gray')`
+                        - will be set to `dict(cmap=cur_cmap)`
+                        - default cmap
 
             Raises
             ------
@@ -226,21 +228,27 @@ class CornerPlot:
             --------
         """
 
+        cur_cmap = plt.rcParams["image.cmap"]
+
+
         #default values
         if sctr_kwargs is None:
             sctr_kwargs = dict(s=1, alpha=0.5, zorder=2)
         if 's' not in sctr_kwargs.keys():       sctr_kwargs['s']        = 1
         if 'alpha' not in sctr_kwargs.keys():   sctr_kwargs['alpha']    = 0.5
         if 'zorder' not in sctr_kwargs.keys():  sctr_kwargs['zorder']   = 2
-        if contour_kwargs is None:              contour_kwargs          = dict(cmap='gray')
-        if 'cmap' not in contour_kwargs.keys(): contour_kwargs['cmap']  = 'gray'
-
+        if contour_kwargs is None:              contour_kwargs          = dict(cmap=cur_cmap)
+        if 'cmap' not in contour_kwargs.keys(): contour_kwargs['cmap']  = cur_cmap
+        if axvline_kwargs is None:                  axvline_kwargs              = dict(color='C0', linestyle='--')
+        if 'color' not in axvline_kwargs.keys():    axvline_kwargs['color']     = 'C0'
+        if 'linestyle' not in axvline_kwargs.keys():axvline_kwargs['linestyle'] = '--'
+        
         #add new panel
         ax = fig.add_subplot(nrowscols, nrowscols, idx)
         
         #lines for means
-        if mu1 is not None: ax.axhline(mu1, color="tab:orange", linestyle="--")
-        if mu2 is not None: ax.axvline(mu2, color="tab:orange", linestyle="--")
+        if mu1 is not None: ax.axhline(mu1, **axvline_kwargs)
+        if mu2 is not None: ax.axvline(mu2, **axvline_kwargs)
 
         #data
         sctr = ax.scatter(
@@ -343,12 +351,12 @@ class CornerPlot:
                     - ``dict`` optional
                     - kwargs to pass to `ax.plot()`
                     - the default is `None`
-                        - will be set to `dict(color='tab:grey')`
+                        - will be set to `dict(color='C2')`
                 - `axvline_kwargs`
                     - `dict` optional
                     - kwargs to pass to `ax.axvline()`
                     - the default is `None`
-                        - will be set to `dict(color='tab:orange', linestyle='--')`
+                        - will be set to `dict(color='C0', linestyle='--')`
                     
             Raises
             ------
@@ -373,10 +381,10 @@ class CornerPlot:
         if 's' not in sctr_kwargs.keys():           sctr_kwargs['s']            = 1
         if 'alpha' not in sctr_kwargs.keys():       sctr_kwargs['alpha']        = 0.5
         if 'zorder' not in sctr_kwargs.keys():      sctr_kwargs['zorder']       = 2        
-        if plot_kwargs is None:                     plot_kwargs                 = dict(color='tab:grey')
-        if 'color' not in plot_kwargs.keys():       plot_kwargs['color']        = 'tab:grey'
-        if axvline_kwargs is None:                  axvline_kwargs              = dict(color='tab:orange', linestyle='--')
-        if 'color' not in axvline_kwargs.keys():    axvline_kwargs['color']     = 'tab:orange'
+        if plot_kwargs is None:                     plot_kwargs                 = dict(color='C2')
+        if 'color' not in plot_kwargs.keys():       plot_kwargs['color']        = 'C2'
+        if axvline_kwargs is None:                  axvline_kwargs              = dict(color='C0', linestyle='--')
+        if 'color' not in axvline_kwargs.keys():    axvline_kwargs['color']     = 'C0'
         if 'linestyle' not in axvline_kwargs.keys():axvline_kwargs['linestyle'] = '--'
         
         
@@ -387,9 +395,7 @@ class CornerPlot:
 
         #get colors for distributions
         if isinstance(cmap, str): cmap = plt.get_cmap(cmap)
-        if isinstance(y, str):
-            ##if no classes got passed
-            colors = [y]
+        if isinstance(y, str):  colors = [y]    ##if no classes got passed
         else:
             ##generate colormap if classes are passed
             colors = cmap(mcolors.Normalize(vmin=vmin, vmax=vmax)(np.unique(y).astype(np.float64)))
@@ -450,7 +456,7 @@ class CornerPlot:
         X:np.ndarray, y:Union[np.ndarray,str]=None, featurenames:np.ndarray=None,
         mus:np.ndarray=None, sigmas:np.ndarray=None, corrmat:np.ndarray=None,
         bins:Union[int,np.ndarray]=100,
-        cmap:Union[str,mcolors.Colormap]='viridis',
+        cmap:Union[str,mcolors.Colormap]=None,
         asstandardnormal:bool=False,
         fig:Figure=None,
         sctr_kwargs:dict=None,
@@ -476,7 +482,7 @@ class CornerPlot:
                     - if a string is passed
                         - will be interpreted as the actual color
                     - the default is `None`
-                        - will default to `'tab:blue'`
+                        - will default to `'C0'`
                 - `featurenames`
                     - `np.ndarray`, optional
                     - names to give to the features present in `X`
@@ -519,7 +525,8 @@ class CornerPlot:
                     - `str`, `mcolors.Colormap`
                     - name of the colormap to use or `Colormap` instance
                     - used to color the 1d and 2d distributions according to `y`
-                    - the default is `'viridis'`
+                    - the default is `None`
+                        - will use current default `cmap`
                 - `asstandardnormal`
                     - `bool`, optional
                     - whether to plot the data rescaled to zero mean and unit variance
@@ -538,7 +545,8 @@ class CornerPlot:
                     - `dict`, optional
                     - kwargs to pass to `ax.contour()`
                     - the default is `None`
-                        - will be set to `dict(cmap='gray')`                        
+                        - will be set to `dict(cmap=cur_cmap)`                        
+                        - will use current default `cmap`
                 - `hist_kwargs`
                     - `dict`, optional
                     - kwargs to pass to `ax.hist()`
@@ -548,12 +556,12 @@ class CornerPlot:
                     - `dict` optional
                     - kwargs to pass to `ax.plot()`
                     - the default is `None`
-                        - will be set to `dict(color='tab:grey')`
+                        - will be set to `dict(color='C2')`
                 - `axvline_kwargs`
                     - `dict` optional
                     - kwargs to pass to `ax.axvline()`
                     - the default is `None`
-                        - will be set to `dict(color='tab:orange', linestyle='--')`                        
+                        - will be set to `dict(color='C0', linestyle='--')`                        
 
             Raises
             ------
@@ -571,9 +579,10 @@ class CornerPlot:
             --------
         """
 
+        cur_cmap = plt.rcParams["image.cmap"]
+
         #default parameters
-        if y is None:
-            y = 'tab:blue'
+        if y is None: y = 'C1'
         if featurenames is None: featurenames = [f'Feature {i}' for i in np.arange(X.shape[1])]
 
         if mus is None:
@@ -582,22 +591,23 @@ class CornerPlot:
             sigmas = [None]*len(X)
         if corrmat is None:
             corrmat = np.corrcoef(X.T)
+        if cmap is None: cmap = cur_cmap
         if sctr_kwargs is None:
             sctr_kwargs = dict(s=1, alpha=0.5, zorder=2)
         if 's' not in sctr_kwargs.keys():       sctr_kwargs['s']        = 1
         if 'alpha' not in sctr_kwargs.keys():   sctr_kwargs['alpha']    = 0.5
         if 'zorder' not in sctr_kwargs.keys():  sctr_kwargs['zorder']   = 2
-        if contour_kwargs is None:              contour_kwargs          = dict(cmap='gray')
-        if 'cmap' not in contour_kwargs.keys(): contour_kwargs['cmap']  = 'gray'
+        if contour_kwargs is None:              contour_kwargs          = dict(cmap=cur_cmap)
+        if 'cmap' not in contour_kwargs.keys(): contour_kwargs['cmap']  = cur_cmap
         if hist_kwargs is None:
             hist_kwargs = dict(density=True, alpha=0.5, zorder=2)
         if 'density' not in hist_kwargs.keys(): hist_kwargs['density']  = True
         if 'alpha' not in hist_kwargs.keys():   hist_kwargs['alpha']    = 0.5
         if 'zorder' not in hist_kwargs.keys():  hist_kwargs['zorder']   = 2
-        if plot_kwargs is None:                     plot_kwargs                 = dict(color='tab:grey')
-        if 'color' not in plot_kwargs.keys():       plot_kwargs['color']        = 'tab:grey'
-        if axvline_kwargs is None:                  axvline_kwargs              = dict(color='tab:orange', linestyle='--')
-        if 'color' not in axvline_kwargs.keys():    axvline_kwargs['color']     = 'tab_orange'
+        if plot_kwargs is None:                     plot_kwargs                 = dict(color='C2')
+        if 'color' not in plot_kwargs.keys():       plot_kwargs['color']        = 'C2'
+        if axvline_kwargs is None:                  axvline_kwargs              = dict(color='C0', linestyle='--')
+        if 'color' not in axvline_kwargs.keys():    axvline_kwargs['color']     = "C0"
         if 'linestyle' not in axvline_kwargs.keys():axvline_kwargs['linestyle'] = '--'
         
         if fig is None: fig = plt.figure()
@@ -638,6 +648,7 @@ class CornerPlot:
                         xvals=xvals, yvals=yvals,
                         fig=fig, nrowscols=nrowscols,
                         sctr_kwargs=sctr_kwargs,                        
+                        axvline_kwargs=axvline_kwargs,
                     )
 
                 #plotting 1d histograms
@@ -860,7 +871,7 @@ class LatentSpaceExplorer:
                     - if `str`
                         - will be interpreted as that specific color
                     - the default is `None`
-                        - will be set to `'tab:blue'`
+                        - will be set to `'C0'`
                 - `featurenames`
                     - `np.ndarray`, optional
                     - names to give to the features present in `X`
@@ -886,7 +897,7 @@ class LatentSpaceExplorer:
             --------
         """
 
-        if y is None: y = 'tab:blue'
+        if y is None: y = 'C1'
         if corner_kwargs is None: corner_kwargs = {}
 
         CP = CornerPlot()
@@ -2601,7 +2612,7 @@ class ParallelCoordinates:
                 - `str`, `tuple`, optional
                 - color to draw failed runs (evaluate to nan) in
                 - if a tuple is passed it has to be a RGBA-tuple
-                - the default is `'tab:grey'`
+                - the default is `'C2'`
             - `nanfrac`
                 - `float`, optional
                 - the fraction of the colormap to use for nan-values (i.e. failed runs)

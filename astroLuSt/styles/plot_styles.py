@@ -152,7 +152,7 @@ def tre_light():
         cycler(color=tre_light_palette)
     )
 
-    tre_light_cmap = "gray"
+    tre_light_cmap = "gray_r"
 
     tre_light_bg = "FFFFFF"
 

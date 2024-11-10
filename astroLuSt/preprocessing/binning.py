@@ -518,11 +518,11 @@ class Binning:
 
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1.scatter(self.x, self.y, label="Input", zorder=1, color="tab:blue", alpha=0.7)
-        ax1.errorbar(self.x_binned, self.y_binned, yerr=self.y_std, linestyle="", marker=".", label="Binned", zorder=2, color="tab:orange", alpha=1)
+        ax1.scatter(self.x, self.y, label="Input", zorder=1, color="C1", alpha=0.7)
+        ax1.errorbar(self.x_binned, self.y_binned, yerr=self.y_std, linestyle="", marker="o", label="Binned", zorder=2, color="C0", alpha=1)
 
         if verbose > 2:
-            ax1.vlines(self.bins, ymin=np.nanmin(self.y), ymax=np.nanmax(self.y), color='tab:grey', zorder=3, label='Bin Boundaries')
+            ax1.vlines(self.bins, ymin=np.nanmin(self.y), ymax=np.nanmax(self.y), color='C3', zorder=3, label='Bin Boundaries')
 
         ax1.set_xlabel("x")
         ax1.set_ylabel("y")

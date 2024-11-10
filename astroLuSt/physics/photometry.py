@@ -856,7 +856,7 @@ def mags_contribution_polars(
     ])
 
     #total contaminating magnitude
-    df_cont = df_cont.groupby(by=id_col_targ).agg([
+    df_cont = df_cont.group_by(id_col_targ).agg([
         pl.lit(-2.5).alias(app_mag_col_cont)*np.log10(pl.col('__distmodexp').sum()),    #total contaminating magnitude
         pl.col(app_mag_col_targ).mode().first(),                                        #get first most common value in aggregated columns
         pl.col(id_col_targ).alias('n_contaminants').count()-pl.lit(1),
@@ -938,7 +938,7 @@ def flux_contribution_polars(
     ])
 
     #total contaminating magnitude
-    df_cont = df_cont.groupby(by=id_col_targ).agg([
+    df_cont = df_cont.group_by(id_col_targ).agg([
         pl.col(flux_col_cont).sum(),    #total contaminating magnitude
         pl.col(flux_col_targ).mode().first(),                                        #get first most common value in aggregated columns
         pl.col(id_col_targ).alias('n_contaminants').count()-pl.lit(1),

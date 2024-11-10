@@ -548,9 +548,9 @@ class DTW:
         
         #plot
         contour = ax1.contourf(cxx, cyy, C[1:,1:], zorder=1)    #exclude np.inf row and column
-        c1,     = ax2.plot(X_plot, cy,         color="tab:blue",   label=f'X[{X_idx}]')
-        c2,     = ax3.plot(cx,     Xtemp_plot, color="tab:orange", label=f'X_template[{Xtemp_idx}]')
-        owp,    = ax1.plot(path[:,1], path[:,0], color="r", zorder=2, label="Optimal\nWarping Path")
+        c1,     = ax2.plot(X_plot, cy,         color="C2",   label=f'X[{X_idx}]')
+        c2,     = ax3.plot(cx,     Xtemp_plot, color="C1", label=f'X_template[{Xtemp_idx}]')
+        owp,    = ax1.plot(path[:,1], path[:,0], color="C0", zorder=2, label="Optimal\nWarping Path")
         ax1.plot(path[:,1], path[:,0], color="w", linewidth=5, zorder=1)
         handles = [c1, c2, owp]
 

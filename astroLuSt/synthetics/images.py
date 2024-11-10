@@ -804,6 +804,8 @@ class TPF:
             --------
         """
 
+        cur_cmap = plt.rcParams["image.cmap"]
+
         if plot_apertures is None: plot_apertures = []
         elif plot_apertures == 'all': plot_apertures = range(len(self.starparams))
         if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
@@ -812,12 +814,12 @@ class TPF:
             frame2plot = self.frame
             c_lab = 'Flux [-]'
             if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis'
+                pcolormesh_kwargs['cmap'] = cur_cmap
         elif self.mode == 'mag':
             frame2plot = self.frame_mag
             c_lab = 'Magnitude [mag]'
             if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis_r'
+                pcolormesh_kwargs['cmap'] = cur_cmap
 
         if fig is None: fig = plt.figure(figsize=(6,5))
         ax1 = fig.add_subplot(111)
@@ -1190,7 +1192,8 @@ class TPF_Series:
                     - `dict`, optional
                     - kwargs to pass to `ax.pcolormesh()`
                     - the default is `None`
-                        - will be set to `dict(cmap='viridis')`
+                        - will be set to `dict(cmap=cur_cmap)`
+                        - will use current default `cmap`
                 - `funcanim_kwargs`
                     - `dict`, optional
                     - kwargs to pass to `matplotlib.animation.FuncAnimation()`
@@ -1237,6 +1240,8 @@ class TPF_Series:
             title.set_text(f'Frame {frame:.0f}')
             return
 
+        cur_cmap = plt.rcParams["image.cmap"]
+
         #default parameters
         if pcolormesh_kwargs is None:   pcolormesh_kwargs = dict()
         if funcanim_kwargs is None:     funcanim_kwargs = dict()
@@ -1246,11 +1251,11 @@ class TPF_Series:
         if self.mode == 'flux':
             c_lab = 'Flux [-]'
             if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis'
+                pcolormesh_kwargs['cmap'] = cur_cmap
         elif self.mode == 'mag':
             c_lab = 'Magnitude [mag]'
             if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis_r'
+                pcolormesh_kwargs['cmap'] = cur_cmap
 
         #initialize figure
         if fig is None: fig = plt.figure(figsize=(6,5))

@@ -301,6 +301,9 @@ class Pad2Size:
             --------
         
         """
+        
+        cur_bg = plt.rcParams["axes.facecolor"]
+
         #default values
         if X is None: X = [np.nan]*X_pad.shape[0]
 
@@ -309,10 +312,10 @@ class Pad2Size:
         colors = generate_colors(len(X))
         for x, xp, c in zip(X, X_pad, colors):
             ax1.plot(x,  c=c,   ls='-', lw=5)
-            ax1.plot(xp, c='w', ls='-',lw=3)
+            ax1.plot(xp, c=cur_bg, ls='-',lw=3)
             ax1.plot(xp, c=c, ls='--', lw=2)
-        ax1.plot(np.nan, color='tab:blue', ls='-',  lw=5, label='Original')
-        ax1.plot(np.nan, color='tab:blue', ls='--', lw=2, label='Padded')
+        ax1.plot(np.nan, color='C0', ls='-',  lw=5, label='Original')
+        ax1.plot(np.nan, color='C0', ls='--', lw=2, label='Padded')
         ax1.legend()
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')
@@ -625,8 +628,8 @@ class PeriodicExpansion:
             ax1.scatter(self.y,                    x,            facecolor='none', ec=c,      **sctr_kwargs)
             ax1.scatter(self.y_expanded[exp_bool], xe[exp_bool], facecolor=c,      ec='none', **sctr_kwargs)
             
-        ax1.scatter(np.nan, np.nan, facecolor='none',     ec='tab:blue', label='Original',        **sctr_kwargs)
-        ax1.scatter(np.nan, np.nan, facecolor='tab:blue', ec='none',     label='Newly Generated', **sctr_kwargs)
+        ax1.scatter(np.nan, np.nan, facecolor='none',     ec='C0', label='Original',        **sctr_kwargs)
+        ax1.scatter(np.nan, np.nan, facecolor='C0', ec='none',     label='Newly Generated', **sctr_kwargs)
 
         ax1.set_xlabel('x')
         ax1.set_ylabel('y')
@@ -906,8 +909,8 @@ class PeriodicShift:
             fig = ax.get_figure()
         ax.plot(   x,        y, label="Original")
         ax.scatter(x_shifted,y, label="Shifted")
-        ax.axvline(self.borders[0], color="tab:grey", ls="--", label="Boundaries")
-        ax.axvline(self.borders[1], color="tab:grey", ls="--", label="_Boundaries")
+        ax.axvline(self.borders[0], color="C1", ls="--", label="Boundaries")
+        ax.axvline(self.borders[1], color="C1", ls="--", label="_Boundaries")
         ax.set_xlabel("x")
         ax.set_ylabel("y")
         ax.legend()
@@ -1197,6 +1200,8 @@ class Periodize:
 
         """
 
+        cur_bg = plt.rcParams["axes.facecolor"]
+
         x_per, y_per = self.transform(x, y)
 
         if ax is None:
@@ -1206,7 +1211,7 @@ class Periodize:
             fig = ax.get_figure()
 
         ax.scatter(x, y, label='Input Signal')
-        ax.plot(x_per, y_per, c='w', lw=3)
+        ax.plot(x_per, y_per, c=cur_bg, lw=3)
         ax.plot(x_per, y_per, label='Periodized Signal')
         ax.set_xlabel('x')
         ax.set_ylabel('y')

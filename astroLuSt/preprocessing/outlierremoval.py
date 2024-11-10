@@ -284,9 +284,9 @@ class PercentileClipping:
             --------
 
         """
-        ret_color = "tab:blue"
-        cut_color = "tab:grey"
-        per_color = 'tab:orange'
+        ret_color = "C0"
+        cut_color = "C1"
+        per_color = 'C1'
 
 
         patches = []
@@ -1036,11 +1036,11 @@ class SigmaClipping:
             --------
 
         """
-        ret_color = "tab:blue"
-        cut_color = "tab:grey"
-        used_bins_color = "tab:orange"
-        mean_curve_color = "tab:green"
-        ulb_color="k"
+        ret_color = "C0"
+        cut_color = "C1"
+        used_bins_color = "C2"
+        mean_curve_color = "C2"
+        ulb_color="C1"
 
         ulb_lab = r"$\bar{y}~\{+%g,-%g\}\sigma$"%(self.sigma_top, self.sigma_bottom)
         
@@ -1416,10 +1416,10 @@ class StringOfPearls:
 
         """
         
-        ret_color = "tab:blue"
-        cut_color = "tab:grey"
-        met_color = 'tab:green'
-        th_color  = 'tab:orange'
+        ret_color = "C0"
+        cut_color = "C1"
+        met_color = 'C2'
+        th_color  = 'C2'
 
 
         patches = []

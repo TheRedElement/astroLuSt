@@ -13,9 +13,9 @@ import numpy as np
 from typing import Union, Literal, Tuple, Callable, Any, List
 import warnings
 
-from astroLuSt.monitoring import errorlogging as alme, formatting as almf
-from astroLuSt.physics import photometry as alpp
-from astroLuSt.visualization import plotting as alvp
+from astroLuSt.monitoring import formatting as almofo
+from astroLuSt.physics import photometry as alphph
+from astroLuSt.visualization import plotting as alvipg
 
 #%%classes
 class Aperture:
@@ -585,7 +585,7 @@ class Aperture:
                     - `dict`, optional
                     - kwargs to pass to `ax.contour()`
                     - the default is `None`
-                        - will be set to `dict(colors='r', levels=0)`
+                        - will be set to `dict(colors='C0', levels=0)`
             
             Raises
             ------
@@ -612,7 +612,7 @@ class Aperture:
             ]
         if pcolormesh_kwargs is None:   pcolormesh_kwargs   = dict()
         if contour_kwargs is None:      contour_kwargs      = dict()
-        if 'colors' not in contour_kwargs.keys(): contour_kwargs['colors'] = 'r'
+        if 'colors' not in contour_kwargs.keys(): contour_kwargs['colors'] = 'C0'
         if 'levels' not in contour_kwargs.keys(): contour_kwargs['levels'] = 0
 
 
@@ -1108,7 +1108,7 @@ class AperturePhotometry:
                     - kwargs to be passed to `ax.pcolormesh()` called to plot the aperture
                     - NOTE, that the parameters will be set using `ax.pcolormesh().set_<parameter>(value)`
                     - the default is `None`
-                        - will be set to `dict(alpha=aperture, zorder=2, edgecolor='r', facecolor='none')`
+                        - will be set to `dict(alpha=aperture, zorder=2, edgecolor='C0', facecolor='none')`
                 - sctr_kwargs
                     - `dict`, optional
                     - kwargs to be passed to `ax.scatter()`
@@ -1120,7 +1120,7 @@ class AperturePhotometry:
                     - kwargs to be passed to `ax.errorbar()`
                     - the default is `None`
                         - will be set to `dict(ls='', marker=None, zorder=-1)`
-                        - `'ecolor'` will be inherited from the datapoints in `ax.scatter()`, if not provided
+                        - `'ecolor'` will be inherited from the datapoints in `ax.scatter()`
                 - func_animation_kwargs
                     - `dict`, optional
                     - kwargs to be passed to `matplotlib.animation.FuncAnimation()`
@@ -1163,10 +1163,10 @@ class AperturePhotometry:
         if pcolormesh_kwargs is None:               pcolormesh_kwargs                   = dict()
         if 'vmin' not in pcolormesh_kwargs:         pcolormesh_kwargs['vmin']           = np.nanmin(X_in)
         if 'vmax' not in pcolormesh_kwargs:         pcolormesh_kwargs['vmax']           = np.nanmax(X_in)
-        if pcolormesh_ap_kwargs is None:            pcolormesh_ap_kwargs                = dict(alpha=aperture, zorder=2, edgecolor='r', facecolor='none')
+        if pcolormesh_ap_kwargs is None:            pcolormesh_ap_kwargs                = dict(alpha=aperture, zorder=2, edgecolor='C0', facecolor='none')
         if 'alpha' not in pcolormesh_ap_kwargs:     pcolormesh_ap_kwargs['alpha']       = aperture
         if 'zorder' not in pcolormesh_ap_kwargs:    pcolormesh_ap_kwargs['zorder']      = 2
-        if 'edgecolor' not in pcolormesh_ap_kwargs: pcolormesh_ap_kwargs['edgecolor']   = 'r'
+        if 'edgecolor' not in pcolormesh_ap_kwargs: pcolormesh_ap_kwargs['edgecolor']   = 'C0'
         if 'facecolor' not in pcolormesh_ap_kwargs: pcolormesh_ap_kwargs['facecolor']   = 'none'
         if sctr_kwargs is None:                     sctr_kwargs                         = dict()
         if 'cmap' not in sctr_kwargs.keys():        sctr_kwargs['cmap']                 = 'nipy_spectral'
@@ -1199,7 +1199,7 @@ class AperturePhotometry:
             for param, value in pcolormesh_ap_kwargs.items():
                 setter = getattr(mesh_ap, f'set_{param}')
                 setter(value)
-            ax2.plot(np.nan, np.nan, '-r', label='Aperture')
+            ax2.plot(np.nan, np.nan, ls="-", color=pcolormesh_ap_kwargs["edgecolor"], label='Aperture')
             ax2.legend(framealpha=0.5)
 
         for idx, xi in enumerate(X.T):
@@ -1211,9 +1211,9 @@ class AperturePhotometry:
             if X_e is not None:
                 #get colors of datapoints to assign to errors
                 c = sctr.to_rgba(sctr.get_array())
-                if 'ecolor' not in errorbar_kwargs.keys(): errorbar_kwargs['ecolor'] = c
-                #plot errorbars
-                errbar  = ax1.errorbar(x_vals, xi, yerr=X_e.T[idx], **errorbar_kwargs)
+                #plot errorbars (capsize=0 because cannot set color of caps individually)
+                errbar  = ax1.errorbar(x_vals, xi, yerr=X_e.T[idx], capsize=0, **errorbar_kwargs)
+                for eb in errbar[2]: eb.set_colors(c)
             
             ax1.set_xlabel('x')
             ax1.set_ylabel(f'X[:,{idx}]')
@@ -1242,24 +1242,6 @@ class BestAperture:
 
         Attributes
         ----------
-            - `mode`
-                - `Literal["flux","mag"]`, optional
-                - mode to use
-                - can be one of
-                    - `'flux'`
-                        - will consider equations for fluxes to execute calculations
-                    - `'mag'`
-                        - will consider equations for magnitudes to execute calculations
-            - `store_ring_masks`
-                - `bool`, optional
-                - whether to store all sky-ring masks created during calculations
-                    - those will be used during i.e., plotting
-                - the default is `True`
-            - `store_aperture_masks`
-                - `bool`, optional
-                - whether to store all aperture masks created during calculations
-                    - those will be used during i.e., plotting
-                - the default is `True`
             - `verbose`
                 - `int`, optional
                 - verbosity level
@@ -1267,40 +1249,21 @@ class BestAperture:
 
         Infered Attributes
         ------------------
+            - `sum_frame`
+                - `np.ndarray`
+                - has shape `(xpix,ypix)` for an input of shape `(nframes,xpix,ypix)`
+                - frame of pixel-wise sum over entire frame-series
             - `aperture_res`
                 - `np.ndarray`
                 - contains results for the analysis of the aperture
-                - has shape `(nradii,3)`
-                    - `nradii` is the number of tested radii
-                    - the last axis contains
-                        - element 0: tested radius
-                        - element 1: total flux/magnitude within aperture
-                        - element 2: number of enclosed pixels
+                - contains as many elements as different tested apertures
             - `ring_res`
                 - `np.ndarray`
                 - contains results for the analysis of the sky-ring
-                - has shape `(nradii*nwidths,4)`
-                    - `nradii` is the number of tested radii
-                    - `nwidths` is the number of tested widths for the sky-ring
-                    - the last axis contains
-                        - element 0: tested radius
-                        - element 1: tested width
-                        - element 2: total flux/magnitude within aperture (dependent on `self.mode`)
-                        - element 3: number of enclosed pixels
-            - `aperture_masks`
-                - `np.ndarray`
-                - contains boolean arrays of all tested apertures
-            - `ring_masks`
-                - `np.ndarray`
-                - contains boolean arrays of all tested sky-rings
+                - contains as many elements as different tested sky-rings
 
         Methods
         -------
-            - `__check_frames_shape()`
-            - `__store_frames()`
-            - `get_sum_frame()`
-            - `test_aperture()`
-            - `test_background_skyring()`
             - `fit()`
             - `predict()`
             - `fit_predict()`
@@ -1318,304 +1281,33 @@ class BestAperture:
     """
 
     def __init__(self,
-        mode:Literal['flux','mag']=None,
-        store_aperture_masks:bool=True,
-        store_ring_masks:bool=True,
         verbose:int=0,
         ) ->  None:
 
-        if mode is None:    self.mode   = 'flux'
-        else:               self.mode   = mode
-        self.store_aperture_masks       = store_aperture_masks
-        self.store_ring_masks           = store_ring_masks
-        self.verbose                    = verbose
+        self.verbose    = verbose
         
         #infered attributes
-        self.frames         = None          
-        self.aperture_res   = np.empty((0,3))
+        self.sum_frame      = None
+        self.aperture_res   = np.empty((0,1))
         self.ring_res       = np.empty((0,4))
-        self.aperture_masks = np.empty((0,0,0))
-        self.ring_masks     = np.empty((0,0,0))
-        
 
         return
 
     def __repr__(self) -> str:
         return (
             f'{self.__class__.__name__}(\n'
-            f'    mode={repr(self.mode)},\n'
-            f'    store_ring_mask={repr(self.store_ring_masks)},\n'
-            f'    store_aperture_masks={repr(self.store_aperture_masks)},\n'
             f'    verbose={self.verbose},\n'
             f')'
         )
 
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
-    
-    def __check_frames_shape(self,
-        frames
-        ) -> None:
-        """
-            - private method to check if `frames` is of the correct shape
 
-            Parameters
-            ----------
-                - `frames`
-                    - `np.ndarray`
-                    - series of frames to consider for the analysis
-                    - has to have shape `(nframes,npixels,npixels,3)`
-                        - the last axis contains
-                            - element 0: number of frames
-                            - element 1: posistion in x direction
-                            - element 2: posistion in y direction
-                            - element 3: flux/magnitude values
-
-            Raises
-            ------
-                - `ValueError`
-                    - if `frames` has a wrong shape
-
-            Returns
-            -------
-
-            Comments
-            --------
-        """
-
-        if len(frames.shape) == 4:
-            self.frames                 = frames
-        elif len(frames.shape) == 3:
-            self.frames                 = np.expand_dims(frames,0)
-        else:
-            raise ValueError(f'`frames` has to be 4d but has shape {frames.shape}!')
-        
-        return
-
-    def __store_frames(self,
-        frames:np.ndarray,
-        ) -> None:
-        """
-            - private method to store passed frames
-            - also initializes storage arrays for aperture and sky-ring masks
-
-            Parameters
-            ----------
-                - `frames`
-                    - `np.ndarray`
-                    - series of frames to consider for the analysis
-                    - has to have shape `(nframes,npixels,npixels,3)`
-                        - the last axis contains
-                            - element 0: number of frames
-                            - element 1: posistion in x direction
-                            - element 2: posistion in y direction
-                            - element 3: flux/magnitude values
-
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-
-        """
-
-        self.frames = frames
-
-        #get frame of pixel-wise sum
-        self.get_sum_frame()
-
-        #update frame-dependent attributes (only when in respective functions)
-        self.aperture_masks = np.empty((0,*self.frames.shape[1:3]))
-        self.ring_masks     = np.empty((0,*self.frames.shape[1:3]))
-
-        return
-
-    def get_sum_frame(self,
-        ) -> np.ndarray:
-        """
-            - method to get the pixel-wise sum of all frames `self.frames`
-            - used to visually determine location and size of aperture
-
-            Parameters
-            ----------
-
-            Raises
-            ------
-
-            Returns
-            -------
-                - `sum_frame`
-                    - `np.ndarray`
-                    - frame consisting of the pixel wise total flux/magnitude
-
-            Comments
-            --------
-        """
-
-        self.sum_frame = self.frames[0].copy()
-        
-        if self.mode == 'flux':
-            self.sum_frame[:,:,2] = np.nansum(self.frames[:,:,:,2], axis=0)
-        elif self.mode == 'mag':
-            self.sum_frame[:,:,2] = alpp.mags_sum(self.frames[:,:,:,2], axis=0)
-
-        return self.sum_frame
-
-    def test_aperture(self,
-        frames:np.ndarray,
-        posx:float, posy:float,
-        r_aperture:np.ndarray,
-        ) -> None:
-        """
-            - method to test different apertures
-        
-            Parameters
-            ----------
-                - `frames`
-                    - `np.ndarray`
-                    - series of frames to consider for the analysis
-                    - has to have shape `(nframes,npixels,npixels,3)`
-                        - the last axis contains
-                            - element 0: posistion in x direction
-                            - element 1: posistion in y direction
-                            - element 2: flux/magnitude values
-                - `posx`
-                    - `float`
-                    - position of the aperture in x direction
-                - `posy`
-                    - `float`
-                    - position of the aperture in y direction
-                - `r_aperture`
-                    - `np.ndarray`
-                    - test radii of the aperture
-                    - will test every radius and calculate total flux/magnitude contained within that radius
-            
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-        
-        """
-
-        #initial checks and saves
-        if self.frames is None:
-            self.__check_frames_shape(frames)
-            self.__store_frames(self.frames)
-
-        #construct position array
-        pos = np.array([posx,posy])
-
-        #check all apertures
-        for r in r_aperture:
-            
-            #create aperture mask (boolean array)
-            aperture_mask = (np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) < r)
-
-            #get total flux/magnitude contained in aperture
-            if self.mode == 'flux':
-                aperture_brightness = np.sum(self.sum_frame[aperture_mask,2])#/np.sum(aperture_mask)**2
-            elif self.mode == 'mag':
-                aperture_brightness = alpp.mags_sum(self.sum_frame[aperture_mask,2])
-            
-            #store result
-            self.aperture_res = np.append(self.aperture_res, np.array([[r, aperture_brightness, aperture_mask.sum()]]), axis=0)
-
-            #store aperture_mask for current r
-            if self.store_aperture_masks:
-                self.aperture_masks = np.append(self.aperture_masks, np.expand_dims(aperture_mask,0), axis=0)
-
-        return
-    
-    def test_background_skyring(self,
-        frames:np.ndarray,
-        posx:float, posy:float,
-        rw_sky:np.ndarray,
-        ) -> None:
-        """
-            - method to test various sky-rings for background determination
-            - a sky ring is described by its radius (`r_sky`) and width (`w_sky`)
-
-            Parameters
-            ----------
-                - `frames`
-                    - `np.ndarray`
-                    - series of frames to consider for the analysis
-                    - has to have shape `(nframes,npixels,npixels,3)`
-                        - the last axis contains
-                            - element 0: posistion in x direction
-                            - element 1: posistion in y direction
-                            - element 2: flux/magnitude values
-                - `posx`
-                    - `float`
-                    - position of the sky-ring in x direction
-                - `posy`
-                    - `float`
-                    - position of the sky-ring in y direction
-                - `rw_sky`
-                    - `np.ndarray`
-                    - test specifications for sky-rings to test
-                    - has to have shape `(nrings,2)`
-                        - element 0: radii of the sky-rings
-                        - element 1: widths of the sky-rings
-                                
-            Raises
-            ------
-
-            Returns
-            -------
-
-            Comments
-            --------
-
-        """
-
-        #initial checks and saves
-        if self.frames is None:
-            self.__check_frames_shape(frames)
-            self.__store_frames(self.frames)
-            
-        #generate position array
-        pos = np.array([posx,posy])
-        
-        #test all test sky-rings (radii-width combinations)
-        for (r, w) in rw_sky:
-            
-            #create ring-mask (everything inside interval [r, r+w])
-            ring_mask = \
-                    (np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) >r)\
-                &(np.sqrt(np.sum((self.sum_frame[:,:,:2]-pos)**2, axis=2)) < r+w)
-
-            #calculate flux within sky-ring
-            if self.mode == 'flux':
-                ring_brightness = np.sum(self.sum_frame[ring_mask,2])#/np.sum(ring_mask)**2
-            elif self.mode == 'mag':
-                ring_brightness = alpp.mags_sum(self.sum_frame[ring_mask,2])
-            
-
-            #get sky-ring results
-            self.ring_res = np.append(self.ring_res, np.array([[r, w, ring_brightness, ring_mask.sum()]]), axis=0)
-            
-            #store ring_mask for current w
-            if self.store_ring_masks:
-                self.ring_masks = np.append(self.ring_masks, np.expand_dims(ring_mask,0), axis=0)
-
-        return
-    
     def fit(self,
         x:np.ndarray,
-        posx:float,
-        posy:float,
-        r_aperture:np.ndarray,
-        rw_sky:np.ndarray,
-        test_aperture_kwargs:dict=None,
-        test_background_kwargs:dict=None,
+        apertures:List[np.ndarray],
+        sky_rings:List[np.ndarray],
+        verbose:int=None,
         *args, **kwargs
         ) -> None:
         """
@@ -1627,32 +1319,20 @@ class BestAperture:
                     - `np.ndarray`
                     - input values to apply estimator on
                     - i.e. frames of the timeseries
-                - `posx`
-                    - `float`
-                    - position of aperture and sky-ring in x direction
-                - `posy`
-                    - `float`
-                    - position of aperture and sky-ring in y direction
-                - `r_aperture`
-                    - `np.ndarray`
-                    - test radii of the aperture
-                    - will test every radius and calculate total flux/magnitude contained within that radius
-                - `rw_sky`
-                    - `np.ndarray`
-                    - test specifications for sky-rings to test
-                    - has to have shape `(nrings,2)`
-                        - element 0: radii of the sky-rings
-                        - element 1: widths of the sky-rings
-                - `test_aperture_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `self.test_aperture()`
+                - `apertures`
+                    - `List[np.ndarray]`
+                    - aperture masks to be tested
+                    - will test every aperture mask by applying `AperturePhotometry` on the pixel-wise sum of `x`
+                - `sky_rings`
+                    - `List[np.ndarray]`
+                    - sky-ring masks to be tested
+                    - will test every sky-ring mask by applying `AperturePhotometry` on the pixel-wise sum of `x`
+                - `verbose`
+                    - `int`, optional
+                    - verbosity level
+                    - overrides `self.verbose`
                     - the default is `None`
-                        - will be set to `dict()`
-                - `test_background_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `self.test_background()`
-                    - the default is `None`
-                        - will be set to `dict()`
+                        - will fall back to `self.verbose`
 
             Raises
             ------
@@ -1663,25 +1343,35 @@ class BestAperture:
             Comments
             --------
         """
-        if test_aperture_kwargs is None:    test_aperture_kwargs    = dict()
-        if test_background_kwargs is None:  test_background_kwargs  = dict()
 
-        self.test_aperture(
-            frames=x,
-            posx=posx,
-            posy=posy,
-            r_aperture=r_aperture,
-            **test_aperture_kwargs
-        )
+        #default parameters
+        if verbose is None: verbose = self.verbose
 
-        self.test_background_skyring(
-            frames=x,
-            posx=posx,
-            posy=posy,
-            rw_sky=rw_sky,
-            **test_background_kwargs
-        )
+        #get frame of pixel-wise sum
+        self.sum_frame = x.sum(axis=0, keepdims=True)
 
+        #test different apertures
+        for idx, ap in enumerate(apertures):
+            APH = AperturePhotometry()
+            APH.fit(self.sum_frame,
+                aperture=ap,
+                reduce_func=None,
+                fluxvars=lambda x, x_e, **kwargs: (None,None),
+            )
+            fluxes, fluxes_e, _ = APH.transform()
+            self.aperture_res = np.append(self.aperture_res, fluxes)
+            
+        #test different sky-rings
+        for idx, sr in enumerate(sky_rings):
+            APH = AperturePhotometry()
+            APH.fit(self.sum_frame,
+                aperture=sr,
+                reduce_func=None,
+                fluxvars=lambda x, x_e, **kwargs: (None,None),
+            )
+            fluxes, fluxes_e, _ = APH.transform()
+            self.ring_res = np.append(self.ring_res, fluxes)
+            
         return
     
     def predict(self,
@@ -1704,7 +1394,7 @@ class BestAperture:
             --------
         """
 
-        almf.printf(
+        almofo.printf(
             msg=f'Not implemented yet. Call `{self.__class__.__name__}.{self.plot_result.__name__}()` to visualize the executed analysis.',
             context=f'{self.__class__.__name__}.{self.predict.__name__}()',
             type='WARNING',
@@ -1713,13 +1403,11 @@ class BestAperture:
         return
 
     def fit_predict(self,
-        frames:np.ndarray,
-        posx:float,
-        posy:float,
-        r_aperture:np.ndarray,
-        rw_sky:np.ndarray,
-        fit_kwargs:dict=None,
-        predict_kwargs:dict=None,
+        x:np.ndarray,
+        apertures:List[np.ndarray],
+        sky_rings:List[np.ndarray],
+        verbose:int=None,
+        *args, **kwargs
         ) -> None:
         """
             - method to fit the estimator and and predict with it
@@ -1730,32 +1418,21 @@ class BestAperture:
                     - `np.ndarray`
                     - input values to apply estimator on
                     - i.e. frames of the timeseries
-                - `posx`
-                    - `float`
-                    - position of aperture and sky-ring in x direction
-                - `posy`
-                    - `float`
-                    - position of aperture and sky-ring in y direction
-                - `r_aperture`
-                    - `np.ndarray`
-                    - test radii of the aperture
-                    - will test every radius and calculate total flux/magnitude contained within that radius
-                - `rw_sky`
-                    - `np.ndarray`
-                    - test specifications for sky-rings to test
-                    - has to have shape `(nrings,2)`
-                        - element 0: radii of the sky-rings
-                        - element 1: widths of the sky-rings
-                - `test_aperture_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `self.test_aperture()`
+                - `apertures`
+                    - `List[np.ndarray]`
+                    - aperture masks to be tested
+                    - will test every aperture mask by applying `AperturePhotometry` on the pixel-wise sum of `x`
+                - `sky_rings`
+                    - `List[np.ndarray]`
+                    - sky-ring masks to be tested
+                    - will test every sky-ring mask by applying `AperturePhotometry` on the pixel-wise sum of `x`
+                - `verbose`
+                    - `int`, optional
+                    - verbosity level
+                    - overrides `self.verbose`
                     - the default is `None`
-                        - will be set to `dict()`
-                - `test_background_kwargs`
-                    - `dict`, optional
-                    - kwargs to pass to `self.test_background()`
-                    - the default is `None`
-                        - will be set to `dict()`
+                        - will fall back to `self.verbose`
+
                         
             Raises
             ------
@@ -1772,74 +1449,85 @@ class BestAperture:
         if predict_kwargs is None:  predict_kwargs  = dict()
 
         self.fit(
-            frames=frames,
-            posx=posx,
-            posy=posy,
-            r_aperture=r_aperture,
-            rw_sky=rw_sky
-            **fit_kwargs
+            x=x,
+            apertures=apertures,
+            sky_rings=sky_rings,
+            verbose=verbose,
+            *args, **kwargs,
         )
         # self.predict(**predict_kwargs)
 
         return
 
     def plot_result(self,
-        plot_aperture_r:np.ndarray=None,
-        plot_sky_rings_rw:np.ndarray=None,
-        aperture_cmap:str=None,
-        sky_rings_cmap:Union[str,mcolors.Colormap]=None,
+        aperture_xvals:np.ndarray=None, sky_ring_xvals:np.ndarray=None,
+        aperture_masks:List[np.ndarray]=None, sky_ring_masks:List[np.ndarray]=None,
+        aperture_cmap:Union[str,mcolors.Colormap]=None, sky_rings_cmap:Union[str,mcolors.Colormap]=None,
         fig:Figure=None,
-        sort_rings_apertures:bool=True,
         pcolormesh_kwargs:dict=None,
-        plot_kwargs:dict=None,
-        scatter_kwargs:dict=None,
+        plot_kwargs_ap:dict=None,
+        plot_kwargs_sr:dict=None,
         ) -> Union[Figure,plt.Axes]:
         """
             - mathod to visualize the result
 
             Parameters
             ----------
-                - `plot_aperture_r`
+                - `aperture_xvals`
                     - `np.ndarray`, optional
-                    - radii to visualize the aperture for in the frame of total magnitudes/fluxes
-                    - the default is `None`
-                        - will be set to `[]`
-                - `plot_sky_rings_rw`
+                    - x-values to use when plotting the growth curve for the aperture
+                        - tpyically radii used for generating the aperture masks
+                    - has to have same shape as `self.aperture_res`
+                    - the deafault is `None`
+                        - will use indices as x-values
+                - `sky_ring_xvals`
                     - `np.ndarray`, optional
-                    - radii-width combinations to visualize the sky-ring for in the frame of total magnitudes/fluxes
-                    - has to have shape `(n2plot,2)`
-                        - element 0: sky-ring radius
-                        - emement 1: sky-ring width
+                    - x-values to use when plotting the growth curve for the sky-ring
+                        - tpyically (inner our outer) radii used for generating the aperture masks
+                    - has to have same shape as `self.ring_res`
+                    - the deafault is `None`
+                        - will use indices as x-values
+                - `aperture_masks`
+                    - `List[np.ndarray]`, optional
+                    - exemplary aperture masks to include in the plot
+                    - typically a subset of the test apertures
                     - the default is `None`
-                        - will be set to `[]`
+                        - no apertures plotted
+                - `sky_ring_masks`
+                    - `List[np.ndarray]`, optional
+                    - exemplary sky-ring masks to include in the plot
+                    - typically a subset of the test sky-rings
+                    - the default is `None`
+                        - no sky-rings plotted
                 - `aperture_cmap`
                     - `str`, `mcolors.Colormap`, optional
                     - colormap to use for colorcoding apertures
                     - the default is `None`
-                        - will be set to `autumn`
+                        - will be set to `"autumn"`
                 - `sky_rings_cmap`
                     - `str`, `mcolors.Colormap`, optional
-                    - colormap to use for colorcoding apertures
+                    - colormap to use for colorcoding sky-rings
                     - the default is `None`
-                        - will be set to `winter`
+                        - will be set to `"winter"`
                 - `fig`
                     - `Figure`, optional
                     - figure to plot into
                     - the default is `None`
                         - will create a new figure
-                - `sort_rings_apertures`
-                    - `bool`, optional
-                    - whether to sort the passed rings and apertures before plotting
-                    - recommended because then it is more likely that all requested apertures/sky-rings are visible
-                        - if they are not sorted, it could be that a large aperture is plot on top of a smaller one, essentially covering it
-                - `plot_kwargs`
+                - `pcolormesh_kwargs`
                     - `dict`, optional
-                    - kwargs to pass to`ax.plot()`
+                    - kwargs to pass to`ax.pcolormesh()`
                     - the default is `None`
                         - will be set to `dict()`
-                - `scatter_kwargs`
+                        - will use current default colormap
+                - `plot_kwargs_ap`
                     - `dict`, optional
-                    - kwargs to pass to `ax.scatter()`
+                    - kwargs to pass to`ax.plot()` when plotting aperture growth curve
+                    - the default is `None`
+                        - will be set to `dict()`
+                - `plot_kwargs_ap`
+                    - `dict`, optional
+                    - kwargs to pass to`ax.plot()` when plotting sky-ring growth curve
                     - the default is `None`
                         - will be set to `dict()`
 
@@ -1860,113 +1548,53 @@ class BestAperture:
         """
 
         #default values
-        if plot_aperture_r is None:   plot_aperture_r   = np.empty((0))
-        if plot_sky_rings_rw is None: plot_sky_rings_rw = np.empty((0,2))
-        if sky_rings_cmap is None:    sky_rings_cmap    = 'autumn'
-        if aperture_cmap is None:     aperture_cmap     = 'winter'
-        if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
-        if plot_kwargs is None:       plot_kwargs       = dict(lw=1)
-        if scatter_kwargs is None:    scatter_kwargs    = dict(s=5, cmap=sky_rings_cmap)
-
-        #set some fixed kwargs
-        scatter_kwargs['cmap'] = sky_rings_cmap     #to ensure that cmap of scatter and skyrings matches
-        if 'cmap' not in pcolormesh_kwargs.keys():
-            pcolormesh_kwargs['cmap'] = 'viridis' + '_r'*(self.mode=='mag')
-
-        #kwargs of outline for star aperture plot
-        outline_kwargs = plot_kwargs.copy()
-        outline_kwargs['lw'] = plot_kwargs['lw']*4
-        outline_kwargs['color'] = 'w'
-
-        #sorting
-        if sort_rings_apertures:
-            sortidxs_skyring = np.argsort(plot_sky_rings_rw[:,1])
-            plot_aperture_r   = np.sort(plot_aperture_r)[::-1]
-            plot_sky_rings_rw = plot_sky_rings_rw[sortidxs_skyring][::-1]
+        if aperture_xvals is None:      aperture_xvals      = range(len(self.aperture_res))
+        if sky_ring_xvals is None:      sky_ring_xvals      = range(len(self.ring_res))
+        if sky_rings_cmap is None:      sky_rings_cmap      = 'autumn'
+        if aperture_cmap is None:       aperture_cmap       = 'winter'
+        if pcolormesh_kwargs is None:   pcolormesh_kwargs   = dict()
+        if plot_kwargs_ap is None:      plot_kwargs_ap      = dict(lw=1, c="C0")
+        if plot_kwargs_sr is None:      plot_kwargs_sr      = dict(lw=1, c="C1")
 
         #plotting
-        if fig is None: fig = plt.figure(figsize=(14,6))
+        if fig is None: fig = plt.figure()
         ax1 = fig.add_subplot(121)
         ax2 = fig.add_subplot(122)
+        ax3 = ax2.twinx()
+        ax3.spines.right.set_visible(True)
 
         #plot sum frame
-        mesh = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.sum_frame[:,:,2], **pcolormesh_kwargs)
+        mesh = ax1.pcolormesh(self.sum_frame[0], **pcolormesh_kwargs)
         
-        #plot some selected sky rings
-        if len(plot_sky_rings_rw) > 0:
-            colors_sky_ring = alvp.generate_colors(len(plot_sky_rings_rw), cmap=sky_rings_cmap)
-            for idx, (rsr, wsr) in enumerate(plot_sky_rings_rw):
-
-                br = (rsr==self.ring_res[:,0])
-                bw = (wsr==self.ring_res[:,1])
-                try:
-                    mesh_sr = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.ring_masks[bw&br][0], zorder=2, edgecolor=colors_sky_ring[idx], facecolors='none')
-                    mesh_sr.set_alpha(self.ring_masks[bw&br][0])
-                except IndexError as i:
-                    alme.LogErrors().print_exc(
-                        e=i,
-                        prefix=(
-                            f'EXCEPTION({self.__class__.__name__}.plot_results()).\n'
-                            f'    Ignoring plotting of sky-ring for combination `(r,w)={rsr,wsr}`.\n'
-                            f'    Original ERROR:'
-                        )
-                    )
-                
-                if idx == 0: lab = 'Radius Skyring'
-                else: lab = None
-                ax2.axvline(rsr, color=colors_sky_ring[idx], linestyle='--', label=lab)
+        #plot apertures
+        if aperture_masks is not None:
+            colors_aperture = alvipg.generate_colors(classes=len(aperture_masks), cmap=aperture_cmap)
+            for idx, ap in enumerate(aperture_masks):
+                mesh_a = ax1.pcolormesh(ap, zorder=2, edgecolor=colors_aperture[idx], facecolors="none")
+                mesh_a.set_alpha(ap)
         
-        #plot some selected apertures
-        if len(plot_aperture_r) > 0:
-            colors_aperture = alvp.generate_colors(len(plot_aperture_r), cmap=aperture_cmap)
-            for idx, ra in enumerate(plot_aperture_r):
-                br = (ra==self.aperture_res[:,0])
-                try:
-                    mesh_a = ax1.pcolormesh(self.sum_frame[:,:,0], self.sum_frame[:,:,1], self.aperture_masks[br][0], zorder=2, edgecolor=colors_aperture[idx], facecolors='none')
-                    mesh_a.set_alpha(self.aperture_masks[br][0])
-                except IndexError as i:
-                    alme.LogErrors().print_exc(
-                        e=i,
-                        prefix=(
-                            f'EXCEPTION({self.__class__.__name__}.plot_results()).\n'
-                            f'    Ignoring plotting of aperture...\n'
-                            f'    Original ERROR:'
-                        )
-                    )
+        #plot sky rings
+        if sky_ring_masks is not None:
+            colors_sr = alvipg.generate_colors(classes=len(sky_ring_masks), cmap=sky_rings_cmap)
+            for idx, sr in enumerate(sky_ring_masks):
+                mesh_sr = ax1.pcolormesh(sr, zorder=2, edgecolor=colors_sr[idx], facecolors="none", ls="--")
+                mesh_sr.set_alpha(sr)
 
-                #show which apertures are plotted
-                if idx == 0: lab = 'Radius Aperture'
-                else: lab = None
-                ax2.axvline(ra, color=colors_aperture[idx], label=lab)
-                
-
-
-        #plot star aperture and sky ring
-        ax2.plot(self.aperture_res[:,0], self.aperture_res[:,1], label=None,            **outline_kwargs)
-        ax2.plot(self.aperture_res[:,0], self.aperture_res[:,1], label='Aperture Curve Growth', **plot_kwargs)
-        sctr = ax2.scatter(self.ring_res[:,:1], self.ring_res[:,2], c=self.ring_res[:,1], label='Sky Ring Curve Growth', **scatter_kwargs)
-
+        #plot aperture- and sky-ring-flux
+        ax2.plot(aperture_xvals, self.aperture_res, label="Aperture Growth Curve", **plot_kwargs_ap)
+        ax2.plot(np.nan, np.nan, label="Sky-Ring Growth Curve", **plot_kwargs_sr)
+        ax3.plot(sky_ring_xvals, self.ring_res, label="Sky-Ring Growth Curve", **plot_kwargs_sr)
 
         #add colorbars
         cbar1 = fig.colorbar(mesh, ax=ax1)
-        cbar2 = fig.colorbar(sctr, ax=ax2)
 
         ax2.legend()
 
-        #labelling
-        cbar2.set_label('Sky Ring Width [pixel]')
-
         ax1.set_xlabel('Pixel')
         ax1.set_ylabel('Pixel')
-        ax2.set_xlabel('Radius [pixel]')
-        if self.mode == 'flux':
-            cbar1.set_label('Total Flux (Pixel-Wise)')
-            ax2.set_ylabel('Aperture Flux')
-        elif self.mode == 'mag':
-            ax2.invert_yaxis()
-            cbar1.ax.invert_yaxis()
-            cbar1.set_label('Total Magnitude (Pixel-Wise)')
-            ax2.set_ylabel('Aperture Magnitude')
+        cbar1.set_label('Total Flux (Pixel-Wise)')
+        ax2.set_ylabel('Aperture Flux')
+        ax3.set_ylabel('Sky-Ring Flux')
 
         axs = fig.axes
         
@@ -2392,11 +2020,11 @@ class DifferentialPhotometryImage:
 
 
         #default parameters
-        if x_vals is None:                  x_vals                  = np.arange(X.shape[0])
-        if verbose is None:                 verbose                 = self.verbose
-        if pcolormesh_kwargs is None:       pcolormesh_kwargs       = dict()
-        if sctr_kwargs is None:             sctr_kwargs             = dict()
-        if 'cmap' not in sctr_kwargs.keys():sctr_kwargs['cmap']     = 'nipy_spectral'
+        if x_vals is None:                  x_vals                                      = np.arange(X.shape[0])
+        if verbose is None:                 verbose                                     = self.verbose
+        if pcolormesh_kwargs is None:       pcolormesh_kwargs                           = dict()
+        if sctr_kwargs is None:             sctr_kwargs                                 = dict()
+        if 'cmap' not in sctr_kwargs.keys():sctr_kwargs['cmap']                         = 'nipy_spectral'
         if errorbar_kwargs is None:                 errorbar_kwargs                     = dict()
         if 'ls' not in errorbar_kwargs.keys():      errorbar_kwargs['ls']               = ''
         if 'marker' not in errorbar_kwargs.keys():  errorbar_kwargs['marker']           = None
@@ -2465,15 +2093,14 @@ class DifferentialPhotometryImage:
             if errs2plot[idx] is not None:
                 #get colors of datapoints to assign to errors
                 c = sctr.to_rgba(sctr.get_array())
-                if 'ecolor' not in errorbar_kwargs.keys(): errorbar_kwargs['ecolor'] = c
-                #plot errorbars
-                errbar  = ax2.errorbar(x_vals, lcsi[:,0], yerr=lcs_e[idx][:,0], **errorbar_kwargs)
-                        
+                #plot errorbars (capsize=0 because cannot set color of caps individually)
+                errbar  = ax2.errorbar(x_vals, lcsi[:,0], yerr=lcs_e[idx][:,0], capsize=0, **errorbar_kwargs)
+                for eb in errbar[2]: eb.set_colors(c)                        
 
             #plot aperture
-            mesh_ap = ax1.pcolormesh(aps[idx], zorder=2, edgecolor='r', facecolors='none')
+            mesh_ap = ax1.pcolormesh(aps[idx], zorder=2, edgecolor='C0', facecolors='none')
             mesh_ap.set_alpha(aps[idx])
-            ax1.plot(np.nan, np.nan, '-r', label='Aperture')
+            ax1.plot(np.nan, np.nan, '-C0', label='Aperture')
             ax1.legend(framealpha=0.5)
 
             cbar = fig.colorbar(mesh, ax=ax1)
@@ -2885,10 +2512,9 @@ class DifferentialPhotometryLC:
             if errs2plot[idx] is not None:
                 #get colors of datapoints to assign to errors
                 c = sctr.to_rgba(sctr.get_array())
-                if 'ecolor' not in errorbar_kwargs.keys(): errorbar_kwargs['ecolor'] = c
-                #plot errorbars
-                errbar  = ax1.errorbar(x_vals, Xi, yerr=errs2plot[idx][idx], **errorbar_kwargs)
-            
+                #plot errorbars (capsize=0 because cannot set color of caps individually)
+                errbar  = ax1.errorbar(x_vals, Xi, yerr=errs2plot[idx][idx], capsize=0, **errorbar_kwargs)
+                for eb in errbar[2]: eb.set_colors(c)
 
         fig.tight_layout()
 

@@ -790,9 +790,9 @@ class PDM:
             ax1 = fig.add_subplot(111)
 
         ax1.set_title("PDM-result")
-        ax1.scatter(self.trial_periods, self.thetas, color='tab:green', s=1, zorder=1, **sctr_kwargs)
-        ax1.axvline(self.best_period, color='tab:grey', linestyle="--", label=r'$\mathrm{P_{PDM}}$ = %.3f'%(self.best_period), zorder=2)
-        ax1.fill_between([np.nanmin(self.trial_periods), np.nanmax(self.trial_periods)], y1=[self.best_theta]*2, y2=[max(self.theta_tolerance, self.best_theta)]*2, color='tab:grey', alpha=0.2, label='Tolerated as improvement')
+        ax1.scatter(self.trial_periods, self.thetas, color='C1', s=1, zorder=1, **sctr_kwargs)
+        ax1.axvline(self.best_period, color='C0', linestyle="--", label=r'$\mathrm{P_{PDM}}$ = %.3f'%(self.best_period), zorder=2)
+        ax1.fill_between([np.nanmin(self.trial_periods), np.nanmax(self.trial_periods)], y1=[self.best_theta]*2, y2=[max(self.theta_tolerance, self.best_theta)]*2, color='C2', alpha=0.2, label='Tolerated as improvement')
         # ax1.axhline(self.best_theta, color="tab:grey", linestyle="--", zorder=2)
         ax1.set_xlabel(r'Period')
         ax1.set_ylabel(r'$\theta$')
@@ -802,7 +802,7 @@ class PDM:
         if x is not None and y is not None:
                         
             ax2.set_title("Folded Input")
-            ax2.scatter(fold(x, self.best_period, 0)[0], y, color='tab:blue', s=1, label='Folded Input-Dataseries')
+            ax2.scatter(fold(x, self.best_period, 0)[0], y, color='C0', s=1, label='Folded Input-Dataseries')
             ax2.set_xlabel('x')
             ax2.set_ylabel('y')
                 
@@ -1521,9 +1521,9 @@ class HPS:
         if fig_kwargs  is None: fig_kwargs = {}
         if plot_kwargs is None: plot_kwargs = {}
         
-        c_ls = 'tab:olive'
-        c_pdm = 'tab:green'
-        c_hps = 'tab:orange'
+        c_ls = 'C1'
+        c_pdm = 'C2'
+        c_hps = 'C0'
         
         fig = plt.figure(**fig_kwargs)
         #check if folded dataseries shall be plotted as well
@@ -1550,7 +1550,7 @@ class HPS:
         l_pdm,  = ax2.plot(self.trial_periods, self.thetas_hps, color=c_pdm,  zorder=2, **plot_kwargs, label=r'PDM')
         l_ls,   = ax3.plot(1/self.trial_frequencies,  self.powers_hps, color=c_ls,   zorder=1, **plot_kwargs, label=r'Lomb-Scargle')
         
-        vline   = ax1.axvline(self.best_period, linestyle='--', color='tab:grey', zorder=3, label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period))
+        vline   = ax1.axvline(self.best_period, linestyle='--', color='C0', zorder=3, label=r'$\mathrm{P_{HPS}}$ = %.3f'%(self.best_period))
 
         ax1.set_xlabel('Period')
         ax1.set_ylabel(r'$\Psi$',   color=c_hps)
@@ -1574,7 +1574,7 @@ class HPS:
         if x is not None and y is not None:
             
             ax4.set_title('Folded Input')
-            ax4.scatter(fold(x, self.best_period, 0)[0], y, color='tab:blue', s=1, label='Folded Input-Dataseries')
+            ax4.scatter(fold(x, self.best_period, 0)[0], y, color='C0', s=1, label='Folded Input-Dataseries')
             ax4.set_xlabel('x')
             ax4.set_ylabel('y')
 
