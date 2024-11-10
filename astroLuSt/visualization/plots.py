@@ -1362,7 +1362,7 @@ class MultiConfusionMatrix:
                 - `str`, `mcolors.Colormap`, optional
                 - colormap to use for coloring the different models
                 - the default is `None`
-                    - will be set to `'nipy_spectral'`
+                    - will use current default `cmap`
             - `vmin`
                 - `float`, optional
                 - minimum value of the colormapping
@@ -1427,9 +1427,11 @@ class MultiConfusionMatrix:
         text_kwargs:dict=None,
         ) -> None:
 
+        cur_cmap = plt.rcParams["image.cmap"]
+
         self.score_decimals = score_decimals
         self.text_colors    = text_colors
-        if cmap is None:        self.cmap       = 'nipy_spectral'
+        if cmap is None:        self.cmap       = cur_cmap
         else:                   self.cmap       = cmap
         self.vmin       = vmin
         self.vmax       = vmax
@@ -1745,7 +1747,6 @@ class MultiConfusionMatrix:
 
         #generate colors for the bars and text (m_labels)
         colors = alvp.generate_colors(len(score)+1, vmin, vmax, vcenter, cmap=cmap)
-        
         if text_colors is None:
             text_colors = colors.copy()
             text_colors[:len(text_colors)//2] = colors[-1]
@@ -1873,6 +1874,8 @@ class MultiConfusionMatrix:
 
         if text_colors is None:         text_colors         = self.text_colors
         if cmap is None:                cmap                = self.cmap
+        if vmin is None:                vmin                = self.vmin
+        if vmax is None:                vmax                = self.vmax
         if score_decimals is None:      score_decimals      = self.score_decimals
         if fig_kwargs is None:          fig_kwargs          = self.fig_kwargs
         if pcolormesh_kwargs is None:   pcolormesh_kwargs   = dict()
@@ -2054,6 +2057,8 @@ class MultiConfusionMatrix:
         if score_decimals is None:  score_decimals  = self.score_decimals
         if text_colors is None:     text_colors     = self.text_colors
         if cmap is None:            cmap            = self.cmap
+        if vmin is None:            vmin            = self.vmin
+        if vmax is None:            vmax            = self.vmax
         if subplots_kwargs is None: subplots_kwargs = dict(sharex='all', sharey='all')
         if fig_kwargs is None:      fig_kwargs      = self.fig_kwargs
         if text_kwargs is None:     text_kwargs     = self.text_kwargs
@@ -2282,7 +2287,7 @@ class MultiHeadAttentionWeights:
                 - `Union[str,mcolors.Colormap]`, optional
                 - colormap to use for plotting
                 - the default is `None`
-                    - will be set to `'Blues'`
+                    - will be set to current default colormap
             - `cmap_norm`
                 - `mcolors.Normalize`,optional
                 - normalization to use for colormapping
@@ -2316,9 +2321,12 @@ class MultiHeadAttentionWeights:
         verbose:int=0,
         ) -> None:
 
+        cur_cmap = plt.rcParams["image.cmap"]
+
+
         if style is None:           self.style  = 'matrix'
         else:                       self.style  = style
-        if cmap is None:            self.cmap   = 'Blues'
+        if cmap is None:            self.cmap   = cur_cmap
         elif isinstance(cmap, str): self.cmap   = plt.get_cmap(cmap)
         else:                       self.cmap   = cmap
         self.cmap_norm                          = cmap_norm
@@ -2624,7 +2632,8 @@ class ParallelCoordinates:
                 - `str`, `mcolors.Colormap`, optional
                 - colormap to map the scores onto
                 - some space will be allocated for `nan`, if nans shall be displayed as well
-                - the default is `'plasma'`
+                - the default is `None`
+                    - will be set to current default colormap
             - `vmin`
                 - `float`, optional
                 - minimum value for the colormapping
@@ -2693,17 +2702,19 @@ class ParallelCoordinates:
 
     def __init__(self,
         nancolor:Union[str,tuple]='tab:grey', nanfrac:float=4/256,
-        base_cmap:Union[str,mcolors.Colormap]='plasma', vmin:float=0, vmax:float=0,
+        base_cmap:Union[str,mcolors.Colormap]=None, vmin:float=0, vmax:float=0,
         y_margin:float=0.05,
         xscale_dist:Union[Literal["symlog","linear"],Callable]=None,
         sleep:float=0,
         verbose:int=0,
         ) -> None:
         
-        
+        cur_cmap = plt.rcParams["image.cmap"]
+
         self.nancolor                                   = nancolor
         self.nanfrac                                    = nanfrac
-        self.base_cmap                                  = base_cmap
+        if base_cmap is None:       self.base_cmap      = cur_cmap
+        else:                       self.base_cmap      = base_cmap
         self.vmin                                       = vmin
         self.vmax                                       = vmax
         self.y_margin                                   = y_margin
@@ -3280,7 +3291,7 @@ class ParallelCoordinates:
         line:np.ndarray,
         nabool:bool,
         ax:plt.Axes,
-        linecolor:Tuple[str,tuple]='tab:blue', nancolor:Union[str,tuple]='tab:grey',
+        linecolor:Tuple[str,tuple]='C0', nancolor:Union[str,tuple]='tab:grey',
         sleep:float=0,
         verbose:int=None,
         pathpatch_kwargs:dict=None,
@@ -3303,12 +3314,12 @@ class ParallelCoordinates:
                     - `str`, `tuple`, optional
                     - color to plot the line in
                     - if a tuple is passed, it has to be a RGBA-tuple
-                    - the default is `'tab:blue'`
+                    - the default is `"C0"`
                 - `nancolor`
                     - `str`, `tuple`, optional
                     - color to draw line in, if it contains missing values (`np.nan`)
                     - if a tuple is passed it has to be a RGBA-tuple
-                    - the default is `'tab:grey'`
+                    - the default is `"tab:grey"`
                 - `sleep`
                     - `float`, optional
                     - time to sleep after finishing plotting `line`
@@ -3368,7 +3379,7 @@ class ParallelCoordinates:
         ax:plt.Axes,
         nanfrac:float=None,
         xscale_dist:Union[Literal['symlog', 'linear'],Callable]=None,
-        cmap:Union[mcolors.Colormap,str]='plasma', vmin:float=None, vmax:float=None,
+        cmap:Union[mcolors.Colormap,str]=None, vmin:float=None, vmax:float=None,
         verbose:int=None,
         set_xticklabels_dist_kwargs:dict=None,
         ) -> None:
@@ -3414,7 +3425,8 @@ class ParallelCoordinates:
                 - `cmap`
                     - `mcolor.Colormap`, `str`, optional
                     - colormap to apply to the plot for encoding the score
-                    - the default is `'plasma'`
+                    - the default is `None`
+                        - will be set to `self.base_cmap`
                 - `vmin`
                     - `float`, optional
                     - minimum value for the colormapping
@@ -3454,6 +3466,7 @@ class ParallelCoordinates:
         
         #default parameter
         if nanfrac is None:                     nanfrac                     = self.nanfrac
+        if cmap is None:                        cmap                        = self.base_cmap
         if vmin is None:                        vmin                        = self.vmin
         if vmax is None:                        vmax                        = self.vmax
         if verbose is None:                     verbose                     = self.verbose
@@ -4146,11 +4159,12 @@ class VennDiagram:
 def plot_confusion_matrix(
     X:np.ndarray, y:np.ndarray,
     xlab:str="Class", ylab:str="Class",
-    cbarlabel:str=None, cmap:Union[str,mcolors.Colormap]="viridis",
-    annotate:bool=True, annotationcolor:Union[str,tuple]="w",
+    cbarlabel:str=None,
+    annotate:bool=True, annotationcolor:Union[str,tuple]=None,
     textfontsize:float=None,
     ax:plt.Axes=None,
     fontsize:float=16,
+    imshow_kwargs:dict=None,
     ) -> Tuple[Figure,plt.Axes]:
     """
         - function to plot a confusion matrix
@@ -4177,10 +4191,6 @@ def plot_confusion_matrix(
                 - `str`, optional
                 - colorbar label
                 - the default is `None`
-            - `cmap`
-                - `str`, `mcolors.Colormap` optional
-                - matplotlib colormap to use
-                - the default is `"viridis"`
             - `annotate`
                 - bool, optional
                 - whether to depict the heatmap values in the individiual cells
@@ -4188,7 +4198,8 @@ def plot_confusion_matrix(
             - `annotationcolor`
                 - `str`, optional
                 - color of the heatmapvalues, when depicted in the cells
-                - the default is `"w"`
+                - the default is `None`
+                    - will be set to `plt.rcParams["axes.facecolor"]`
             - `annotationfontsize`
                 - `float`, optional
                 - fontsize of the heatmapvalues, when depicted in the cells
@@ -4198,6 +4209,11 @@ def plot_confusion_matrix(
                 - `float`, optional
                 - fontsize of labels
                 - the default is `16`
+            - `imshow_kwargs`
+                - `dict`, optional
+                - kwargs to pass to `ax.imshow()`
+                - the default is `None`
+                    - will be set to `dict()`
         
         Raises
         ------
@@ -4221,8 +4237,12 @@ def plot_confusion_matrix(
 
     """
 
+    cur_bg = plt.rcParams["axes.facecolor"]
+
     #default paramaeters
-    if textfontsize is None: textfontsize = fontsize
+    if textfontsize is None:    textfontsize    = fontsize
+    if annotationcolor is None: annotationcolor = cur_bg
+    if imshow_kwargs is None:   imshow_kwargs   = dict()
 
 
     #generate tick positions
@@ -4235,7 +4255,7 @@ def plot_confusion_matrix(
         fig = ax.get_figure()
 
     #plot
-    im = ax.imshow(X, cmap=cmap)
+    im = ax.imshow(X, **imshow_kwargs)
     cbar = fig.colorbar(im, ax=ax)
 
     #annotating
@@ -4294,12 +4314,12 @@ def plot_predictioneval(
                 - `dict`, optional
                 - kwargs to pass to `ax.scatter()`
                 - the default is `None`
-                    - will be initialized with `{'color':'tab:blue', 's':1}`
+                    - will be initialized with `dict(color="C1", s=1)`
             - `plot_kwargs`
                 - `dict`, optional
                 - kwargs to pass to `ax.plot()`
                 - the default is `None`
-                    - will be initialized with `{'color':'tab:orange'}`
+                    - will be initialized with `dict(color='C0')`
             
             Raises
             ------
@@ -4325,8 +4345,8 @@ def plot_predictioneval(
     
     #initialize parameters
     if fig_kwargs is None: fig_kwargs = {}
-    if sctr_kwargs is None: sctr_kwargs = {'color':'tab:blue', 's':1}
-    if plot_kwargs is None: plot_kwargs = {'color':'tab:orange'}
+    if sctr_kwargs is None: sctr_kwargs = {'color':'C1', 's':1}
+    if plot_kwargs is None: plot_kwargs = {'color':'C0'}
 
 
     x_ideal = np.linspace(np.nanmin(y_true),np.nanmax(y_true),3)

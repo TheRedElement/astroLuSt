@@ -786,7 +786,7 @@ class TPF:
                     - `dict`, optional
                     - kwargs to pass to `ax.pcolormesh()`
                     - the default is `None`
-                        - will be set to `dict(cmap='viridis')`
+                        - will be set to `dict()`
 
             Raises
             ------
@@ -804,8 +804,6 @@ class TPF:
             --------
         """
 
-        cur_cmap = plt.rcParams["image.cmap"]
-
         if plot_apertures is None: plot_apertures = []
         elif plot_apertures == 'all': plot_apertures = range(len(self.starparams))
         if pcolormesh_kwargs is None: pcolormesh_kwargs = dict()
@@ -813,13 +811,9 @@ class TPF:
         if self.mode == 'flux':
             frame2plot = self.frame
             c_lab = 'Flux [-]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = cur_cmap
         elif self.mode == 'mag':
             frame2plot = self.frame_mag
             c_lab = 'Magnitude [mag]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = cur_cmap
 
         if fig is None: fig = plt.figure(figsize=(6,5))
         ax1 = fig.add_subplot(111)
@@ -827,7 +821,7 @@ class TPF:
         if self.store_stars:
             for idx, apidx in enumerate(plot_apertures):
                 try:
-                    cont = ax1.contour(self.stars[apidx,:,:,2], levels=0, colors='r', linewidths=1, zorder=1)
+                    cont = ax1.contour(self.stars[apidx,:,:,2], levels=0, colors='C0', linewidths=1, zorder=1)
                 except IndexError:
                     almf.printf(
                         msg=f'Ignoring `plot_apertures[{idx}]` because the index is out of bounds!',
@@ -836,7 +830,7 @@ class TPF:
                     )
 
             #legend entries
-            ax1.plot(np.nan, np.nan,  'r-', label='Aperture')
+            ax1.plot(np.nan, np.nan,  'C0-', label='Aperture')
 
         #labelling
         ax1.set_xlabel('Pixel')
@@ -1192,8 +1186,7 @@ class TPF_Series:
                     - `dict`, optional
                     - kwargs to pass to `ax.pcolormesh()`
                     - the default is `None`
-                        - will be set to `dict(cmap=cur_cmap)`
-                        - will use current default `cmap`
+                        - will be set to `dict()`
                 - `funcanim_kwargs`
                     - `dict`, optional
                     - kwargs to pass to `matplotlib.animation.FuncAnimation()`
@@ -1250,12 +1243,8 @@ class TPF_Series:
         if 'fps' not in save_kwargs.keys(): save_kwargs['fps'] = 15
         if self.mode == 'flux':
             c_lab = 'Flux [-]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = cur_cmap
         elif self.mode == 'mag':
             c_lab = 'Magnitude [mag]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = cur_cmap
 
         #initialize figure
         if fig is None: fig = plt.figure(figsize=(6,5))

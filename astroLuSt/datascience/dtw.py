@@ -522,6 +522,8 @@ class DTW:
 
         """
 
+        cur_bg = plt.rcParams["axes.facecolor"]
+
         X_plot = X[X_idx]
         Xtemp_plot = self.X_template[Xtemp_idx]
         C = self.Cs[X_idx, Xtemp_idx]
@@ -551,7 +553,7 @@ class DTW:
         c1,     = ax2.plot(X_plot, cy,         color="C2",   label=f'X[{X_idx}]')
         c2,     = ax3.plot(cx,     Xtemp_plot, color="C1", label=f'X_template[{Xtemp_idx}]')
         owp,    = ax1.plot(path[:,1], path[:,0], color="C0", zorder=2, label="Optimal\nWarping Path")
-        ax1.plot(path[:,1], path[:,0], color="w", linewidth=5, zorder=1)
+        ax1.plot(path[:,1], path[:,0], color=cur_bg, linewidth=5, zorder=1)
         handles = [c1, c2, owp]
 
         #add colorbar
