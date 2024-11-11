@@ -1,4 +1,8 @@
 
+"""
+    - functions for testing `astroLuSt.monitoring.errorlogging`
+"""
+
 import numpy as np
 
 def raise_div0():

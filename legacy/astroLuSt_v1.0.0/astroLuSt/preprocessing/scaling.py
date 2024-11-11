@@ -12,14 +12,14 @@ class AxisScaler:
         Attributes
         ----------
             - `scaler`
-                - callable
+                - `Callable`
                 - some function
                     - has to have least at the following (positional) parameter
                         - `X`
-                            - np.ndarray
+                            - `np.ndarray`
                             - input array
                         - `axis`
-                            - tuple, int
+                            - `Tuple[int]`, `int`
                             - denoting the axis to operate on
                     - returning one value `X_new`
                 - if a string is passed one of the class methods will be used
@@ -27,15 +27,15 @@ class AxisScaler:
                         - 'range_scaler'
                 - the default is `None`
                     - will fallback to `self.range_scale()`
-                        - scales featurewise into the interval [0,1]
+                        - scales featurewise into the interval `[0,1]`
             - `axis`
-                - tuple, int
+                - `Tuple`, `int`
                 - axis along which to apply the scaling
                 - the default is `None`
                     - defaults to `0`
                     - will scale feature-wise
             - `scaler_kwargs`
-                - dict, optional
+                - `dict`, optional
                 - any kwargs that will be passed to `scaler`
                 - the default is `None`
                     - will be set to `{}`
@@ -43,28 +43,28 @@ class AxisScaler:
         Infered Attributes
         ------------------
             - `internal_scalers`
-                - list
+                - `list`
                 - contains all scalers that are internally implemented
             - `X_new`
-                - np.ndarray
+                - `np.ndarray`
                 - the scaled version of the input data `X`
 
         Methods
         -------
-            - `range_scale()`
+            - `range_scaler()`
             - `fit()`
             - `transform()`
             - `fit_transform()`
 
         Raises
         ------
-            - ValueError
+            - `ValueError`
                 - if the string passed to `scaler` is not valid
 
         Dependencies
         ------------
-            - numpy
-            - typing
+            - `numpy`
+            - `typing`
 
         Comments
         --------
@@ -106,31 +106,34 @@ class AxisScaler:
     def __repr__(self) -> str:
         
         return (
-            f'AxisScaler(\n'
+            f'{self.__class__.__name__}(\n'
             f'    scaler={self.scaler.__name__},\n'
             f'    scaler_kwargs={self.scaler_kwargs},\n'
             f')'
         )
     
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+        
     def range_scaler(self,
         X:np.ndarray, axis:Union[tuple,int]=None,
         feature_range:tuple=(0,1), 
         ) -> np.ndarray:
         """
-            - method that scales the input X along axis into feature-range
+            - method that scales the input `X` along axis into feature-range
 
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input data that shall be scaled
                 - `feature_range`
-                    - tuple, optional
+                    - `tuple`, optional
                     - feature range into which to scale `X`
-                    - the maximum and minimum of `X` w.r.t. `axis` will lye in that range 
+                    - the maximum and minimum of `X` w.r.t. `axis` will lie in that range 
                     - the default is `(0,1)`
                 - `axis`
-                    - tuple, int
+                    - `tuple`, `int`
                     - axis along which to apply the scaling
                     - will override `self.axis`
                     - the default is `None`
@@ -142,7 +145,7 @@ class AxisScaler:
             Returns
             -------
                 - `X_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - scaled version of `X`
 
             Comments
@@ -171,16 +174,16 @@ class AxisScaler:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input data that shall be transformed
                     - contains samples as the rows and features as the columns
                 - `y`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - does not affect the transformation
                     - included for compatibility
                     - the default is `None`
                 - `scaler_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - any kwargs that will be passed to `scaler`
                     - will override `self.scaler_kwargs`
                     - the default is `None`
@@ -213,7 +216,7 @@ class AxisScaler:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - input data that shall be transformed
                     - contains samples as the rows and features as the columns
                     - the default is `None`
@@ -224,7 +227,7 @@ class AxisScaler:
             Returns
             -------
                 - `X_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the scaled version of the input data `X`
 
             Comments
@@ -247,16 +250,16 @@ class AxisScaler:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray, pd.DataFrame
+                    - `np.ndarray`
                     - input data that shall be transformed
                     - contains samples as the rows and features as the columns
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - does not affect the transformation
                     - included for compatibility
                     - the default is `None`
                 - `scaler_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - any kwargs that will be passed to `scaler`
                     - will override `self.scaler_kwargs`
                     - the default is `None`
@@ -268,7 +271,7 @@ class AxisScaler:
             Returns
             -------
                 - `X_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the scaled version of the input data `X`
             
             Comments

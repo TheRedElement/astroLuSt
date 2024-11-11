@@ -9,8 +9,6 @@ import warnings
 from astroLuSt.preprocessing.scaling import AxisScaler
 
 #%% definitions
-
-
 class AugmentAxis: 
     """
         - class to execute data augmentation on 1D input samples
@@ -18,11 +16,11 @@ class AugmentAxis:
         Attributes
         ----------
             - `nsamples`
-                - int, optional
+                - `int`, optional
                 - number of new samples to generate
                 - the deafult is 1
             - `ntransformations`
-                - int, optional
+                - `int`, optional
                 - how many transformations to apply to get an augmented sample
                 - if negative
                     - will use `len(methods) + 1 + ntransformations` transformations
@@ -30,9 +28,9 @@ class AugmentAxis:
                         - will use all available transformations for `ntransformations == -1`
                         - will use all available transformations but one for `ntransformations == -2`
                         - ect.
-                - the default is -1
+                - the default is `-1`
             - `methods`
-                - list, optional
+                - `list`, optional
                 - transformation methods to use for generation of an augmented sample
                 - contains names of the methods to use as strings
                 - to get a list of all allowed methods call `self.get_transformations()`
@@ -41,96 +39,96 @@ class AugmentAxis:
                 - the default is `None`
                     - will use all internally stored methods
             - `transform_order`
-                - str, list, optional
+                - `str`, `list`, optional
                 - order to use for applying transformations
                 - the following strings are allowed
-                    - `random`
+                    - `"random"`
                         - will randomly sample `ntransformations` transformations from `methods`
-                    - `unchanged`
+                    - `"unchanged"`
                         - will use the unchanged input for `methods` in that order
-                - if list
+                - if `list`
                     - will use the list as array indices to select the respective elements in `methods` as it was passed
                 - the default is `None`
                     - will be set to `'unchanged'`
             - `shift`
-                - tuple, int, optional
+                - `tuple`, `int`, optional
                 - shift to apply to the input `x` along `axis`
                 - will be passed to `np.roll`
                 - the default is `None`
-                    - will fall be set to 0
+                    - will be set to `0`
                     - no shift
             - `flip`
-                - bool, optional
+                - `bool`, optional
                 - whether to apply flipping to the curve or not
-                - the default is True
+                - the default is `True`
             - `npoints`
-                - int, tuple, str, optional
+                - `int`, `tuple`, `str`, optional
                 - number of datapoints to obscure for the chosen axis
-                - if an int is passed
+                - if an `int` is passed
                     - will obscure those many points
-                - if a tuple is passed
+                - if a `tuple` is passed
                     - will be interpreted as `low` and `high` from `np.random.randint()` and randomly generate a number
                 - the default is `None`
-                    - will be set to 0
+                    - will be set to `0`
                     - will not obscure anything
             - `neighbors`
-                - bool, optinonal
+                - `bool`, optinonal
                 - whether the datapoints to obscure shall be neighbors or randomly chosen upon all elements along `axis`
-                - if True
+                - if `True`
                     - will obscure `npoints` neighboring elements along `axis`
-                - if False
+                - if `False`
                     - will randomly choose `npoints` elements along `axis`
-                - the default is False
+                - the default is `False`
             - `fill_value_obscure`
-                - int, str, optional
+                - `int`, `str`, optional
                 - value to use inplace of the obscured entries
-                - if an int is passed, this value gets inserted for all elements
+                - if an `int` is passed, this value gets inserted for all elements
                 - the following strings are currently allowed
                     - `'random'`
                         - generate `npoints` random datapoints within `fill_value_range`
                 - the default is `None`
-                    - will be set to 0
+                    - will be set to `0`
             - `fill_value_range`
-                - tuple, optional
+                - `tuple`, optional
                 - boundaries to define from which range to uniformly sample fill-values
                 - will generate `npoints` random fill-values for the requested axis
                 - only relevant is `fill_value == 'random'`
-                - the default is None
+                - the default is `None`
                     - will be set to `(0,1)`
             - `cutout_start`
-                - int, tuple, optional
+                - `int`, `tuple`, optional
                 - index of where to start the cutout region along `axis`
-                - if an int
+                - if an `int`
                     - interpreted as the starting index
-                - if a tuple
+                - if a `tuple`
                     - interpreted as `low` and `high` parameters in `np.random.randint()`
                     - will generate a random integer used as the starting point
                 - the default is `None`
-                    - defaults to 0
+                    - defaults to `0`
             - `cutout_size`
-                - int, tuple, optional
+                - `int`, `tuple`, optional
                 - length of the cutout region along `axis`
-                - if an int
+                - if an `int`
                     - interpreted as the length
-                -  if a tuple
+                -  if a `tuple`
                     - interpreted as `low` and `high` parameters in `np.random.randint()`
                     - will generate a random integer used as the length of the cutout
                 - the default is `None`
-                    - defaults to 0
+                    - defaults to `0`
                         - no transformation applied
             - `interpkind`
-                - int, str, optional
+                - `int`, `str`, optional
                 - interpolation method to use
                 - parameter of `scipy.interpolate.interp1d()`
                 - the default is `None`
                     - defaults to `'linear'`
             - `fill_value_crop`
-                - int, tuple, str, optional
+                - `int`, `tuple`, `str`, optional
                 - value used to fill regions where extrapolation is necessary
                 - parameter of `scipy.interpolate.interp1d()`
-                - if an int
+                - if an `int`
                     - this value will be used for datapoints out of interpolation range
-                - if a tuple
+                - if a `tuple`
                     - the first element will be used for datapoints out of the lower bound of the interpolation range
                     - the second element will be used for datapoints out of the upper bound of the interpolation range
                 - supported strings
@@ -139,48 +137,47 @@ class AugmentAxis:
                 - the default is `None`
                     - defaults to `'extrapolate'`   
             - `noise_mag`
-                - float, tuple
+                - `float`, `tuple`, optional
                 - magnitude of the noise to apply
-                - if float
+                - if `float`
                     - will be interpreted as the magnitude
-                - if tuple
+                - if `tuple`
                     - interpreted as `low` and `high` parameters in `np.random.uniform()`
                     - will generate a random float to use as the noise_mag
                 - the default is `None`
-                    - will default to 0
+                    - will default to `0`
                     - no noise applied                    
             - `feature_range_min`
-                - int, tuple, optional
+                - `int`, `tuple`, optional
                 - the lower bound of the interval the rescaled axis shall have
-                - if an int
+                - if an `int`
                     - interpreted as the lower bound directly
-                - if a tuple
+                - if a `tuple`
                     - interpreted as `low` and `high` parameters in `np.random.uniform()`
                 - the default is `None`
-                    - will default to 0                     
+                    - will default to `0`
             - `feature_range_max`
-                - int, tuple, optional
+                - `int`, `tuple`, optional
                 - the upper bound of the interval the rescaled axis shall have
-                - if an int
+                - if an `int`
                     - interpreted as the upper bound directly
-                - if a tuple
+                - if a `tuple`
                     - interpreted as `low` and `high` parameters in `np.random.uniform()`
                 - the default is `None`
-                    - will default to 1                             
+                    - will default to `1`
             - `axis`
-                - int, tuple, optional
+                - `int`, `tuple`, optional
                 - axis onto which to apply the transformations
                 - the default is `None`
-                    - will be set to 0
+                    - will be set to `0`
             - `seed`
-                - int, optional
+                - `int`, optional
                 - seed of the random number generator
                 - the default is `None`
-            - verbose
-                - int, optional
+            - `verbose`
+                - `int`, optional
                 - verbosity level
-                - the default is 0
-                
+                - the default is `0`
 
         Methods
         -------
@@ -201,10 +198,10 @@ class AugmentAxis:
             
         Dependencies
         ------------
-            - numpy
-            - matplotlib
-            - scipy
-            - typing
+            - `numpy`
+            - `matplotlib`
+            - `scipy`
+            - `typing`
 
         Comments
         --------
@@ -278,7 +275,7 @@ class AugmentAxis:
 
     def __repr__(self) -> str:
         return (
-            f'AugmentAxis(\n'
+            f'{self.__class__.__name__}(\n'
             f'    nsamples={repr(self.nsamples)},\n'
             f'    ntransformations={repr(self.ntransformations)}, methods={repr(self.methods)}, transform_order={repr(self.transform_order)},\n'
             f'    shift={repr(self.shift)},\n'
@@ -313,7 +310,7 @@ class AugmentAxis:
             Returns
             -------
                 - transformations
-                    - list
+                    - `list`
                     - contains the names of the methods used for applying transformations
 
             Comments
@@ -338,7 +335,7 @@ class AugmentAxis:
             Parameters
             ----------
                 - `class_weights`
-                    - np.ndarray
+                    - `np.ndarray`
                     - weights per class
                         - classes are sorted in ascending order
                         - `class_weights` has to be passed accordingly
@@ -347,7 +344,7 @@ class AugmentAxis:
                             - ect.
                     - has to have same shape as `np.unique(y)`
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - array of class labels
                     - has to have `len(class_weights)` unique labels
 
@@ -357,7 +354,7 @@ class AugmentAxis:
             Returns
             -------
                 - `sample_weights`
-                    - np.ndarray
+                    - `np.ndarray`
                     - same shape as `y`
                     - `class_weights` converted to weights per sample
                         - all samples of the same class will have the same weight
@@ -387,24 +384,24 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be shifted
                 - `shift`
-                    - tuple, int, optional
+                    - `tuple`, `int`, optional
                     - shift to apply to the input `x` along `axis`
                     - will be passed to `np.roll`
                     - overrides `self.shift`
                     - the default is `None`
                         - will fall back to `self.shift`
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply `shift`
                     - will be passed to `np.roll`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
                 - `**kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - keyword arguments to pass to the function
 
             Raises
@@ -413,7 +410,7 @@ class AugmentAxis:
             Returns
             -------
                 - `x_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the input `x` shifted according to the specifications
 
             Comments
@@ -448,17 +445,17 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be flipped
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply `flip_axis`
                     - will be passed to `np.flip`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
                 - `**kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - keyword arguments to pass to the function
 
             Raises
@@ -467,7 +464,7 @@ class AugmentAxis:
             Returns
             -------
                 - `x_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the input `x` flipped according to the specifications
 
             Comments
@@ -497,31 +494,31 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be obscured
                 - `npoints`
-                    - int, tuple, str, optional
+                    - `int`, `tuple`, `str`, optional
                     - number of datapoints to obscure for the chosen axis
-                    - if an int is passed
+                    - if an `int` is passed
                         - will obscure those many points
-                    - if a tuple is passed
+                    - if a `tuple` is passed
                         - will be interpreted as `low` and `high` from `np.random.randint()` and randomly generate a number
                     - the default is `None`
                         - will fall back to `self.npoints`
                 - `neighbors`
-                    - bool, optinonal
+                    - `bool`, optinonal
                     - whether the datapoints to obscure shall be neighbors or randomly chosen upon all elements along `axis`
-                    - if True
+                    - if `True`
                         - will obscure `npoints` neighboring elements along `axis`
-                    - if False
+                    - if `False`
                         - will randomly choose `npoints` elements along `axis`
                     - overrides `self.neighbors`
                     - the default is `None`
                         - will fall back to `self.neighbors`
                 - `fill_value_obscure`
-                    - int, str, optional
+                    - `int`, `str`, optional
                     - value to use inplace of the obscured entries
-                    - if an int is passed, this value gets inserted for all elements
+                    - if an `int` is passed, this value gets inserted for all elements
                     - the following strings are currently allowed
                         - `'random'`
                             - generate `npoints` random datapoints within `fill_value_range`
@@ -529,7 +526,7 @@ class AugmentAxis:
                     - the default is `None`
                         - will fall back to `self.fill_value_obscure`
                 - `fill_value_range`
-                    - tuple, optional
+                    - `tuple`, optional
                     - boundaries to define from which range to uniformly sample fill-values
                     - will generate `npoints` random fill-values for the requested axis
                     - only relevant is `fill_value == 'random'`
@@ -537,13 +534,13 @@ class AugmentAxis:
                     - the default is `None`
                         - will fall back to `self.fill_value_range`
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply `obscure_observations`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
                 - `**kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - keyword arguments to pass to the function
                         
             Raises
@@ -552,7 +549,7 @@ class AugmentAxis:
             Returns
             -------
                 - `x_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the input `x` with elements obscured according to the specifications
 
             Comments
@@ -632,44 +629,44 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be obscured
                 - `cutout_start`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - index of where to start the cutout region along `axis`
-                    - if an int
+                    - if an `int`
                         - interpreted as the starting index
-                    -  if a tuple
+                    -  if a `tuple`
                         - interpreted as `low` and `high` parameters in `np.random.randint()`
                         - will generate a random integer used as the starting point
                     - overrides `self.cutout_start`
                     - the default is `None`
                         - falls back to `self.cutout_start`
                 - `cutout_size`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - length of the cutout region along `axis`
-                    - if an int
+                    - if an `int`
                         - interpreted as the length
-                    -  if a tuple
+                    -  if a `tuple`
                         - interpreted as `low` and `high` parameters in `np.random.randint()`
                         - will generate a random integer used as the length of the cutout
                     - overrides `self.cutout_size`
                     - the default is `None`
                         - falls back to `self.cutout_size`
                 - `interpkind`
-                    - int, str, optional
+                    - `int`, `str`, optional
                     - interpolation method to use
                     - parameter of `scipy.interpolate.interp1d()`
                     - overrides `self.interpkind`
                     - the default is `None`
                         - falls back to `self.interpkind`
                 - `fill_value_crop`
-                    - int, tuple, str, optional
+                    - `int`, `tuple`, `str`, optional
                     - value used to fill regions where extrapolation is necessary
                     - parameter of `scipy.interpolate.interp1d()`
-                    - if an int
+                    - if an `int`
                         - this value will be used for datapoints out of interpolation range
-                    - if a tuple
+                    - if a `tuple`
                         - the first element will be used for datapoints out of the lower bound of the interpolation range
                         - the second element will be used for datapoints out of the upper bound of the interpolation range
                     - supported strings
@@ -679,13 +676,13 @@ class AugmentAxis:
                     - the default is `None`
                         - falls back to `self.fill_value_crop`
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply `crop`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`
                 - `**kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - keyword arguments to pass to the function
                         
             Raises
@@ -694,7 +691,7 @@ class AugmentAxis:
             Returns
             -------
                 - `x_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the input `x` with regions cutout from the whole array
 
             Comments
@@ -755,37 +752,37 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be obscured
                 - `feature_range_min`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - the lower bound of the interval the rescaled axis shall have
-                    - if an int
+                    - if an `int`
                         - interpreted as the lower bound directly
-                    - if a tuple
+                    - if a `tuple`
                         - interpreted as `low` and `high` parameters in `np.random.uniform()`
                     - overrides `self.feature_range_min`
                     - the default is `None`
                         - falls back to `self.feature_range_min`
                 - `feature_range_max`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - the upper bound of the interval the rescaled axis shall have
-                    - if an int
+                    - if an `int`
                         - interpreted as the upper bound directly
-                    - if a tuple
+                    - if a `tuple`
                         - interpreted as `low` and `high` parameters in `np.random.uniform()`
                     - overrides `self.feature_range_max`
                     - the default is `None`
                         - falls back to `self.feature_range_max`
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply `rescale`
                     - will be passed to `astroLuSt.preprossesing.scaling.AxisScaler()`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`    
                 - `**kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - keyword arguments to pass to the function
                         
             Raises
@@ -794,7 +791,7 @@ class AugmentAxis:
             Returns
             -------
                 - `x_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the input `x` with the requested axis rescaled to the requested feature range
 
             Comments
@@ -839,27 +836,27 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be obscured
                 - `noise_mag`
-                    - float, tuple
+                    - `float`, tuple
                     - magnitude of the noise to apply
-                    - if float
+                    - if `float`
                         - will be interpreted as the magnitude
-                    - if tuple
+                    - if `tuple`
                         - interpreted as `low` and `high` parameters in `np.random.uniform()`
                         - will generate a random float to use as the noise_mag
                     - overrides `self.noise_mag`
                     - the default is `None`
                         - will fall back to `self.noise_mag`
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply `add_noise`
                     - overrides `self.axis`
                     - the default is `None`
                         - will fall back to `self.axis`    
                 - `**kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - keyword arguments to pass to the function
                         
             Raises
@@ -920,17 +917,17 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be transformed
                 - `transform_parameters`
-                    - dict, optional
+                    - `dict`, optional
                     - parameters passed to all methods applied for the transformation
                         - i.e. entries contained within `methods`
                     - the default is `None`
                         - will be set to `{}`
                         - i.e. uses class attributes
                 - `ntransformations`
-                    - int, optional
+                    - `int`, optional
                     - how many transformations to apply to the input `x`
                     - if negative
                         - will use `len(methods) + 1 + ntransformations` transformations
@@ -942,7 +939,7 @@ class AugmentAxis:
                     - the default is `None`
                         - will fall back onto `self.ntransformations`
                 - `methods`
-                    - list, optional
+                    - `list`, optional
                     - methods to use on the input `x`
                     - contains names of the methods to use as strings
                     - to get a list of all allowed methods call `self.get_transformations()`
@@ -952,20 +949,20 @@ class AugmentAxis:
                     - the default is `None`
                         - will fall back to `self.methods`
                 - `transform_order`
-                    - str, list, optional
+                    - `str`, `list`, optional
                     - order to use for applying transformations
                     - the following strings are allowed
                         - `random`
                             - will randomly sample `ntransformations` transformations from `methods`
                         - `unchanged`
                             - will use the unchanged input for `methods` in that order
-                    - if list
+                    - if `list`
                         - will use the list as array indices to select the respective elements in `methods` as it was passed
                     - overrides `self.transform_order`
                     - the default is `None`
                         - will fall back to `self.transform_order`
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
@@ -975,13 +972,13 @@ class AugmentAxis:
 
             Raises
             ------
-                - ValueError
+                - `ValueError`
                     - if `transform_order` is not valid
 
             Returns
             -------
                 - `x_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - transformed version of the input `x`
 
             Comments
@@ -1066,15 +1063,15 @@ class AugmentAxis:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - has to be 4d array
                     - input data containing n samples on its first axis
                 - `augment`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to fit to randomly augmented data
-                    - the default is False
+                    - the default is `False`
                 - `random_seed`
-                    - int, optional
+                    - `int`, optional
                     - random seed
                     - overrides `self.random_seed`
                     - the default is `None`
@@ -1108,30 +1105,30 @@ class AugmentAxis:
             Parameters
             ----------
                 - `X`
-                    - np.ndarray
+                    - `np.ndarray`
                     - input dataset serving as template for augmentation
                 - `y`
-                    - np.ndarray
+                    - `np.ndarray`
                     - labels corresponding to `X`
                     - if `class_weights` are passed
                         - has to contain integer labels as column at `label_idx`
                     - the default is `None`
                         - will be ignored and returned as array of `np.nan`
                 - `X_misc`
-                    - list, optional
+                    - `list`, optional
                     - list of np.ndarrays of same first dimension as `X`
                     - miscallaneous datasets that get passed to the output without any modifications
                     - will return as many additional entries in the output as entries in `X_misc`
                     - the default is `None`
                         - will be ignored
                 - `sample_weights`
-                    - list, optional
+                    - `list`, optional
                     - has to have same lenght as `X`
                     - probabilities for each sample to be drawn for augmentation
                     - the default is `None`
                         - will assume uniform distribution over the input `X`
                 - `class_weights`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - weights per class in `y[:,label_idx]`
                         - classes are sorted in ascending order
                         - `class_weights` has to be passed accordingly
@@ -1141,23 +1138,23 @@ class AugmentAxis:
                     - the default is `None`
                         - will use `sample_weights` instead
                 - `label_idx`
-                    - int, optional
+                    - `int`, optional
                     - index to the column in `y` that contains the class-labels
-                    - the default is 0
+                    - the default is `0`
                 - `nsamples`
-                    - int, optional
+                    - `int`, optional
                     - number of new samples to generate
                     - overrides `self.nsamples`
                     - the deafult is `None`
                         - will fall back to `self.nsamples`
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
                         - will fall back to `self.verbose`
                 - `apply_transform_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.apply_transform()`
                     - the default is `None`
                         -  will be initialized with `{}`
@@ -1168,13 +1165,13 @@ class AugmentAxis:
             Returns
             -------
                 - `X_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - augmented samples generated based on `X`
                 - `y_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - labels corresponding to `X_new`
                 - `*X_misc_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - any miscallaneous dataset with entries corresponding to `X_new`
 
             Comments
@@ -1244,10 +1241,10 @@ class AugmentAxis:
             Parameters
             ----------
                 - `shape`
-                    - tuple
+                    - `tuple`
                     - shape of the array (sample) to transform
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply `add_noise`
                     - overrides `self.axis`
                     - the default is `None`
@@ -1258,8 +1255,8 @@ class AugmentAxis:
 
             Returns
             -------
-                - transformations
-                    - dict
+                - `transformations`
+                    - `dict`
                     - dictionary containing parameter-value pairs
                     - the values are random transformation values
                     - can be passed to `apply_transform()` as `transform_parameters`
@@ -1297,10 +1294,10 @@ class AugmentAxis:
             Parameters
             ----------
                 - `x`
-                    - np.ndarray
+                    - `np.ndarray`
                     - the array to be transformed
                 - `axis`
-                    - int, tuple, optional
+                    - `int`, `tuple`, optional
                     - axis onto which to apply the random transformation
                     - overrides `self.axis`
                     - the default is `None`
@@ -1312,7 +1309,7 @@ class AugmentAxis:
             Returns
             -------
                 - `x_new`
-                    - np.ndarray
+                    - `np.ndarray`
                     - transformed version of the input `x`                
             
             Comments

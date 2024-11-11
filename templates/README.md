@@ -6,7 +6,7 @@ This module started out as a central space for all code generated in the frame o
 * Author: <author>
 * Author Email: <author_email>
 * Maintainer: <maintainer>
-* Maintiner Email: <maintainer_email>
+* Maintainer Email: <maintainer_email>
 * Last Update: <lastupdate>
 * Version: <version>
 * URL: <url>

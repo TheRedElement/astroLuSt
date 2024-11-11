@@ -23,7 +23,7 @@ class GaiaDatabaseInterface:
             - `verbose`
                 - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
                 
         
         Methods
@@ -57,9 +57,14 @@ class GaiaDatabaseInterface:
 
     def __repr__(self) -> str:
         return (
-            f'GaiaDatabaseInterface(\n'
+            f'{self.__class__.__name__}(\n'
+            f"    gaia_class={self.Gaia},\n"
+            f"    verbose={self.verbose},\n"
             f')'
         )
+
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
     def remove_all_jobs(self,
         pd_filter:str=None,
@@ -72,7 +77,7 @@ class GaiaDatabaseInterface:
             Parameters
             ----------
                 - `pd_filter`
-                    - str, optional
+                    - `str`, optional
                     - string that will be evaluated as a boolean filter
                         - serves to filter all jobs for some specific ones
                     - must have the following structure
@@ -101,9 +106,9 @@ class GaiaDatabaseInterface:
                     - the default is `None`
                         - will delete all jobs in the archive
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - how much additional information to display
-                    - the default is 0
+                    - the default is `0`
 
             Raises
             ------
@@ -189,9 +194,9 @@ class GaiaDatabaseInterface:
                 - `get_normalized_flux`
                     - bool, optional
                     - whether to also extract the (passband-wise) normalized versions of the extracted fluxes
-                    - the default is True
+                    - the default is `True`
                 - `normfunc`
-                    - Callable, optional
+                    - `Callable`, optional
                     - function to execute the normalization
                     - has to take exactly one two arguments
                         - `flux`
@@ -205,7 +210,7 @@ class GaiaDatabaseInterface:
                     - `int`, optional
                     - number of chunks to split `ids` into
                     - use if too many targets to extract, i.e. request refuses to process
-                    - the default is 1
+                    - the default is `1`
                         - all `ids` at once
                 - `verbose`
                     - `int`, optional
@@ -323,19 +328,19 @@ class GaiaDatabaseInterface:
             Parameters
             ----------
                 - `df`
-                    - pd.DataFrame
+                    - `pd.DataFrame`
                     - dataframe of extracted lc-data (`lcs` from `self.extract_source()`)
                 - `filename`
-                    - str
+                    - `str`
                     - name of the file in which the data gets stored
                     - NO FILE EXTENSION!
                 - `directory`
-                    - str, optional
+                    - `str`, optional
                     - directory of where the data will be stored
                     - the default is `None`
                         - will be set to `'./'`
                 - `pd_savefunc`
-                    - str, optional
+                    - `str`, optional
                     - pandas saving function to use
                         - i.e., methods of pd.DataFrames
                         - examples
@@ -344,7 +349,7 @@ class GaiaDatabaseInterface:
                     - the default is `None`
                         - will be set to `'to_parquet'`
                 - `save_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `pd_savefunc`
                     - the default is `None`
                         - will be set to `dict()`

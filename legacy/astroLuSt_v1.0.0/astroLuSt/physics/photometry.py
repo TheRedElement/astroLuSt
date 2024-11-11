@@ -2,11 +2,7 @@
 #%%imports
 import numpy as np
 import polars as pl
-
 from typing import Union, Tuple, Callable
-
-from astroLuSt.monitoring import errorlogging as alme
-from astroLuSt.monitoring import formatting as almf
 
 #%%classes
 class DistanceModule:
@@ -17,45 +13,45 @@ class DistanceModule:
         Attributes
         ----------
             - `m`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - apparent magnitude(s)
                 - will infer `M` if both `M` and `m` are not `None`
                 - the default is `None`
                     - will be infered from `M`
             - `M`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - absolute magnitude(s)
                 - will infer `M` if both `M` and `m` are not `None`
                 - the default is `None`
                     - will be infered from `m`
             - `d`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - distance(s) in parsec [pc]
                 - will use `d` if both `d` and `plx` are not `None`
                 - the default is `None`
                     - will try to infer distances via `plx`
             - `plx`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - parallax(es) in arcseconds [arcsec]
                 - will use `d` if both `d` and `plx` are not `None`
                 - the default is `None`
                     - will try to infer parallaces via `d`
             - `dm`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - uncertainty of `dm`
-                - the default is 0
+                - the default is `0`
             - `dM`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - uncertainty of `dM`
-                - the default is 0
+                - the default is `0`
             - `dd`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - uncertainty of `dd`
-                - the default is 0
+                - the default is `0`
             - `dplx`
-                - `float, np.ndarray`, optional
+                - `float`, `np.ndarray`, optional
                 - uncertainty of `dplx`
-                - the default is 0
+                - the default is `0`
 
         Methods
         -------
@@ -66,8 +62,8 @@ class DistanceModule:
 
         Dependencies
         ------------
-            - numpy
-            - typing
+            - `numpy`
+            - `typing`
         
         Comments
         --------
@@ -102,7 +98,7 @@ class DistanceModule:
 
     def __repr__(self) -> str:
         return (
-            f'DistanceModule(\n'
+            f'{self.__class__.__name__}(\n'
             f'    m={repr(self.m)}, M={repr(self.M)},\n'
             f'    d={repr(self.d)}, plx={repr(self.plx)},\n'
             f'    dm={repr(self.dm)}, dM={repr(self.dM)},\n'
@@ -197,11 +193,6 @@ class DistanceModule:
             Returns
             -------
 
-            Dependencies
-            ------------
-                - numpy
-                - typing
-            
             Comments
             --------
         """
@@ -226,11 +217,6 @@ class DistanceModule:
             Returns
             -------
 
-            Dependencies
-            ------------
-                - numpy
-                - typing
-            
             Comments
             --------
         """
@@ -263,30 +249,30 @@ def mags2fluxes(
                 - `float`, `np.ndarray`, optional
                 - reference magnitude for the conversion
                     - this value is dependent on the passband in use
-                - the default is 0
+                - the default is `0`
                     - will interpret input as the difference `m - m_ref`
             - `f_ref`
                 - `float`, `np.ndarray`, optional
                 - reference flux for the conversion
                     - corresponding to `m_ref`
                     - this value is dependent on the passband in use
-                - the default is 1
+                - the default is `1`
                     - will return the fraction `f/f_ref`
             - `dm`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm`
                 - the default is `None`
-                    - will be set to 0 for all entries in `m`
+                    - will be set to `0` for all entries in `m`
             - `dm_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm_ref`
                 - the default is `None`
-                    - will be set to 0 for all entries in `m_ref`
+                    - will be set to `0` for all entries in `m_ref`
             - `dm_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm_ref`
                 - the default is `None`
-                    - will be set to 0 for all entries in `f_ref`
+                    - will be set to `0` for all entries in `f_ref`
 
 
         Raises
@@ -303,8 +289,8 @@ def mags2fluxes(
 
         Dependencies
         ------------
-            - numpy
-            - typing
+            - `numpy`
+            - `typing`
 
         Comments
         --------
@@ -345,30 +331,30 @@ def fluxes2mags(
                 - `float`, `np.ndarray`, optional
                 - reference flux for the conversion
                     - this value is dependent on the passband in use
-                - the default is 1
+                - the default is `1`
                     - will interpret input as the fraction `f/f_ref`
             - `m_ref`
                 - `float`, `np.ndarray`, optional
                 - reference magnitude for the conversion
                     - corresponding to `f_ref`
                     - this value is dependent on the passband in use
-                - the default is 0
+                - the default is `0`
                     - will return the difference `m - m_ref`
             - `df`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `df`
                 - the default is `None`
-                    - will be set to 0 for all entries in `df`
+                    - will be set to `0` for all entries in `df`
             - `df_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `df_ref`
                 - the default is `None`
-                    - will be set to 0 for all entries in `df_ref`
+                    - will be set to `0` for all entries in `df_ref`
             - `dm_ref`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `dm_ref`
                 - the default is `None`
-                    - will be set to 0 for all entries in `dm_ref`
+                    - will be set to `0` for all entries in `dm_ref`
 
         Raises
         ------
@@ -440,27 +426,27 @@ def wesenheit_magnitude(
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `M`
                 - the default is `None`
-                    - will be set to 0 for all entries in `M`
+                    - will be set to `0` for all entries in `M`
             - `dCI`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `CI`
                 - the default is `None`
-                    - will be set to 0 for all entries in `CI`
+                    - will be set to `0` for all entries in `CI`
             - `dR`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `R`
                 - the default is `None`
-                    - will be set to 0 for all entries in `R`
+                    - will be set to `0` for all entries in `R`
             - `dA_M`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `A_M`
                 - the default is `None`
-                    - will be set to 0 for all entries in `A_M`
+                    - will be set to `0` for all entries in `A_M`
             - `dE_CI`
                 - `np.ndarray`, `float`, optional
                 - uncertainty of `E_CI`
                 - the default is `None`
-                    - will be set to 0 for all entries in `E_CI`
+                    - will be set to `0` for all entries in `E_CI`
 
         Raises
         ------
@@ -478,7 +464,7 @@ def wesenheit_magnitude(
 
         Dependencies
         ------------
-            - numpy
+            - `numpy`
 
         Comments
         --------
@@ -531,19 +517,19 @@ def mags_sum(
                     - for example some distance measure
                 - has to be of shape `(1,*m.shape[1:])`
                 - the default is `None`
-                    - will be set to 1 for all elements in `m`
+                    - will be set to `1` for all elements in `m`
             - `dm`
                 - `np.ndarray`, optional
                 - uncertainties of `m`
                 - the default is `None`
-                    - will be set to 0 for all entries in `m`
+                    - will be set to `0` for all entries in `m`
             - `axis`
                 - `int`, optional
                 - axis along which to add up magnitudes
-                    - 0     ... pixel wise
-                    - 1     ... row wise
-                    - 2     ... column wise
-                    - (1,2) ... frame wise
+                    - `0`     ... pixel wise
+                    - `1`     ... row wise
+                    - `2`     ... column wise
+                    - `(1,2)` ... frame wise
                 - the default is `None`
                     - will flatten before adding up magnitudes
 
@@ -561,8 +547,8 @@ def mags_sum(
         
         Dependencies
         ------------
-            - numpy
-            - typing
+            - `numpy`
+            - `typing`
 
         Comments
         --------
@@ -588,7 +574,7 @@ def mags_contribution(
     dm:Union[float,np.ndarray]=None, dm_cont:Union[float,np.ndarray]=None,
     ) -> Tuple[Union[float,np.ndarray],Union[float,np.ndarray]]:
     """
-        - function that estimates the contribution in magnitude of target star (m) to a total magnitude
+        - function that estimates the contribution in magnitude of target star (`m`) to a total magnitude
         
         Parameters
         ----------
@@ -613,17 +599,17 @@ def mags_contribution(
                     - only applied if `m_cont` is a `np.ndarray`
                     - for example some distance measure
                 - the default is `None`
-                    - will be set to 1 for all elements in `m`
+                    - will be set to `1` for all elements in `m`
             - `dm`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `m`
                 - the default is `None`
-                    - will be set to 0 for all entries in `m` (infinite accuracy)
+                    - will be set to `0` for all entries in `m` (infinite accuracy)
             - `dm_cont`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `m_cont`
                 - the default is `None`
-                    - will be set to 0 for all entries in `m_cont` (infinite accuracy)
+                    - will be set to `0` for all entries in `m_cont` (infinite accuracy)
 
         Raises
         ------
@@ -645,8 +631,8 @@ def mags_contribution(
 
         Dependencies
         ------------
-            - numpy
-            - typing
+            - `numpy`
+            - `typing`
 
         Comments
         --------
@@ -719,17 +705,17 @@ def flux_contribution(
                     - only applied if `f_cont` is a `np.ndarray`
                     - for example some distance measure
                 - the default is `None`
-                    - will be set to 1 for all elements in `f`
+                    - will be set to `1` for all elements in `f`
             - `df`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `f`
                 - the default is `None`
-                    - will be set to 0 for all entries in `f` (infinite accuracy)                
+                    - will be set to `0` for all entries in `f` (infinite accuracy)                
             - `df_cont`
                 - `float`, `np.ndarray`, optional
                 - uncertainty of `f_cont`
                 - the default is `None`
-                    - will be set to 0 for all entries in `f_cont` (infinite accuracy)                
+                    - will be set to `0` for all entries in `f_cont` (infinite accuracy)                
 
         Raises
         ------
@@ -751,8 +737,8 @@ def flux_contribution(
 
         Dependencies
         ------------
-            - numpy
-            - typing
+            - `numpy`
+            - `typing`
 
         Comments
         --------
@@ -809,6 +795,7 @@ def mags_contribution_polars(
     ) -> pl.DataFrame:
     """
         - polars compatible implementation of `mags_contribution()`
+        - very efficient for huge tables
 
         Parameters
         ----------
@@ -869,7 +856,7 @@ def mags_contribution_polars(
     ])
 
     #total contaminating magnitude
-    df_cont = df_cont.groupby(by=id_col_targ).agg([
+    df_cont = df_cont.group_by(id_col_targ).agg([
         pl.lit(-2.5).alias(app_mag_col_cont)*np.log10(pl.col('__distmodexp').sum()),    #total contaminating magnitude
         pl.col(app_mag_col_targ).mode().first(),                                        #get first most common value in aggregated columns
         pl.col(id_col_targ).alias('n_contaminants').count()-pl.lit(1),
@@ -890,6 +877,7 @@ def flux_contribution_polars(
     ) -> pl.DataFrame:
     """
         - polars compatible implementation of `flux_contribution()`
+        - very efficient for huge tables
 
         Parameters
         ----------
@@ -950,7 +938,7 @@ def flux_contribution_polars(
     ])
 
     #total contaminating magnitude
-    df_cont = df_cont.groupby(by=id_col_targ).agg([
+    df_cont = df_cont.group_by(id_col_targ).agg([
         pl.col(flux_col_cont).sum(),    #total contaminating magnitude
         pl.col(flux_col_targ).mode().first(),                                        #get first most common value in aggregated columns
         pl.col(id_col_targ).alias('n_contaminants').count()-pl.lit(1),

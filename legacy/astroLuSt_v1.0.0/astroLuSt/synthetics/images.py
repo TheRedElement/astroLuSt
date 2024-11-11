@@ -1,5 +1,8 @@
 
 #TODO: add frame with uncertainties to TPF (use `dm_` and `df_`)
+#TODO: `TPF.add_custom()`: Add other common trends
+#TODO: TPF.add_noise()`: `add different noise parts (photon noise, dead pixels, hot pixels, ...)
+
 
 #%%imports
 from functools import partial
@@ -23,17 +26,17 @@ class TPF:
         Attributes
         ----------
             - `size`
-                - tuple, int, optional
+                - `tuple`, `int`, optional
                 - size of the TPF to generate
-                - if int
+                - if `int`
                     - will be interpreted as `(size,size)`
                     - i.e., square frame with `size` pixels in x and y direction
-                - if tuple
+                - if `tuple`
                     - `size[0]` denotes the number of pixels in x direction
                     - `size[1]` denotes the number of pixels in y direction
-                - the default is 15
+                - the default is `15`
             - `mode`
-                - Literal, optional
+                - `Literal["flux","mag"]`, optional
                 - whether to generate the frame using magnitudes or fluxes
                 - allowed values are
                     - `'flux'`
@@ -43,49 +46,50 @@ class TPF:
                 - the default is `None`
                     - will be set to `'flux'`
             - `f_ref`
-                - float, optional
+                - `float`, optional
                 - reference flux to use when converting fluxes to magnitudes
-                - the default is 1
+                - the default is `1`
             - `m_ref`
+                - `float`, optional
                 - reference magnitude to use when converting magnitudes to fluxes
-                - the default is 0
+                - the default is `0`
             - `store_stars`
-                - bool, optional
+                - `bool`, optional
                 - wether to store an array of all generated stars including their apertures
-                - if False
+                - if `False`
                     - will only store the final (composite) frame
-                - the default is True
+                - the default is `True`
             - `rng`
-                - np.random.default_rng, int, optional
-                - if int
+                - `np.random.default_rng`, `int`, optional
+                - if `int`
                     - random seed to use in the random number generator
-                - if np.random.default_rng instance
+                - if `np.random.default_rng` instance
                     - random number gnerator to use for random generation
                 - the default is `None`
                     - will use `np.random.default_rng(seed=None)`
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Infered Attributes
         ------------------
             - `frame`
-                - np.ndarray
+                - `np.ndarray`
                 - final frame when all contributions are added up
                 - contains values in flux
                 - has shape `(xpix, ypix, 3)`
                     - the first two entries of the last dimension contain the pixel coordinates
                     - the last entry contains the flux value
             - `frame_mag`
-                - np.ndarray
+                - `np.ndarray`
                 - final frame when all contributions are added up
                 - contains values in magnitudes (infered from `frame`)
                 - has shape `(xpix, ypix, 3)`
                     - the first two entries of the last dimension contain the pixel coordinates
                     - the last entry contains the flux value
             - `starparams`
-                - list
+                - `list`
                 - contains as many entries as stars in the frame
                 - each entry is a list that contains the star specifications
                     - element 0: position in x direction (`posx`)
@@ -94,7 +98,7 @@ class TPF:
                     - element 3: magnitude (`m`)
                     - element 4: aperture (`aperture`)
             - `stars`
-                - np.ndarray
+                - `np.ndarray`
                 - only stored if `store_stars=True`
                 - array of frames of each individual star including its aperture mask
                 - has shape `(nstars,xpix,ypix,2)`
@@ -119,10 +123,10 @@ class TPF:
 
         Dependencies
         ------------
-            - matplotlib
-            - numpy
-            - typing
-            - scipy
+            - `matplotlib`
+            - `numpy`
+            - `typing`
+            - `scipy`
 
         Comments
         --------
@@ -195,9 +199,9 @@ class TPF:
             Parameters
             ----------
                 - `cleanparams`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also clean the parameters (`self.stars`, `self.starparams`)
-                    - the default is True
+                    - the default is `True`
 
             Raises
             ------
@@ -228,11 +232,11 @@ class TPF:
             Parameters
             ----------
                 - `pos`
-                    - np.ndarray
+                    - `np.ndarray`
                     - position of the star in pixels
                         - lower left corner has coordinates `(0,0)`
                 - `f`
-                    - float, optional
+                    - `float`, optional
                     - flux of the star
                         - implemented as amplitude (scaling factor) to gaussian PSF
                     - used to determine `m` via flux-magnitude relation
@@ -241,7 +245,7 @@ class TPF:
                     - the default is `None`
                         - will be infered from `m`
                 - `m`
-                    - float, optional
+                    - `float`, optional
                     - magnitude of the star
                     - used to determine `f` via flux-magnitude relation
                         - calls `astroLuSt.physics.photometry.mags2fluxes()`
@@ -250,11 +254,11 @@ class TPF:
                     - the default is `None`
                         - will be ignored
                 - `aperture`
-                    - float, opational
+                    - `float`, opational
                     - "ground truth" aperture of the star
                         - defined as aperture = 2*FWHM = 2*2*std*sqrt(ln(2))
                         - implemented as proportionality factor to covariance
-                    - the default is 1
+                    - the default is `1`
 
             Raises
             ------
@@ -264,7 +268,7 @@ class TPF:
             Returns
             -------
                 - `star`
-                    - np.ndarray
+                    - `np.ndarray`
                     - has shape `(self.size[0],self.size[1],2)`
                         - entry 0 in last dimension contains the fluxes
                         - entry 1 in last dimension contains the aperture mask
@@ -325,118 +329,118 @@ class TPF:
             Parameters
             ----------
                 - `nstars`
-                    - int, optional
+                    - `int`, optional
                     - number of stars to generate
                     - will be ignored if all other parameters are specified
                         - i.e., the stars will be generated according to specific parameters and not randomly
-                    - the default is 1
+                    - the default is `1`
                 - `posx`
-                    - dict, np.ndarray, float, int, optional
+                    - `dict`, `np.ndarray`, `float`, `int`, optional
                     - x values of the stars position in pixels
-                    - if dict
+                    - if `dict`
                         - has to contain 2 keys
                             - `'dist'`
                                 - value is a string
                                 - specifies distribution implemented for `np.random.default_rng()`
                                     - this distribution will be used to generate random positions
                             - `'params'`
-                                - value is dict or list
+                                - value is `dict` or `list`
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
-                                    - passed as list of positional args (for list)
-                    - if int
-                        - will be interpreted as list of length 1 (i.e. one star)
-                    - if float
-                        - will be interpreted as list of length 1 (i.e. one star)
+                                    - passed as `list` of positional args (for list)
+                    - if `int`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
+                    - if `float`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0,  'high':self.size[0]})`
                         - i.e. a uniform distribution in the whole range of the frame
                 - `posy`
-                    - dict, np.ndarray, float, int, optional
+                    - `dict`, `np.ndarray`, `float`, `int`, optional
                     - y values of the stars position in pixels
-                    - if dict
+                    - if `dict`
                         - has to contain 2 keys
                             - `'dist'`
-                                - value is a string
+                                - value is a `string`
                                 - specifies distribution implemented for `np.random.default_rng()`
                                     - this distribution will be used to generate random positions
                             - `'params'`
-                                - value is dict or list
+                                - value is `dict` or `list`
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
-                                    - passed as list of positional args (for list)
-                    - if int
-                        - will be interpreted as list of length 1 (i.e. one star)
-                    - if float
-                        - will be interpreted as list of length 1 (i.e. one star)
+                                    - passed as `list` of positional args (for `list`)
+                    - if `int`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
+                    - if `float`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0,  'high':self.size[1]})`
                         - i.e. a uniform distribution in the whole range of the frame
                 - `f`
-                    - dict, np.ndarray, float, int, optional
+                    - `dict`, `np.ndarray`, `float`, `int`, optional
                     - fluxes of the stars to generate
-                    - if dict
+                    - if `dict`
                         - has to contain 2 keys
                             - `'dist'`
                                 - value is a string
                                 - specifies distribution implemented for `np.random.default_rng()`
                                     - this distribution will be used to generate random flux values
                             - `'params'`
-                                - value is dict or list
+                                - value is `dict` or `list`
                                 - parameters of `'dist'`
                                     - passed as `key:value`-pairs (kwargs, for dict)
-                                    - passed as list of positional args (for list)
-                    - if int
-                        - will be interpreted as list of length 1 (i.e. one star)
-                    - if float
-                        - will be interpreted as list of length 1 (i.e. one star)
+                                    - passed as `list` of positional args (for `list`)
+                    - if `int`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
+                    - if `float`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0.1,  'high':1})`
                         - i.e. a uniform distribution from 0.1 to 1
                 - `m`
-                    - dict, np.ndarray, float, int, optional
+                    - `dict`, `np.ndarray`, `float`, `int`, optional
                     - magnitudes of the stars to generate
-                    - if dict
+                    - if `dict`
                         - has to contain 2 keys
                             - `'dist'`
                                 - value is a string
                                 - specifies distribution implemented for `np.random.default_rng()`
                                     - this distribution will be used to generate random magnitudes
                             - `'params'`
-                                - value is dict or list
+                                - value is `dict` or `list`
                                 - parameters of `'dist'`
-                                    - passed as `key:value`-pairs (kwargs, for dict)
-                                    - passed as list of positional args (for list)
-                    - if int
-                        - will be interpreted as list of length 1 (i.e. one star)
-                    - if float
-                        - will be interpreted as list of length 1 (i.e. one star)
+                                    - passed as `key:value`-pairs (kwargs, for `dict`)
+                                    - passed as `list` of positional args (for `list`)
+                    - if `int`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
+                    - if `float`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':-2.5,  'high':0})`
                         - i.e. a uniform distribution from -2.5 to 0
                 - `aperture`
-                    - dict, np.ndarray, float, int, optional
+                    - `dict`, `np.ndarray`, `float`, `int`, optional
                     - apertures to use for the stars 
-                    - if dict
+                    - if `dict`
                         - has to contain 2 keys
                             - `'dist'`
                                 - value is a string
                                 - specifies distribution implemented for `np.random.default_rng()`
                                     - this distribution will be used to generate random apertures
                             - `'params'`
-                                - value is dict or list
+                                - value is `dict` or `list`
                                 - parameters of `'dist'`
-                                    - passed as `key:value`-pairs (kwargs, for dict)
-                                    - passed as list of positional args (for list)
-                    - if int
-                        - will be interpreted as list of length 1 (i.e. one star)
-                    - if float
-                        - will be interpreted as list of length 1 (i.e. one star)
+                                    - passed as `key:value`-pairs (kwargs, for `dict`)
+                                    - passed as `list` of positional args (for `list`)
+                    - if `int`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
+                    - if `float`
+                        - will be interpreted as `list` of length 1 (i.e. one star)
                     - the default is `None`
                         - will be set to `dict(dist='uniform', params={'low':0.1, 'high':1})`
                         - i.e. a uniform distribution from 0.1 to 1
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
@@ -543,20 +547,19 @@ class TPF:
         trend:Union[np.ndarray,Literal['lineary','linearx']],
         amplitude:float=1,
         ) -> None:
-        #TODO: Add other common trends
         """
             - method to add custom trends to the final image
             
             Parameters
             ----------
                 - `trend`
-                    - np.ndarray, Literal
+                    - `np.ndarray`, `Literal["linearx","lineary"]`
                     - trend to add to `self.frame`
-                    - if a np.ndarray
+                    - if a `np.ndarray`
                         - will be added to `self.frame` via element-wise addition
                         - has to have same shape as `self.frame.shape[:2]`
                             - i.e. `self.size`
-                    - options for Literal
+                    - options for `Literal`
                         - `lineary`
                             - linear trend in y direction
                             - generated via `np.linspace(0, np.ones((self.frame.shape[0])), self.frame.shape[1], axis=0)`
@@ -564,9 +567,9 @@ class TPF:
                             - linear trend in x direction
                             - generated via `np.linspace(0, np.ones((self.frame.shape[0])), self.frame.shape[1], axis=1)`
                 - `amplitude`
-                    - float, optional
+                    - `float`, optional
                     - scaling factor of the trend
-                    - the default is 1
+                    - the default is `1`
                         - i.e. no scaling
 
             Raises
@@ -579,11 +582,13 @@ class TPF:
             --------
         """
 
-        if trend in ['lineary', 'linearx']:
+        if isinstance(trend, str):
             if trend == 'lineary':
                 trend = np.linspace(1,2*np.ones((self.frame.shape[0])), self.frame.shape[1], axis=0)
             elif trend == 'linearx':
                 trend = np.linspace(1,2*np.ones((self.frame.shape[0])), self.frame.shape[1], axis=1)
+            else:
+                raise ValueError("`trend` has to be one of 'linearx', 'lineary'!")
 
         self.frame[:,:,2] += amplitude*trend
 
@@ -596,22 +601,21 @@ class TPF:
     def add_noise(self,
         amplitude:float=1, bias:float=1,
         ) -> None:
-        #TODO: add different noise parts (photon noise, dead pixels, hot pixels, ...)
         """
             - method to add (gaussian) noise to the input frame
 
             Parameters
             ----------
                 - `amplitude`
-                    - float, optional
+                    - `float`, optional
                     - amplitude of the added noise
                     - scaled such that `m=0` and `f=1` are likely to give good results for `aperture=1`,  `m_ref=0`, `f_ref=1`
-                    - the default is 1
+                    - the default is `1`
                 - `bias`
-                    - float, optional
+                    - `float`, optional
                     - offset of noise from 0 (similar to bias-current)
                     - measured in flux
-                    - the default is 1
+                    - the default is `1`
                         - such that also for magnitudes are at least 0 for the default `m_ref` and `f_ref`
 
             Raises
@@ -643,12 +647,12 @@ class TPF:
             Parameters
             ----------
                 - `aperture_mask`
-                    - np.ndarray
+                    - `np.ndarray`
                     - aperture mask to use for the determination
                     - for this class stored in `TPF.stars[staridx,:,:,1]`
                         - i.e. second entry of last axis if `store_star` is set to `True`
-                    - estimation executed via sqrt(aperture_mask.sum()/pi)
-                        - solving aperture = pi*r**2
+                    - estimation executed via `sqrt(aperture_mask.sum()/pi)`
+                        - solving `aperture = pi*r**2`
             
             Raises
             ------
@@ -656,7 +660,7 @@ class TPF:
             Returns
             -------
                 - `aperture`
-                    - float
+                    - `float`
                     - estimated aperture radius
 
             Comments
@@ -682,11 +686,11 @@ class TPF:
             Returns
             -------
                 - `self.frame`
-                    - np.ndarray
+                    - `np.ndarray`
                     - generated frame in fluxes
                     - returned if `self.mode=='flux'`
                 - `self.frame_mag`
-                    - np.ndarray
+                    - `np.ndarray`
                     - generated frame in magnitudes
                     - returned if `self.mode=='mag'`
                     
@@ -713,22 +717,22 @@ class TPF:
             Parameters
             ----------
                 - `shape`
-                    - int, tuple optional
+                    - `int`, `tuple`, optional
                     - NOT USED BECAUSE DEFINED BY `self.size`
                     - number of samples to generate
                     - the default is `None`
                 - `add_stars_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_stars()`
                     - the default is `None`
                         - will be set to `dict()`
                 - `add_noise_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_noise()`
                     - the default is `None`
                         - will be set to `dict(amplitude=0, bias=0)`
                 - `add_custom_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_custom()`
                     - the default is `None`
                         - will be set to `dict(trend='linearx', amplitude=0)`
@@ -739,7 +743,7 @@ class TPF:
             Returns
             -------
                 - `frame`
-                    - np.ndarray
+                    - `np.ndarray`
                     - generated frame
             
             Comments
@@ -765,24 +769,24 @@ class TPF:
             Parameters
             ----------
                 - `plot_apertures`
-                    - list, Literal, optional
-                    - if list
+                    - `list`, `Literal["all"]`, optional
+                    - if `list`
                         - contains indices of apertures to show in the produced figure
-                    - options for Literal
+                    - options for `Literal`
                         - `'all'`
                             - plots all apertures
                     - the default is `None`
                         - will not plot any apertures
                 - `fig`
-                    - Figure, optional
+                    - `Figure`, optional
                     - matplotlib figure to place plots into
                     - the default is `None`
                         - will generate a new figure                        
                 - `pcolormesh_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `ax.pcolormesh()`
                     - the default is `None`
-                        - will be set to `dict(cmap='viridis')`
+                        - will be set to `dict()`
 
             Raises
             ------
@@ -790,10 +794,10 @@ class TPF:
             Returns
             -------
                 - `fig`
-                    - Figure
+                    - `Figure`
                     - created matplotlib figure
                 - `axs`
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
 
             Comments
@@ -807,13 +811,9 @@ class TPF:
         if self.mode == 'flux':
             frame2plot = self.frame
             c_lab = 'Flux [-]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis'
         elif self.mode == 'mag':
             frame2plot = self.frame_mag
             c_lab = 'Magnitude [mag]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis_r'
 
         if fig is None: fig = plt.figure(figsize=(6,5))
         ax1 = fig.add_subplot(111)
@@ -821,7 +821,7 @@ class TPF:
         if self.store_stars:
             for idx, apidx in enumerate(plot_apertures):
                 try:
-                    cont = ax1.contour(self.stars[apidx,:,:,2], levels=0, colors='r', linewidths=1, zorder=1)
+                    cont = ax1.contour(self.stars[apidx,:,:,2], levels=0, colors='C0', linewidths=1, zorder=1)
                 except IndexError:
                     almf.printf(
                         msg=f'Ignoring `plot_apertures[{idx}]` because the index is out of bounds!',
@@ -830,7 +830,7 @@ class TPF:
                     )
 
             #legend entries
-            ax1.plot(np.nan, np.nan,  'r-', label='Aperture')
+            ax1.plot(np.nan, np.nan,  'C0-', label='Aperture')
 
         #labelling
         ax1.set_xlabel('Pixel')
@@ -858,17 +858,17 @@ class TPF_Series:
         Attributes
         ----------
             - `size`
-                - tuple, int
+                - `tuple`, `int`
                 - size of the TPFs to generate
-                - if int
+                - if `int`
                     - will be interpreted as `(size,size)`
                     - i.e., square frame with `size` pixels in x and y direction
-                - if tuple
+                - if `tuple`
                     - `size[0]` denotes the number of pixels in x direction
                     - `size[1]` denotes the number of pixels in y direction
-                - the default is 15
+                - the default is `15`
             - `mode`
-                - Literal, optional
+                - `Literal["flux","mag"]`, optional
                 - whether to generate the frames using magnitudes or fluxes
                 - allowed values are
                     - `'flux'`
@@ -878,27 +878,29 @@ class TPF_Series:
                 - the default is `None`
                     - will be set to `'flux'`
             - `f_ref`
-                - float, optional
+                - `float`, optional
                 - reference flux to use when converting fluxes to magnitudes
-                - the default is 1
+                - the default is `1`
             - `m_ref`
+                - `float`, optional
                 - reference magnitude to use when converting magnitudes to fluxes
-                - the default is 0
+                - the default is `0`
             - `rng`
-                - np.random.default_rng, int, optional
-                - if int
+                - `np.random.default_rng`, `int`, optional
+                - if `int`
                     - random seed to use in the random number generator
-                - if np.random.default_rng instance
+                - if `np.random.default_rng` instance
                     - random number gnerator to use for random generation
                 - the default is `None`
                     - will use `np.random.default_rng(seed=None)`
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Methods
         -------
+            - `get_frames()`
             - `rvs()`
             - `plot_result()`
                 - `init()`
@@ -906,9 +908,9 @@ class TPF_Series:
 
         Dependencies
         ------------
-            - matplotlib
-            - numpy
-            - typing
+            - `matplotlib`
+            - `numpy`
+            - `typing`
 
         Comments
         --------
@@ -969,7 +971,7 @@ class TPF_Series:
             Returns
             -------
                 - `frames`
-                    - np.ndarray
+                    - `np.ndarray`
                     - generated frames
                     - in fluxes/magnitudes according to `self.mode`
                     
@@ -999,24 +1001,24 @@ class TPF_Series:
             Parameters
             ----------
                 - `times`
-                    - np.ndarray
+                    - `np.ndarray`
                     - timestamps encoding time of each frame
                     - ideally a sorted array
                     - also phases can be passed
                         - then, `variability` has to be adjusted accordingly
                 - `variability`
-                    - Callable
+                    - `Callable`
                     - function encoding the variability for every generated star
                     - the function has to take two arguments
                         - `tp`
-                            - float
+                            - `float`
                             - a time/phasestamp
                         - `fm`
-                            - np.ndarray
+                            - `np.ndarray`
                             - fluxes/magnitudes for all generated stars
                     - the function shall return one value
                         - `fm`
-                            - np.ndarray
+                            - `np.ndarray`
                             - the flux/magnitude value for the current time/phasestamp
                     - the function can implement variability for every single star separately
                     - an example for strong sinusoidal variability of the last generated star and weak sinusoidal variability (with random periods) of all other stars can be found below
@@ -1025,34 +1027,34 @@ class TPF_Series:
                         >>>     amp    = 7
                         >>>     rperiods = np.random.uniform(40, 50, size=fm[:-1].shape)
                         >>>     ramps    = np.random.uniform(.1, 2,  size=rperiods.shape)
-                        >>>     fm[-1]  *= amp*(np.sin(2*np.pi*tp/period)+3) + 2E-3*np.random.randn(1)
+                        >>>     fm[-1]  *= amp*(np.sin(2*np.pi*tp/period)+3) + 2E-3*np.random.randn()
                         >>>     fm[:-1] *= ramps*(np.sin(2*np.pi*tp/rperiods)+2) + 1E-3*np.random.randn(*fm[:-1].shape)
                         >>>     return fm
                     - the default is `None`
                         - will be implemented as `lambda tp, fm: fm`
                         - i.e., no variability at all
                 - `shape`
-                    - int, tuple optional
+                    - `int`, `tuple`, optional
                     - NOT USED BECAUSE DEFINED BY `self.size`
                     - number of samples to generate
                     - the default is `None`
                 - `add_stars_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_stars()`
                     - the default is `None`
                         - will be set to `dict()`
                 - `add_noise_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_noise()`
                     - the default is `None`
                         - will be set to `dict(amplitude=0, bias=0)`
                 - `add_custom_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `astroLuSt.synthetic.images.TPF.add_custom()`
                     - the default is `None`
                         - will be set to `dict(trend='linearx', amplitude=0)`
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
@@ -1064,7 +1066,7 @@ class TPF_Series:
             Returns
             -------
                 - `tpf_s`
-                    - np.ndarray
+                    - `np.ndarray`
                     - target pixel file series
                     - i.e. series of generated frames
                     - has shape `(nframes,self.size[0],self.size[1],3)`
@@ -1073,7 +1075,7 @@ class TPF_Series:
                             element 1: pixel coordinate in y direction
                             element 2: pixel flux/magnitude values
                 - `starparams_s`
-                    - np.ndarray
+                    - `np.ndarray`
                     - contains for every frame for physical parameters for all targets
                     - has shape `(nframes,nstars,7)`
                         - the last dimension contains
@@ -1108,7 +1110,6 @@ class TPF_Series:
             verbose=verbose,
         )
 
-        #TODO: Parallelize
         #generate one frame for each timestamp
         for idx, tp in enumerate(self.times):
 
@@ -1170,29 +1171,29 @@ class TPF_Series:
             Parameters
             ----------
                 - `save`
-                    - str, optional
+                    - `str`, optional
                     - path to the location of where to save the created animation
-                    - if str
+                    - if `str`
                         - will be interpreted as savepath
-                    - the default is False
+                    - the default is `False`
                         - will not save the animation
                 - `fig`
-                    - Figure, optional
+                    - `Figure`, optional
                     - matplotlib figure to place plots into
                     - the default is `None`
                         - will generate a new figure
                 - `pcolormesh_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `ax.pcolormesh()`
                     - the default is `None`
-                        - will be set to `dict(cmap='viridis')`
+                        - will be set to `dict()`
                 - `funcanim_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `matplotlib.animation.FuncAnimation()`
                     - the default is `None`
                         - will be set to `dict(frames=len(self.tpf_s))`
                 - `save_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `matplotlib.animation.FuncAnimation().save()`
                     - the default is `None`
                         - will be set to `dict(fps=15)`
@@ -1203,10 +1204,10 @@ class TPF_Series:
             Returns
             -------
                 - `fig`
-                    - Figure
+                    - `Figure`
                     - created matplotlib figure
                 - `axs`
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
                 - `anim`
                     - `matplotlib.animation.FuncAnimation()`
@@ -1232,6 +1233,8 @@ class TPF_Series:
             title.set_text(f'Frame {frame:.0f}')
             return
 
+        cur_cmap = plt.rcParams["image.cmap"]
+
         #default parameters
         if pcolormesh_kwargs is None:   pcolormesh_kwargs = dict()
         if funcanim_kwargs is None:     funcanim_kwargs = dict()
@@ -1240,12 +1243,8 @@ class TPF_Series:
         if 'fps' not in save_kwargs.keys(): save_kwargs['fps'] = 15
         if self.mode == 'flux':
             c_lab = 'Flux [-]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis'
         elif self.mode == 'mag':
             c_lab = 'Magnitude [mag]'
-            if 'cmap' not in pcolormesh_kwargs.keys():
-                pcolormesh_kwargs['cmap'] = 'viridis_r'
 
         #initialize figure
         if fig is None: fig = plt.figure(figsize=(6,5))

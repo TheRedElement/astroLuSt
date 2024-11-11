@@ -9,257 +9,140 @@ import numpy as np
 import os
 import pandas as pd
 import time
-from typing import Tuple
+from typing import Tuple, List
 
-from astroLuSt.monitoring.timers import ExecTimer
+from astroLuSt.monitoring import (formatting as almofo, errorlogging as almoer)
 
 
 #ALeRCE
 class AlerceDatabaseInterface:
     """
-        - class to interact with the ZTF database via the Alerce python API
+        - class to interact with the ZTF database via the Alerce Python API
 
         Attributes
         ----------
+            - `sleep`
+                - `float`, optional
+                - number of seconds to sleep after downloading each object
+                - the default is `0`
+            - `n_jobs`
+                - `int`, optional
+                - number of jobs to be used by `joblib.Parallel()`
+                - the default is `1`
+            -  `verbose`
+                - `int`, optional
+                - verbosity level
+                - the default is `0`
+
+        Infered Attributes
+        ------------------
+            - `self.alerce`
+                - `alerce.core.ALERCE`
+                - api to interact with the ALERCE database
+            - `self.LE`
+                - `astroLuSt.monitoring.errorlogging.LogErrors` instance
+                - used to log and display caught errors
 
         Methods
         -------
-            - `download_one()`
             - `crossmatch_by_coordinates()`
+            - `download_one()`
             - `download_lightcurves()`
             - `plot_result()`
 
         Dependencies
         ------------
-            - alerce
-            - joblib
-            - matplotlib
-            - numpy
-            - os
-            - pandas
-            - time
-            - typing
+            - `alerce`
+            - `joblib`
+            - `matplotlib`
+            - `numpy`
+            - `os`
+            - `pandas`
+            - `time`
+            - `typing`
 
         Comments
         --------
     """
 
-
     def __init__(self,
+        sleep:float=0,
+        n_jobs:int=1,
+        verbose:int=0,
         ) -> None:
-        self.alerce = Alerce()
-        
-        self.ET = ExecTimer()
 
+        self.sleep      = sleep
+        self.n_jobs     = n_jobs
+        self.verbose    = verbose
+
+        #infered attributes
+        self.alerce = Alerce()
+        self.LE = almoer.LogErrors()
+        
         return
     
     def __repr__(self) -> str:
         return (
-            f'(AlerceDatabaseInterface\n'
+            f'{self.__class__.__name__}(\n'
+            f'    n_jobs={self.n_jobs},\n'
+            f'    sleep={self.sleep},\n'
+            f'    verbose={self.verbose},\n'
             f')'
         )
 
-    def download_one(self,
-        ztf_id:str,
-        #saving
-        redownload:bool=False,
-        save:str=False,
-        #plotting
-        plot_result:bool=False, save_plot:bool=False, close_plots:bool=False,
-        #computing
-        sleep:float=0,
-        idx:int=0,
-        total_targets:int=1,
-        verbose:int=0,
-        ) -> Tuple[pd.DataFrame,str,bool,str]:
-        """
-            - method to download the lightcurve on one particular ztf_id
-            - will be called during self.download_lightcurves() in parallel
-            
-            Parameters
-            ----------
-                - `ztf_id`
-                    - str
-                    - id of the desired target
-                - `redownload`
-                    - bool, optional
-                    - whether to redownload lightcurves that already have been donwloaded at some point in the past
-                        - i.e. are found in the save-directory
-                    - the default is False
-                - `save`
-                    - str, bool, optional
-                    - directory of where to store the downloaded lightcurves to
-                    - if set to `False`, will not save the data
-                    - `save` has to end with a slash (`'/'`)
-                    - the default is `'./'`
-                - `plot_result`
-                    - bool, optional
-                    - whether to plot the lightcurve of the downloaded data
-                        - will create one plot for each target
-                    - the default is `True`
-                - `save_plot`
-                    - str, optional   
-                    - directory of where to store the created plots
-                    - `save_plot` has to end with a slash (`'/'`)
-                    - the default is `False`
-                        - will not save the plots
-                - `close_plots`
-                    - bool, optional
-                    - whether to close the plots immediately after creation
-                    - useful if one wants to save the plots, but not view at them right away
-                    - the default is `True`
-                - `sleep`
-                    - float, optional
-                    - number of seconds to sleep after downloading each target
-                    - the default is 0
-                        - no sleep at all
-                - `idx`
-                    - int, optional
-                    - index of the currently downloaded target
-                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
-                    - the default is 0
-                - `total_targets`
-                    - int, optional
-                    - total number of targets that get extracted
-                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
-                    - the default is 1
-                -  `verbose`
-                    - int, optional
-                    - verbosity level
-                    - the default is 0 
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
-            Raises
-            ------
-
-            Returns
-            -------
-                - `df`
-                    - pd.DataFrame
-                    - containing the downloaded lightcurve data
-                - `ztf_id`
-                    - str
-                    - id of the extracted object
-                - `sucess`
-                    - bool
-                    - whether the download was successful
-                - `error_msg`
-                    - str
-                    - potential error-messages that occured during the download
-
-            Comments
-            --------  
-
-        """
-
-        savefile = f'{save}{ztf_id}.csv'
-        #get files that already have been extracted
-        try:
-            already_extracted = os.listdir(str(save))
-        except:
-            already_extracted = []
-
-        print(f"\nExtracting {ztf_id} (#{idx+1}/{total_targets})")
-
-        if savefile.replace(str(save),'') not in already_extracted or redownload:
-
-            error_msg = None
-            success = True
-
-            try:
-                df = self.alerce.query_detections(
-                    ztf_id,
-                    format='pandas'
-                )
-
-            except Exception as e:
-                #empty placeholder DataFrame
-                df = pd.DataFrame()
-                if verbose > 1:
-                    print("WARNING: Error in alerce.query_objects()")
-                    print(f"ORIGINAL ERROR: {e}")
-                    if len(str(e)) > 80: e = str(e)[:79] + '...'
-                    error_msg = f"{'alerce.query_objects()':25s}: {e}"
-                    success = False
-                # print(len(df['detections']))
-
-            # self.df_error_msgs_lcdownload.loc[len(self.df_error_msgs_lcdownload)] = [ztf_id, success, error_msg]
-
-
-            if plot_result:
-                
-                self.plot_result(
-                    df=df,
-                    ztf_id=ztf_id,
-                    save=save_plot
-                )
-
-                if close_plots: plt.close()
-            
-            if isinstance(save, str): df.to_csv(savefile, index=False)
-
-
-            # print(df)
-            # print(df.columns)
-            # print(df.shape)
-
-            #sleep after downloading one target
-            time.sleep(sleep)
-        else:
-            df = pd.DataFrame() #empty placeholder
-            success = False
-            error_msg = f'WARNING: {savefile} already exists in {save}. Ignoring target because "redownload" == False '
-            print(error_msg)
-
-
-        return df, ztf_id, success, error_msg
-
-    def crossmerge_by_coordinates(
-        self,
-        df_left:pd.DataFrame,
+    def crossmerge_by_coordinates(self,
+        df_coords:pd.DataFrame,
         ra_colname:str, dec_colname:str, radius:float,
-        sleep:float=0,
-        n_jobs:int=-1, verbose:int=0,
-        timeit:bool=False,
+        sleep:float=None,
+        n_jobs:int=None,
+        verbose:int=None,
+        parallel_kwargs:dict=None,
         ) -> pd.DataFrame:
         """
-            - method to crossmerge `df_left` with the ZTF catalog by coordinates (cone search)
-                - will take each row in `df_left` and find the corresponding target in the ZTF catalog via coordinates
-                - will then proceed to append to each matched entry in the ZTF catalog the input row from `df_left`
+            - method to crossmerge `df_coords` with the ZTF catalog by coordinates (cone search)
+                - will take each row in `df_coords` and find the corresponding target in the ZTF catalog via coordinates
+                - will then proceed to append to each matched entry in the ZTF catalog the input row from `df_coords`
                 - will combine everything into one huge table
+                - will ignore anything that is not extractable and track failed extractions in `self.LE.df_errorlog`
 
             Parameters
             ----------
-                - `df_left`
-                    - pd.DataFrame
+                - `df_coords`
+                    - `pd.DataFrame`
                     - table to be crossmerged with ZTF
                     - must contain ra and dec as columns
                 - `ra_colname`
-                    - str
+                    - `str`
                     - name of the column to be considered as Right Ascension
                 - `dec_colname`
-                    - str
+                    - `str`
                     - name of the column to be considered as Declination
                 - `radius`
-                    - float
+                    - `float`
                     - radius to use for the cone search
                 - `sleep`
-                    - float, optional
+                    - `float`, optional
                     - number of seconds to sleep after downloading each target
-                    - the default is 0
-                        - no sleep at all                    
+                    - the default is `None`
+                        - will fall back to `self.sleep`                   
                 - `n_jobs`
-                    - int, optional
+                    - `int`, optional
                     - number of jobs to be used by `joblib.Parallel()`
-                    - the default is -1
-                        - will use all available resources
+                    - the default is `None`
+                        - will fall back to `self.n_jobs`
                 -  `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
-                    - the default is 0
-                - `timeit`
-                    - bool, optional
-                    - whether to time the execution
-                    - the default is `False`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `parallel_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `joblib.Parallel`
+                    - the default is `None`
+                        - will be set to `dict(backend='threading')`
 
             Raises
             ------
@@ -267,29 +150,29 @@ class AlerceDatabaseInterface:
             Returns
             -------
                 - `df`
-                    - pd.DataFrame
-                    - ZTF catalog crossmerged with `df_left` via coordinates
+                    - `pd.DataFrame`
+                    - ZTF catalog crossmerged with `df_coords` via coordinates
 
             Comments
             --------
 
         """
-
-        if timeit:
-            self.ET.checkpoint_start('AlerceDatabaseInterface().crossmerge_by_coordinates()')
-
         def query_one(
             idx:int, inrow:pd.DataFrame,
             ra_colname:str, dec_colname:str, radius:float,
             total_targets:int,
             sleep:float,
-            ):
+            verbose:int,
+            ) -> pd.DataFrame:
 
-            print(f"\nExtracting #{idx+1}/{total_targets}")
+            almofo.printf(
+                msg=f"Extracting #{idx+1}/{total_targets}",
+                context=self.crossmerge_by_coordinates.__name__,
+                type='INFO',
+                level=0,
+                verbose=verbose
+            )
 
-            error_msg = None
-            success = True
-            
             try:
                 df = self.alerce.query_objects(
                     format='pandas',
@@ -299,113 +182,237 @@ class AlerceDatabaseInterface:
                 df.rename(columns={'meanra':'raj2000', 'meandec':'dej2000'}, inplace=True)
                 df = df.add_suffix('_ztf')
 
-                # print(idx, df.columns)
-
                 #append all entries of inrow to each of the extracted rows in df
                 df.loc[:, inrow.index] = inrow.values
 
+                #correct dtypes
+                regex = "^g_r.+$"
+                df[df.filter(regex=regex).columns] = df.filter(regex=regex).astype(np.float64)
+
+
             except Exception as e:
-                #empty placeholder DataFrame
-                df = pd.DataFrame()
-                if verbose > 1:
-                    print("WARNING: Error in alerce.query_objects()")
-                    print(f"ORIGINAL ERROR: {e}")
-                    if len(str(e)) > 80: e = str(e)[:79] + '...'
-                    error_msg = f"{'alerce.query_objects()':25s}: {e}"
-                    success = False
+                df = pd.DataFrame() #empty DataFrame
+                self.LE.print_exc(
+                    e,
+                    prefix=f"{inrow['id']}",
+                    suffix=self.crossmerge_by_coordinates.__name__,
+                    verbose=verbose
+                )
+                self.LE.exc2df(
+                    e,
+                    prefix=f"{inrow['id']}",
+                    suffix=self.crossmerge_by_coordinates.__name__,
+                    verbose=verbose
+                )
 
             #sleep after each target
             time.sleep(sleep)
 
-            return df, idx, success, error_msg
+            return df
 
+        #default parameters
+        if n_jobs is None:                  n_jobs                  = self.n_jobs
+        if sleep is None:                   sleep                   = self.sleep
+        if verbose is None:                 verbose                 = self.verbose
+        if parallel_kwargs is None:         parallel_kwargs         = dict(backend='threading')
 
-        result = Parallel(n_jobs, verbose=verbose)(
+        if parallel_kwargs is None:         parallel_kwargs         = dict(backend='threading')
+        if 'backend' not in parallel_kwargs.keys():
+            parallel_kwargs['backend'] = 'threading'
+        if 'verbose' not in parallel_kwargs.keys():
+            parallel_kwargs['verbose'] = verbose
+
+        result = Parallel(n_jobs, **parallel_kwargs)(
             delayed(query_one)(
                 idx=idx, inrow=inrow,
                 ra_colname=ra_colname, dec_colname=dec_colname, radius=radius,
-                total_targets=df_left.shape[0],
+                total_targets=df_coords.shape[0],
                 sleep=sleep,
-            ) for idx, inrow in df_left.iterrows()
+                verbose=verbose,
+            ) for idx, inrow in df_coords.iterrows()
         )
 
-        result = np.array(result, dtype=object)
+        df = pd.concat([r for r in result if not r.empty], ignore_index=True)
 
-        self.df_error_msgs_crossmerge = pd.DataFrame(
-            data=result[:,1:],
-            columns=['idx','success','original error message'],
+        return df
+
+    def download_one(self,
+        ztf_id:str,
+        redownload:bool=False,
+        save:str=False,
+        sleep:float=None,
+        idx:int=0,
+        total_targets:int=1,
+        verbose:int=None,
+        ) -> pd.DataFrame:
+        """
+            - method to download the lightcurve of one particular `ztf_id`
+            - will be called during `self.download_lightcurves()` in parallel
+            - will ignore anything that is not extractable and track failed extractions in `self.LE.df_errorlog`
+            
+            Parameters
+            ----------
+                - `ztf_id`
+                    - `str`
+                    - id of the desired target
+                - `redownload`
+                    - `bool`, optional
+                    - whether to redownload lightcurves that already have been donwloaded at some point in the past
+                        - i.e. are found in the save-directory
+                    - the default is False
+                - `save`
+                    - str, `bool`, optional
+                    - directory of where to store the downloaded lightcurves
+                    - if set to `False`, will not save the data
+                    - `save` has to end with a slash (`'/'`)
+                    - the default is `'./'`
+                - `sleep`
+                    - `float`, optional
+                    - number of seconds to sleep after downloading each target
+                    - the default is `None`
+                        - will fall back to `self.sleep`
+                - `idx`
+                    - `int`, optional
+                    - index of the currently downloaded target
+                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
+                    - the default is `0`
+                - `total_targets`
+                    - `int`, optional
+                    - total number of targets that get extracted
+                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
+                    - the default is `1`
+                -  `verbose`
+                    - `int`, optional
+                    - verbosity level
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `df`
+                    - `pd.DataFrame`
+                    - containing the downloaded lightcurve data
+
+            Comments
+            --------  
+
+        """
+
+        #default parameters
+        if sleep is None:   sleep   = self.sleep
+        if verbose is None: verbose = self.verbose
+
+
+        #current filename
+        savefile = f'{save}{ztf_id}.parquet'
+
+        #get files that already have been extracted
+        try:
+            already_extracted = os.listdir(str(save))
+        except:
+            already_extracted = []
+
+        almofo.printf(
+            msg=f"Extracting {ztf_id} (#{idx+1}/{total_targets})",
+            context=self.download_one.__name__,
+            type='INFO',
+            level=0,
+            verbose=verbose
         )
 
-        df = pd.concat(result[:,0], ignore_index=True)
+        if savefile.replace(str(save),'') not in already_extracted or redownload:
 
-        if timeit:
-            self.ET.checkpoint_end('AlerceDatabaseInterface().crossmerge_by_coordinates()')
+            try:    #try extraction
+                df = self.alerce.query_detections(
+                    ztf_id,
+                    format='pandas'
+                )
 
+                if isinstance(save, str): df.to_parquet(savefile, index=False)
+
+            except Exception as e:  #skip if extraction fails
+                #empty placeholder DataFrame
+                df = pd.DataFrame()
+                self.LE.print_exc(
+                    e,
+                    prefix=f"{ztf_id}",
+                    suffix=self.download_one.__name__,
+                    verbose=verbose
+                )
+                self.LE.exc2df(
+                    e,
+                    prefix=f"{ztf_id}",
+                    suffix=self.download_one.__name__,
+                    verbose=verbose
+                )
+
+            #sleep after downloading one target
+            time.sleep(sleep)
+        else:   #load data if already extracted
+            df = pd.read_parquet(savefile) #empty placeholder
+            almofo.printf(
+                msg=f"{ztf_id} has already been extracted and `redownload==False`... ignoring",
+                context=self.download_one.__name__,
+                type='INFO',
+                level=1,
+                verbose=verbose
+            )
 
         return df
 
     def download_lightcurves(self,
-        ztf_ids:list,
-        #saving data
-        save:str="./",
+        ztf_ids:List[str],
+        save:str=False,
         redownload:bool=False,
-        #plotting
-        plot_result:bool=True, save_plot:str=False, close_plots:bool=True,
-        #calculating
         sleep:float=0,
-        n_jobs:int=-1, verbose:int=0,
-        timeit:bool=False,
-        ) -> None:
+        n_jobs:int=-1,
+        verbose:int=None,
+        parallel_kwargs:dict=None,
+        ) -> List[pd.DataFrame]:
         """
             - function to download all lightcurves corresponding to the ZTF ids in `ztf_ids`
+            - will remove failed extractions from the output
+                - failed extractions are tracked in `self.LE.df_errorlog`
 
             Parameters
             ----------
+                - `ztf_ids`
+                    - `List[str]`
+                    - ids to extract the lcs for
                 - `save`
-                    - str, bool, optional
+                    - `str`, `bool`, optional
                     - directory of where to store the downloaded lightcurves to
                     - if set to False, will not save the data
                     - save has to end with a slash (`'/'`)
-                    - the default is `'./'`
+                    - the default is `False`
                 - `redownload`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to redownload lightcurves that already have been donwloaded at some point in the past
                         - i.e. are found in the save-directory
                     - the default is `False`                   
-                - `plot_result`
-                    - bool, optional
-                    - whether to plot the lightcurve of the downloaded data
-                        - will create one plot for each target
-                    - the default is `True`
-                - `save_plot`
-                    - str, optional   
-                    - directory of where to store the created plots
-                    - `save_plot` has to end with a slash (`'/'`)
-                    - the default is `False`
-                        - will not save the plots
-                - `close_plots`
-                    - bool, optional
-                    - whether to close the plots immediately after creation
-                    - useful if one wants to save the plots, but not view at them right away
-                    - the default is `True`
                 - `sleep`
-                    - float, optional
+                    - `float`, optional
                     - number of seconds to sleep after downloading each target
-                    - the default is 0
-                        - no sleep at all
+                    - the default is `None`
+                        - will fall back to `self.sleep`                   
                 - `n_jobs`
-                    - int, optional
+                    - `int`, optional
                     - number of jobs to be used by `joblib.Parallel()`
-                    - the default is -1
-                        - will use all available resources
+                    - the default is `None`
+                        - will fall back to `self.n_jobs`
                 -  `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
-                    - the default is 0
-                - `timeit`
-                    - bool, optional
-                    - whether to time the execution
-                    - the default is `False`
+                    - the default is `None`
+                        - will fall back to `self.verbose`
+                - `parallel_kwargs`
+                    - `dict`, optional
+                    - kwargs to pass to `joblib.Parallel`
+                    - the default is `None`
+                        - will be set to `dict(backend='threading')`
 
             Raises
             ------
@@ -414,29 +421,34 @@ class AlerceDatabaseInterface:
                 
             Returns
             -------
+                - `dfs_lc`
+                    - `List[pd.DataFrame]`
+                    - list containing the dataframes for all extracted objects
 
             Comments
             --------
 
         """
 
-        if timeit:
-            self.ET.checkpoint_start('AlerceDatabaseInterface().download_lightcurves()')
-
+        #default parameters
+        if n_jobs is None:                  n_jobs                  = self.n_jobs
+        if sleep is None:                   sleep                   = self.sleep
+        if verbose is None:                 verbose                 = self.verbose
+        if parallel_kwargs is None:         parallel_kwargs         = dict(backend='threading')
+        if 'backend' not in parallel_kwargs.keys():
+            parallel_kwargs['backend'] = 'threading'
+        if 'verbose' not in parallel_kwargs.keys():
+            parallel_kwargs['verbose'] = verbose
 
         if isinstance(save, str):
             assert save[-1] == '/' or save[-1] == '\\', \
                 '"save" has to end either with a slash ("/") or backslash ("\\")'
-        if isinstance(save_plot, str):
-            assert save_plot[-1] == '/' or save_plot[-1] == '\\', \
-                '"save_plot" has to end either with a slash ("/") or backslash ("\\")'
 
-        result = Parallel(n_jobs, verbose=verbose)(
+        dfs_lc = Parallel(n_jobs, **parallel_kwargs)(
             delayed(self.download_one)(
                 ztf_id=ztf_id,
                 save=save,
                 redownload=redownload,
-                plot_result=plot_result, close_plots=close_plots, save_plot=False,
                 sleep=sleep,
                 total_targets=len(ztf_ids),
                 idx=idx,
@@ -444,23 +456,13 @@ class AlerceDatabaseInterface:
             ) for idx, ztf_id in enumerate(ztf_ids)
         )
 
-        result = np.array(result, dtype=object)
+        #remove failed extractions
+        dfs_lc = [df for df in dfs_lc if len(df) > 0]
 
-        self.df_error_msgs_lcdownload = pd.DataFrame(
-            data=result[:,1:],
-            columns=['ztf','success','original error message'],
-        )        
-
-        if timeit:
-            self.ET.checkpoint_end('AlerceDatabaseInterface().download_lightcurves()')
-
-
-        return 
+        return dfs_lc
 
     def plot_result(self,
         df:pd.DataFrame,
-        ztf_id:str,
-        save:str=False,
         ) -> Tuple[Figure, plt.Axes]:
         """
             - method to plot the result of the extraction
@@ -468,25 +470,16 @@ class AlerceDatabaseInterface:
             Parameters
             ----------
                 - `df`
-                    - pd.DataFrame
-                    - dataframe containing the downloaded data
-                - `ztf_id`
-                    - str
-                    - id of the current target
-                - `save`
-                    - str, optional   
-                    - directory of where to store the created plots
-                    - save has to end with a slash (`'/'`)
-                    - the default is `False`
-                        - will not save the plots
+                    - `pd.DataFrame`
+                    - dataframe containing the downloaded data for one extracted object
             
             Returns
             -------
                 - `fig`
-                    - Figure
+                    - `Figure`
                     - created figure
                 - `axs`
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
             
             Comments
@@ -502,10 +495,8 @@ class AlerceDatabaseInterface:
         newcmap = mcolors.ListedColormap(newcolors)
 
         fig = plt.figure()
-
-        fig.suptitle(ztf_id)
-
         ax1 = fig.add_subplot(111)
+
         try:
             sctr = ax1.scatter(df['mjd'], df['magpsf_corr'], c=df['fid'], cmap=newcmap, vmin=1, vmax=3, marker='^', label='magpsf_corr')
         except:
@@ -524,11 +515,6 @@ class AlerceDatabaseInterface:
         ax1.set_ylabel(r'm [mag]')
 
         ax1.legend()
-
-        plt.tight_layout()
-        if isinstance(save, str): plt.savefig(f'{save}{ztf_id}.png')
-
-        plt.show()        
 
         axs = fig.axes
 

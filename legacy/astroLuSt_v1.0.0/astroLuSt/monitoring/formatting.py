@@ -17,39 +17,39 @@ def printf(
         Parameters
         ----------
             - `msg`
-                - str
+                - `str`
                 - message to be printed
             - `context`
-                - str, optional
+                - `str`, optional
                 - context to the printed message
                 - the default is `None`
                     - will print `''`
             - `type`
-                - Literal, optional
+                - `Literal`, optional
                 - type of the message
                 - allowed strings are
                     - `'INFO'`
                     - `'WARNING'`
             - `level`
-                - int, optional
+                - `int`, optional
                 - level of the message
                 - will append `level*[r'\t']` at the start of the message
                     - i.e., indent the message
-                - the default is 0
+                - the default is `0`
                     - no indentation
             - `start`
-                - str, optional
+                - `str`, optional
                 - string used to mark levels
                 - will print `level*start` before `msg`
                 - the default is `None`
                     - will be set to `4*''`
                     - i.e., 4 spaces
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
             - `print_kwargs`
-                - dict, optional
+                - `dict`, optional
                 - kwargs to pass to `print()`
                 - the default is `None`
                     - will be set to `dict()`
@@ -62,7 +62,7 @@ def printf(
 
         Dependencies
         ------------
-            - typing
+            - typing`
 
         Comments
         --------

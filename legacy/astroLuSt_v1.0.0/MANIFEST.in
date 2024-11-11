@@ -1,5 +1,12 @@
+include astroLuSt/*
+prune demos
+prune legacy
+prune templates
+exclude .gitignore
+exclude compile_module.py
+include MANIFEST.in
 include README.md
-include astroLuSt_example_usage.ipynb
-exclude PHOEBE_astroLuSt.py
-exclude __pycache__
-global-include *.mplstyle
+include requirements.txt
+include setup.py
+exclude TODOs.md
+prune */__pycache__

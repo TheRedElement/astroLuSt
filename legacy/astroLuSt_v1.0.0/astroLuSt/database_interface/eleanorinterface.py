@@ -1,6 +1,4 @@
 
-#TODO: EDI.download(): enable to not save (save_kwargs(directory=None))
-
 #%%imports
 import eleanor
 import glob
@@ -28,38 +26,37 @@ class EleanorDatabaseInterface:
         Attributes
         ----------
             - `sleep`
-                - float, optional
+                - `float`, optional
                 - time to sleep inbetween downloads
                 - necessary to avoid server timeout
-                - the default is 0
+                - the default is `0`
             - `n_jobs`
-                - int, optional
+                - `int`, optional
                 - number of jobs to use for the parallel extraction
                 - will be passed to `joblib.Parallel`
-                - the default is -1
-                    - will use all avaliable cpus
+                - the default is `1`
             - `metadata_path`
-                - str, optional
+                - `str`, optional
                 - path where the metadata is stored
                 - the default is `None`
                     - will be set to `'./mastDownload/HLSP'`
             - `clear_metadata`
-                - bool, optional
+                - `bool`, optional
                 - whether to clear the metadata after completing the download of one chunk (in `self.download()`)
-                - the default is False
+                - the default is `False`
             - `redownload`
-                - bool, optional
+                - `bool`, optional
                 - whether to redownload already stored targets or ignore them
-                - the default is False
+                - the default is `False`
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Infered Attributes
         ------------------
             - `self.LE`
-                - `astroLuSt.monitoring.errorloggin.LogErrors` instance
+                - `astroLuSt.monitoring.errorlogging.LogErrors` instance
                 - used to log and display caught errors
 
         Methods
@@ -71,16 +68,16 @@ class EleanorDatabaseInterface:
 
         Dependencies
         ------------
-            - eleanor
-            - glob
-            - joblib
-            - matplotlib
-            - numpy
-            - pandas
-            - shutil
-            - time
-            - typing
-            - warnings
+            - `eleanor`
+            - `glob`
+            - `joblib`
+            - `matplotlib`
+            - `numpy`
+            - `pandas`
+            - `shutil`
+            - `time`
+            - `typing`
+            - `warnings`
 
         Comments
         --------
@@ -89,7 +86,7 @@ class EleanorDatabaseInterface:
 
     def __init__(self,
         sleep:float=0,
-        n_jobs:int=-1,
+        n_jobs:int=1,
         metadata_path:str=None,
         clear_metadata:bool=False,
         redownload:bool=False,
@@ -144,7 +141,7 @@ class EleanorDatabaseInterface:
             Parameters
             ----------
                 - `sectors`
-                    - str, list, optional
+                    - `str`, `list`, optional
                     - TESS sectors to extract data from
                     - the default is `None`
                         - will be set to `'all'`
@@ -157,13 +154,13 @@ class EleanorDatabaseInterface:
                         - `'gaia'`
                         - `'coords'`
                         - `'name'`
-                    - values of the dict has to be the corresponding identifier
+                    - values of the `dict` has to be the corresponding identifier
                     - the default is `None`
                         - will be set to `dict()`
                 - `get_normalized_flux`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also extract the (sector-wise) normalized versions of the extracted fluxes
-                    - the default is True
+                    - the default is `True`
                 - `normfunc`
                     - `Callable`, optional
                     - function to execute the normalization
@@ -190,7 +187,7 @@ class EleanorDatabaseInterface:
                 - `store_aperture_masks`
                     - `bool`, optional
                     - whether to also store aperture-masks
-                    - the default is True
+                    - the default is `True`
                 - `verbose`
                     - `int`, optional
                     - verbosity level
@@ -198,17 +195,17 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - will fall back to `self.verbose`
                 - `multi_sectors_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `eleanor.multi_sectors()`
                     - the default is `None`
                         - will be set to `dict()`
                 - `targetdata_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `eleanor.TargetData()`
                     - the default is `None`
                         - will be set to `dict(height=13, width=13)`
                 - `custom_aperture_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs if one wants to use a custom aperture
                     - will override the automatically determined aperture
                     - for the source of the `custom_aperture` method within eleanor see
@@ -217,7 +214,7 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - will not use a custom aperture
                 - `save_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.save()`
                     - if entry for `save_kwargs['directory']` is `None`
                         - will not save
@@ -463,13 +460,13 @@ class EleanorDatabaseInterface:
             Parameters
             ----------
                 - `sectors`
-                    - str, list, optional
+                    - `str`, `list`, optional
                     - TESS sectors to extract data from
                     - the default is `None`
                         - will be set to `'all'`
                         - i.e. all available sectors will be extracted
                 - `source_ids`
-                    - list, optional
+                    - `list`, optional
                     - contains dicts
                         - dicts contain mission and keys available in `eleanor.multi_sectors()`
                         - keys of the dict have to be one of
@@ -481,11 +478,11 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - will be set to `[]`
                 - `get_normalized_flux`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also extract the (sector-wise) normalized versions of the extracted fluxes
-                    - the default is True
+                    - the default is `True`
                 - `normfunc`
-                    - Callable, optional
+                    - `Callable`, optional
                     - function to execute the normalization
                     - has to take exactly one two arguments
                         - `flux`
@@ -501,47 +498,47 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - uses aperture calcualted by `eleanor`                
                 - `tpfs2store`
-                    - slice, optional
+                    - `slice`, optional
                     - which target-pixel-files to store
                     - if you want to store all pass `slice(None)`
                     - the default is `None`
                         - will be set to `slice(0)`
                         - no tpf extracted
                 - `store_aperture_masks`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also store aperture-masks
-                    - the default is True
+                    - the default is `True`
                 - `n_chunks`
-                    - int, optional
+                    - `int`, optional
                     - number of chuks to divide the data into
                     - similar to batch-size in machine learning
-                    - the default is 1
+                    - the default is `1`
                         - all data processed in one go
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
                         - will fall back to `self.verbose`
                 - `parallel_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `joblib.Parallel()`
                     - the default is `None`
                         - will be set to `dict(n_jobs=self.n_jobs, backend='threading', verbose=verbose)`
                 - `multi_sectors_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `eleanor.multi_sectors()`
                     - the default is `None`
                         - will be set to `dict()`
                             - done within `self.extract_source()`
                 - `targetdata_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `eleanor.TargetData()`
                     - the default is `None`
                         - will be set to `dict()`
                             - done within `self.extract_source()`
                 - `custom_aperture_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs if one wants to use a custom aperture
                     - will override the automatically determined aperture
                     - for the source of the `custom_aperture` method within eleanor see
@@ -550,13 +547,12 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - will not use a custom aperture                            
                 - `save_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `self.save()`
                     - if entry for `save_kwargs['directory']` is `None`
                         - will not save
                     - the default is `None`
                         - will be set to `dict(filename='_'.join([''.join(item) for item in source_id.items()]), directory=None)`
-
 
             Raises
             ------
@@ -700,10 +696,10 @@ class EleanorDatabaseInterface:
             Parameters
             ----------
                 - `df`
-                    - pd.DataFrame
+                    - `pd.DataFrame`
                     - dataframe of extracted lc-data (`lcs` from `self.extract_source()`)
                 - `filename`
-                    - str
+                    - `str`
                     - name of the file in which the data gets stored
                     - NO FILE EXTENSION!
                 - `df_meta`
@@ -712,12 +708,12 @@ class EleanorDatabaseInterface:
                     - the default is `None`
                         - will be ignored
                 - `directory`
-                    - str, optional
+                    - `str`, optional
                     - directory of where the data will be stored
                     - the default is `None`
                         - will be set to `'./'`
                 - `pd_savefunc`
-                    - str, optional
+                    - `str`, optional
                     - pandas saving function to use
                         - i.e., methods of pd.DataFrames
                         - examples
@@ -730,7 +726,7 @@ class EleanorDatabaseInterface:
                     - whether to also save extracted metadata
                     - the default is `True`                
                 - `save_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `pd_savefunc`
                     - the default is `None`
                         - will be set to `dict()`
@@ -782,24 +778,24 @@ class EleanorDatabaseInterface:
                     - has to be of shape `(nobservations,nquantities)`
                     - output from `self.extract_source`
                 - `tpfs`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - exemplary target pixel files for each sector
                     - has to be of shape `(nsectors,xpix,ypix,1)`
                     - the default is `None`
                         - will be ignored in the plot
                 - `aperture_masks`
-                    - np.ndarray, optional
+                    - `np.ndarray`, optional
                     - aperture masks for each sector
                     - has to be of shape `(nsectors,xpix,ypix,1)`
                     - the default is `None`
                         - will be ignored in the plot
                 - `fig`
-                    - Figure, optional
+                    - `Figure`, optional
                     - figure to plot into
                     - the default is `None`
                         - will create a new figure
                 - `sctr_kwargs`
-                    - dict, optional
+                    - `dict`, optional
                     - kwargs to pass to `ax.scatter()`
                     - the default is `None`
                         - will be set to `dict(cmap='nipy_spectral')`
@@ -810,10 +806,10 @@ class EleanorDatabaseInterface:
             Returns
             -------
                 - `fig`
-                    - Figure
+                    - `Figure`
                     - created figure
                 - `axs`
-                    - plt.Axes
+                    - `plt.Axes`
                     - axes corresponding to `fig`
 
             Comments

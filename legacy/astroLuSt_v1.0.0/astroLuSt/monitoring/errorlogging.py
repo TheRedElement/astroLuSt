@@ -14,14 +14,14 @@ class LogErrors:
         Attributes
         ----------
             - `verbose`
-                - int, optional
+                - `int`, optional
                 - verbosity level
-                - the default is 0
+                - the default is `0`
 
         Infered Attributes
         ------------------
             - `df_errorlog`
-                - pd.DataFrame
+                - `pd.DataFrame`
                 - dataframe to log all the caught errors
                 - rows corresponding to the same error will have the same index
                 - has the following columns
@@ -54,9 +54,9 @@ class LogErrors:
         
         Dependencies
         ------------
-            - pandas
-            - re
-            - traceback
+            - `pandas`
+            - `re`
+            - `traceback`
             
         Comments
         --------
@@ -79,6 +79,9 @@ class LogErrors:
             f')'
         )
     
+    def __dict__(self) -> dict:
+        return eval(str(self).replace(self.__class__.__name__, 'dict'))
+
     def print_exc(self,
         e:Exception,
         prefix:str=None, suffix:str=None,
@@ -91,20 +94,20 @@ class LogErrors:
             Parameters
             ----------
                 - `e`
-                    - Exception
+                    - `Exception`
                     - exception that got caught via `try ... except`
                 - `prefix`
-                    - str, optional
+                    - `str`, optional
                     - something to print before the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `suffix`
-                    - str, optional
+                    - `str`, optional
                     - something to print after the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - will override `self.verbose` if passed
                     - the default is `None`
@@ -147,24 +150,24 @@ class LogErrors:
             Parameters
             ----------
                 - `e`
-                    - Exception
+                    - `Exception`
                     - exception that got caught via `try ... except`
                 - `prefix`
-                    - str, optional
+                    - `str`, optional
                     - something to print before the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `suffix`
-                    - str, optional
+                    - `str`, optional
                     - something to print after the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `store`
-                    - bool, optional
+                    - `bool`, optional
                     - whether to also store the created dataframe to `self.df_errorlog`
                     - the default is True
                 - `verbose`
-                    - int, optional
+                    - `int`, optional
                     - verbosity level
                     - overrides `self.verbose`
                     - the default is `None`
@@ -176,7 +179,7 @@ class LogErrors:
             Returns
             -------
                 - `df_temp`
-                    - pd.DataFrame
+                    - `pd.DataFrame`
                     - temporary dataframe containing information for last exception
                     - has the following columns
                         - 'exception'
@@ -274,7 +277,8 @@ class LogErrors:
         df_temp.index = [idx]*df_temp.shape[0]
 
         if store:
-            self.df_errorlog = pd.concat([self.df_errorlog, df_temp])
+            dfs2cat = [self.df_errorlog, df_temp]
+            self.df_errorlog = pd.concat([df for df in dfs2cat if not df.empty])
 
         return df_temp
 
@@ -288,7 +292,7 @@ class LogErrors:
             Parameters
             ----------
                 - `filename`
-                    - str, optional
+                    - `str`, optional
                     - path to the file to save `self.df_errorlog` to
                 - `**kwargs`
                     - kwargs passed to `pd.DataFrame.to_csv()`
@@ -307,5 +311,3 @@ class LogErrors:
 
         return
 
-
-# %%
