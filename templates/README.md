@@ -24,6 +24,11 @@ python -m pip install --no-dependencies git+https://github.com/TheRedElement/ast
 * You might need to use `pip3` instead of `pip` depending on your python version.
 * Make sure you have `git` installed before you intall `astroLuSt`!
 
+Because of package dependencies within [`eleanor`](https://adina.feinste.in/eleanor/) you currently have to manually downgrade `photutils` to version `1.13.0`
+```shell
+python -m pip install --force-reinstall -v photutils==1.13.0
+```
+
 ## Examples
 
 Examples for the different functionalities contained within the module can be found in the demo files ([./demos/](./demos/)).
