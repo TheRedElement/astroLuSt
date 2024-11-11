@@ -10,7 +10,7 @@ astroLuSt package
 # from astroLuSt import visualization
 
 __modulename__ = 'astroLuSt' 
-__version__ = '1.0.0'
+__version__ = '2.0.0'
 __author__ = 'Lukas Steinwender'
 __author_email__ = ''
 __maintainer__ = 'Lukas Steinwender'
