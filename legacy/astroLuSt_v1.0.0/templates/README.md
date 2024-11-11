@@ -49,5 +49,5 @@ If you use any of the utilities provided in the `astroLuSt`-module, I would be v
 
 | Version   | Date  | Notes |
 | -         | -     | -     |
-| v1.0.0    | XXXX/XX/XX    | Inclusion of  code from Master's Thesis in computer-science. Reorganization of directory tree. Addition of demo for every function and class.|
-| v0.0.0    | 2021/10/21    | Initial release. Code from Bachelor's and Master's Thesis in astronomy. |
+| v1.0.0    | <lastupdate>    | Inclusion of  code from Master's Thesis in computer-science. Reorganization of directory tree. Addition of demo for every function and class.|
+| v0.0.0    | 2021-10-21    | Initial release. Code from Bachelor's and Master's Thesis in astronomy. |
