@@ -4,9 +4,9 @@ A collection of functions useful for dataprocessing especially in astronomy.
 This module started out as a central space for all code generated in the frame of my theses.
 
 * Author: Lukas Steinwender
-* Author Email: lukas.steinwender99@gmail.com
+* Author Email: 
 * Maintainer: Lukas Steinwender
-* Maintainer Email: lukas.steinwender99@gmail.com
+* Maintainer Email: 
 * Last Update: 2024-11-11
 * Version: 1.0.0
 * URL: [https://github.com/TheRedElement/astroLuSt](https://github.com/TheRedElement/astroLuSt)
