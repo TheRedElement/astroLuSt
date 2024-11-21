@@ -549,7 +549,7 @@ class RPCA_ADMM:
 
 class RPCA_CP:
     """
-        - class implementing the solution of a Robust PCA via the Alternating Direction Method of Multipliers (ADMM)
+        - class implementing the solution of a Robust PCA via the Chambolle-Pock Primal-Dual Algorithm
 
         
         Attributes
@@ -575,8 +575,8 @@ class RPCA_CP:
                     - will iterate until `max_iter` is reached
             - `theta`
                 - `float`, optional
-                - stepsize for the extrapolation step of the primal variables
-                - has to be greater than 0
+                - stepsize for the extrapolation/overrelaxation step of the primal variables
+                - has to be greater than `0`
                 - the default is `1.0`
             - `verbose`
                 - `int`, optional
