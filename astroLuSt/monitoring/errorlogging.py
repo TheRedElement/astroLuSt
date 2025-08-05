@@ -1,10 +1,12 @@
 
 #%%imports
+import logging
 import pandas as pd
 import re
 import traceback
 
-from astroLuSt.monitoring import formatting as almof
+
+logger = logging.getLogger(__name__)
 
 #%%definitions
 class LogErrors:
@@ -49,7 +51,7 @@ class LogErrors:
                 
         Methods
         -------
-            - `print_exc()`
+            - `log_exc()`
             - `save_log()`
         
         Dependencies
@@ -82,14 +84,14 @@ class LogErrors:
     def __dict__(self) -> dict:
         return eval(str(self).replace(self.__class__.__name__, 'dict'))
 
-    def print_exc(self,
+    def log_exc(self,
         e:Exception,
         prefix:str=None, suffix:str=None,
         verbose:int=None,
         ) -> None:
         """
             - method to log a formatted version of the caught exception e
-            - will print the formatted version if requested
+            - will log the formatted version if requested
 
             Parameters
             ----------
@@ -98,12 +100,12 @@ class LogErrors:
                     - exception that got caught via `try ... except`
                 - `prefix`
                     - `str`, optional
-                    - something to print before the caught exception
+                    - something to log before the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `suffix`
                     - `str`, optional
-                    - something to print after the caught exception
+                    - something to log after the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `verbose`
@@ -130,10 +132,9 @@ class LogErrors:
 
         format_exc = traceback.format_exc()
 
-        if verbose > 0:
-            print(prefix)
-            print(format_exc)
-            print(suffix)
+        logger.debug(
+            f"{prefix}\n{format_exc}\n{suffix}"
+        )
 
 
         return
@@ -154,12 +155,12 @@ class LogErrors:
                     - exception that got caught via `try ... except`
                 - `prefix`
                     - `str`, optional
-                    - something to print before the caught exception
+                    - something to log before the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `suffix`
                     - `str`, optional
-                    - something to print after the caught exception
+                    - something to log after the caught exception
                     - the default is `None`
                         - will be set to `''`
                 - `store`
@@ -260,15 +261,13 @@ class LogErrors:
                 'squeezed':     [True],                     #whether the content has been sqeezed into one row
 
             })
-            almof.printf(
+            logger.info(
                 msg=(
                     f'All exceptions sqeezed into one row due to `ValueError`.'
                     f' Likely the shapes of the extracted exceptions did not match.'
                     f' Original error message: {ve}'
                 ),
-                context=self.exc2df.__name__,
-                type='WARNING',
-                verbose=verbose
+                extra=dict(context=self.exc2df.__name__),
             )
 
         #set index to be the same accross one extraction
