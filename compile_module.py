@@ -3,13 +3,14 @@
 
 import astroLuSt
 
-import re
-
+import datetime
 import glob
 import os
+import re
 import shutil
+import toml
 
-import datetime
+
 #%%definitions
 def compile_readme(
     modulename:str,
@@ -44,6 +45,56 @@ def compile_readme(
         f.write(readme)
         f.close()
 
+    return
+
+def make_toml(req_path:str="requirements.txt"):
+    """
+        - function to create the pyproject.toml file
+    """
+
+    #get dependencies
+    with open(req_path, "r") as f:
+        deps = [l.rstrip("\n") for l in f.readlines()]
+
+    #load existing pyproject.toml
+    data = toml.load("pyproject.toml")
+
+    #update pyproject.toml
+    data["build-system"]["requires"] = ["hatchling >= 1.26"]
+    data["build-system"]["build-backend"] = "hatchling.build"
+
+    data["project"]["name"] = astroLuSt.__modulename__
+    data["project"]["version"] = astroLuSt.__version__
+    data["project"]["description"] = "package containing tools useful especially in astronomy."
+    data["project"]["readme"] = "README.md"
+    data["project"]["requires-python"] = ">=3.10"
+    data["project"]["classifiers"] = [
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+        "Topic :: Scientific/Engineering :: Astronomy",
+        "Intended Audience :: Science/Research",
+        "Natural Language :: English",
+        "Development Status :: 4 - Beta",
+    ]
+    data["project"]["license"] = "MIT"
+    data["project"]["license-files"] = ["LICEN[CS]E*",]
+    data["project"]["dependencies"] = deps
+    data["project"]["authors"] = [{"name":astroLuSt.__author__, "email":astroLuSt.__author_email__},]
+    data["project"]["maintaners"] = [{"name":astroLuSt.__maintainer__, "email":astroLuSt.__maintainer_email__},]
+    data["project"]["urls"] = {"Homepage":astroLuSt.__url__, "Issues":astroLuSt.__url__+"/issues"}
+    data["project"]["keywords"] = ["astronomy", "data analysis", "machine learning"]
+
+    data["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"] = [astroLuSt.__modulename__]
+    data["tool"]["hatch"]["build"]["exclude"] = [
+        "__pychache__", 
+        "demos",
+        "legacy",
+        "templates",
+    ]
+
+    #save updated version
+    with open("pyproject.toml", "w") as f:
+        toml.dump(data, f)
 
     return
 
@@ -127,9 +178,11 @@ def main():
         outfilename='README.md'
     )
 
+    make_toml(req_path="requirements.txt")
+
     current2legacy(
         modulename=astroLuSt.__modulename__, version=astroLuSt.__version__,
-        write=True,
+        write=False,
     )
 
     print('FINISHED')

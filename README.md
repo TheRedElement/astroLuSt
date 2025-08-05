@@ -7,8 +7,8 @@ This module started out as a central space for all code generated in the frame o
 * Author Email: 
 * Maintainer: Lukas Steinwender
 * Maintainer Email: 
-* Last Update: 2024-11-11
-* Version: 2.0.1
+* Last Update: 2025-08-06
+* Version: 2.0.0
 * URL: [https://github.com/TheRedElement/astroLuSt](https://github.com/TheRedElement/astroLuSt)
 
 ## Installation
@@ -49,5 +49,5 @@ If you use any of the utilities provided in the `astroLuSt`-module, I would be v
 
 | Version   | Date  | Notes |
 | -         | -     | -     |
-| v1.0.0    | 2024-11-11    | Inclusion of  code from Master's Thesis in computer-science. Reorganization of directory tree. Addition of demo for every function and class.|
+| v1.0.0    | 2025-08-06    | Inclusion of  code from Master's Thesis in computer-science. Reorganization of directory tree. Addition of demo for every function and class.|
 | v0.0.0    | 2021-10-21    | Initial release. Code from Bachelor's and Master's Thesis in astronomy. |

@@ -15,4 +15,5 @@ scikit_learn==1.7.1
 scipy==1.16.1
 setuptools==80.9.0
 tensorflow==2.20.0rc0
+toml==0.10.2
 umap==0.1.1

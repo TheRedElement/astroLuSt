@@ -1,0 +1,32 @@
+[build-system]
+requires = [ "hatchling >= 1.26",]
+build-backend = "hatchling.build"
+
+[project]
+name = "astroLuSt"
+version = "2.0.0"
+description = "package containing tools useful especially in astronomy."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [ "Programming Language :: Python :: 3", "Operating System :: OS Independent", "Topic :: Scientific/Engineering :: Astronomy", "Intended Audience :: Science/Research", "Natural Language :: English", "Development Status :: 4 - Beta",]
+license = "MIT"
+license-files = [ "LICEN[CS]E*",]
+dependencies = [ "alerce==1.4.0", "astropy==7.1.0", "astroquery==0.4.10", "cycler==0.12.1", "eleanor==2.0.5", "joblib==1.5.1", "matplotlib==3.10.5", "numpy==2.3.2", "pandas==2.3.1", "photutils==1.13.0", "polars==1.32.0", "pyarrow==21.0.0", "Requests==2.32.4", "scikit_learn==1.7.1", "scipy==1.16.1", "setuptools==80.9.0", "tensorflow==2.20.0rc0", "toml==0.10.2", "umap==0.1.1",]
+keywords = [ "astronomy", "data analysis", "machine learning",]
+[[project.authors]]
+name = "Lukas Steinwender"
+email = ""
+
+[[project.maintaners]]
+name = "Lukas Steinwender"
+email = ""
+
+[project.urls]
+Homepage = "https://github.com/TheRedElement/astroLuSt"
+Issues = "https://github.com/TheRedElement/astroLuSt/issues"
+
+[tool.hatch.build]
+exclude = [ "__pychache__", "demos", "legacy", "templates",]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "astroLuSt",]
