@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 import re
 import traceback
+from typing import Dict
 
 
 logger = logging.getLogger(__name__)
@@ -87,6 +88,7 @@ class LogErrors:
     def log_exc(self,
         e:Exception,
         prefix:str=None, suffix:str=None,
+        extra:Dict[str,object]=None,
         verbose:int=None,
         ) -> None:
         """
@@ -133,7 +135,8 @@ class LogErrors:
         format_exc = traceback.format_exc()
 
         logger.debug(
-            f"{prefix}\n{format_exc}\n{suffix}"
+            f"{prefix}\n{format_exc}\n{suffix}",
+            extra=extra,
         )
 
 
@@ -261,7 +264,7 @@ class LogErrors:
                 'squeezed':     [True],                     #whether the content has been sqeezed into one row
 
             })
-            logger.info(
+            logger.debug(
                 msg=(
                     f'All exceptions sqeezed into one row due to `ValueError`.'
                     f' Likely the shapes of the extracted exceptions did not match.'
