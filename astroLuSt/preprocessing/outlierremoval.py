@@ -1,6 +1,7 @@
 
 
 #%%imports
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
@@ -8,9 +9,9 @@ import re
 from typing import Union, Tuple, Callable
 import warnings
 
+from .binning import Binning
 
-from astroLuSt.preprocessing.binning import Binning
-
+logger = logging.getLogger(__name__)
 
 #%%definitions
 class PercentileClipping:
@@ -580,10 +581,12 @@ class SigmaClipping:
         #calculate mean curve if insufficient information is provided
         if mean_x is None or mean_y is None or std_y is None:
             
-            if verbose > 0:
-                print(
-                    f"INFO({self.__class__.__name__}): Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!"
+            logger.info(
+                f"Calculating mean-curve because one of 'mean_x', 'mean_y', std_y' is None!",
+                extra=dict(
+                    context=self.get_mean_curve.__name__
                 )
+            )
             
             #fit legendre polynomial
             if self.use_polynomial:
@@ -881,15 +884,19 @@ class SigmaClipping:
 
         for n in range(n_iter):
             if verbose > 0:
-                print(f'INFO({self.__class__.__name__}): Executing iteration #{n+1}/{n_iter}')
+                logger.info(
+                    f'Executing iteration #{n+1}/{n_iter}',
+                    extra=dict(
+                        context=self.__class__.__name__
+                    )
+                )
 
             self.clip_curve(mean_x, mean_y, std_y, **cur_clip_curve_kwargs)
 
-            #print the output of the stopping criterion
-            if verbose > 2: print(f'INFO({self.__class__.__name__}): stopping_crit evaluated to: %g'%(eval(re.findall(r'^[^<>=!]+', stopping_crit)[0])))
+            #log the output of the stopping criterion
+            logger.info(f'stopping_crit evaluated to: %g'%(eval(re.findall(r'^[^<>=!]+', stopping_crit)[0])), extra=dict(context=self.__class__.__name__))
             if eval(stopping_crit):
-                if verbose > 0:
-                    print(f'INFO({self.__class__.__name__}): stopping_crit fullfilled... Exiting after iteration #{n+1}/{n_iter}')
+                logger.info(f'stopping_crit fullfilled... Exiting after iteration #{n+1}/{n_iter}', extra=dict(context=self.__class__.__name__))
                 
                 #restore values of previous iteration
                 
@@ -1282,8 +1289,7 @@ class StringOfPearls:
         if len(idxs) > 0:
             self.clip_mask[idxs] = False
         
-        if verbose > 1:
-            print(f'INFO({self.__class__.__name__}): Number of clipped entries: {(~self.clip_mask).sum()}/{len(self.x)}')
+        logger.info(f'Number of clipped entries: {(~self.clip_mask).sum()}/{len(self.x)}', extra=dict(context=self.__class__.__name__))
 
         return
 

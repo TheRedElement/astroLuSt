@@ -5,7 +5,7 @@ from matplotlib.figure import Figure
 import numpy as np
 from typing import Union, Tuple
 
-from astroLuSt.visualization.plots import CornerPlot
+from ..visualization.plots import CornerPlot
 
 #%%definitions
 class MLE:

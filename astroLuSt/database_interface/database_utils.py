@@ -13,7 +13,6 @@ import pandas as pd
 from requests import HTTPError
 import time
 
-from ..monitoring import formatting as almofo
 
 logger = logging.getLogger(__name__)
 #%%classes

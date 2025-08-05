@@ -6,7 +6,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 from typing import Union, Tuple, Callable, List, Literal
 
-from astroLuSt.visualization.plotting import generate_colors
+from ..visualization.plotting import generate_colors
 
 
 #%%classes

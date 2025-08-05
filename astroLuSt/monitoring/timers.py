@@ -8,7 +8,7 @@ import pandas as pd
 import time
 from typing import Callable, Any, List, Tuple
 
-from astroLuSt.visualization.plotting import generate_colors
+from ..visualization.plotting import generate_colors
 
 logger = logging.getLogger(__name__)
 

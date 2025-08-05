@@ -13,7 +13,7 @@ import pandas as pd
 import time
 from typing import Tuple, List
 
-from ..monitoring import (formatting as almofo, errorlogging as almoer)
+from ..monitoring import (errorlogging as almoer)
 
 logger = logging.getLogger(__name__)
 
