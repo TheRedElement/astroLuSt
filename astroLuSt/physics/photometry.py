@@ -2,7 +2,7 @@
 #%%imports
 import numpy as np
 import polars as pl
-from typing import Union, Tuple, Callable
+from typing import Union, Tuple
 
 #%%classes
 class DistanceModule:
