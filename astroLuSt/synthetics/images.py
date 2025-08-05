@@ -6,16 +6,19 @@
 
 #%%imports
 from functools import partial
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.animation import FuncAnimation, PillowWriter
+from matplotlib.animation import FuncAnimation
 import numpy as np
 import scipy.stats as sps
 
-from astroLuSt.physics import photometry as alpp
-from astroLuSt.monitoring import formatting as almf
+from ..physics import photometry as alpp
+from ..monitoring import formatting as almf
 
-from typing import Union, Tuple, Callable, Literal, List, Dict
+from typing import Union, Tuple, Callable, Literal, List
+
+logger = logging.getLogger(__name__)
 
 #%%classes
 class TPF:
@@ -823,11 +826,13 @@ class TPF:
                 try:
                     cont = ax1.contour(self.stars[apidx,:,:,2], levels=0, colors='C0', linewidths=1, zorder=1)
                 except IndexError:
-                    almf.printf(
+                    logger.warning(
                         msg=f'Ignoring `plot_apertures[{idx}]` because the index is out of bounds!',
-                        context=f'{self.__class__.__name__}.plot_result()',
-                        type='WARNING'
+                        extra=dict(
+                            context=f'{self.__class__.__name__}.plot_result()',
+                        )
                     )
+
 
             #legend entries
             ax1.plot(np.nan, np.nan,  'C0-', label='Aperture')
