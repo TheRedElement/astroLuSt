@@ -7,15 +7,18 @@ from astropy import units as u
 from astroquery.mast import Tesscut
 import glob
 from joblib.parallel import Parallel, delayed
+import logging
 import matplotlib.pyplot as plt
 from matplotlib import animation as manimation
 from matplotlib.figure import Figure
 import numpy as np
 import requests
 import time
-from typing import List, Callable, Union, Tuple
+from typing import List, Union, Tuple
 
-from astroLuSt.monitoring import (formatting as almofo, errorlogging as almoer)
+from ..monitoring import (errorlogging as almoer)
+
+logger = logging.getLogger(__name__)
 
 #%%classes
 class TESScut_Interface:
@@ -246,16 +249,17 @@ class TESScut_Interface:
 
         """
 
-        almofo.printf(
-            msg='Merging sectors...',
-            context=f'{self.__class__.__name__}.{self._merge_sectors.__name__}',
-            type='INFO',
-            level=1,
-            verbose=verbose,
-        )
-
         #default parameters
         if verbose is None: verbose = self.verbose
+
+        if verbose < 2: logger.info(
+            msg='Merging sectors...',
+            extra=dict(
+                context=f'{self.__class__.__name__}.{self._merge_sectors.__name__}',
+                level=1,
+            )
+        )
+        
         ##headers to include as global header to the BinaryTableHDU - extracted from first entry in hdulist_sectors
         if ffi_header_keys is None:
             ffi_header_keys = [
@@ -302,7 +306,7 @@ class TESScut_Interface:
                 try:
                     hdu1.columns.change_attrib(col_name=cn, attrib=ca, new_value=cav)
                 except Exception as e:
-                    self.LE.print_exc(  e, prefix=f'{hdu1_base.header["RA_OBJ"]}, {hdu1_base.header["DEC_OBJ"]} ({target_id})')
+                    self.LE.log_exc(  e, prefix=f'{hdu1_base.header["RA_OBJ"]}, {hdu1_base.header["DEC_OBJ"]} ({target_id})')
                     self.LE.exc2df(     e, prefix=f'{hdu1_base.header["RA_OBJ"]}, {hdu1_base.header["DEC_OBJ"]} ({target_id})')
                     pass
 
@@ -320,10 +324,10 @@ class TESScut_Interface:
         #add PrimaryHDU
         # tmin = Time(hdu1.data.field('TIME').min()+hdu1.header['BJDREFI'], format='jd', scale='tdb')
         # tmax = Time(hdu1.data.field('TIME').max()+hdu1.header['BJDREFI'], format='jd', scale='tdb')
-        # print(hdulist_sectors[0][1].header['DATE-OBS'])
-        # print(hdulist_sectors[-1][1].header['DATE-END'])
-        # print(tmin.fits)
-        # print(tmax.fits)
+        # logger.debug(hdulist_sectors[0][1].header['DATE-OBS'])
+        # logger.debug(hdulist_sectors[-1][1].header['DATE-END'])
+        # logger.debug(tmin.fits)
+        # logger.debug(tmax.fits)
 
         hdu0 = fits.PrimaryHDU(
             header=fits.Header([
@@ -357,12 +361,12 @@ class TESScut_Interface:
 
         #combine to HDUList
         hdul = fits.HDUList([hdu0, hdu1, hdu2])
-        almofo.printf(
+        logger.debug(
             msg=hdul.info(output=False),    #show HDUList info as list of strings
-            context=f'{self.__class__.__name__}.{self._merge_sectors.__name__}()',
-            type='INFO',
-            level=1,
-            verbose=verbose-1,
+            extra=dict(
+                context=f'{self.__class__.__name__}.{self._merge_sectors.__name__}()',
+                level=1,
+            )
         )
 
         return hdul
@@ -508,12 +512,12 @@ class TESScut_Interface:
         if get_cutouts_kwargs is None:  get_cutouts_kwargs  = dict()
 
         #logging
-        almofo.printf(
+        logger.info(
             msg=f'Working on `{coords.ra.value} {coords.dec.value}` ({target_id=}, {self.idx+1:.0f}/{self.n2extract:.0f})',
-            context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
-            type='INFO',
-            level=0,
-            verbose=verbose,
+            extra=dict(
+                context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
+                level=0,
+            )
         )
         self.idx += 1   #update counter
 
@@ -537,12 +541,12 @@ class TESScut_Interface:
         
         #check if already extracted - ignore if specified
         if not self.redownload:
-            almofo.printf(
+            logger.info(
                 msg=f'Ignoring sectors `{sectors[~ext_bool]}` for `{coords.ra.value} {coords.dec.value}` because found in {savedir} and `self.redownload==False`!',
-                context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
-                type='INFO',
-                level=1,
-                verbose=verbose,
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
+                    level=1,
+                )
             )
             sectors = sectors[ext_bool]
 
@@ -550,24 +554,23 @@ class TESScut_Interface:
 
         #extract for each sector
         for sector in sectors:
-            almofo.printf(
+            logger.info(
                 msg=f'Extracting `{sector=}` for `{coords.ra.value} {coords.dec.value}` ({target_id=})',
-                context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
-                type='INFO',
-                level=1,
-                verbose=verbose,
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
+                    level=1,
+                )
             )
-
             #get relevant tpfs (cutouts)
             ##try `nretries` times in case of a ConnectionError (usually HTTPSConnectionPoolError)
             for rt in range(nretries):
-                almofo.printf(
+                logger.info(
                     msg=f'Try {rt+1}/{nretries}',
-                    context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
-                    type='INFO',
-                    level=2,
-                    verbose=verbose,
-                )                
+                    extra=dict(
+                        context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
+                        level=2
+                    ),
+                )
                 try:
                     cutouts = Tesscut.get_cutouts(
                         coordinates=coords,
@@ -578,26 +581,26 @@ class TESScut_Interface:
                         break
                 except requests.exceptions.ConnectionError as e:
                     if rt+1 == nretries:
-                        almofo.printf(
+                        logger.warning(
                             msg=f'Failed after {nretries} retries due to {e}',
-                            context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
-                            type='WARNING',
-                            level=2,
-                            verbose=verbose,
-                        )                
+                            extra=dict(
+                                context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
+                                level=2,
+                            )
+                        )
                     cutouts = []    #return empty sectors
             
             
             #check if sector was extractable
             if len(cutouts) > 0:            
                 hdulist = cutouts[0]
-                almofo.printf(
+                logger.debug(
                     msg=hdulist,
-                    context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
-                    type='INFO',
-                    level=1,
-                    verbose=verbose-1,
-                )                
+                    extra=dict(
+                        context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
+                        level=1,
+                    )
+                )
             
                 #add new information to header
                 if target_id is not None:
@@ -618,12 +621,12 @@ class TESScut_Interface:
 
             #set to empty list if not extractable
             else:
-                almofo.printf(
+                logger.warning(
                     msg=f'WARNING: `{sector=}` not found for `{coords.ra.value} {coords.dec.value}` ({target_id=})',
-                    context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
-                    type='WARNING',
-                    level=1,
-                    verbose=verbose,                
+                    extra=dict(
+                        context=f'{self.__class__.__name__}.{self.extract_target.__name__}()',
+                        level=1,
+                    )
                 )
                 pass
 
@@ -964,7 +967,7 @@ class TESScut_Interface:
             return
 
 
-        # print(hdulist[1].header["TIMEUNIT"])
+        # logger.debug(hdulist[1].header["TIMEUNIT"])
 
         #default parameters
         if pcolormesh_kwargs is None:       pcolormesh_kwargs       = dict()

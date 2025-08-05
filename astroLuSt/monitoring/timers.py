@@ -1,5 +1,6 @@
 
 #%%imports
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
@@ -7,7 +8,9 @@ import pandas as pd
 import time
 from typing import Callable, Any, List, Tuple
 
-from astroLuSt.visualization.plotting import generate_colors
+from ..visualization.plotting import generate_colors
+
+logger = logging.getLogger(__name__)
 
 #%%definitions
 class ExecTimer:
@@ -21,9 +24,9 @@ class ExecTimer:
                 - verbosity level
                 - the higher the more information will be displayed
                 - the default is `1`
-            - `print_kwargs`
+            - `log_kwargs`
                 - `dict`, optional
-                - kwargs to pass to `print()`
+                - kwargs to pass to `logging.info()`
                 - the default is `None`
                     - will be set to `dict()`
 
@@ -57,12 +60,12 @@ class ExecTimer:
 
     def __init__(self,
         verbose:int=1,
-        print_kwargs:dict=None,
+        log_kwargs:dict=None,
         ) -> None:
 
         self.verbose = verbose
-        if print_kwargs is None:    self.print_kwargs = dict()
-        else:                       self.print_kwargs = print_kwargs
+        if log_kwargs is None:    self.log_kwargs = dict()
+        else:                       self.log_kwargs = log_kwargs
 
         self.df_protocoll = pd.DataFrame(
             columns=['Task', 'Start', 'End', 'Duration', 'Start_Seconds', 'End_Seconds', 'Duration_Seconds', 'Comment_Start', 'Comment_End'],
@@ -170,8 +173,13 @@ class ExecTimer:
         ]
 
         if self.verbose > 0:
-            print('\n'+'#'*70, **self.print_kwargs)
-            print(f'INFO: Started {taskname} at {start_timestamp}', **self.print_kwargs)
+            logger.info(
+                msg=(
+                    '\n'+'#'*70+
+                    f'\nStarted {taskname} at {start_timestamp}'
+                ),
+                **self.log_kwargs
+            )
 
 
         return
@@ -235,13 +243,15 @@ class ExecTimer:
 
 
         if self.verbose > 0:
-            print(
-                f'\n'
-                f'INFO: Finished {taskname} at {end_timestamp}\n'
-                f'Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, "Duration"])}',
-                **self.print_kwargs
+            logger.info(
+                msg=(
+                    f'\n'
+                    f'Finished {taskname} at {end_timestamp}\n'
+                    f'Required time: {pd.to_timedelta(self.df_protocoll.at[cur_task, "Duration"])}'
+                    '#'*70
+                ),
+                **self.log_kwargs
             )
-            print('#'*70, **self.print_kwargs)
         return
 
     def estimate_runtime(self,
@@ -281,7 +291,7 @@ class ExecTimer:
 
         runtime_estimate = cur_runtime*nrepeats/ndone
 
-        print(f'INFO: Total estimated runtime for {nrepeats} repeats: {runtime_estimate}', **self.print_kwargs)        
+        logger.info(f'Total estimated runtime for {nrepeats} repeats: {runtime_estimate}', **self.log_kwargs)        
 
 
         return

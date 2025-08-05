@@ -1,13 +1,13 @@
 
 #%%
+import logging
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
-from typing import Union, List, Tuple, Callable
-import warnings
+from typing import Union, List, Tuple
 
-from astroLuSt.preprocessing.scaling import AxisScaler
+from ..preprocessing.scaling import AxisScaler
 
+logger = logging.getLogger(__name__)
 #%% definitions
 class AugmentAxis: 
     """
@@ -1010,12 +1010,13 @@ class AugmentAxis:
                 not_allowed = methods[~methods_bool]
                 methods = methods[methods_bool]
 
-                if verbose > 0:
-                    print(
-                        f'WARNING(AugmentAxis.apply_transform):\n'
-                        f'    {not_allowed} are invalid methods, will therefore be ignored.\n'
-                        f'    Allowed are {self.get_transformations()}.'
-                    )
+                logger.warning(
+                    msg=(
+                        f'{not_allowed} are invalid methods, will therefore be ignored.\n'
+                        f'Allowed are {self.get_transformations()}.'
+                    ),
+                    extra=dict(context=self.__class__.__name__)
+                )
 
         ##use a random selection of passed methods
         if transform_order == 'random':
@@ -1043,12 +1044,12 @@ class AugmentAxis:
             x_new = eval('self.'+tf)(x_new, **transform_parameters)
 
         #summary
-        if verbose > 1:
-            print(
-                f'INFO(AugmentAxis.apply_transform):\n'
-                f'    Applied the following transformations: {to_apply}'
-            )
-
+        logger.info(
+            msg=(
+            f'Applied the following transformations: {to_apply}'
+            ),
+            extra=dict(context=self.__class__.__name__)
+        )
         return x_new
     
     def fit(self,
@@ -1216,11 +1217,10 @@ class AugmentAxis:
         X_misc_new = [np.empty((nsamples, *X_m.shape[1:])) for X_m in X_misc]
 
         ##generate nsamples new samples
-        if verbose > 2:
-            print(
-                f'INFO(AugmentAxis.flow):\n'
-                f'    Generating {nsamples} new samples...'
-            )
+        logger.info(
+            f'Generating {nsamples} new samples...',
+            extra=dict(context=self.__class__.__name__)
+        )
         for n in range(nsamples):
             sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=True, p=sample_weights_use)
             # sample_idx = self.rng.choice(np.arange(0, len(X),1), size=None, replace=True, p=sample_weights)

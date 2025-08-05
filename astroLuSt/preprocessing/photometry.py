@@ -3,6 +3,7 @@
 
 
 #%%imports
+import logging
 from joblib.parallel import Parallel, delayed
 import matplotlib.pyplot as plt
 import matplotlib.animation as manimation
@@ -13,9 +14,9 @@ import numpy as np
 from typing import Union, Literal, Tuple, Callable, Any, List
 import warnings
 
-from astroLuSt.monitoring import formatting as almofo
-from astroLuSt.physics import photometry as alphph
-from astroLuSt.visualization import plotting as alvipg
+from ..visualization import plotting as alvipg
+
+logger = logging.getLogger(__name__)
 
 #%%classes
 class Aperture:
@@ -1394,10 +1395,11 @@ class BestAperture:
             --------
         """
 
-        almofo.printf(
+        logger.warning(
             msg=f'Not implemented yet. Call `{self.__class__.__name__}.{self.plot_result.__name__}()` to visualize the executed analysis.',
-            context=f'{self.__class__.__name__}.{self.predict.__name__}()',
-            type='WARNING',
+            extra=dict(
+                context=f'{self.__class__.__name__}.{self.predict.__name__}()',
+            )
         )
 
         return

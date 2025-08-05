@@ -1,4 +1,5 @@
 #%%imports
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
@@ -8,9 +9,9 @@ from scipy.stats import norm
 import string
 from typing import Union, Tuple, List, Callable
 
-from astroLuSt.preprocessing import timeseries as alpdm
-from astroLuSt.monitoring import formatting as almof
+from ..preprocessing import timeseries as alprti
 
+logger = logging.getLogger(__name__)
 #%%definitions
 class GeneratePeriodicSignals:
     """
@@ -214,15 +215,15 @@ class GeneratePeriodicSignals:
             ))
 
         if np.any(self.periods<1e-2):
-            almof.printf(
+            logger.warning(
                 msg=(
                     f'Found entries in `self.periods` that are < 1e-2.'
                     f' This is likely to cause issues during generation.'
                     f' Consider providing a higher mininmum period or increase `init_res` in `func_kwargs` passed in the call to `self.rvs()` accordingly!'
                 ),
-                context=self.__class__.__init__.__name__,
-                type='WARNING',
-                verbose=self.verbose,
+                extra=dict(
+                    context=self.__class__.__init__.__name__,
+                )
             )
 
         #initialize choices
@@ -443,11 +444,11 @@ class GeneratePeriodicSignals:
         poly = [np.polyval(x=x_[0], p=kwargs['p'])]
 
         #periodize template arrays
-        _, poly = alpdm.periodize(
+        PDZ = alprti.Periodize()
+        _, poly = PDZ.fit_transform(
             x_, poly,
             # repetitions=None,
-            outshapes=[x.shape[0]],
-            testplot=False,
+            outshapes=x.shape[0],
             verbose=verbose-2
         )
 
@@ -551,13 +552,13 @@ class GeneratePeriodicSignals:
         randarray = np.random.randn(1,res)
         
         #periodize template arrays
-        _, randarray = alpdm.periodize(
+        PDZ = alprti.Periodize()
+        _, randarray = PDZ.fit_transform(
             x_, randarray,
             # repetitions=None,
-            outshapes=[x.shape[0]],
-            testplot=False,
+            outshapes=x.shape[0],
             verbose=verbose-2
-        )
+        )        
 
         randarray = randarray[0]
 
@@ -848,7 +849,7 @@ class GeneratePeriodicSignals:
         for xi, yi, pi in zip(x_gen, y_gen, p_gen):
             ax1.plot(xi, yi, **plot_kwargs)
             
-            if pi[0] is not None: ax2.scatter(alpdm.fold(xi, pi[0])[1], yi, **plot_kwargs)
+            if pi[0] is not None: ax2.scatter(alprti.fold(xi, pi[0])[1], yi, **plot_kwargs)
 
         
         ax1.set_xlabel('x')
@@ -1275,7 +1276,7 @@ class GenerateViaReperiodizing:
             ax1.plot(xi[sortidx], yi[sortidx], **plot_kwargs)
             
             if pi is not None:
-                xp = alpdm.fold(xi, pi)[1]
+                xp = alprti.fold(xi, pi)[1]
                 sortidx = np.argsort(xp)
                 ax2.plot(xp[sortidx], yi[sortidx], **plot_kwargs)
 

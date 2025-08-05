@@ -6,13 +6,15 @@ from astropy.table import Table
 from astroquery.utils.tap.core import TapPlus
 from astroquery.simbad import Simbad
 from joblib.parallel import Parallel, delayed
+import logging
 import numpy as np
 import os
 import pandas as pd
 from requests import HTTPError
 import time
 
-from astroLuSt.monitoring import formatting as almofo
+
+logger = logging.getLogger(__name__)
 #%%classes
 
 
@@ -100,25 +102,25 @@ def get_reference_objects(
     #query for potential reference targets
     res_tab = Simbad.query_tap(query=q, maxrec=1000)
 
-    almofo.printf(
+    logger.info(
         msg=f'Found {len(res_tab)} reference star candidate(s).',
-        context=f'{get_reference_objects.__name__}()',
-        type='INFO',
-        level=0,
-        verbose=verbose,
+        extra=dict(
+            context=f'{get_reference_objects.__name__}()',
+            level=0,
+        ),
     )
             
     if len(res_tab) == 0:
-        almofo.printf(
+        logger.warning(
             msg=(
                 f'WARNING: did not find any nearby constant stars for {ra=} deg, {dec=} deg, {radius=} deg.'
                 f' Consider increasing `radius` or choose a different method for background-correction.'
                 f' Returning `None` for that matter.'
             ),
-            context=f'{get_reference_objects.__name__}()',
-            type='WARNING',
-            level=0,
-            verbose=verbose,
+            extra=dict(
+                context=f'{get_reference_objects.__name__}()',
+                level=0,
+            )
         )
 
         res_tab = None
@@ -236,12 +238,12 @@ def query_upload_table(
 
         if launch_job_kwargs is None: launch_job_kwargs = dict()
 
-        almofo.printf(
+        logger.info(
             msg=f'Extracting split {idx+1}/{nsplits} (len(split): {len(s)})',
-            context=query_upload_table.__name__,
-            type='INFO',
-            level=0,
-            verbose=verbose
+            extra=dict(
+                context=query_upload_table.__name__,
+                level=0,
+            )
         )
 
         #temporarily store in votable for upload
@@ -265,14 +267,15 @@ def query_upload_table(
                 )
             df_res = job.get_results().to_pandas()
         except HTTPError as e:
-            almofo.printf(
+            logger.warning(
                 msg=(
                     f'HTTPError when extracting split #{idx+1}/{nsplits}, hence ignoring. '
                     f'{e}'
                 ),
-                context=query_upload_table.__name__,
-                type='WARNING', level=1,
-                verbose=verbose
+                extra=dict(
+                    context=query_upload_table.__name__,
+                    level=1,
+                )
             )
             df_res = None
 

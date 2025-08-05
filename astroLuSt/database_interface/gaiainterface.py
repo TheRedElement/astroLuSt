@@ -1,12 +1,13 @@
 
 #%%imports
 from astroquery.gaia import GaiaClass
+import logging
 import numpy as np
 import pandas as pd
 import re
-from typing import List, Union, Any, Dict, Callable
+from typing import List, Union, Dict
 
-from astroLuSt.monitoring import formatting as almf
+logger = logging.getLogger(__name__)
 
 #%%definitions
 #GAIA
@@ -147,9 +148,12 @@ class GaiaDatabaseInterface:
 
         jobs.sort_index(axis=1, inplace=True)
         
-        if verbose > 0:
-            print("INFO: The following jobs have been found:")
-            print(jobs)
+        logger.info(
+            msg=(
+                "INFO: The following jobs have been found:\n"
+                f"{jobs}"
+            )
+        )
 
         #apply filter
         if pd_filter is not None:
@@ -245,12 +249,12 @@ class GaiaDatabaseInterface:
         #iterate over requested dataproducts
         for ridx, rt in enumerate(retrieval_type):
             
-            almf.printf(
+            logger.info(
                 msg=f'Extracting retrieval_type {ridx+1}/{len(retrieval_type)} ({rt})',
-                context=f'{self.__class__.__name__}.{self.get_datalink.__name__}()',
-                type='INFO',
-                level=0,
-                verbose=verbose
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.get_datalink.__name__}()',
+                    level=0,
+                )
             )
 
             #iterate over chuncks
@@ -259,12 +263,12 @@ class GaiaDatabaseInterface:
                 #update number of extracted targets
                 extracted += len(chunk)
 
-                almf.printf(
+                logger.info(
                     msg=f'Extracting chunk {cidx+1}/{len(chunks)} ({extracted}/{len(ids)})',
-                    context=f'{self.__class__.__name__}.{self.get_datalink.__name__}()',
-                    type='INFO',
-                    level=1,
-                    verbose=verbose,
+                    extra=dict(
+                        context=f'{self.__class__.__name__}.{self.get_datalink.__name__}()',
+                        level=1,
+                    )
                 )
 
                 #obtain data from gaia archive

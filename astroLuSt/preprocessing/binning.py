@@ -1,13 +1,14 @@
 
 
 #%%imports
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 
 from typing import Union, Tuple, Callable
 
-
+logger = logging.getLogger(__name__)
 #%%definitions
 class Binning:
     """
@@ -287,8 +288,7 @@ class Binning:
         self.bins = bins
 
 
-        if self.verbose > 0:
-            print(f"INFO(Binning): Generated {len(self.bins)-1} bins")
+        logging.info(f"Generated {len(self.bins)-1} bins", extra=dict(context=self.generate_bins.__name__))
 
         return self.bins
     

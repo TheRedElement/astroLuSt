@@ -4,14 +4,14 @@
 
 
 #%%imports
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib import animation as manimation
-from typing import Tuple, Literal, Callable, Any, Union
+from typing import Tuple, Literal
 
-from astroLuSt.monitoring import formatting as almofo
-
+logger = logging.getLogger(__name__)
 #%%functions
 def soft_thresholding(
     xbar:np.ndarray, tau:float=1,
@@ -397,32 +397,32 @@ class RPCA_ADMM:
             delta = abs(self.energy[k]-self.energy[k-1])/abs(self.energy[k-1])  #fractional change of energy
             
             #logging
-            almofo.printf(
+            logger.info(
                 msg=f'Iteration {k+1} with delta={delta:8.1e}, energy={abs(self.energy[k]):9.2e}.',
-                context=f'{self.__class__.__name__}.{self.fit.__name__}',
-                type='INFO',
-                level=0,
-                verbose=verbose-1
-            )            
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                    level=0,
+                )
+            )          
 
             #check convergence
             if (delta < self.eps) and (k > 0):
-                almofo.printf(
+                logger.info(
                     msg=f'Converged after {k+1} iterations with delta={delta:7.1e}, energy={self.energy[k]:9.2e}.',
-                    context=f'{self.__class__.__name__}.{self.fit.__name__}',
-                    type='INFO',
-                    level=0,
-                    verbose=verbose
+                    extra=dict(
+                        context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                        level=0,
+                    )
                 )
                 break
         
-        #print finishing message
-        almofo.printf(
+        #log finishing message
+        logger.info(
             msg=f'Finished after {k+1} iterations with delta={delta:7.1e}, energy={self.energy[k]:9.2e}.',
-            context=f'{self.__class__.__name__}.{self.fit.__name__}',
-            type='INFO',
-            level=0,
-            verbose=verbose
+            extra=dict(
+                context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                level=0,
+            )
         )
             
         #update result
@@ -480,13 +480,13 @@ class RPCA_ADMM:
 
         #check feasibility
         if self.L is None or self.S is None:
-            almofo.printf(
+            logger.warning(
                 msg=f'You have to call `self.fit()` before calling `self.transform()`!',
-                context=f'{self.__class__.__name__}{self.transform.__name__}',
-                type='WARNING',
-                level=0,
-                verbose=verbose
-            )            
+                extra=dict(
+                    context=f'{self.__class__.__name__}{self.transform.__name__}',
+                    level=0,
+                )
+            )        
         L = self.L
         S = self.S
 
@@ -735,32 +735,32 @@ class RPCA_CP:
             delta = abs(self.energy[k]-self.energy[k-1])/abs(self.energy[k-1])  #fractional change of energy
 
             #logging
-            almofo.printf(
+            logger.info(
                 msg=f'Iteration {k+1} with delta={delta:8.1e}, energy={abs(self.energy[k]):9.2e}.',
-                context=f'{self.__class__.__name__}.{self.fit.__name__}',
-                type='INFO',
-                level=0,
-                verbose=verbose-1
-            )            
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                    level=0,
+                )
+            )        
 
             #check convergence
             if (delta < self.eps) and (k > 0):
-                almofo.printf(
+                logger.info(
                     msg=f'Converged after {k+1} iterations with delta={delta:7.1e}, energy={self.energy[k]:9.2e}.',
-                    context=f'{self.__class__.__name__}.{self.fit.__name__}',
-                    type='INFO',
-                    level=0,
-                    verbose=verbose
+                    extra=dict(
+                        context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                        level=0,
+                    )
                 )
                 break
 
-        #print finishing message
-        almofo.printf(
+        #log finishing message
+        logger.info(
             msg=f'Finished after {k+1} iterations with delta={delta:7.1e}, energy={self.energy[k]:9.2e}.',
-            context=f'{self.__class__.__name__}.{self.fit.__name__}',
-            type='INFO',
-            level=0,
-            verbose=verbose
+            extra=dict(
+                context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                level=0,
+            )
         )
 
         #store result
@@ -818,12 +818,12 @@ class RPCA_CP:
 
         #check feasibility
         if self.L is None or self.S is None:
-            almofo.printf(
+            logger.warning(
                 msg=f'You have to call `self.fit()` before calling `self.transform()`!',
-                context=f'{self.__class__.__name__}{self.transform.__name__}',
-                type='WARNING',
-                level=0,
-                verbose=verbose
+                extra=dict(
+                    context=f'{self.__class__.__name__}{self.transform.__name__}',
+                    level=0,
+                )
             )
 
         L = self.L
@@ -1221,13 +1221,13 @@ class RobustPCA:
 
         #check feasibility
         if self.L is None or self.S is None:
-            almofo.printf(
+            logger.warning(
                 msg=f'You have to call `self.fit()` before calling `self.transform()`!',
-                context=f'{self.__class__.__name__}{self.transform.__name__}',
-                type='WARNING',
-                level=0,
-                verbose=verbose
-            )
+                extra=dict(
+                    context=f'{self.__class__.__name__}{self.transform.__name__}',
+                    level=0,
+                )
+            )            
 
         L = self.L
         S = self.S

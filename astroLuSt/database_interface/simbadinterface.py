@@ -1,14 +1,14 @@
 
 #%%imports
 from astropy.table import Table
-from astroquery.simbad import Simbad, SimbadClass
+from astroquery.simbad import Simbad
 from joblib import Parallel, delayed
+import logging
 import numpy as np
 import pandas as pd
-import re
-from typing import Union, Literal, List
+from typing import List
 
-from astroLuSt.monitoring import formatting as almofo
+logger = logging.getLogger(__name__)
 
 #%%classes
 #SIMBAD
@@ -62,7 +62,6 @@ class SimbadDatabaseInterface:
             - `joblib`
             - `numpy`
             - `pandas`
-            - `re`
             - `typing`
 
         Comments
@@ -219,12 +218,12 @@ class SimbadDatabaseInterface:
                 - subfunction to extract IDs for one partition
             """
 
-            almofo.printf(
+            logger.info(
                 msg=f'Working on parition {idx+1}/{npartitions} ({len(ids):.0f} samples)',
-                context=self.get_ids.__name__,
-                type='INFO',
-                level=0,
-                verbose=verbose,
+                extra=dict(
+                    context=self.get_ids.__name__,
+                    level=0,
+                )
             )
 
             #setup SIMBAD

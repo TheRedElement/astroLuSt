@@ -3,17 +3,20 @@
 import eleanor
 import glob
 from joblib import Parallel, delayed
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
+import photutils
 import shutil
 import time
 from typing import Union, Tuple, Callable, List
 import warnings
 
-from astroLuSt.monitoring import errorlogging as alme
-from astroLuSt.monitoring import formatting as almf
+from ..monitoring import errorlogging as alme
+
+logger = logging.getLogger(__name__)
 
 #%%catch problematic warnings and convert them to exceptions
 w2e1 = r".*The following header keyword is invalid or follows an unrecognized non-standard convention:.*"
@@ -334,11 +337,12 @@ class EleanorDatabaseInterface:
 
         #check if redownload is wished and target alread got extracted in the past
         if not self.redownload and len(glob.glob(f"{save_kwargs_use['directory']}{save_kwargs_use['filename']}.*")) > 0:
-            almf.printf(
+            logger.info(
                 msg=f'Ignoring {source_id} because found in {save_kwargs_use["directory"]} and `self.redownload==False`!',
-                context=f'{self.__class__.__name__}.{self.extract_source.__name__}()',
-                type='INFO',
-                verbose=verbose
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.extract_source.__name__}()',
+                    level=0,
+                )
             )
 
             #return nothing
@@ -413,7 +417,7 @@ class EleanorDatabaseInterface:
 
                 except Exception as e:
                     #log and try next sector
-                    self.LE.print_exc(e, prefix=f'{source_id}', suffix=f'sector {s.sector}')
+                    self.LE.log_exc(e, prefix=f'{source_id}', suffix=f'sector {s.sector}')
                     self.LE.exc2df(e, prefix=f'{source_id}', suffix=f'sector {s.sector}')
 
             #concatenate and transform to arrays
@@ -435,7 +439,7 @@ class EleanorDatabaseInterface:
             # tpfs            = [np.empty((targetdata_kwargs['height'], targetdata_kwargs['width'],1))]
             # aperture_masks  = [np.empty((targetdata_kwargs['height'], targetdata_kwargs['width'],1))]
 
-            self.LE.print_exc(e, prefix=f'{source_id}', suffix=None,)
+            self.LE.log_exc(e, prefix=f'{source_id}', suffix=None,)
             self.LE.exc2df(e, prefix=f'{source_id}', suffix=None,)
 
         return lcs, meta, tpfs, aperture_masks
@@ -637,11 +641,12 @@ class EleanorDatabaseInterface:
             #update number of extracted targets
             extracted += len(chunk)
             
-            almf.printf(
+            logger.info(
                 msg=f'Extracting chunk {cidx+1}/{len(chunks)} ({extracted}/{len(source_ids)})',
-                context=f'{self.__class__.__name__}.{self.download.__name__}()',
-                type='INFO',
-                verbose=verbose,
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.download.__name__}()',
+                    level=0,
+                )
             )
 
             #extract targets (in parallel)
@@ -662,15 +667,16 @@ class EleanorDatabaseInterface:
             #delete metadata after extraction of each chunck
             if self.clear_metadata:
                 try:
-                    almf.printf(
+                    logger.info(
                         msg='Removing Metadata...',
-                        context=f'{self.__class__.__name__}.{self.download.__name__}()',
-                        type='INFO',
-                        verbose=verbose,
+                        extra=dict(
+                            context=f'{self.__class__.__name__}.{self.download.__name__}()',
+                            level=0,
+                        )
                     )
                     shutil.rmtree(self.metadata_path)
                 except FileNotFoundError as e:                    
-                    self.LE.print_exc(e=e, prefix='No Metadata to clear!')
+                    self.LE.log_exc(e=e, prefix='No Metadata to clear!')
                     self.LE.exc2df(e=e, prefix='No Metadata to clear!')
 
             #append to output lists
@@ -926,8 +932,3 @@ class EleanorDatabaseInterface:
 
         return fig, axs
 
-    # def animate(self,
-    #     ):
-    #     #TODO
-
-    #     return

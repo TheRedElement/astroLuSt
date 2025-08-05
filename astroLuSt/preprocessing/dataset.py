@@ -1,7 +1,7 @@
 
 #%%imports
 import numpy as np
-from typing import Union, Tuple, Callable, List, Literal
+from typing import List
 
 #%%definitions
 def data_split(

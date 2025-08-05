@@ -1,18 +1,19 @@
 
 #%%imports
 from astropy.timeseries import LombScargle
+import logging
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from typing import Union, Tuple, Callable
+from typing import Tuple
 import warnings
 
-from astroLuSt.preprocessing.binning import Binning
-from astroLuSt.preprocessing.timeseries import fold
+from .binning import Binning
+from .timeseries import fold
 
-
+logger = logging.getLogger(__name__)
 #%%definitions
 class PDM:
     """
@@ -388,11 +389,15 @@ class PDM:
         self.period_stop = period_stop
         self.trial_periods = trial_periods
 
-        if self.verbose > 2:
-            print(f'INFO(PDM): generated grid:')
-            print(f'    start        = {period_start}')
-            print(f'    stop         = {period_stop}')
-            print(f'    trial points = {trial_periods.shape}')
+        logger.debug(
+            msg=(
+                f'generated grid:'
+                f'    start        = {period_start}'
+                f'    stop         = {period_stop}'
+                f'    trial points = {trial_periods.shape}'
+            ),
+            extra=dict(context=self.__class__.__name__)
+            )
 
         return trial_periods
 
@@ -573,8 +578,7 @@ class PDM:
 
         # theta_tolerance = eval(f'{best_theta}{tolerance_expression}')   #tolerance for improvement
         for retry in range(1,self.n_retries+1):
-            if verbose > 3:
-                print(f'INFO: Retrying with best_period/{retry}')
+            logger.info(f'INFO: Retrying with best_period/{retry}', extra=dict(context=self.__class__.__name__))
 
             #trial periods for retry period
             retry_trial_periods = np.linspace((best_p/retry)*(1-self.retry_range/2), (best_p/retry)*(1+self.retry_range/2), self.nperiods_retry)
@@ -601,8 +605,7 @@ class PDM:
                 #break if no improvement is made
                 else:
                     if self.breakloop:
-                        if verbose > 1:
-                            print(f'INFO: Broke loop after retry #{retry} because best theta retry ({retry_best_theta:.3f}) > current best theta ({theta_tolerance:.3f})')
+                        logger.info(f'Broke loop after retry #{retry} because best theta retry ({retry_best_theta:.3f}) > current best theta ({theta_tolerance:.3f})', extra=dict(context=self.__class__.__name__))
                         break
                 
 

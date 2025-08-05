@@ -8,7 +8,7 @@ This module started out as a central space for all code generated in the frame o
 * Maintainer: Lukas Steinwender
 * Maintainer Email: 
 * Last Update: 2024-11-11
-* Version: 1.0.0
+* Version: 2.0.1
 * URL: [https://github.com/TheRedElement/astroLuSt](https://github.com/TheRedElement/astroLuSt)
 
 ## Installation

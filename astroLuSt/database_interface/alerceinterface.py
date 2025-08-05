@@ -2,17 +2,20 @@
 #%%imports
 from alerce.core import Alerce
 from joblib import Parallel, delayed
+import logging
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.figure import Figure
 import numpy as np
 import os
+import pyarrow
 import pandas as pd
 import time
 from typing import Tuple, List
 
-from astroLuSt.monitoring import (formatting as almofo, errorlogging as almoer)
+from ..monitoring import (errorlogging as almoer)
 
+logger = logging.getLogger(__name__)
 
 #ALeRCE
 class AlerceDatabaseInterface:
@@ -165,12 +168,12 @@ class AlerceDatabaseInterface:
             verbose:int,
             ) -> pd.DataFrame:
 
-            almofo.printf(
-                msg=f"Extracting #{idx+1}/{total_targets}",
-                context=self.crossmerge_by_coordinates.__name__,
-                type='INFO',
-                level=0,
-                verbose=verbose
+            logger.info(
+                f"Extracting #{idx+1}/{total_targets}",
+                extra=dict(
+                    context=self.crossmerge_by_coordinates.__name__,
+                    level=0,
+                )
             )
 
             try:
@@ -192,7 +195,7 @@ class AlerceDatabaseInterface:
 
             except Exception as e:
                 df = pd.DataFrame() #empty DataFrame
-                self.LE.print_exc(
+                self.LE.log_exc(
                     e,
                     prefix=f"{inrow['id']}",
                     suffix=self.crossmerge_by_coordinates.__name__,
@@ -274,12 +277,12 @@ class AlerceDatabaseInterface:
                 - `idx`
                     - `int`, optional
                     - index of the currently downloaded target
-                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
+                    - only necessary to log in the protocoll when called in `self.download_lightcurves()`
                     - the default is `0`
                 - `total_targets`
                     - `int`, optional
                     - total number of targets that get extracted
-                    - only necessary to print in the protocoll when called in `self.download_lightcurves()`
+                    - only necessary to log in the protocoll when called in `self.download_lightcurves()`
                     - the default is `1`
                 -  `verbose`
                     - `int`, optional
@@ -315,12 +318,12 @@ class AlerceDatabaseInterface:
         except:
             already_extracted = []
 
-        almofo.printf(
+        logger.info(
             msg=f"Extracting {ztf_id} (#{idx+1}/{total_targets})",
-            context=self.download_one.__name__,
-            type='INFO',
-            level=0,
-            verbose=verbose
+            extra=dict(
+                context=self.download_one.__name__,
+                level=0,
+            )
         )
 
         if savefile.replace(str(save),'') not in already_extracted or redownload:
@@ -336,7 +339,7 @@ class AlerceDatabaseInterface:
             except Exception as e:  #skip if extraction fails
                 #empty placeholder DataFrame
                 df = pd.DataFrame()
-                self.LE.print_exc(
+                self.LE.log_exc(
                     e,
                     prefix=f"{ztf_id}",
                     suffix=self.download_one.__name__,
@@ -353,12 +356,12 @@ class AlerceDatabaseInterface:
             time.sleep(sleep)
         else:   #load data if already extracted
             df = pd.read_parquet(savefile) #empty placeholder
-            almofo.printf(
+            logger.info(
                 msg=f"{ztf_id} has already been extracted and `redownload==False`... ignoring",
-                context=self.download_one.__name__,
-                type='INFO',
-                level=1,
-                verbose=verbose
+                extra=dict(
+                    context=self.download_one.__name__,
+                    level=1,
+                ),
             )
 
         return df
@@ -519,3 +522,6 @@ class AlerceDatabaseInterface:
         axs = fig.axes
 
         return fig, axs
+
+#%%
+AL = AlerceDatabaseInterface()

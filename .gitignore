@@ -1,7 +1,7 @@
 
 
 #my files
-.vscode
+.vscode/
 
 ##across all directories
 maxsector.py

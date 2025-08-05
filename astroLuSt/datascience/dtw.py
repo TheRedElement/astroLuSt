@@ -3,11 +3,13 @@
 
 
 #%%imports
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, Literal
 
+logger = logging.getLogger(__name__)
 #%%definitions
 class DTW:
     """
@@ -319,8 +321,9 @@ class DTW:
 
         #initialize result arrays
         self.Cs = np.empty((len(X), len(self.X_template)), dtype=object)
-        self.pearsons = np.empty((len(X), len(self.X_template)), dtype=object)
+        self.pearsons = np.empty((len(X), len(self.X_template)), dtype=np.float64)
         self.paths = np.empty((len(X), len(self.X_template)), dtype=object)
+        self.dtw_loss = np.empty((len(X), len(self.X_template)), dtype=np.float64)
 
         #run fit for every sample in X
         for iidx, x in enumerate(X):
@@ -332,20 +335,23 @@ class DTW:
                 C = self.accumulate_cost_matrix(x, xt, cost_fct=cost_fct)
                 path = self.optimal_warping_path(C)
                 pearson = np.abs(np.corrcoef(path.T)[0,1])
+                rows, cols = zip(*path)
+                dtw_loss = C[rows,cols].sum()  #dtw loss = sum(C[optimal_warping path])
                 
                 #append results
                 self.Cs[iidx, jidx] = C
                 self.pearsons[iidx, jidx] = pearson
                 self.paths[iidx, jidx] = path
+                self.dtw_loss[iidx, jidx] = dtw_loss
 
         return
 
-    def predict(self,
+    def predict_pearson(self,
         X:np.ndarray=None, y:np.ndarray=None,
         threshold:float=None, multi_hot_encoded:bool=False
         ) -> np.ndarray:
         """
-            - method to predict with the fitted classifier
+            - method to predict with the fitted classifier using the pearson correlation coefficient of the optimal warping path
             
             Parameters
             ----------
@@ -421,6 +427,128 @@ class DTW:
             if multi_hot_encoded:
                 y_pred = (y_pred>0).astype(int)
 
+
+        return y_pred
+
+    def predict_dtwloss(self,
+        X:np.ndarray=None, y:np.ndarray=None,
+        ) -> np.ndarray:
+        """
+            - method to predict with the fitted classifier using the dtw-loss (sum over cost values of optimal warping path)
+            - will convert dtw-loss to probabilities
+            
+            Parameters
+            ----------
+                - `X`
+                    - `np.ndarray`
+                    - not used in the method
+                    - can contain samples of different lengths
+                    - training set to be compared to `self.X_template`
+                - `y`
+                    - `np.ndarray`, optional
+                    - labels corresponding to `X`
+                    - not used in the method
+                    - the default is `None`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `y_pred`
+                    - `np.ndarray`
+                    - array containing the probabilities for `X`
+                    - has shape `(X.shape[0],self.X_template.shape[0])`
+
+            Comments
+            --------
+        """
+        uniques = np.sort(np.unique(self.y_template))   #unique classes
+        y_pred = np.empty((self.dtw_loss.shape[0], uniques.shape[0]))
+        for idx, yi in enumerate(uniques):
+            #get dt_loss per class
+            class_dtw_loss = self.dtw_loss[:,(yi==self.y_template)]
+            dtw_score = (-(class_dtw_loss / class_dtw_loss.sum()).flatten())    #convert loss to score (pseudo-probability, `-` to interpret lower loss as better score)
+            y_pred[:,idx] = dtw_score / dtw_score.sum()                         #convert score to probabilities
+
+        return y_pred
+
+    def predict(self,
+        X:np.ndarray=None, y:np.ndarray=None,
+        threshold:float=None, multi_hot_encoded:bool=False,
+        method:Literal["dtwloss","pearson"]="dtwloss",
+        ) -> np.ndarray:
+        """
+            - method to predict with the fitted classifier
+            
+            Parameters
+            ----------
+                - `X`
+                    - `np.ndarray`
+                    - not used in the method
+                    - can contain samples of different lengths
+                    - training set to be compared to `self.X_template`
+                - `y`
+                    - `np.ndarray`, optional
+                    - labels corresponding to `X`
+                    - not used in the method
+                    - the default is `None`
+                - `threshold`
+                    - `float`, optional
+                    - a classification threshold
+                        - optimal warping path which has an absolute correlation coefficient (|r_P|) higher than `threshold` will be classified as being of the same type as the template-curve
+                    - has to be value in the interval [0,1]
+                    - overrides `self.threshold`
+                    - the default is `None`
+                        - will fall back to `self.threshold`
+                - `multi_hot_encoded`
+                    - `bool`, optional
+                    - whether to convert the calculated correlations to a multi-hot encoded matrix
+                        - will consider every unique class in `self.y_template`
+                        - will calculate the overall correlation trend w.r.t. `threshold` for all template-curves
+                        - i.e. computes $\sum_{class} r_P(class) - threshold$ for every sample in `X` and every unique class
+                            - if the the result is > 0 this means that (w.r.t. `threshold`) there is a correlation
+                                - Hence a 1 will be assigned for that class
+                            - if the the result is < 0 this means that (w.r.t. `threshold`) there is no correlation
+                                - Hence a 0 will be assigned for that class
+                    - only relevant if `threshold` and `self.threshold` are not `None`
+                    - the default is `False`
+                        - will return the overall correlation trend instead
+                        - i.e. $\sum_{class} r_P(class) - threshold$
+                - `method`
+                    - `Literal["dtwloww","pearson"]`, optional
+                    - method to use for the prediction
+                    - `dtwloss`
+                        - will convert the DTW-loss (sum over cost values of optimal warping path) to probabilities
+                    - `pearson`
+                        - will attempt to compute a pearson correlation coefficient of the optimal warping path
+                        - result is interpreted as a probability of belonging to some class
+                    - the default is `dtwloss`
+
+            Raises
+            ------
+
+            Returns
+            -------
+                - `y_pred`
+                    - `np.ndarray`
+                    - array containing the labes for `X`
+                    - has shape `(X.shape[0],self.X_template.shape[0])`
+                    - returns matrix of 0 and 1 if `multi_hot_encoded == True`
+                        - `1` if the overall correlation exceeds `threshold`
+                        - `0` otherwise
+                    - the second axis of `y_pred` will be sorted in ascending order w.r.t. the classlabels if `multi_hot_encoded == True`
+                    - otherwise returns the overall correlation as entries
+
+            Comments
+            --------
+        """
+        if method == "dtwloss":
+            y_pred = self.predict_dtwloss(X, y)
+        elif method == "pearson":
+            y_pred = self.predict_pearson(X, y, threshold, multi_hot_encoded)
+        else:
+            raise ValueError(f"`method` has to be one of `'dtwloss', 'pearson'` but is {method}")
 
         return y_pred
 
@@ -529,6 +657,7 @@ class DTW:
         C = self.Cs[X_idx, Xtemp_idx]
         path = self.paths[X_idx, Xtemp_idx]
         pearson = self.pearsons[X_idx, Xtemp_idx]
+        dtw_loss = self.dtw_loss[X_idx, Xtemp_idx]
 
         # if pearson is None: tit = None
         # else: tit = f"corr:  {pearson:.3f}"
@@ -583,8 +712,12 @@ class DTW:
         ax3.margins(x=0, tight=True)
 
         #add legend
+        tit = (
+            r'$|r_P| =$%-4g'%pearson + "\n" + 
+            r'$\mathcal{L}_\mathrm{DTW} = %.4g$'%dtw_loss
+        )
         axleg.tick_params(labelcolor="none", which="both", top=False, bottom=False, left=False, right=False) #hide ticks and ticklabels
-        leg = axleg.legend(handles=handles, title=r'$|r_P| =$%-4g'%pearson, loc="best")
+        leg = axleg.legend(handles=handles, title=tit, loc="best")
         leg._legend_box.align = "left"
 
         #reduce white space between plots
