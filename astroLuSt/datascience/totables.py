@@ -1,12 +1,13 @@
 
 #%%imports
+import logging
 import numpy as np
 import pandas as pd
-import re
 from tensorflow.keras import Model
 import tensorflow as tf
 from typing import Dict, List
 
+logger = logging.getLogger(__name__)
 #%%definitions
 def hypergrid2latex(
     hypergrid:Dict[str,list],
@@ -115,7 +116,7 @@ def summary2pandas_keras(
     #get basic layer attributes
     for idx, layer in enumerate(model.layers):
 
-        # print(dir(layer))
+        # logger.debug(dir(layer))
         extraction["name"].append(layer.name)
         extraction["type"].append(layer.__class__.__name__)
         if hasattr(layer.input, "shape"):   extraction["input_shape"].append(layer.input.shape) 

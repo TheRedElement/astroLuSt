@@ -1,13 +1,13 @@
 
 #%%imports
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 import scipy
 from typing import Literal, Tuple
 
-from astroLuSt.monitoring import formatting as almofo
-
+logger = logging.getLogger(__name__)
 #%%definitions
 class TotalVariation:
     """
@@ -274,7 +274,7 @@ class TotalVariation:
 
         #merged
         D = scipy.sparse.vstack([Dx, Dy])
-        # print(D.shape)
+        # logger.debug(D.shape)
 
         return D
 
@@ -387,32 +387,32 @@ class TotalVariation:
             delta = abs(self.energy[k]-self.energy[k-1])/abs(self.energy[k-1])  #fractional change of energy
 
             #logging
-            almofo.printf(
+            logger.info(
                 msg=f'Iteration {k+1} with delta={delta:8.1e}, energy={abs(self.energy[k]):9.2e}.',
-                context=f'{self.__class__.__name__}.{self.fit.__name__}',
-                type='INFO',
-                level=0,
-                verbose=verbose-1
-            )            
+                extra=dict(
+                    context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                    level=0,
+                )
+            )
 
             #check convergence
             if (delta < self.eps) and (k > (self.min_iter-1)):
-                almofo.printf(
+                logger.info(
                     msg=f'Converged after {k+1} iterations with delta={delta:7.1e}, energy={self.energy[k]:9.2e}.',
-                    context=f'{self.__class__.__name__}.{self.fit.__name__}',
-                    type='INFO',
-                    level=0,
-                    verbose=verbose
+                    extra=dict(
+                        context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                        level=0,
+                    )
                 )
                 break
 
-        #print finishing message
-        almofo.printf(
+        #log finishing message
+        logger.info(
             msg=f'Finished after {k+1} iterations with delta={delta:7.1e}, energy={self.energy[k]:9.2e}.',
-            context=f'{self.__class__.__name__}.{self.fit.__name__}',
-            type='INFO',
-            level=0,
-            verbose=verbose
+            extra=dict(
+                context=f'{self.__class__.__name__}.{self.fit.__name__}',
+                level=0,
+            )
         )
 
         #store result
@@ -550,9 +550,9 @@ class TotalVariation:
         if fig is None:
             fig = plt.figure()
         
-        ax1 = fig.add_subplot(132, title=r"$X_\mathrm{in}$")
-        ax2 = fig.add_subplot(133, title=r"$u$")
-        ax3 = fig.add_subplot(134, title="Energy")
+        ax1 = fig.add_subplot(131, title=r"$X_\mathrm{in}$")
+        ax2 = fig.add_subplot(132, title=r"$u$")
+        ax3 = fig.add_subplot(133, title="Energy")
         
         ax1.pcolormesh(X_in, **pcolormesh_kwargs)
         ax2.pcolormesh(self.u, **pcolormesh_kwargs)

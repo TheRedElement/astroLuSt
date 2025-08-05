@@ -6,7 +6,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple
 
 #%%definitions
 class DTW:
