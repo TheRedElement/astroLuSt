@@ -1,6 +1,4 @@
 
-#TODO: `DTW`: correct for wrong assignment of high correlation
-
 
 #%%imports
 import logging
